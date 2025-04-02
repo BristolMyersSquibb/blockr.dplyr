@@ -42,21 +42,6 @@ new_filter_block <- function(string = "TRUE", ...) {
       moduleServer(
         id,
         function(input, output, session) {
-          # Restore block state
-          observeEvent(TRUE, {
-            # Compare default constructor string param to the one
-            # passed to the constructor when it is called.
-            if (
-              !isTRUE(all.equal(eval(formals(list(...)$ctor)$string), string))
-            ) {
-              apply_filter(
-                data(),
-                r_string(),
-                r_expr_validated,
-                r_string_validated
-              )
-            }
-          })
 
           r_string <- mod_vexpr_server(
             id = "v",
@@ -65,8 +50,8 @@ new_filter_block <- function(string = "TRUE", ...) {
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(NULL)
-          r_string_validated <- reactiveVal(NULL)
+          r_expr_validated <- reactiveVal(parse_filter(string))
+          r_string_validated <- reactiveVal(string)
 
           # Validate and update on submit
           observeEvent(input$submit, {
