@@ -108,3 +108,59 @@ This creates a visual pipeline where: 1. Data is loaded from the mtcars
 dataset 2. Rows are filtered to only include cars with mpg \> 20 3.
 Results are summarized by cylinder count, calculating average mpg,
 average horsepower, and row count
+
+## Mutate Example with Multiple Expressions
+
+The `dplyr::mutate()` block now supports multiple expressions that can
+be added/removed dynamically in the UI:
+
+### Full dashboard with mutate block
+
+``` r
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a complete data transformation pipeline
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    mutate_block = new_mutate_block(
+      string = list(
+        mpg_double = "mpg * 2",
+        hp_per_100 = "hp / 100", 
+        power_to_weight = "hp / wt",
+        efficiency_score = "mpg / hp * 100"
+      )
+    ),
+    filter_block = new_filter_block("power_to_weight > 30"),
+    summary_block = new_summarize_block(
+      string = list(
+        avg_efficiency = "mean(efficiency_score)",
+        count = "n()"
+      ),
+      by = c("cyl")
+    )
+  ),
+  links = links(
+    from = c("data_block", "mutate_block", "filter_block"),
+    to = c("mutate_block", "filter_block", "summary_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+This creates a comprehensive data analysis workflow: 1. **Data
+loading**: Load the mtcars dataset 2. **Multiple mutations**: Create 4
+new columns simultaneously (mpg_double, hp_per_100, power_to_weight,
+efficiency_score)  
+3. **Filtering**: Keep only cars with power-to-weight ratio \> 30 4.
+**Grouped summary**: Calculate average efficiency and count by cylinder
+count
+
+The mutate block UI allows you to: - Add new expressions with the “Add
+Expression” button - Remove expressions (keeping at least one) - Edit
+column names and expressions with syntax highlighting - See real-time
+results as you modify the expressions

@@ -116,3 +116,47 @@ This creates a visual pipeline where:
 1. Data is loaded from the mtcars dataset
 2. Rows are filtered to only include cars with mpg > 20
 3. Results are summarized by cylinder count, calculating average mpg, average horsepower, and row count
+
+## Mutate Example with Multiple Expressions
+
+The `dplyr::mutate()` block now supports multiple expressions that can be added/removed dynamically in the UI:
+
+### Full dashboard with mutate block
+
+```{r mutate-dashboard, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard with mutate block showing multiple expressions
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    mutate_block = new_mutate_block(
+      string = list(
+        mpg_double = "mpg * 2",
+        hp_per_100 = "hp / 100", 
+        power_to_weight = "hp / wt",
+        efficiency_score = "mpg / hp * 100"
+      )
+    )
+  ),
+  links = links(
+    from = c("data_block"),
+    to = c("mutate_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+This creates a focused demonstration of the mutate block's new capabilities:
+- **Data loading**: Load the mtcars dataset
+- **Multiple mutations**: Create 4 new columns simultaneously in one block
+
+The mutate block UI allows you to:
+- Add new expressions with the "Add Expression" button
+- Remove expressions (keeping at least one)
+- Edit column names and expressions with syntax highlighting
+- See real-time results as you modify the expressions
