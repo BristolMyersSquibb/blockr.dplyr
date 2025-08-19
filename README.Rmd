@@ -252,6 +252,94 @@ In the UI, you can:
 4. Use autocompletion for column names and functions
 5. Remove conditions with the trash icon (keeping at least one)
 
+## Rename Block for Column Renaming
+
+The `dplyr::rename()` block provides an intuitive interface for renaming columns with visual new_name ← old_name mappings:
+
+### Simple rename usage
+
+```{r rename-simple, eval = FALSE}
+library(blockr.dplyr)
+# Rename with predefined mappings
+blockr.core::serve(
+  new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")), 
+  data = list(data = mtcars)
+)
+```
+
+### Interactive rename interface
+
+```{r rename-interactive, eval = FALSE}
+library(blockr.dplyr)
+# Start with empty rename block for interactive column renaming
+blockr.core::serve(new_rename_block(), data = list(data = mtcars))
+```
+
+### Complete data pipeline with rename
+
+```{r rename-pipeline, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard with rename in the pipeline
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    rename_block = new_rename_block(list(
+      miles_per_gallon = "mpg",
+      number_of_cylinders = "cyl",
+      gross_horsepower = "hp",
+      weight_pounds = "wt"
+    )),
+    filter_block = new_filter_block("miles_per_gallon > 20"),
+    summary_block = new_summarize_block(
+      string = list(
+        avg_mpg = "mean(miles_per_gallon)",
+        avg_hp = "mean(gross_horsepower)",
+        count = "n()"
+      ),
+      by = c("number_of_cylinders")
+    )
+  ),
+  links = links(
+    from = c("data_block", "rename_block", "filter_block"),
+    to = c("rename_block", "filter_block", "summary_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+The rename block features:
+- **Visual mapping interface**: Clear new_name ← old_name with arrow indicators
+- **Add/remove functionality**: Dynamic interface to add/remove rename pairs
+- **Column validation**: Dropdown selectors ensure old column names exist
+- **Duplicate prevention**: Validation prevents renaming the same column multiple times
+- **Real-time preview**: See the generated `dplyr::rename()` code as you work
+
+### Testing rename functionality
+
+To quickly test the rename features:
+
+```{r rename-testing, eval = FALSE}
+library(blockr.dplyr)
+
+# Test the multi-rename module directly
+run_multi_rename_example()
+
+# Test in context with sample data
+blockr.core::serve(new_rename_block(), data = list(data = mtcars))
+```
+
+In the UI, you can:
+1. Set new column names in the left text inputs
+2. Select existing columns from dropdowns on the right  
+3. Add more rename pairs with "Add Rename" button
+4. Remove pairs with trash icons (keeping at least one)
+5. See the arrow (←) indicating the rename direction
+
 ## Mutate without blockr.ui (core-only)
 
 You can run a `dplyr::mutate()` block with only `blockr.core` and this package:
