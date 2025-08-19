@@ -48,13 +48,19 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Multi-condition interface** - Visual condition builder with add/remove functionality
    - **AND/OR logic** - Dropdown selectors to choose between condition operators
    - **Backward compatibility** - `multi_condition = FALSE` parameter for single-condition mode
-   - **Comprehensive testing** - 28 tests covering all scenarios including edge cases
+   - **Comprehensive testing** - 34 tests covering all scenarios including edge cases
    - **Full autocompletion** - Column names and function suggestions in all condition fields
 
+8. **New Rename Block** - Complete column renaming functionality:
+   - **Visual mapping interface** - Clear new_name ← old_name with arrow indicators
+   - **Add/remove functionality** - Dynamic interface to add/remove rename pairs  
+   - **Column validation** - Dropdown selectors ensure old column names exist
+   - **Duplicate prevention** - Validation prevents renaming the same column multiple times
+   - **Comprehensive testing** - 31 tests covering validation, UI components, and integration
+
 ### Future New Blocks
-- **group_by** - Explicit grouping block
+- **group_by** - Explicit grouping block  
 - **arrange** - Enhanced sorting with multiple columns and directions
-- **rename** - Column renaming
 - **distinct** - Remove duplicates
 - **slice** variants - Row selection by position
 
@@ -107,8 +113,12 @@ After making changes to the code, use this workflow to test:
    # Test multi-condition filter (new!)
    library(blockr.core); serve(new_filter_block(), list(data = mtcars))
 
-   # Test standalone multi-filter module
+   # Test rename block (new!)
+   library(blockr.core); serve(new_rename_block(), list(data = mtcars))
+
+   # Test standalone modules
    library(blockr.dplyr); run_multi_filter_example()
+   library(blockr.dplyr); run_multi_rename_example()
    ```
 4. Test in browser: Check multi-expressions/conditions, dplyr functions, autocompletion
 
