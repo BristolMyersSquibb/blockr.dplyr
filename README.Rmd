@@ -96,7 +96,7 @@ board <- blockr.ui::new_dag_board(
     summary_block = new_summarize_block(
       string = list(
         avg_mpg = "mean(mpg)",
-        avg_hp = "mean(hp)", 
+        avg_hp = "mean(hp)",
         count = "n()"
       ),
       by = c("cyl")
@@ -135,7 +135,7 @@ board <- blockr.ui::new_dag_board(
     mutate_block = new_mutate_block(
       string = list(
         mpg_double = "mpg * 2",
-        hp_per_100 = "hp / 100", 
+        hp_per_100 = "hp / 100",
         power_to_weight = "hp / wt",
         efficiency_score = "mpg / hp * 100"
       )
@@ -160,3 +160,22 @@ The mutate block UI allows you to:
 - Remove expressions (keeping at least one)
 - Edit column names and expressions with syntax highlighting
 - See real-time results as you modify the expressions
+
+## Mutate without blockr.ui (core-only)
+
+You can run a `dplyr::mutate()` block with only `blockr.core` and this package:
+
+```{r mutate-core-only, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+
+blockr.core::serve(
+  new_mutate_block(
+    string = list(
+      mpg_double = "mpg * 2",
+      power_to_weight = "hp / wt"
+    )
+  ),
+  data = list(data = mtcars)
+)
+```
