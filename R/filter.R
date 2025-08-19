@@ -1,14 +1,17 @@
 #' Filter block constructor
 #'
 #' This block allows filtering rows in a data frame based on conditions
-#' (see [dplyr::filter()]). Changes are applied after clicking the submit button.
+#' (see [dplyr::filter()]). Supports multiple conditions with AND/OR logic.
+#' Changes are applied after clicking the submit button.
 #'
 #' @param string Reactive expression returning character vector of
-#'   filter conditions
+#'   filter conditions (default: "TRUE" for no filtering)
+#' @param multi_condition Logical. If TRUE, use multi-condition interface.
+#'   If FALSE, use single expression interface (default: TRUE)
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for filter operations
-#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
+#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon div
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
@@ -17,9 +20,11 @@
 #' library(blockr.core)
 #' serve(new_filter_block(), list(data = mtcars))
 #'
-#' # With a custom dataset
-#' df <- data.frame(x = 1:5, y = letters[1:5])
-#' serve(new_filter_block(), list(data = df))
+#' # With single condition interface
+#' serve(new_filter_block(multi_condition = FALSE), list(data = mtcars))
+#'
+#' # With custom initial condition
+#' serve(new_filter_block("mpg > 20"), list(data = mtcars))
 #'
 #' # Connected blocks example
 #' serve(
@@ -36,18 +41,27 @@
 #' )
 #' }
 #' @export
-new_filter_block <- function(string = "TRUE", ...) {
+new_filter_block <- function(string = "TRUE", multi_condition = TRUE, ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
 
-          r_string <- mod_vexpr_server(
-            id = "v",
-            get_value = \() string,
-            get_cols = \() colnames(data())
-          )
+          # Choose module based on multi_condition parameter
+          r_string <- if (multi_condition) {
+            mod_multi_filter_server(
+              id = "mf",
+              get_value = \() string,
+              get_cols = \() colnames(data())
+            )
+          } else {
+            mod_vexpr_server(
+              id = "v",
+              get_value = \() string,
+              get_cols = \() colnames(data())
+            )
+          }
 
           # Store the validated expression
           r_expr_validated <- reactiveVal(parse_filter(string))
@@ -66,7 +80,8 @@ new_filter_block <- function(string = "TRUE", ...) {
           list(
             expr = r_expr_validated,
             state = list(
-              string = r_string_validated
+              string = r_string_validated,
+              multi_condition = multi_condition
             )
           )
         }
@@ -75,7 +90,12 @@ new_filter_block <- function(string = "TRUE", ...) {
     function(id) {
       div(
         class = "m-3",
-        mod_vexpr_ui(NS(id, "v")),
+        # Choose UI based on multi_condition parameter
+        if (multi_condition) {
+          mod_multi_filter_ui(NS(id, "mf"))
+        } else {
+          mod_vexpr_ui(NS(id, "v"))
+        },
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(

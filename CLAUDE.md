@@ -28,31 +28,28 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
    - Improved timing and race condition handling via `initialize_ace_editor()`
    - Works in mutate, summarize, filter, and all expression blocks
 
-## Current Status: Core Functionality Complete ✅
+## Current Status: Major Features Complete ✅
 
-The multi-expression support and autocompletion are fully working. Next priority is enhancing the filter block with multiple conditions.
+All core blocks (mutate, summarize, filter) now have advanced multi-expression/multi-condition support with full autocompletion. Ready for new block development or advanced UI enhancements.
 
 ### Working Features ✅
 - **Multi-expression support** in mutate and summarize blocks
-- **Dynamic add/remove** expressions with proper UI feedback
+- **Multi-condition support** in filter block with AND/OR logic
+- **Dynamic add/remove** expressions and conditions with proper UI feedback
 - **dplyr function compatibility** - all common functions work correctly
-- **Comprehensive autocompletion** - column names and function suggestions
+- **Comprehensive autocompletion** - column names and function suggestions across all blocks
 - **Proper state management** - save/restore functionality works
-- **Full test coverage** - 55 tests covering all functionality
+- **Full test coverage** - 80+ tests covering all functionality
 - **Clean architecture** - proper namespace imports, no regex preprocessing
+- **Backward compatibility** - all existing functionality preserved
 
-## Next Priority: Enhanced Filter Block
-
-### Current Filter Block Limitations
-- **Single condition only** - Uses `mod_vexpr_server` instead of multi-condition interface
-- **Manual boolean logic** - Users must write `mpg > 20 & cyl == 4` manually
-- **Limited tests** - Only 3 basic constructor tests
-
-### Planned Filter Improvements
-1. **Multi-condition support** - Visual condition builder with add/remove functionality
-2. **AND/OR logic** - Dropdown to choose between condition operators
-3. **Column/operator/value UI** - User-friendly condition building interface
-4. **Comprehensive testing** - Full test suite covering multiple scenarios
+## Recently Completed ✅
+7. **Enhanced Filter Block** - Major upgrade with multi-condition support:
+   - **Multi-condition interface** - Visual condition builder with add/remove functionality  
+   - **AND/OR logic** - Dropdown selectors to choose between condition operators
+   - **Backward compatibility** - `multi_condition = FALSE` parameter for single-condition mode
+   - **Comprehensive testing** - 28 tests covering all scenarios including edge cases
+   - **Full autocompletion** - Column names and function suggestions in all condition fields
 
 ### Future New Blocks
 - **group_by** - Explicit grouping block
@@ -91,6 +88,7 @@ Follow the existing patterns in the codebase:
 - This package uses roxygen2 for documentation and NAMESPACE generation
 - After modifying imports (e.g., adding @importFrom statements), run `devtools::document()` or `roxygen2::roxygenise()` to regenerate NAMESPACE
 - Do not edit NAMESPACE directly - use roxygen comments in R files
+- **README.md is generated from README.Rmd** - Always edit README.Rmd, never edit README.md directly
 
 ### Testing Workflow
 After making changes to the code, use this workflow to test:
@@ -98,16 +96,30 @@ After making changes to the code, use this workflow to test:
 **Option 1: R Console (Recommended)**
 1. Install package: `R CMD INSTALL . --no-multiarch`
 2. Open R console/RStudio
-3. Run: `library(blockr.core); serve(new_summarize_block(), list(data = mtcars))`
-4. Test in browser: Check multi-expressions, dplyr functions, autocompletion
+3. Run any of these to test specific functionality:
+   ```r
+   # Test multi-expression mutate
+   library(blockr.core); serve(new_mutate_block(), list(data = mtcars))
+   
+   # Test multi-expression summarize 
+   library(blockr.core); serve(new_summarize_block(), list(data = mtcars))
+   
+   # Test multi-condition filter (new!)
+   library(blockr.core); serve(new_filter_block(), list(data = mtcars))
+   
+   # Test standalone multi-filter module
+   library(blockr.dplyr); run_multi_filter_example()
+   ```
+4. Test in browser: Check multi-expressions/conditions, dplyr functions, autocompletion
 
 **Option 2: Development Testing**
 1. `pkgload::load_all()` (loads development code without installing)
-2. Run example manually in R console/RStudio
-3. Alternative: `serve(new_mutate_block(), list(data = mtcars))`
+2. Run examples from README.md manually in R console/RStudio
+3. Use the enhanced filter examples provided in the README
 
 **Option 3: Automated Testing**
-- Run `devtools::test()` to ensure all unit tests pass
+- Run `devtools::test()` to ensure all 80+ unit tests pass
+- Run `devtools::test(filter = 'filter')` to test filter-specific functionality
 - This verifies core functionality without needing browser testing
 
 **Note**: Running Shiny apps via command-line scripts may not work reliably in all environments. Use R console/RStudio for interactive testing.
@@ -184,3 +196,4 @@ shiny::shinyApp(ui, server)
 - Look at existing modules for patterns
 - The blockr.core package documentation
 - dplyr documentation for function semantics
+- update README.Rmd not md
