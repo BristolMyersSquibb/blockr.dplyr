@@ -45,7 +45,7 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
 
 ## Recently Completed ✅
 7. **Enhanced Filter Block** - Major upgrade with multi-condition support:
-   - **Multi-condition interface** - Visual condition builder with add/remove functionality  
+   - **Multi-condition interface** - Visual condition builder with add/remove functionality
    - **AND/OR logic** - Dropdown selectors to choose between condition operators
    - **Backward compatibility** - `multi_condition = FALSE` parameter for single-condition mode
    - **Comprehensive testing** - 28 tests covering all scenarios including edge cases
@@ -100,13 +100,13 @@ After making changes to the code, use this workflow to test:
    ```r
    # Test multi-expression mutate
    library(blockr.core); serve(new_mutate_block(), list(data = mtcars))
-   
-   # Test multi-expression summarize 
+
+   # Test multi-expression summarize
    library(blockr.core); serve(new_summarize_block(), list(data = mtcars))
-   
+
    # Test multi-condition filter (new!)
    library(blockr.core); serve(new_filter_block(), list(data = mtcars))
-   
+
    # Test standalone multi-filter module
    library(blockr.dplyr); run_multi_filter_example()
    ```
@@ -191,9 +191,25 @@ shiny::shinyApp(ui, server)
 - Code is clean and maintainable
 - Tests pass and coverage improves
 
+## Future Cleanup Tasks
+
+When all major features are complete, consider these cleanup opportunities:
+
+### Code Simplification
+- **Remove single-condition filter mode** - Once users are comfortable with the multi-condition interface, the `multi_condition = FALSE` parameter and associated `mod_vexpr_server` usage could be deprecated to simplify the codebase
+- **Consolidate similar modules** - Review if any patterns can be further abstracted across mutate, summarize, and filter implementations
+- **Remove legacy code paths** - Clean up any remaining code that supported pre-multi-expression functionality
+
+### Benefits of Cleanup
+- Reduced code maintenance burden
+- Simpler API with fewer parameters
+- More focused testing requirements
+- Cleaner architecture with single implementation paths
+
+**Note**: These cleanups should only be considered after users have had time to adopt the new multi-condition interface and confirm it meets all their needs.
+
 ## Resources
 - Check git history for previous implementations
 - Look at existing modules for patterns
 - The blockr.core package documentation
 - dplyr documentation for function semantics
-- update README.Rmd not md
