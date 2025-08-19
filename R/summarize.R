@@ -24,7 +24,7 @@
 #' }
 #' @export
 new_summarize_block <- function(
-  string = list(newcol = "paste('type', 'here')"),
+  string = list(count = "n()"),
   by = character(),
   ...
 ) {
@@ -111,7 +111,6 @@ new_summarize_block <- function(
 }
 
 parse_summarize <- function(summarize_string = "", by_selection = character()) {
-  print(summarize_string)
   by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
@@ -142,7 +141,6 @@ apply_summarize <- function(data, string, r_expr_validated, r_string_validated, 
     )
     return()
   }
-  print(expr)
   ans <- try(eval(expr))
   if (inherits(ans, "try-error")) {
     showNotification(
