@@ -30,14 +30,90 @@ You can install the development version of blockr.dplyr from [GitHub](https://gi
 devtools::install_github("cynkra/blockr.dplyr")
 ```
 
-## Example
+## Enhanced Select Block for Visual Column Selection
 
-A `dplyr::select()` block can be spun up as
+The `dplyr::select()` block now features an enhanced visual interface with column cards, search functionality, and detailed column information:
 
-```{r select, eval = FALSE}
+### Simple select usage (backward compatible)
+
+```{r select-simple, eval = FALSE}
 library(blockr.dplyr)
+# Classic dropdown interface
+blockr.core::serve(new_select_block(c("mpg", "cyl"), enhanced = FALSE), data = list(data = mtcars))
+```
+
+### Enhanced visual interface (new default)
+
+```{r select-enhanced, eval = FALSE}
+library(blockr.dplyr)
+# Enhanced interface with column cards and information
 blockr.core::serve(new_select_block(c("mpg", "cyl")), data = list(data = mtcars))
 ```
+
+### Complete data pipeline with enhanced select
+
+```{r select-pipeline, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard demonstrating the enhanced select capabilities
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    select_block = new_select_block(c("mpg", "cyl", "hp", "wt")),
+    filter_block = new_filter_block("mpg > 20"),
+    arrange_block = new_arrange_block(list(
+      list(column = "mpg", direction = "desc"),
+      list(column = "hp", direction = "asc")
+    ))
+  ),
+  links = links(
+    from = c("data_block", "select_block", "filter_block"),
+    to = c("select_block", "filter_block", "arrange_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+The enhanced select block features:
+- **Visual column cards** - Show column type, sample data, and statistics (NA count, unique values)
+- **Search functionality** - Type to filter columns by name (case-insensitive)
+- **Quick selection controls** - Select All, Select None, and Invert Selection buttons
+- **Column information** - Display data types, sample values, and basic statistics
+- **Selection summary** - Clear overview of selected columns with numbering
+- **Backward compatibility** - Use `enhanced = FALSE` for classic dropdown interface
+
+### Testing select functionality
+
+To quickly test the select features:
+
+```{r select-testing, eval = FALSE}
+library(blockr.dplyr)
+
+# Test the multi-select module directly
+run_multi_select_example()
+
+# Test in context with sample data
+blockr.core::serve(new_select_block(), data = list(data = mtcars))
+```
+
+In the enhanced UI, you can:
+1. View column cards with type information and sample data
+2. Use the search box to filter columns by name
+3. Click "Select All" to select all visible columns
+4. Click "Select None" to clear all selections
+5. Click "Invert" to toggle selected/unselected columns
+6. Click individual column cards to select/deselect them
+7. See a summary of selected columns at the bottom
+
+The column cards show:
+- **Column name** with checkbox for selection
+- **Data type** and observation count (e.g., "numeric (32 obs)")
+- **Sample values** from the first few non-NA entries
+- **Statistics** showing unique value count and NA count
 
 A `dplyr::mutate()` block can be used to add new variables:
 
