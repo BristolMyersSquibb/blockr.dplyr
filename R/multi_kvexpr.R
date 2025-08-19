@@ -192,6 +192,16 @@ mod_multi_kvexpr_ui <- function(id) {
         padding-right: 0.75rem;
       }
       
+      .multi-kvexpr-expression .expr-delete {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        height: 38px;
+        width: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
       .multi-kvexpr-expression .expr-delete:hover {
         color: var(--bs-white);
         border-color: var(--bs-danger);
