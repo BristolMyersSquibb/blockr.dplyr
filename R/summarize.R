@@ -7,7 +7,7 @@
 #'   expressions
 #' @param by Columns to define grouping
 #' @param ... Additional arguments forwarded to [new_block()]
-#'
+#
 #' @return A block object for summarize operations
 #' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
 #' @importFrom glue glue
