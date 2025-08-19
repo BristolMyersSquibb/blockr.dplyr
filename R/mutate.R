@@ -97,6 +97,11 @@ parse_mutate <- function(mutate_string = "") {
 }
 
 apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
+  # Convert list to character vector if needed (for compatibility with multi_kvexpr)
+  if (is.list(string)) {
+    string <- unlist(string)
+  }
+  
   # If empty or only whitespace, return simple mutate
   if (all(trimws(unname(string)) == "")) {
     expr <- parse_mutate(string)
