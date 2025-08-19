@@ -57,10 +57,20 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Column validation** - Dropdown selectors ensure old column names exist
    - **Duplicate prevention** - Validation prevents renaming the same column multiple times
    - **Comprehensive testing** - 31 tests covering validation, UI components, and integration
+   - **Polished UI** - Perfect alignment and full horizontal space utilization
 
-### Future New Blocks
-- **group_by** - Explicit grouping block  
-- **arrange** - Enhanced sorting with multiple columns and directions
+## Recently Completed ✅
+9. **Enhanced Arrange Block** - Complete multi-column sorting functionality:
+   - **Multi-column interface** - Visual list with individual ASC/DESC controls per column
+   - **Individual direction controls** - Each column gets its own ASC/DESC dropdown
+   - **Visual priority indicators** - Clear 1., 2., 3. numbering showing sort order
+   - **Add/remove functionality** - Dynamic interface to add/remove sort columns
+   - **Backward compatibility** - Supports both character vectors and list specifications
+   - **Comprehensive testing** - 22 tests covering all input formats and integration
+   - **Clean UI** - Simple interface without sorting arrows for intuitive use
+
+### Future New Blocks  
+- **group_by** - Explicit grouping block
 - **distinct** - Remove duplicates
 - **slice** variants - Row selection by position
 
@@ -207,6 +217,7 @@ When all major features are complete, consider these cleanup opportunities:
 
 ### Code Simplification
 - **Remove single-condition filter mode** - Once users are comfortable with the multi-condition interface, the `multi_condition = FALSE` parameter and associated `mod_vexpr_server` usage could be deprecated to simplify the codebase
+- **Remove single arrange functionality** - Keep only the multi-arrange interface and remove the old single-column arrange logic to simplify the codebase
 - **Consolidate similar modules** - Review if any patterns can be further abstracted across mutate, summarize, and filter implementations
 - **Remove legacy code paths** - Clean up any remaining code that supported pre-multi-expression functionality
 

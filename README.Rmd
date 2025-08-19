@@ -340,6 +340,97 @@ In the UI, you can:
 4. Remove pairs with trash icons (keeping at least one)
 5. See the arrow (←) indicating the rename direction
 
+## Enhanced Arrange Block for Multi-Column Sorting
+
+The `dplyr::arrange()` block now supports enhanced multi-column sorting with individual ASC/DESC controls and visual priority management:
+
+### Simple arrange usage (backward compatible)
+
+```{r arrange-simple, eval = FALSE}
+library(blockr.dplyr)
+# Classic approach with character vector
+blockr.core::serve(
+  new_arrange_block(c("mpg", "cyl"), desc = TRUE), 
+  data = list(data = mtcars)
+)
+```
+
+### Advanced multi-column interface (new default)
+
+```{r arrange-multi, eval = FALSE}
+library(blockr.dplyr)
+# Enhanced interface with individual column controls
+blockr.core::serve(
+  new_arrange_block(list(
+    list(column = "mpg", direction = "desc"),
+    list(column = "cyl", direction = "asc"),
+    list(column = "hp", direction = "desc")
+  )), 
+  data = list(data = mtcars)
+)
+```
+
+### Complete data pipeline with enhanced arrange
+
+```{r arrange-pipeline, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard demonstrating the enhanced arrange capabilities
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    filter_block = new_filter_block("mpg > 15"),
+    arrange_block = new_arrange_block(list(
+      list(column = "mpg", direction = "desc"),
+      list(column = "cyl", direction = "asc")
+    )),
+    mutate_block = new_mutate_block(
+      string = list(
+        efficiency_rank = "row_number()",
+        power_class = "case_when(hp > 200 ~ 'High', hp > 100 ~ 'Medium', TRUE ~ 'Low')"
+      )
+    )
+  ),
+  links = links(
+    from = c("data_block", "filter_block", "arrange_block"),
+    to = c("filter_block", "arrange_block", "mutate_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+The enhanced arrange block features:
+- **Multi-column interface**: Add/remove sort columns with individual controls
+- **Individual ASC/DESC**: Choose ascending or descending for each column independently  
+- **Visual priority**: Clear 1., 2., 3. indicators showing sort order priority
+- **Add/remove controls**: Dynamic interface to add/remove sort columns
+- **Backward compatibility**: Accepts both character vectors and list specifications
+
+### Testing arrange functionality
+
+To quickly test the arrange features:
+
+```{r arrange-testing, eval = FALSE}
+library(blockr.dplyr)
+
+# Test the multi-arrange module directly
+run_multi_arrange_example()
+
+# Test in context with sample data
+blockr.core::serve(new_arrange_block(), data = list(data = mtcars))
+```
+
+In the UI, you can:
+1. Start with default or provided sort columns
+2. Click "Add Sort Column" to add more sorting criteria
+3. Choose ASC/DESC for each column individually using dropdowns
+4. Remove columns with trash icons (keeping at least one)
+5. See priority numbers (1., 2., 3.) indicating sort order
+
 ## Mutate without blockr.ui (core-only)
 
 You can run a `dplyr::mutate()` block with only `blockr.core` and this package:
