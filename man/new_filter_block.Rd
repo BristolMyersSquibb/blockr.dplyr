@@ -4,11 +4,14 @@
 \alias{new_filter_block}
 \title{Filter block constructor}
 \usage{
-new_filter_block(string = "TRUE", ...)
+new_filter_block(string = "TRUE", multi_condition = TRUE, ...)
 }
 \arguments{
 \item{string}{Reactive expression returning character vector of
-filter conditions}
+filter conditions (default: "TRUE" for no filtering)}
+
+\item{multi_condition}{Logical. If TRUE, use multi-condition interface.
+If FALSE, use single expression interface (default: TRUE)}
 
 \item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
 }
@@ -17,7 +20,8 @@ A block object for filter operations
 }
 \description{
 This block allows filtering rows in a data frame based on conditions
-(see \code{\link[dplyr:filter]{dplyr::filter()}}). Changes are applied after clicking the submit button.
+(see \code{\link[dplyr:filter]{dplyr::filter()}}). Supports multiple conditions with AND/OR logic.
+Changes are applied after clicking the submit button.
 }
 \examples{
 \dontrun{
@@ -25,9 +29,11 @@ This block allows filtering rows in a data frame based on conditions
 library(blockr.core)
 serve(new_filter_block(), list(data = mtcars))
 
-# With a custom dataset
-df <- data.frame(x = 1:5, y = letters[1:5])
-serve(new_filter_block(), list(data = df))
+# With single condition interface
+serve(new_filter_block(multi_condition = FALSE), list(data = mtcars))
+
+# With custom initial condition
+serve(new_filter_block("mpg > 20"), list(data = mtcars))
 
 # Connected blocks example
 serve(

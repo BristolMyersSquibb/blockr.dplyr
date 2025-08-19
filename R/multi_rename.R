@@ -24,7 +24,9 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       initial_values <- as.list(initial_values)
     }
     if (length(initial_values) == 0 || is.null(initial_values)) {
-      initial_values <- list(new_col = "old_col")
+      available_cols <- get_cols()
+      default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
+      initial_values <- list(new_col = default_old_col)
     }
     
     # Store renames as reactive value
@@ -55,7 +57,9 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       }
       
       if (length(result) == 0) {
-        result <- list(new_col = "old_col")
+        available_cols <- r_cols()
+        default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
+        result <- list(new_col = default_old_col)
       }
       
       result
