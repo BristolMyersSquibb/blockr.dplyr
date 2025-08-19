@@ -53,9 +53,9 @@ new_summarize_block <- function(
             }
           )
 
-          r_string <- mod_kvexpr_server(
-            id = "kv",
-            get_value = \() unlist(string),
+          r_string <- mod_multi_kvexpr_server(
+            id = "mkv",
+            get_value = \() string,
             get_cols = \() colnames(data())
           )
 
@@ -87,7 +87,7 @@ new_summarize_block <- function(
     function(id) {
       div(
         class = "m-3",
-        mod_kvexpr_ui(NS(id, "kv")),
+        mod_multi_kvexpr_ui(NS(id, "mkv")),
         selectInput(
           inputId = NS(id, "by"),
           label = "By columns",
@@ -111,17 +111,27 @@ new_summarize_block <- function(
 }
 
 parse_summarize <- function(summarize_string = "", by_selection = character()) {
-  by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
     summarize_string <- glue::glue("{names(summarize_string)} = {unname(summarize_string)}")
-    glue::glue("dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))")
+    summarize_string <- glue::glue_collapse(summarize_string, sep = ", ")
+    if (length(by_selection) > 0 && !all(by_selection == "")) {
+      by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
+      glue::glue("dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))")
+    } else {
+      glue::glue("dplyr::summarize(data, {summarize_string})")
+    }
   }
   parse(text = text)[1]
 }
 
 apply_summarize <- function(data, string, r_expr_validated, r_string_validated, by_selection) {
+  # Convert list to character vector if needed (for compatibility with multi_kvexpr)
+  if (is.list(string)) {
+    string <- unlist(string)
+  }
+  
   # If empty or only whitespace, return simple summarize
   if (all(trimws(unname(string)) == "")) {
     expr <- parse_summarize(string)

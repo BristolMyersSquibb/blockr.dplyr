@@ -125,6 +125,11 @@ Follow the existing patterns in the codebase:
 
 ## Technical Considerations
 
+### Package Development
+- This package uses roxygen2 for documentation and NAMESPACE generation
+- After modifying imports (e.g., adding @importFrom statements), run `devtools::document()` or `roxygen2::roxygenise()` to regenerate NAMESPACE
+- Do not edit NAMESPACE directly - use roxygen comments in R files
+
 ### Shiny Reactivity
 - Be mindful of reactive dependencies
 - Use `isolate()` when needed to prevent circular updates
