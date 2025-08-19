@@ -21,13 +21,16 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 5. **Proper roxygen workflow** - Updated package to use roxygen2 for NAMESPACE generation
 
 ### Recently Completed ✅
-6. **Fixed autocompletion** - ACE editors in mutate and summarize blocks now properly support:
-   - Column name suggestions from input data
-   - dplyr function suggestions (`n()`, `mean()`, `sum()`, `first()`, `lag()`, etc.)
-   - Improved timing of editor initialization to prevent race conditions
-   - Enhanced function categories including window functions and filter functions
+6. **Fixed autocompletion** - ACE editors now work perfectly across all blocks:
+   - Column name suggestions from input data (appear first in suggestions)
+   - dplyr function suggestions organized by category (arithmetic, aggregate, ranking, etc.)
+   - Functions auto-insert with parentheses and position cursor inside
+   - Improved timing and race condition handling via `initialize_ace_editor()`
+   - Works in mutate, summarize, filter, and all expression blocks
 
-## Current Status: Ready for Production
+## Current Status: Core Functionality Complete ✅
+
+The multi-expression support and autocompletion are fully working. Next priority is enhancing the filter block with multiple conditions.
 
 ### Working Features ✅
 - **Multi-expression support** in mutate and summarize blocks
@@ -38,16 +41,28 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 - **Full test coverage** - 55 tests covering all functionality
 - **Clean architecture** - proper namespace imports, no regex preprocessing
 
-## Future Enhancements to Consider
+## Next Priority: Enhanced Filter Block
 
-### New Blocks
+### Current Filter Block Limitations
+- **Single condition only** - Uses `mod_vexpr_server` instead of multi-condition interface
+- **Manual boolean logic** - Users must write `mpg > 20 & cyl == 4` manually
+- **Limited tests** - Only 3 basic constructor tests
+
+### Planned Filter Improvements
+1. **Multi-condition support** - Visual condition builder with add/remove functionality
+2. **AND/OR logic** - Dropdown to choose between condition operators
+3. **Column/operator/value UI** - User-friendly condition building interface
+4. **Comprehensive testing** - Full test suite covering multiple scenarios
+
+### Future New Blocks
 - **group_by** - Explicit grouping block
+- **arrange** - Enhanced sorting with multiple columns and directions
 - **rename** - Column renaming
 - **distinct** - Remove duplicates
 - **slice** variants - Row selection by position
 
 ### UI/UX Improvements
-- Drag-and-drop for reordering expressions
+- Drag-and-drop for reordering expressions/conditions
 - Better validation messages
 - Template/snippet system for common operations
 - Column picker UI improvements
