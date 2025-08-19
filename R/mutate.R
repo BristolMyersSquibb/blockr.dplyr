@@ -23,7 +23,7 @@
 #' }
 #' @export
 new_mutate_block <- function(
-  string = list(newcol = "paste('type', 'here')"),
+  string = list(new_col = "1"),
   ...
 ) {
   # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
@@ -35,9 +35,9 @@ new_mutate_block <- function(
         id,
         function(input, output, session) {
 
-          r_string <- mod_kvexpr_server(
-            id = "kv",
-            get_value = \() unlist(string),
+          r_string <- mod_multi_kvexpr_server(
+            id = "mkv",
+            get_value = \() string,
             get_cols = \() colnames(data())
           )
 
@@ -67,7 +67,7 @@ new_mutate_block <- function(
     function(id) {
       div(
         class = "m-3",
-        mod_kvexpr_ui(NS(id, "kv")),
+        mod_multi_kvexpr_ui(NS(id, "mkv")),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
@@ -86,11 +86,11 @@ new_mutate_block <- function(
 # serve(new_mutate_block(), list(data = mtcars))
 
 parse_mutate <- function(mutate_string = "") {
-  print(mutate_string)
   text <- if (identical(unname(mutate_string), "")) {
     "dplyr::mutate(data)"
   } else {
     mutate_string <- glue::glue("{names(mutate_string)} = {unname(mutate_string)}")
+    mutate_string <- glue::glue_collapse(mutate_string, sep = ", ")
     glue::glue("dplyr::mutate(data, {mutate_string})")
   }
   parse(text = text)[1]
@@ -116,7 +116,6 @@ apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
     )
     return()
   }
-  print(expr)
   ans <- try(eval(expr))
   if (inherits(ans, "try-error")) {
     showNotification(
