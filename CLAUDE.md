@@ -1,190 +1,154 @@
-# blockr.dplyr Development Plan
+# blockr.dplyr Development Guide
 
 ## Overview
-This document outlines the improvement plan for the `blockr.dplyr` package, which provides dplyr-powered data wrangling blocks for blockr.core.
+This document provides guidance for improving the `blockr.dplyr` package, which provides dplyr-powered data wrangling blocks for blockr.core.
 
 ## Current State
 
-### Existing Blocks (6)
-1. **select** - Column selection
-2. **filter** - Row filtering with conditions  
-3. **mutate** - Add/modify columns
-4. **arrange** - Row ordering
-5. **summarize** - Group summaries (includes grouping via `by` parameter)
-6. **join** - Combining tables (lower priority for improvements)
+### Existing Blocks
+- **select** - Column selection
+- **filter** - Row filtering with conditions  
+- **mutate** - Add/modify columns
+- **arrange** - Row ordering
+- **summarize** - Group summaries with `.by` parameter for grouping
+- **join** - Combining tables (lower priority)
 
-### Supporting Modules
-- `vexpr` - Single expression input (used by filter)
-- `kvexpr` - Key-value expression input (used by mutate, summarize)
-- `flexpr` - Flexible expression input
-- `ace_utils` - ACE editor integration for code completion
+### Current Limitations
+1. The mutate and summarize blocks only support single expression input through the UI
+2. Debug print statements exist in the code
+3. Default values could be more helpful
+4. Test coverage is incomplete
 
-## Phase 1: Improve Existing Blocks
+## Key Insight
+The backend parsing functions (`parse_mutate`, `parse_summarize`) already support multiple expressions. The limitation is only in the UI layer which uses `mod_kvexpr_*` modules that handle single key-value pairs.
 
-### Priority 1: Summarize Block
-**Current Issues:**
-- Debug print statements in code (lines 114, 145)
-- No test coverage
-- Poor default value: `paste('type', 'here')`
-- Limited to single expression at a time
-- No common aggregation helpers
+## Priority 1: Multiple Expression Support for Mutate Block
 
-**Improvements:**
-1. Remove debug statements
-2. Add comprehensive tests
-3. Better defaults (e.g., `n()` for count)
-4. Multiple expression support with add/remove UI
-5. Dropdown with common functions:
-   - `n()` - count
-   - `mean()`, `sum()`, `min()`, `max()`
-   - `sd()`, `median()`
-   - `first()`, `last()`
-6. Support for `across()` function
-7. Preview of grouped data
-
-### Priority 2: Filter Block  
-**Improvements:**
-1. UI helpers for common operations (`==`, `!=`, `>`, `<`, `%in%`)
-2. Multiple condition builder with AND/OR logic
-3. Better validation messages
-4. Column-specific filter templates based on data type
-
-### Priority 3: Select Block
-**Improvements:**
-1. Add tidy-select helpers:
-   - `starts_with()`, `ends_with()`
-   - `contains()`, `matches()`
-   - `where()` for type-based selection
-2. Column reordering with drag-and-drop
-3. Search/filter for many columns
-4. Preview of selected columns
-
-### Priority 4: Mutate Block
-**Improvements:**
-1. Expression builder UI with common functions
-2. Better column name autocomplete
-3. Multiple mutations with add/remove
-4. Function templates for common operations
-5. Preview of new columns
-
-### Priority 5: Arrange Block
-**Improvements:**
-1. Per-column ascending/descending controls
-2. Drag-and-drop for column order
-3. Support for `arrange_all()`, `arrange_at()`, `arrange_if()`
-4. Visual indicators for sort direction
-
-### Priority 6: Join Block (Lower Priority)
-**Improvements:**
-1. Visual preview of join result
-2. Support for `suffix` parameter
-3. Better key column matching UI
-4. Join type visualization
-
-## Phase 2: Add Essential New Blocks
-
-### High Priority
-1. **group_by** - Essential for grouped operations
-   - Multi-select columns
-   - Works seamlessly with summarize
-   - Visual grouping indicator
-
-2. **rename** - Column renaming
-   - Key-value pairs UI
-   - Drag-and-drop reordering
-   - Batch rename with patterns
-
-3. **distinct** - Remove duplicates
-   - Column selection for uniqueness
-   - `.keep_all` parameter
-   - Preview duplicate counts
-
-### Medium Priority
-4. **slice** variants - Row selection by position
-   - `slice_head()`, `slice_tail()`
-   - `slice_sample()`, `slice_min()`, `slice_max()`
-   - Numeric/percentage input
-
-5. **relocate** - Column reordering
-   - Drag-and-drop interface
-   - Before/after positioning
-   - Batch move operations
-
-### Lower Priority (Not Initially Planned)
-- count/tally - Can be achieved with summarize
-- pull - Limited use in visual workflows
-- pivot_longer/pivot_wider - Complex, need careful design
-
-## Phase 3: Infrastructure Improvements
-
-### Testing
-- Add comprehensive test suite for all blocks
-- Test UI components with shinytest2
-- Test expression parsing and validation
-- Test state management and serialization
-
-### Documentation
-- Add vignettes for common workflows
-- Document expression syntax
-- Provide examples for each block
-- Create user guide for the UI
-
-### Code Quality
-- Remove all debug statements
-- Consistent error handling
-- Improved validation messages
-- Code review and refactoring
-
-## Implementation Guidelines
-
-### Block Development Pattern
+### Goal
+Enable users to add/remove multiple expressions dynamically in the mutate block, similar to how one might write:
 ```r
-new_*_block <- function(param1 = default1, ...) {
-  new_transform_block(
-    # Server function
-    function(id, data) {
-      moduleServer(id, function(input, output, session) {
-        # Reactive state management
-        # Input validation
-        # Expression generation
-        # Return expr and state
-      })
-    },
-    # UI function
-    function(id) {
-      # Create UI elements
-      # Use existing modules where applicable
-    },
-    class = "*_block",
-    ...
-  )
-}
+dplyr::mutate(data,
+  col1 = expression1,
+  col2 = expression2,
+  col3 = expression3
+)
 ```
 
-### Best Practices
-1. Use existing UI modules (vexpr, kvexpr) where applicable
-2. Follow reactive programming patterns
-3. Validate user input before evaluation
-4. Provide helpful error messages
-5. Include default values that work
-6. Write tests for new functionality
-7. Update registry when adding new blocks
+### Concepts to Consider
+- Users should be able to start with one or more expressions
+- Add button to create new expression rows
+- Remove button on each row (but keep at least one)
+- Each expression needs a name and a value
+- ACE editor integration for syntax highlighting and autocompletion
 
-### Testing Requirements
-- Unit tests for expression generation
-- Integration tests for block connectivity
-- UI tests for user interactions
-- Edge case handling (empty data, NA values, etc.)
+### Historical Context
+The package previously had multi-expression support (see git commit history around commit 56121c6). The earlier implementation used separate modules that were later simplified. You might find inspiration in that code.
 
-## Next Steps
+### Implementation Ideas
+- Create a new module that manages multiple key-value expressions
+- Track expressions in a reactive list
+- Use dynamic UI rendering to show/hide rows
+- Handle the add/remove operations cleanly
+- Ensure the returned value is compatible with existing parsing functions
 
-1. **Immediate**: Fix debug statements in summarize block
-2. **This Week**: Add test coverage for existing blocks
-3. **Next Sprint**: Implement UI improvements for summarize and filter
-4. **Future**: Add group_by, rename, and distinct blocks
+### Things to Keep in Mind
+- State must be stored as a list (see issue #16 mentioned in code comments)
+- The module should accept both list and named vector inputs for compatibility
+- Initialize ACE editors for new rows dynamically
+- Consider using indices to track rows to avoid ID conflicts
 
-## Notes
-- Multi-input blocks (like join) are lower priority per user feedback
-- Focus on single-table operations first
-- Ensure all blocks work well in dashboard mode with blockr.ui
-- Maintain compatibility with blockr.core API
+## Priority 2: Apply Same Pattern to Summarize Block
+
+### Goal
+Once mutate supports multiple expressions, apply the same approach to summarize, enabling:
+```r
+dplyr::summarize(data,
+  avg_col = mean(col1),
+  sum_col = sum(col2),
+  count = n(),
+  .by = c("group_col")
+)
+```
+
+### Additional Considerations for Summarize
+- The block already has grouping functionality via the `.by` parameter
+- Consider adding common aggregation function templates (mean, sum, count, etc.)
+- The UI could benefit from quick-insert buttons for common patterns
+
+## Priority 3: Clean Up and Testing
+
+### Code Quality
+- Remove debug print statements
+- Improve default values to be more intuitive
+- Add comprehensive test coverage
+- Ensure backward compatibility with saved states
+
+### Testing Scenarios to Cover
+- Single expression
+- Multiple expressions
+- Adding expressions dynamically
+- Removing expressions (with minimum one enforced)
+- State persistence (save and restore)
+- Generated code validation
+
+## Future Enhancements to Consider
+
+### New Blocks
+- **group_by** - Explicit grouping block
+- **rename** - Column renaming
+- **distinct** - Remove duplicates
+- **slice** variants - Row selection by position
+
+### UI/UX Improvements
+- Drag-and-drop for reordering expressions
+- Better validation messages
+- Template/snippet system for common operations
+- Column picker UI improvements
+
+## Design Philosophy
+
+### Modularity
+The blockr ecosystem favors modular, reusable components. Consider creating modules that could be reused across different blocks.
+
+### User Experience
+- Make common tasks easy
+- Provide helpful defaults
+- Give clear feedback on errors
+- Support both beginners and advanced users
+
+### Code Patterns
+Follow the existing patterns in the codebase:
+- Blocks use `new_transform_block()` as a base
+- Modules use `moduleServer()` and return reactive values
+- State is managed through reactive expressions
+- UI and server logic are separated
+
+## Technical Considerations
+
+### Shiny Reactivity
+- Be mindful of reactive dependencies
+- Use `isolate()` when needed to prevent circular updates
+- Consider using `reactiveVal()` for values that need explicit control
+
+### ACE Editor Integration
+- The package uses ACE editors for code input
+- Initialize them properly for dynamic content
+- Set up autocompletion with column names
+
+### State Management
+- State must be serializable for save/restore functionality
+- Return state as a list from blocks
+- Handle both initialization and updates gracefully
+
+## Success Criteria
+- Users can easily add multiple mutations or summaries
+- The interface is intuitive and responsive
+- Existing functionality remains intact
+- Code is clean and maintainable
+- Tests pass and coverage improves
+
+## Resources
+- Check git history for previous implementations
+- Look at existing modules for patterns
+- The blockr.core package documentation
+- dplyr documentation for function semantics
