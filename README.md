@@ -121,7 +121,7 @@ library(blockr.core)
 library(blockr.dplyr)
 library(blockr.ui)
 
-# Create a complete data transformation pipeline
+# Create a dashboard with mutate block showing multiple expressions
 board <- blockr.ui::new_dag_board(
   blocks = list(
     data_block = new_dataset_block("mtcars"),
@@ -132,19 +132,11 @@ board <- blockr.ui::new_dag_board(
         power_to_weight = "hp / wt",
         efficiency_score = "mpg / hp * 100"
       )
-    ),
-    filter_block = new_filter_block("power_to_weight > 30"),
-    summary_block = new_summarize_block(
-      string = list(
-        avg_efficiency = "mean(efficiency_score)",
-        count = "n()"
-      ),
-      by = c("cyl")
     )
   ),
   links = links(
-    from = c("data_block", "mutate_block", "filter_block"),
-    to = c("mutate_block", "filter_block", "summary_block")
+    from = c("data_block"),
+    to = c("mutate_block")
   )
 )
 
@@ -152,13 +144,9 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-This creates a comprehensive data analysis workflow: 1. **Data
-loading**: Load the mtcars dataset 2. **Multiple mutations**: Create 4
-new columns simultaneously (mpg_double, hp_per_100, power_to_weight,
-efficiency_score)  
-3. **Filtering**: Keep only cars with power-to-weight ratio \> 30 4.
-**Grouped summary**: Calculate average efficiency and count by cylinder
-count
+This creates a focused demonstration of the mutate block’s new
+capabilities: - **Data loading**: Load the mtcars dataset - **Multiple
+mutations**: Create 4 new columns simultaneously in one block
 
 The mutate block UI allows you to: - Add new expressions with the “Add
 Expression” button - Remove expressions (keeping at least one) - Edit
