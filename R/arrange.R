@@ -9,7 +9,7 @@
 #'
 #' @export
 new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
-  
+
   # Convert inputs to arrange specifications
   if (is.character(columns) && length(columns) > 0) {
     # Simple character vector - use same desc for all
@@ -30,7 +30,7 @@ new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
         id,
         function(input, output, session) {
           cols <- reactive(colnames(data()))
-          
+
           # Use the multi arrange module
           r_arranges <- mod_multi_arrange_server(
             "multi_arrange",
@@ -41,7 +41,7 @@ new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
           list(
             expr = reactive({
               arranges <- r_arranges()
-              
+
               if (length(arranges) == 0) {
                 # No arrange specifications - return identity
                 parse(text = "data")[1]
@@ -54,7 +54,7 @@ new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
                     arr$column
                   }
                 })
-                
+
                 arrange_str <- paste(arrange_exprs, collapse = ", ")
                 parse(text = glue::glue("dplyr::arrange(data, {arrange_str})"))[1]
               }
