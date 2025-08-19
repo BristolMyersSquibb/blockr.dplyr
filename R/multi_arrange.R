@@ -4,7 +4,7 @@
 #' Supports adding, removing, and reordering sort columns dynamically.
 #'
 #' @param id The module ID
-#' @param get_value Function that returns initial values as a list of {column, direction} pairs
+#' @param get_value Function that returns initial values as a list of \\{column, direction\\} pairs
 #' @param get_cols Function that returns column names for dropdown selection
 #'
 #' @return A reactive expression containing the current arrange configuration
@@ -346,7 +346,7 @@ run_multi_arrange_example <- function() {
         if (length(arranges) > 0) {
           for (i in seq_along(arranges)) {
             arr <- arranges[[i]]
-            direction_label <- if (arr$direction == "desc") "↓ DESC" else "↑ ASC"
+            direction_label <- if (arr$direction == "desc") "DESC" else "ASC"
             cat(sprintf("%d. %s %s\n", i, arr$column, direction_label))
           }
         }
