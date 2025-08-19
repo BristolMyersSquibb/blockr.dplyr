@@ -148,7 +148,98 @@ This creates a focused demonstration of the mutate block’s new
 capabilities: - **Data loading**: Load the mtcars dataset - **Multiple
 mutations**: Create 4 new columns simultaneously in one block
 
-The mutate block UI allows you to: - Add new expressions with the “Add
-Expression” button - Remove expressions (keeping at least one) - Edit
+The mutate block UI allows you to: - Add new expressions with the "Add
+Expression" button - Remove expressions (keeping at least one) - Edit
 column names and expressions with syntax highlighting - See real-time
 results as you modify the expressions
+
+## Enhanced Filter Block with Multi-Condition Support
+
+The `dplyr::filter()` block now supports multiple conditions with visual AND/OR logic builders:
+
+### Simple single condition (classic mode)
+
+``` r
+library(blockr.dplyr)
+# Single condition interface (backward compatible)
+blockr.core::serve(
+  new_filter_block("mpg > 20", multi_condition = FALSE), 
+  data = list(data = mtcars)
+)
+```
+
+### Multi-condition interface (new default)
+
+``` r
+library(blockr.dplyr)
+# Multi-condition interface with visual builder
+blockr.core::serve(
+  new_filter_block("mpg > 20"), 
+  data = list(data = mtcars)
+)
+```
+
+### Complete data pipeline with enhanced filter
+
+``` r
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard demonstrating the enhanced filter capabilities
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    filter_block = new_filter_block("mpg > 20"),  # Will use multi-condition UI
+    mutate_block = new_mutate_block(
+      string = list(
+        efficiency = "mpg / hp",
+        power_ratio = "hp / wt"
+      )
+    ),
+    summary_block = new_summarize_block(
+      string = list(
+        avg_efficiency = "mean(efficiency)",
+        max_power_ratio = "max(power_ratio)",
+        count = "n()"
+      ),
+      by = c("cyl")
+    )
+  ),
+  links = links(
+    from = c("data_block", "filter_block", "mutate_block"),
+    to = c("filter_block", "mutate_block", "summary_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+The enhanced filter block features:
+- **Multi-condition interface**: Add/remove filter conditions with "Add Condition" button
+- **AND/OR logic**: Choose between AND (&) or OR (|) operators between conditions
+- **Full autocompletion**: Column names and dplyr functions suggested as you type
+- **Real-time validation**: Immediate feedback on filter syntax and results
+- **Backward compatibility**: Use `multi_condition = FALSE` for single-condition mode
+
+### Testing multi-condition functionality
+
+To quickly test the multi-condition features:
+
+``` r
+library(blockr.dplyr)
+
+# Test the multi-filter module directly
+run_multi_filter_example()
+
+# Test in context with sample data
+blockr.core::serve(new_filter_block(), data = list(data = mtcars))
+```
+
+In the UI, you can:
+1. Start with one condition (e.g., "mpg > 20")
+2. Click "Add Condition" to add more (e.g., "cyl == 4")
+3. Choose AND/OR between conditions using the dropdown
+4. Use autocompletion for column names and functions
+5. Remove conditions with the trash icon (keeping at least one)
