@@ -70,7 +70,14 @@ setup_ace_editor <- function(id, value = "") {
       }, 100);
     });
 
-    ace.require("ace/ext/language_tools").addCompleter(customCompleter);
+    (function addCompleter(){
+      if (typeof ace === "undefined") { setTimeout(addCompleter, 100); return; }
+      try {
+        ace.require("ace/ext/language_tools").addCompleter(customCompleter);
+      } catch(e) {
+        setTimeout(addCompleter, 100);
+      }
+    })();
   ', jsonlite::toJSON(get_default_categories(), auto_unbox = TRUE), id)
 
   tagList(
@@ -123,20 +130,20 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
   categories <- get_default_categories()
   categories$column <- column_names
 
-  # Convert to JSON and update in JavaScript
-  js <- sprintf("window.updateAceCategories(%s);", jsonlite::toJSON(categories))
+  # Make categories available immediately, regardless of script load order
+  # If updateAceCategories() exists, use it; otherwise fall back to setting window.aceCategories
+  js <- sprintf(
+    "(function(){\n  var cats = %s;\n  if (typeof window.updateAceCategories === 'function') {\n    try { window.updateAceCategories(cats); } catch(e) { window.aceCategories = cats; }\n  } else {\n    window.aceCategories = cats;\n  }\n})();",
+    jsonlite::toJSON(categories)
+  )
   shinyjs::runjs(js)
 
   # Initialize editor options
-  shinyjs::runjs(sprintf("
-    if (typeof ace !== 'undefined') {
-      var editor = ace.edit('%s');
-      editor.setOptions({
-        enableLiveAutocompletion: true,
-        enableBasicAutocompletion: true
-      });
-    }
-  ", editor_id))
+  # Wait until the editor DOM is present before configuring options
+  shinyjs::runjs(sprintf(
+    "(function(){\n  function setup(){\n    if (typeof ace === 'undefined') { setTimeout(setup, 100); return; }\n    var el = document.getElementById('%s');\n    if (!el) { setTimeout(setup, 100); return; }\n    var editor = ace.edit('%s');\n    if (!editor) { setTimeout(setup, 100); return; }\n    editor.setOptions({\n      enableLiveAutocompletion: true,\n      enableBasicAutocompletion: true\n    });\n  }\n  setup();\n})();",
+    editor_id, editor_id
+  ))
 }
 
 #' Run example app demonstrating custom autocompletion

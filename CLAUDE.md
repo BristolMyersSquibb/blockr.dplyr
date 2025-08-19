@@ -7,7 +7,7 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 
 ### Existing Blocks
 - **select** - Column selection
-- **filter** - Row filtering with conditions  
+- **filter** - Row filtering with conditions
 - **mutate** - Add/modify columns with multi-expression support ✅
 - **arrange** - Row ordering
 - **summarize** - Group summaries with `.by` parameter and multi-expression support ✅
@@ -20,7 +20,7 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 4. **Comprehensive testing** - Added 30+ tests covering single/multiple expressions, grouping, and edge cases
 5. **Proper roxygen workflow** - Updated package to use roxygen2 for NAMESPACE generation
 
-### Recently Completed ✅ 
+### Recently Completed ✅
 6. **Fixed autocompletion** - ACE editors in mutate and summarize blocks now properly support:
    - Column name suggestions from input data
    - dplyr function suggestions (`n()`, `mean()`, `sum()`, `first()`, `lag()`, etc.)
@@ -106,6 +106,51 @@ After making changes to the code, use this workflow to test:
 - The package uses ACE editors for code input
 - Initialize them properly for dynamic content
 - Set up autocompletion with column names
+
+#### Autocompletion: requirements and usage
+
+Autocompletion is provided by a custom ACE completer plus live/basic autocompletion from `shinyAce`. To ensure it works reliably:
+
+- UI requirements
+  - Include `shinyjs::useShinyjs()` somewhere in the page (the modules in this package already do this in their own UIs).
+  - Render the editor with `setup_ace_editor(id)` (used internally by the `mod_*_ui()` helpers).
+
+- Server requirements
+  - After the UI is rendered, call `initialize_ace_editor(session, editor_id, column_names)` where `column_names` are the current columns you want suggested (typically `colnames(data())`).
+  - This enables live/basic autocompletion and provides both function and column-name suggestions.
+
+- Minimal example (standalone)
+
+```r
+ui <- bslib::page_fluid(
+  theme = bslib::bs_theme(version = 5),
+  shinyjs::useShinyjs(),
+  blockr.dplyr:::setup_ace_editor("expr")
+)
+
+server <- function(input, output, session) {
+  cols <- colnames(mtcars)
+  blockr.dplyr:::initialize_ace_editor(session, "expr", cols)
+}
+
+shiny::shinyApp(ui, server)
+```
+
+- Within blocks
+  - `mod_vexpr_ui()`, `mod_kvexpr_ui()`, and `mod_multi_kvexpr_ui()` call `setup_ace_editor()` for you and include `useShinyjs()`.
+  - Their paired server modules (`mod_vexpr_server()`, `mod_kvexpr_server()`, `mod_multi_kvexpr_server()`) call `initialize_ace_editor()` with `colnames(data())`, so when you use `new_mutate_block()` or `new_summarize_block()` via `blockr.core::serve(...)`, autocompletion just works.
+
+- What the initialization does
+  - Registers a custom completer (functions/categories + column names).
+  - Sets `enableLiveAutocompletion` and `enableBasicAutocompletion` on the ACE editor.
+  - Defers setup until ACE and the editor DOM are available, so order-of-load issues do not break autocomplete.
+
+- Troubleshooting
+  - If suggestions don’t appear:
+    - Ensure `shinyAce` and `shinyjs` are installed and up to date.
+    - Confirm `shinyjs::useShinyjs()` is present in the UI (or use the provided UI modules).
+    - Check the browser console for `ace is undefined` errors; if present, ensure ACE assets are loading (provided by `shinyAce`).
+    - Verify `initialize_ace_editor()` is called with the correct editor id and a non-empty `column_names` vector.
 
 ### State Management
 - State must be serializable for save/restore functionality
