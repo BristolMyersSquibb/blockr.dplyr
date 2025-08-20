@@ -249,12 +249,11 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
 # Helper function to create a mapping row UI
 create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
   div(
-    class = "join-mapping-row d-flex align-items-center mb-2",
-    style = "gap: 10px;",
+    class = "join-mapping-row mb-2",
+    style = "display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 10px; align-items: end;",
     
     # Left dataset column
     div(
-      style = "flex: 1;",
       selectInput(
         ns(paste0("x_col_", index)),
         label = if (index == 1) "Left Dataset" else NULL,
@@ -266,13 +265,12 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
     
     # Arrow indicator
     div(
-      style = "margin-top: 25px;",
+      style = "display: flex; align-items: center; height: 38px; margin-bottom: 15px;",
       icon("arrow-right", style = "color: #6c757d;")
     ),
     
     # Right dataset column  
     div(
-      style = "flex: 1;",
       selectInput(
         ns(paste0("y_col_", index)),
         label = if (index == 1) "Right Dataset" else NULL,
@@ -284,7 +282,7 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
     
     # Delete button
     div(
-      style = "margin-top: 25px;",
+      style = "display: flex; align-items: center; height: 38px; margin-bottom: 15px;",
       actionButton(
         ns(paste0("delete_", index)),
         label = NULL,
