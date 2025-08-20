@@ -22,7 +22,7 @@
 #' df <- data.frame(x = 1:5, y = letters[1:5])
 #' serve(new_mutate_block(), list(data = df))
 #' }
-#' @expor
+#' @export
 new_mutate_block <- function(
   string = list(new_col = "1"),
   by = character(),

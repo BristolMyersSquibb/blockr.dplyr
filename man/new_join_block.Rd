@@ -2,18 +2,20 @@
 % Please edit documentation in R/join.R
 \name{new_join_block}
 \alias{new_join_block}
-\title{Select block constructor}
+\title{Join block constructor}
 \usage{
 new_join_block(type = character(), by = character(), ...)
 }
 \arguments{
-\item{type}{Join type}
+\item{type}{Join type (left_join, inner_join, right_join, full_join, semi_join, anti_join)}
 
-\item{by}{Column(s) tp join on}
+\item{by}{Column(s) to join on - can be character vector for same-name joins
+or named list for different-name joins}
 
 \item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
 }
 \description{
-This block allows for joining of two \code{data.frame} objects (see
-\code{\link[dplyr:mutate-joins]{dplyr::left_join()}}).
+This block allows for joining of two \code{data.frame} objects with advanced
+multi-column support including same-name and different-name joins (see
+\code{\link[dplyr:mutate-joins]{dplyr::left_join()}}, \code{\link[dplyr:mutate-joins]{dplyr::inner_join()}}, etc.).
 }

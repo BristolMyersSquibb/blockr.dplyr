@@ -4,11 +4,13 @@
 \alias{new_mutate_block}
 \title{Mutate block constructor}
 \usage{
-new_mutate_block(string = list(new_col = "1"), ...)
+new_mutate_block(string = list(new_col = "1"), by = character(), ...)
 }
 \arguments{
 \item{string}{Reactive expression returning character vector of
 expressions}
+
+\item{by}{Character vector of column names for grouping. Default is empty.}
 
 \item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
 }
@@ -21,11 +23,11 @@ This block allows to add new variables and preserve existing ones
 }
 \examples{
 \dontrun{
-# Basic usage with mtcars dataset
+# Basic usage with mtcars datase
 library(blockr.core)
 serve(new_mutate_block(), list(data = mtcars))
 
-# With a custom dataset
+# With a custom datase
 df <- data.frame(x = 1:5, y = letters[1:5])
 serve(new_mutate_block(), list(data = df))
 }

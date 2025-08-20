@@ -1,10 +1,12 @@
-#' Select block constructor
+#' Join block constructor
 #'
-#' This block allows for joining of two `data.frame` objects (see
-#' [dplyr::left_join()]).
+#' This block allows for joining of two `data.frame` objects with advanced
+#' multi-column support including same-name and different-name joins (see
+#' [dplyr::left_join()], [dplyr::inner_join()], etc.).
 #'
-#' @param type Join type
-#' @param by Column(s) tp join on
+#' @param type Join type (left_join, inner_join, right_join, full_join, semi_join, anti_join)
+#' @param by Column(s) to join on - can be character vector for same-name joins
+#'   or named list for different-name joins
 #' @param ... Forwarded to [new_block()]
 #'
 #' @export
@@ -13,19 +15,19 @@ new_join_block <- function(
   by = character(),
   ...
 ) {
-  by_choices <- function(x, y) {
-    intersect(colnames(x), colnames(y))
-  }
-
-  join_types <- paste0(
-    c("left", "inner", "right", "full", "semi", "anti"),
-    "_join"
+  join_types <- c(
+    "left_join" = "Left Join - Keep all rows from left dataset",
+    "inner_join" = "Inner Join - Keep only matching rows from both datasets", 
+    "right_join" = "Right Join - Keep all rows from right dataset",
+    "full_join" = "Full Join - Keep all rows from both datasets",
+    "semi_join" = "Semi Join - Keep left rows that have matches in right",
+    "anti_join" = "Anti Join - Keep left rows that have no matches in right"
   )
 
   if (length(type)) {
-    type <- match.arg(type, join_types)
+    type <- match.arg(type, names(join_types))
   } else {
-    type <- join_types[1L]
+    type <- "left_join"  # Default to left_join (most common)
   }
 
   new_transform_block(
@@ -33,82 +35,93 @@ new_join_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          sels <- reactiveVal(by)
-          type <- reactiveVal(type)
-
-          observeEvent(input$by, sels(input$by))
-
-          observeEvent(
-            input$type,
-            {
-              if (input$type %in% join_types) {
-                type(input$type)
-              }
-            }
-          )
-
-          cols <- reactive(by_choices(x(), y()))
-
-          # Make sure that when we restore with valid join columns
-          # we trigger a click on submit not to block the downstream blocks.
-          # This event must happen once, when the module function is called.
-          observeEvent(cols(), once = TRUE, {
-            shinyjs::click("submit")
+          # Initialize state reactives
+          r_join_type <- reactiveVal(type)
+          r_join_keys <- reactiveVal(by)
+          
+          # Column name providers for join keys module
+          get_x_cols <- reactive({
+            req(x())
+            colnames(x())
           })
-
-          # Get submit disabled by default when no cols are selected
-          observeEvent(
-            sels(),
-            ignoreNULL = FALSE,
-            {
-              shinyjs::toggleState("submit", condition = length(sels()) > 0)
-            }
+          
+          get_y_cols <- reactive({
+            req(y())
+            colnames(y())
+          })
+          
+          # Initialize join keys module
+          join_keys <- mod_join_keys_server(
+            "join_keys",
+            get_x_cols = get_x_cols,
+            get_y_cols = get_y_cols,
+            initial_keys = by
           )
-
-          # Update by cols when upstream data change
-          observeEvent(
-            cols(),
-            {
-              # Reset sels to NULL if x and y don't have
-              # common columns
-              if (!length(cols())) sels(NULL)
-              updateSelectInput(
-                session,
-                inputId = "by",
-                choices = cols(),
-                selected = sels()
-              )
+          
+          # Update join type when input changes
+          observeEvent(input$type, {
+            if (input$type %in% names(join_types)) {
+              r_join_type(input$type)
             }
-          )
-
-          observe(
+          })
+          
+          # Update join type selector when data changes
+          observe({
             updateSelectInput(
               session,
               inputId = "type",
               choices = join_types,
-              selected = type()
+              selected = r_join_type()
             )
-          )
+          })
+          
+          # Enable/disable submit based on join configuration
+          observe({
+            keys <- join_keys()
+            has_valid_keys <- length(keys) > 0 && 
+              (!is.list(keys) || any(vapply(keys, function(k) length(k) > 0, logical(1))))
+            
+            shinyjs::toggleState("submit", condition = has_valid_keys)
+          })
+          
+          # Build join expression
+          build_join_expr <- function(join_type, keys) {
+            # Get the dplyr join function
+            join_func <- eval(
+              bquote(
+                as.call(c(as.symbol("::"), quote(dplyr), quote(.(fun)))),
+                list(fun = as.name(join_type))
+              )
+            )
+            
+            # Handle different join key formats
+            if (is.character(keys) && length(keys) > 0) {
+              # Simple character vector - natural join
+              bquote(.(func)(x, y, by = .(keys)), list(func = join_func, keys = keys))
+            } else if (is.list(keys) && length(keys) > 0) {
+              # Complex join - handle different name mappings
+              # Convert to dplyr join_by() compatible format
+              join_spec <- if (length(keys) == 1 && is.character(keys[[1]])) {
+                keys[[1]]
+              } else {
+                keys
+              }
+              bquote(.(func)(x, y, by = .(join_spec)), list(func = join_func, join_spec = join_spec))
+            } else {
+              # Fallback to natural join on common columns
+              common_cols <- quote(intersect(colnames(x), colnames(y)))
+              bquote(.(func)(x, y, by = .(common_cols)), list(func = join_func, common_cols = common_cols))
+            }
+          }
 
           list(
-            expr = eventReactive(
-              input$submit,
-              bquote(
-                .(func)(x, y, by = .(cols)),
-                list(
-                  func = eval(
-                    bquote(
-                      as.call(c(as.symbol("::"), quote(dplyr), quote(.(fun)))),
-                      list(fun = as.name(type()))
-                    )
-                  ),
-                  cols = sels()
-                )
-              )
-            ),
+            expr = eventReactive(input$submit, {
+              keys <- join_keys()
+              build_join_expr(r_join_type(), keys)
+            }),
             state = list(
-              type = type,
-              by = sels
+              type = r_join_type,
+              by = join_keys
             )
           )
         }
@@ -116,21 +129,28 @@ new_join_block <- function(
     },
     function(id) {
       tagList(
-        selectInput(
-          inputId = NS(id, "type"),
-          label = "Join type",
-          choices = list()
+        # Enhanced join type selector with descriptions
+        div(
+          class = "mb-3",
+          selectInput(
+            inputId = NS(id, "type"),
+            label = "Join Type",
+            choices = character(),
+            width = "100%"
+          )
         ),
-        selectInput(
-          inputId = NS(id, "by"),
-          label = "By columns",
-          choices = list(),
-          multiple = TRUE
-        ),
-        actionButton(
-          inputId = NS(id, "submit"),
-          label = "Submit",
-          class = "btn-primary"
+        
+        # Join keys configuration module
+        mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
+        
+        # Submit button
+        div(
+          class = "mt-3 d-flex justify-content-end",
+          actionButton(
+            inputId = NS(id, "submit"),
+            label = "Apply Join",
+            class = "btn-primary"
+          )
         )
       )
     },
