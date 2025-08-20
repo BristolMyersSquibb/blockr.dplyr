@@ -27,20 +27,20 @@ The `dplyr::select()` block now features an enhanced visual interface
 with column cards, search functionality, and detailed column
 information:
 
-### Simple select usage (backward compatible)
+### Table interface (default)
 
 ``` r
 library(blockr.dplyr)
-# Classic dropdown interface
-blockr.core::serve(new_select_block(c("mpg", "cyl"), enhanced = FALSE), data = list(data = mtcars))
+# Table interface (default) - space-efficient with colored type tags
+blockr.core::serve(new_select_block(c("Species")), data = list(data = iris))
 ```
 
-### Enhanced visual interface (new default)
+Or use the card interface for detailed column information:
 
 ``` r
 library(blockr.dplyr)
-# Enhanced interface with column cards and information
-blockr.core::serve(new_select_block(c("mpg", "cyl")), data = list(data = mtcars))
+# Card interface - detailed column information with visual cards
+blockr.core::serve(new_select_block(c("mpg", "cyl"), interface = "cards"), data = list(data = mtcars))
 ```
 
 ### Complete data pipeline with enhanced select
@@ -60,15 +60,27 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-The enhanced select block features: - **Visual column cards** - Show
-column type, sample data, and statistics (NA count, unique values) -
+The select block offers two modern interfaces:
+
+**Table Interface (default, `interface = "table"`):** -
+**Space-efficient table** - Compact DataTable showing columns with
+essential information - **Colored type tags** - Visually distinct badges
+for different data types (num, chr, fct, etc.) - **Selected columns on
+top** - Optional display with numbered badges and remove buttons -
 **Search functionality** - Type to filter columns by name
-(case-insensitive) - **Quick selection controls** - Select All, Select
-None, and Invert Selection buttons - **Column information** - Display
-data types, sample values, and basic statistics - **Selection
-summary** - Clear overview of selected columns with numbering -
-**Backward compatibility** - Use `enhanced = FALSE` for classic dropdown
-interface
+(case-insensitive) - **Interactive selection** - Click checkboxes in
+table rows to select/deselect columns - **Sortable columns** - Click
+column headers to sort by selection status, name, or type - **Quick
+controls** - Select All, Select None, and Invert Selection buttons -
+**Sample data preview** - See actual values from your dataset for each
+column
+
+**Card Interface (`interface = "cards"`):** - **Visual column cards** -
+Detailed information cards for each column - **Column statistics** -
+Extended sample data and comprehensive statistics - **Individual
+selection** - Click cards to select/deselect with visual feedback -
+**Full column information** - More detailed view with expanded sample
+values
 
 ### Testing select functionality
 
@@ -84,12 +96,21 @@ run_multi_select_example()
 blockr.core::serve(new_select_block(), data = list(data = mtcars))
 ```
 
-In the enhanced UI, you can: 1. View column cards with type information
-and sample data 2. Use the search box to filter columns by name 3. Click
-“Select All” to select all visible columns 4. Click “Select None” to
-clear all selections 5. Click “Invert” to toggle selected/unselected
-columns 6. Click individual column cards to select/deselect them 7. See
-a summary of selected columns at the bottom
+**In the table interface, you can:** 1. View a compact table with column
+information (type, sample values, statistics) 2. See selected columns at
+the top with numbered badges for easy management 3. Use the search box
+to filter columns by name 4. Click checkboxes in the table to
+select/deselect columns 5. Use quick controls: “Select All”, “Select
+None”, and “Invert Selection” 6. Remove selected columns by clicking the
+X on badges at the top
+
+**In the card interface, you can:** 1. View detailed column cards with
+type information and extended sample data 2. Use the search box to
+filter columns by name  
+3. Click “Select All” to select all visible columns 4. Click “Select
+None” to clear all selections 5. Click “Invert” to toggle
+selected/unselected columns 6. Click individual column cards to
+select/deselect them 7. See a summary of selected columns at the bottom
 
 The column cards show: - **Column name** with checkbox for selection -
 **Data type** and observation count (e.g., “numeric (32 obs)”) -
@@ -177,29 +198,19 @@ transactions <- data.frame(
   month = rep(c("Jan", "Feb", "Mar"), 2)
 )
 
-# Create enhanced pipeline with join and analysis
+# Multi-dataframe operations with DAG board - correct syntax!
 board <- blockr.ui::new_dag_board(
-  blocks = list(
-    customers_block = new_dataset_block(customers),
-    transactions_block = new_dataset_block(transactions),
-    join_block = new_join_block(type = "left_join"),  # Will configure id = customer_id in UI
-    filter_block = new_filter_block("amount > 100"),
-    summary_block = new_summarize_block(
-      string = list(
-        total_amount = "sum(amount)",
-        avg_amount = "mean(amount)",
-        transaction_count = "n()"
-      ),
-      by = c("region", "tier")
-    )
+  blocks = c(
+    customers_block = new_dataset_block("customers"),
+    transactions_block = new_dataset_block("transactions"),
+    join_block = new_join_block()
   ),
-  links = links(
-    from = c("customers_block", "transactions_block", "join_block", "filter_block"),
-    to = c("join_block", "join_block", "filter_block", "summary_block")
+  links = c(
+    customer_join = new_link("customers_block", "join_block", "x"),
+    transaction_join = new_link("transactions_block", "join_block", "y")
   )
 )
 
-# Launch the interactive dashboard
 blockr.core::serve(board)
 ```
 
@@ -252,9 +263,9 @@ customer_metrics <- data.frame(
   tier = c("Gold", "Platinum", "Silver")
 )
 
-# Bind columns with custom suffixes for duplicates
+# Bind columns - duplicate names are automatically handled by dplyr
 blockr.core::serve(
-  new_bind_cols_block(suffix = c("_info", "_metrics")),
+  new_bind_cols_block(),
   data = list(x = customer_info, y = customer_metrics)
 )
 ```
@@ -268,45 +279,51 @@ library(blockr.core)
 library(blockr.dplyr)
 library(blockr.ui)
 
-# Create comprehensive multi-dataframe pipeline
+# Simple multi-dataframe example
+current_customers <- data.frame(
+  id = 1:3, name = c("Alice", "Bob", "Charlie"),
+  region = c("East", "West", "North")
+)
+
+new_customers <- data.frame(
+  id = 4:5, name = c("Diana", "Eve"),
+  region = c("South", "East")
+)
+
+# Alternative: Direct serve approach (also works)
+blockr.core::serve(
+  new_bind_rows_block(add_id = TRUE, id_name = "source"),
+  data = list(x = current_customers, y = new_customers)
+)
+```
+
+``` r
+# Example with bind_cols - combining datasets side-by-side
+customer_info <- data.frame(
+  id = 1:3,
+  name = c("Alice", "Bob", "Charlie"),
+  age = c(25, 30, 35)
+)
+
+customer_metrics <- data.frame(
+  id = 1:3,  # Duplicate column name - dplyr handles automatically
+  score = c(85, 92, 78),
+  tier = c("Gold", "Platinum", "Silver")
+)
+
+# DAG board approach
 board <- blockr.ui::new_dag_board(
-  blocks = list(
-    # Data sources
-    current_customers = new_dataset_block(data.frame(
-      id = 1:3, name = c("Alice", "Bob", "Charlie"), 
-      region = c("East", "West", "North"), active = c(TRUE, TRUE, FALSE)
-    )),
-    new_customers = new_dataset_block(data.frame(
-      id = 4:5, name = c("Diana", "Eve"), 
-      region = c("South", "East"), active = c(TRUE, TRUE)
-    )),
-    customer_details = new_dataset_block(data.frame(
-      customer_id = 1:5, tier = c("Gold", "Silver", "Gold", "Bronze", "Silver"),
-      signup_date = as.Date(c("2023-01-01", "2023-02-15", "2023-03-10", "2023-12-01", "2023-12-15"))
-    )),
-    
-    # Multi-dataframe operations
-    bind_customers = new_bind_rows_block(add_id = TRUE, id_name = "source"),
-    join_details = new_join_block(type = "left_join"),  # Configure id = customer_id in UI
-    
-    # Analysis blocks
-    filter_active = new_filter_block("active == TRUE"),
-    summary_by_region = new_summarize_block(
-      string = list(
-        customer_count = "n()",
-        gold_customers = "sum(tier == 'Gold')",
-        avg_days_since_signup = "mean(as.numeric(Sys.Date() - signup_date))"
-      ),
-      by = c("region")
-    )
+  blocks = c(
+    info = new_dataset_block("customer_info"),
+    metrics = new_dataset_block("customer_metrics"),
+    bind = new_bind_cols_block()
   ),
-  links = links(
-    from = c("current_customers", "new_customers", "bind_customers", "customer_details", "join_details", "filter_active"),
-    to = c("bind_customers", "bind_customers", "join_details", "join_details", "filter_active", "summary_by_region")
+  links = c(
+    info_link = new_link("info", "bind", "x"),
+    metrics_link = new_link("metrics", "bind", "y")
   )
 )
 
-# Launch the comprehensive dashboard
 blockr.core::serve(board)
 ```
 
@@ -319,8 +336,12 @@ visual DAG board interface**:
 
 - **Drag-and-drop pipeline building**: Visually connect blocks in the
   interactive interface
+- **Multi-input block support**: Properly handles `x` and `y` inputs for
+  joins and binding operations
 - **Real-time data flow**: See data flowing through your multi-table
   transformations
+- **Both approaches supported**: Use DAG boards for visual building or
+  direct `blockr.core::serve()` for simplicity
 - **Interactive block configuration**: Click blocks to configure join
   keys, bind options, etc.
 - **Visual feedback**: Immediate visual indication of data structure
@@ -333,7 +354,7 @@ visual DAG board interface**:
 - **Advanced join types**: All 6 dplyr join types with clear
   descriptions
 - **Multi-column joins**: Support for complex column mappings between
-  different datasets  
+  different datasets
 - **Same-name joins**: Natural joins on common column names
 - **Different-name joins**: Visual interface for mapping columns with
   different names
@@ -375,12 +396,120 @@ blockr.core::serve(
       mean_mpg = "mean(mpg)",
       max_hp = "max(hp)",
       count = "n()"
-    ),
+  ),
     by = c("cyl", "am")
   ),
   data = list(data = mtcars)
 )
 ```
+
+### Comprehensive dplyr Analysis Pipeline
+
+Here’s a complex DAG board that demonstrates most dplyr blocks in a
+realistic data analysis workflow:
+
+``` r
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create comprehensive data analysis pipeline
+comprehensive_board <- blockr.ui::new_dag_board(
+  blocks = c(
+    # Data sources
+    sales_raw = new_dataset_block("sales_data"),
+    customers_raw = new_dataset_block("customer_data"),
+    products_raw = new_dataset_block("product_data"),
+    
+    # Data cleaning and preparation
+    sales_clean = new_filter_block(),           # Remove invalid sales
+    customers_select = new_select_block(),      # Select relevant customer columns
+    products_rename = new_rename_block(),       # Standardize product column names
+    
+    # Multi-dataframe operations  
+    sales_customers = new_join_block(),         # Join sales with customer data
+    full_dataset = new_join_block(),            # Join with product data
+    
+    # Data transformations
+    sales_enhanced = new_mutate_block(),        # Add calculated columns
+    sales_distinct = new_distinct_block(),      # Remove duplicates
+    sales_arranged = new_arrange_block(),       # Sort by date and amount
+    
+    # Data binding operations
+    current_sales = new_filter_block(),         # This year's sales
+    previous_sales = new_filter_block(),        # Last year's sales  
+    all_sales = new_bind_rows_block(),          # Combine time periods
+    
+    # Analysis and summarization
+    region_summary = new_summarize_block(),     # Regional performance
+    product_summary = new_summarize_block(),    # Product performance
+    time_summary = new_summarize_block(),       # Time-based analysis
+    
+    # Final data slice for dashboard
+    top_performers = new_slice_block()          # Top 10 results
+  ),
+  links = c(
+    # Data cleaning pipeline (single-input blocks use "data")
+    sales_filter = new_link("sales_raw", "sales_clean", "data"),
+    customer_select = new_link("customers_raw", "customers_select", "data"),  
+    product_rename = new_link("products_raw", "products_rename", "data"),
+    
+    # Join operations (multi-input blocks use "x" and "y")
+    sales_join1 = new_link("sales_clean", "sales_customers", "x"),
+    customer_join1 = new_link("customers_select", "sales_customers", "y"),
+    sales_join2 = new_link("sales_customers", "full_dataset", "x"),
+    product_join2 = new_link("products_rename", "full_dataset", "y"),
+    
+    # Enhancement pipeline (single-input blocks use "data")
+    enhance = new_link("full_dataset", "sales_enhanced", "data"),
+    distinct = new_link("sales_enhanced", "sales_distinct", "data"),
+    arrange = new_link("sales_distinct", "sales_arranged", "data"),
+    
+    # Time-based splitting (single-input blocks use "data")
+    current_filter = new_link("sales_arranged", "current_sales", "data"),
+    previous_filter = new_link("sales_arranged", "previous_sales", "data"),
+    time_bind = new_link("current_sales", "all_sales", "x"),
+    time_bind2 = new_link("previous_sales", "all_sales", "y"),
+    
+    # Analysis branches (single-input blocks use "data")
+    region_analysis = new_link("all_sales", "region_summary", "data"),
+    product_analysis = new_link("all_sales", "product_summary", "data"),  
+    time_analysis = new_link("all_sales", "time_summary", "data"),
+    
+    # Final slice (single-input block uses "data")
+    top_slice = new_link("region_summary", "top_performers", "data")
+  )
+)
+
+blockr.core::serve(comprehensive_board)
+```
+
+This comprehensive pipeline demonstrates:
+
+**Data Sources & Input:** - Multiple datasets (sales, customers,
+products) - Real-world multi-table scenario
+
+**Data Cleaning & Preparation:** - `filter_block` - Remove invalid or
+unwanted rows - `select_block` - Choose relevant columns  
+- `rename_block` - Standardize column names
+
+**Multi-Dataframe Operations:** - `join_block` - Multiple join
+operations for data integration - `bind_rows_block` - Combine time
+periods or similar datasets
+
+**Data Transformation:** - `mutate_block` - Add calculated fields and
+derived columns - `distinct_block` - Remove duplicate records -
+`arrange_block` - Sort data for analysis
+
+**Analysis & Summarization:** - Multiple `summarize_block` - Different
+analytical perspectives - `slice_block` - Extract top performers or
+specific subsets
+
+**Complex Workflow Features:** - **Branching pipelines** - Data flows to
+multiple analysis paths - **Multi-input operations** - Joins and binds
+with proper input specification  
+- **Realistic data flow** - Mirrors actual business analysis workflows -
+**Modular design** - Each block handles a specific transformation step
 
 ### Full dashboard example
 

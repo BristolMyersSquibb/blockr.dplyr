@@ -34,15 +34,7 @@ devtools::install_github("cynkra/blockr.dplyr")
 
 The `dplyr::select()` block now features an enhanced visual interface with column cards, search functionality, and detailed column information:
 
-### Simple select usage (backward compatible)
-
-```{r select-simple, eval = FALSE}
-library(blockr.dplyr)
-# Classic dropdown interface
-blockr.core::serve(new_select_block(c("mpg", "cyl"), enhanced = FALSE), data = list(data = mtcars))
-```
-
-### Table interface (new default)
+### Table interface (default)
 
 ```{r select-enhanced, eval = FALSE}
 library(blockr.dplyr)

@@ -4,14 +4,11 @@
 \alias{new_filter_block}
 \title{Filter block constructor}
 \usage{
-new_filter_block(string = "TRUE", multi_condition = TRUE, ...)
+new_filter_block(string = "TRUE", ...)
 }
 \arguments{
 \item{string}{Reactive expression returning character vector of
 filter conditions (default: "TRUE" for no filtering)}
-
-\item{multi_condition}{Logical. If TRUE, use multi-condition interface.
-If FALSE, use single expression interface (default: TRUE)}
 
 \item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
 }
@@ -28,9 +25,6 @@ Changes are applied after clicking the submit button.
 # Basic usage with mtcars dataset
 library(blockr.core)
 serve(new_filter_block(), list(data = mtcars))
-
-# With single condition interface
-serve(new_filter_block(multi_condition = FALSE), list(data = mtcars))
 
 # With custom initial condition
 serve(new_filter_block("mpg > 20"), list(data = mtcars))

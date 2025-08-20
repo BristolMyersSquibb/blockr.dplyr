@@ -3,8 +3,8 @@ test_that("arrange block constructor", {
   blk <- new_arrange_block()
   expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
 
-  # Test constructor with parameters
-  blk <- new_arrange_block("mpg", desc = TRUE)
+  # Test constructor with single column
+  blk <- new_arrange_block("mpg")
   expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
 
   # Test constructor with multiple columns
@@ -21,8 +21,8 @@ test_that("arrange block with character input", {
   blk <- new_arrange_block(c("mpg", "cyl", "hp"))
   expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
 
-  # Test with desc = TRUE
-  blk <- new_arrange_block(c("mpg", "cyl"), desc = TRUE)
+  # Test with multiple columns (defaults to ascending)
+  blk <- new_arrange_block(c("mpg", "cyl"))
   expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
 })
 
@@ -88,19 +88,23 @@ test_that("arrange block expression generation", {
   expect_true(is.function(blk[["expr_ui"]]))
 })
 
-test_that("arrange specifications conversion", {
-  # Test character vector conversion
-  specs1 <- list(
+test_that("arrange specifications format", {
+  # Test ascending specifications
+  specs_asc <- list(
     list(column = "mpg", direction = "asc"),
     list(column = "cyl", direction = "asc")
   )
 
-  # Test desc = TRUE conversion
-  specs2 <- list(
+  # Test mixed ascending and descending specifications
+  specs_mixed <- list(
     list(column = "mpg", direction = "desc"),
-    list(column = "cyl", direction = "desc")
+    list(column = "cyl", direction = "asc")
   )
 
-  # These would be tested within the block constructor's internal logic
-  expect_true(TRUE)  # Placeholder for internal conversion logic tests
+  # Blocks should handle both specification formats
+  blk1 <- new_arrange_block(specs_asc)
+  expect_s3_class(blk1, c("arrange_block", "transform_block", "block"))
+  
+  blk2 <- new_arrange_block(specs_mixed)  
+  expect_s3_class(blk2, c("arrange_block", "transform_block", "block"))
 })
