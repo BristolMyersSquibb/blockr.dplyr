@@ -12,7 +12,7 @@
 #' @importFrom shinyAce aceEditor updateAceEditor
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @export
+#' @keywords internal
 mod_multi_filter_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -245,7 +245,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_multi_filter_ui <- function(id) {
   ns <- NS(id)
 
@@ -335,7 +335,7 @@ multi_filter_condition_ui <- function(id, value = "TRUE", show_remove = TRUE) {
 #' \dontrun{
 #' run_multi_filter_example()
 #' }
-#' @export
+#' @keywords internal
 run_multi_filter_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

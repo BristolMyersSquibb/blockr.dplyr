@@ -14,3 +14,4 @@ Run example app demonstrating multi rename functionality
 run_multi_rename_example()
 }
 }
+\keyword{internal}

@@ -11,7 +11,7 @@
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @export
+#' @keywords internal
 mod_multi_arrange_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -163,7 +163,7 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_multi_arrange_ui <- function(id) {
   ns <- NS(id)
 
@@ -315,7 +315,7 @@ multi_arrange_row_ui <- function(id, column = "", direction = "asc", available_c
 #' \dontrun{
 #' run_multi_arrange_example()
 #' }
-#' @export
+#' @keywords internal
 run_multi_arrange_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

@@ -15,3 +15,4 @@ A div containing the UI elements
 \description{
 Create key-value UI module
 }
+\keyword{internal}

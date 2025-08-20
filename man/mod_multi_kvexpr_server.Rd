@@ -20,3 +20,4 @@ A reactive expression containing the current key-value pairs
 A Shiny module that manages multiple key-value pairs for expressions.
 Supports adding and removing expressions dynamically.
 }
+\keyword{internal}

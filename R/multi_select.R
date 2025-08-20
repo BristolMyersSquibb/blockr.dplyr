@@ -12,7 +12,7 @@
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div textInput checkboxInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @export
+#' @keywords internal
 mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -233,7 +233,7 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_multi_select_ui <- function(id) {
   ns <- NS(id)
 
@@ -407,7 +407,7 @@ multi_select_column_card <- function(id, column_name, column_info, is_selected =
 #' \dontrun{
 #' run_multi_select_example()
 #' }
-#' @export
+#' @keywords internal
 run_multi_select_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

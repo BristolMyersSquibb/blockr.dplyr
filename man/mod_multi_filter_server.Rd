@@ -20,3 +20,4 @@ A reactive expression containing the current filter conditions
 A Shiny module that manages multiple filter conditions with AND/OR logic.
 Supports adding and removing conditions dynamically.
 }
+\keyword{internal}

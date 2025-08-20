@@ -22,3 +22,4 @@ A reactive expression containing the currently selected columns
 A Shiny module that provides an enhanced column selection interface with
 visual column cards, search functionality, and column information display.
 }
+\keyword{internal}
