@@ -255,9 +255,9 @@ customer_metrics <- data.frame(
   tier = c("Gold", "Platinum", "Silver")
 )
 
-# Bind columns with custom suffixes for duplicates
+# Bind columns - duplicate names are automatically handled by dplyr
 blockr.core::serve(
-  new_bind_cols_block(suffix = c("_info", "_metrics")),
+  new_bind_cols_block(),
   data = list(x = customer_info, y = customer_metrics)
 )
 ```
