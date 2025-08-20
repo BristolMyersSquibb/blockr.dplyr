@@ -180,29 +180,19 @@ transactions <- data.frame(
   month = rep(c("Jan", "Feb", "Mar"), 2)
 )
 
-# Create enhanced pipeline with join and analysis
+# Multi-dataframe operations with DAG board - correct syntax!
 board <- blockr.ui::new_dag_board(
-  blocks = list(
-    customers_block = new_dataset_block(customers),
-    transactions_block = new_dataset_block(transactions),
-    join_block = new_join_block(type = "left_join"),  # Will configure id = customer_id in UI
-    filter_block = new_filter_block("amount > 100"),
-    summary_block = new_summarize_block(
-      string = list(
-        total_amount = "sum(amount)",
-        avg_amount = "mean(amount)",
-        transaction_count = "n()"
-      ),
-      by = c("region", "tier")
-    )
+  blocks = c(
+    customers_block = new_dataset_block("customers"), 
+    transactions_block = new_dataset_block("transactions"),
+    join_block = new_join_block()
   ),
-  links = links(
-    from = c("customers_block", "transactions_block", "join_block", "filter_block"),
-    to = c("join_block", "join_block", "filter_block", "summary_block")
+  links = c(
+    customer_join = new_link("customers_block", "join_block", "x"),
+    transaction_join = new_link("transactions_block", "join_block", "y")
   )
 )
 
-# Launch the interactive dashboard
 blockr.core::serve(board)
 ```
 
@@ -271,45 +261,51 @@ library(blockr.core)
 library(blockr.dplyr)
 library(blockr.ui)
 
-# Create comprehensive multi-dataframe pipeline
+# Simple multi-dataframe example
+current_customers <- data.frame(
+  id = 1:3, name = c("Alice", "Bob", "Charlie"), 
+  region = c("East", "West", "North")
+)
+
+new_customers <- data.frame(
+  id = 4:5, name = c("Diana", "Eve"), 
+  region = c("South", "East")
+)
+
+# Alternative: Direct serve approach (also works)
+blockr.core::serve(
+  new_bind_rows_block(add_id = TRUE, id_name = "source"),
+  data = list(x = current_customers, y = new_customers)
+)
+```
+
+```{r, eval=FALSE}
+# Example with bind_cols - combining datasets side-by-side
+customer_info <- data.frame(
+  id = 1:3,
+  name = c("Alice", "Bob", "Charlie"),
+  age = c(25, 30, 35)
+)
+
+customer_metrics <- data.frame(
+  id = 1:3,  # Duplicate column name - dplyr handles automatically
+  score = c(85, 92, 78),
+  tier = c("Gold", "Platinum", "Silver")
+)
+
+# DAG board approach
 board <- blockr.ui::new_dag_board(
-  blocks = list(
-    # Data sources
-    current_customers = new_dataset_block(data.frame(
-      id = 1:3, name = c("Alice", "Bob", "Charlie"), 
-      region = c("East", "West", "North"), active = c(TRUE, TRUE, FALSE)
-    )),
-    new_customers = new_dataset_block(data.frame(
-      id = 4:5, name = c("Diana", "Eve"), 
-      region = c("South", "East"), active = c(TRUE, TRUE)
-    )),
-    customer_details = new_dataset_block(data.frame(
-      customer_id = 1:5, tier = c("Gold", "Silver", "Gold", "Bronze", "Silver"),
-      signup_date = as.Date(c("2023-01-01", "2023-02-15", "2023-03-10", "2023-12-01", "2023-12-15"))
-    )),
-    
-    # Multi-dataframe operations
-    bind_customers = new_bind_rows_block(add_id = TRUE, id_name = "source"),
-    join_details = new_join_block(type = "left_join"),  # Configure id = customer_id in UI
-    
-    # Analysis blocks
-    filter_active = new_filter_block("active == TRUE"),
-    summary_by_region = new_summarize_block(
-      string = list(
-        customer_count = "n()",
-        gold_customers = "sum(tier == 'Gold')",
-        avg_days_since_signup = "mean(as.numeric(Sys.Date() - signup_date))"
-      ),
-      by = c("region")
-    )
+  blocks = c(
+    info = new_dataset_block("customer_info"),
+    metrics = new_dataset_block("customer_metrics"),
+    bind = new_bind_cols_block()
   ),
-  links = links(
-    from = c("current_customers", "new_customers", "bind_customers", "customer_details", "join_details", "filter_active"),
-    to = c("bind_customers", "bind_customers", "join_details", "join_details", "filter_active", "summary_by_region")
+  links = c(
+    info_link = new_link("info", "bind", "x"),
+    metrics_link = new_link("metrics", "bind", "y")
   )
 )
 
-# Launch the comprehensive dashboard
 blockr.core::serve(board)
 ```
 
@@ -319,8 +315,10 @@ The enhanced multi-dataframe blocks feature:
 
 All multi-dataframe operations work seamlessly with the **blockr.ui visual DAG board interface**:
 
-- **Drag-and-drop pipeline building**: Visually connect blocks in the interactive interface
+- **Drag-and-drop pipeline building**: Visually connect blocks in the interactive interface  
+- **Multi-input block support**: Properly handles `x` and `y` inputs for joins and binding operations
 - **Real-time data flow**: See data flowing through your multi-table transformations
+- **Both approaches supported**: Use DAG boards for visual building or direct `blockr.core::serve()` for simplicity
 - **Interactive block configuration**: Click blocks to configure join keys, bind options, etc.
 - **Visual feedback**: Immediate visual indication of data structure changes
 - **Export workflows**: Save and share your multi-dataframe analysis pipelines
