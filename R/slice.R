@@ -52,7 +52,7 @@ new_slice_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          
+
           # Reactive values for all parameters
           r_type <- reactiveVal(type)
           r_n <- reactiveVal(n)
@@ -64,7 +64,7 @@ new_slice_block <- function(
           r_replace <- reactiveVal(replace)
           r_rows <- reactiveVal(rows)
           r_by <- reactiveVal(by)
-          
+
           # Update reactive values from inputs
           observeEvent(input$type, r_type(input$type))
           observeEvent(input$n, r_n(input$n))
@@ -76,7 +76,7 @@ new_slice_block <- function(
           observeEvent(input$replace, r_replace(input$replace))
           observeEvent(input$rows, r_rows(input$rows))
           observeEvent(input$by, r_by(input$by))
-          
+
           # Update column choices when data changes
           observeEvent(colnames(data()), {
             cols <- colnames(data())
@@ -84,11 +84,11 @@ new_slice_block <- function(
             updateSelectInput(session, "weight_by", choices = c("", cols), selected = r_weight_by())
             updateSelectInput(session, "by", choices = cols, selected = r_by())
           })
-          
+
           # Dynamic UI rendering based on type
           output$dynamic_ui <- shiny::renderUI({
             type_val <- r_type()
-            
+
             if (type_val %in% c("head", "tail")) {
               div(
                 radioButtons(
@@ -215,21 +215,23 @@ new_slice_block <- function(
               )
             }
           })
-          
+
           # Build the expression
           expr <- reactive({
             type_val <- r_type()
             by_val <- r_by()
-            
+
             # Helper to format .by parameter
+            # dplyr expects bare column names in `.by`, not character strings.
+            # Build an expression fragment like `.by = c(cyl, gear)`.
             format_by <- function() {
               if (length(by_val) > 0 && !all(by_val == "")) {
-                paste0(".by = c(", paste0('"', by_val, '"', collapse = ", "), ")")
+                paste0(".by = c(", paste0(by_val, collapse = ", "), ")")
               } else {
                 NULL
               }
             }
-            
+
             if (type_val == "head") {
               args <- if (r_use_prop() && !is.null(r_prop())) {
                 paste0("prop = ", r_prop())
@@ -239,7 +241,7 @@ new_slice_block <- function(
               by_arg <- format_by()
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               parse(text = sprintf("dplyr::slice_head(data, %s)", args))
-              
+
             } else if (type_val == "tail") {
               args <- if (r_use_prop() && !is.null(r_prop())) {
                 paste0("prop = ", r_prop())
@@ -249,7 +251,7 @@ new_slice_block <- function(
               by_arg <- format_by()
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               parse(text = sprintf("dplyr::slice_tail(data, %s)", args))
-              
+
             } else if (type_val == "min") {
               order_col <- r_order_by()
               if (order_col == "") {
@@ -266,7 +268,7 @@ new_slice_block <- function(
                 if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
                 parse(text = sprintf("dplyr::slice_min(data, %s)", args))
               }
-              
+
             } else if (type_val == "max") {
               order_col <- r_order_by()
               if (order_col == "") {
@@ -283,7 +285,7 @@ new_slice_block <- function(
                 if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
                 parse(text = sprintf("dplyr::slice_max(data, %s)", args))
               }
-              
+
             } else if (type_val == "sample") {
               args <- if (r_use_prop() && !is.null(r_prop())) {
                 paste0("prop = ", r_prop())
@@ -298,7 +300,7 @@ new_slice_block <- function(
               by_arg <- format_by()
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               parse(text = sprintf("dplyr::slice_sample(data, %s)", args))
-              
+
             } else if (type_val == "custom") {
               rows_expr <- r_rows()
               if (rows_expr == "") {
@@ -315,7 +317,7 @@ new_slice_block <- function(
               parse(text = "dplyr::slice(data, 0)")  # Fallback
             }
           })
-          
+
           # Return the expression and state
           list(
             expr = expr,
