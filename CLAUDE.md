@@ -53,7 +53,7 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
 
 8. **New Rename Block** - Complete column renaming functionality:
    - **Visual mapping interface** - Clear new_name ← old_name with arrow indicators
-   - **Add/remove functionality** - Dynamic interface to add/remove rename pairs  
+   - **Add/remove functionality** - Dynamic interface to add/remove rename pairs
    - **Column validation** - Dropdown selectors ensure old column names exist
    - **Duplicate prevention** - Validation prevents renaming the same column multiple times
    - **Comprehensive testing** - 31 tests covering validation, UI components, and integration
@@ -69,6 +69,14 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Comprehensive testing** - 22 tests covering all input formats and integration
    - **Clean UI** - Simple interface without sorting arrows for intuitive use
 
+10. **New Distinct Block** - Complete duplicate removal functionality:
+   - **Multi-column selection** - Select specific columns to check for uniqueness
+   - **Keep all columns option** - Control whether to keep all columns or just selected ones
+   - **Duplicate count preview** - Real-time display of how many duplicates will be removed
+   - **Empty selection support** - Leave columns empty to check all columns for duplicates
+   - **Comprehensive testing** - 10 tests covering various scenarios including NA handling
+   - **Clean UI** - Simple interface with informative duplicate count display
+
 ## Next Implementation Priority
 
 ### Slice Block (In Development)
@@ -80,9 +88,8 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
 - **Grouping via .by parameter** - No need for separate group_by block
 - **Reactive UI** - Immediate updates without submit button
 
-### Future New Blocks  
-- **join** blocks - Table combining operations (after slice implementation)
-- **distinct** - Remove duplicates
+### Future New Blocks
+- **join** blocks - Table combining operations (needs enhancement for multi-column joins)
 
 ### UI/UX Improvements
 - Drag-and-drop for reordering expressions/conditions
@@ -115,44 +122,6 @@ Follow the existing patterns in the codebase:
 - After modifying imports (e.g., adding @importFrom statements), run `devtools::document()` or `roxygen2::roxygenise()` to regenerate NAMESPACE
 - Do not edit NAMESPACE directly - use roxygen comments in R files
 - **README.md is generated from README.Rmd** - Always edit README.Rmd, never edit README.md directly
-
-### Testing Workflow
-After making changes to the code, use this workflow to test:
-
-**Option 1: R Console (Recommended)**
-1. Install package: `R CMD INSTALL . --no-multiarch`
-2. Open R console/RStudio
-3. Run any of these to test specific functionality:
-   ```r
-   # Test multi-expression mutate
-   library(blockr.core); serve(new_mutate_block(), list(data = mtcars))
-
-   # Test multi-expression summarize
-   library(blockr.core); serve(new_summarize_block(), list(data = mtcars))
-
-   # Test multi-condition filter (new!)
-   library(blockr.core); serve(new_filter_block(), list(data = mtcars))
-
-   # Test rename block (new!)
-   library(blockr.core); serve(new_rename_block(), list(data = mtcars))
-
-   # Test standalone modules
-   library(blockr.dplyr); run_multi_filter_example()
-   library(blockr.dplyr); run_multi_rename_example()
-   ```
-4. Test in browser: Check multi-expressions/conditions, dplyr functions, autocompletion
-
-**Option 2: Development Testing**
-1. `pkgload::load_all()` (loads development code without installing)
-2. Run examples from README.md manually in R console/RStudio
-3. Use the enhanced filter examples provided in the README
-
-**Option 3: Automated Testing**
-- Run `devtools::test()` to ensure all 80+ unit tests pass
-- Run `devtools::test(filter = 'filter')` to test filter-specific functionality
-- This verifies core functionality without needing browser testing
-
-**Note**: Running Shiny apps via command-line scripts may not work reliably in all environments. Use R console/RStudio for interactive testing.
 
 ### Shiny Reactivity
 - Be mindful of reactive dependencies

@@ -479,6 +479,88 @@ In the UI, you can:
 4. Remove pairs with trash icons (keeping at least one)
 5. See the arrow (←) indicating the rename direction
 
+## Distinct Block for Removing Duplicates
+
+The `dplyr::distinct()` block allows you to remove duplicate rows from your data:
+
+### Basic distinct usage
+
+```{r distinct-simple, eval = FALSE}
+library(blockr.dplyr)
+# Remove duplicates based on specific columns
+blockr.core::serve(
+  new_distinct_block(columns = c("cyl", "gear"), .keep_all = TRUE), 
+  data = list(data = mtcars)
+)
+```
+
+### Interactive distinct interface
+
+```{r distinct-interactive, eval = FALSE}
+library(blockr.dplyr)
+# Start with empty distinct block for interactive duplicate removal
+blockr.core::serve(new_distinct_block(), data = list(data = mtcars))
+```
+
+### Complete pipeline with distinct
+
+```{r distinct-pipeline, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create a dashboard with distinct in the pipeline
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    data_block = new_dataset_block("mtcars"),
+    distinct_block = new_distinct_block(
+      columns = c("cyl", "gear"),
+      .keep_all = TRUE
+    ),
+    summary_block = new_summarize_block(
+      string = list(
+        avg_mpg = "mean(mpg)",
+        count = "n()"
+      ),
+      by = c("cyl")
+    )
+  ),
+  links = links(
+    from = c("data_block", "distinct_block"),
+    to = c("distinct_block", "summary_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+The distinct block features:
+- **Multi-column selection**: Choose which columns to check for uniqueness
+- **Keep all columns option**: Decide whether to keep all columns or just the selected ones
+- **Duplicate count preview**: See how many duplicate rows will be removed before applying
+- **Empty selection support**: Leave columns empty to check all columns for duplicates
+
+### Testing distinct functionality
+
+To quickly test the distinct features:
+
+```{r distinct-testing, eval = FALSE}
+library(blockr.dplyr)
+
+# Test the distinct block with example data
+run_distinct_example()
+
+# Test in context with your data
+blockr.core::serve(new_distinct_block(), data = list(data = mtcars))
+```
+
+In the UI, you can:
+1. Select columns from the multi-select dropdown to check for uniqueness
+2. Toggle "Keep all columns" to control output columns
+3. See the duplicate count in real-time
+4. Leave columns empty to remove duplicates across all columns
+
 ## Enhanced Arrange Block for Multi-Column Sorting
 
 The `dplyr::arrange()` block now supports enhanced multi-column sorting with individual ASC/DESC controls and visual priority management:
