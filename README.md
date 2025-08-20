@@ -457,6 +457,9 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Join on shared Time column
     joined_data = new_join_block(type = "inner_join", by = c("Time" = "Time")),
+    
+    # Remove any duplicate time entries
+    distinct_data = new_distinct_block(columns = c("Time")),
 
     # Analysis with mtcars
     cars_data = new_dataset_block("mtcars", package = "datasets"),
@@ -493,15 +496,34 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Analysis with iris dataset
     iris_data = new_dataset_block("iris", package = "datasets"),
+    
+    # Rename columns for clarity
+    iris_renamed = new_rename_block(renames = list(
+      sepal_length = "Sepal.Length",
+      sepal_width = "Sepal.Width", 
+      petal_length = "Petal.Length",
+      petal_width = "Petal.Width"
+    )),
 
     # Group by species and summarize
     iris_summary = new_summarize_block(
       string = list(
-        avg_sepal_length = "mean(Sepal.Length)",
-        avg_petal_length = "mean(Petal.Length)",
+        avg_sepal_length = "mean(sepal_length)",
+        avg_petal_length = "mean(petal_length)",
         count = "n()"
       ),
       by = c("Species")
+    ),
+    
+    # Combine car and iris summaries
+    combined_summaries = new_bind_rows_block(id_column = "dataset"),
+    
+    # Get matching subset of original cars for column binding
+    cars_original_subset = new_slice_block(type = "head", n = 13),
+    
+    # Add metadata to cars data
+    cars_with_ids = new_bind_cols_block(
+      suffix = c("_enhanced", "_original")
     )
   ),
   links = c(
@@ -516,6 +538,9 @@ analysis_board <- blockr.ui::new_dag_board(
     # Join BOD and ChickWeight on Time
     join_bod = new_link("bod_filter", "joined_data", "x"),
     join_chick = new_link("chick_filter", "joined_data", "y"),
+    
+    # Remove duplicates from joined data
+    distinct_link = new_link("joined_data", "distinct_data", "data"),
 
     # Cars analysis pipeline
     filter_cars = new_link("cars_data", "fast_cars", "data"),
@@ -524,8 +549,20 @@ analysis_board <- blockr.ui::new_dag_board(
     summarize_cars = new_link("cars_sorted", "summary_stats", "data"),
     slice_top = new_link("summary_stats", "top_cars", "data"),
 
-    # Iris pipeline
-    iris_link = new_link("iris_data", "iris_summary", "data")
+    # Iris pipeline  
+    iris_rename_link = new_link("iris_data", "iris_renamed", "data"),
+    iris_summary_link = new_link("iris_renamed", "iris_summary", "data"),
+    
+    # Combine summaries
+    bind_cars_summary = new_link("summary_stats", "combined_summaries", "x"),
+    bind_iris_summary = new_link("iris_summary", "combined_summaries", "y"),
+    
+    # Prepare matching subset for bind_cols
+    cars_subset_link = new_link("cars_data", "cars_original_subset", "data"),
+    
+    # Add metadata to cars
+    cars_bind_main = new_link("cars_enhanced", "cars_with_ids", "x"),
+    cars_bind_meta = new_link("cars_original_subset", "cars_with_ids", "y")
   )
 )
 
