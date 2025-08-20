@@ -319,12 +319,30 @@ keep <- function(x, .p) {
 
 #' Map function for applying functions to lists
 #' @keywords internal
-map <- function(x, f) {
-  lapply(x, f)
+map <- function(x, .f) {
+  # Handle lambda syntax (~expression) by converting to function
+  if (inherits(.f, "formula")) {
+    f_env <- environment(.f)
+    f_body <- .f[[2]]  # Get the RHS of the formula
+    .f <- function(.x) {
+      eval(f_body, envir = list(.x = .x), enclos = f_env)
+    }
+  }
+  
+  lapply(x, .f)
 }
 
 #' Map character function
 #' @keywords internal
-map_chr <- function(x, f) {
-  vapply(x, f, character(1))
+map_chr <- function(x, .f) {
+  # Handle lambda syntax (~expression) by converting to function
+  if (inherits(.f, "formula")) {
+    f_env <- environment(.f)
+    f_body <- .f[[2]]  # Get the RHS of the formula
+    .f <- function(.x) {
+      eval(f_body, envir = list(.x = .x), enclos = f_env)
+    }
+  }
+  
+  vapply(x, .f, character(1))
 }
