@@ -14,6 +14,7 @@
 #' @importFrom DT DTOutput renderDT datatable formatStyle
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
+#' @importFrom utils head
 #' @export
 mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, show_selected_on_top = TRUE) {
   moduleServer(id, function(input, output, session) {
@@ -112,14 +113,14 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
         }),
         Sample = sapply(cols, function(col) {
           if (is.null(data_preview) || !col %in% names(data_preview)) {
-            return('<span class="text-muted font-monospace">—</span>')
+            return('<span class="text-muted font-monospace">\u2014</span>')
           }
           col_data <- data_preview[[col]]
           sample_vals <- head(col_data[!is.na(col_data)], 3)
           if (length(sample_vals) > 0) {
             sample_str <- paste(sample_vals, collapse = ", ")
             if (nchar(sample_str) > 40) {
-              sample_str <- paste0(substr(sample_str, 1, 37), "…")
+              sample_str <- paste0(substr(sample_str, 1, 37), "\u2026")
             }
             sprintf('<span class="font-monospace text-muted">%s</span>', sample_str)
           } else {

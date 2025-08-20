@@ -159,9 +159,9 @@ new_bind_rows_block <- function(
 #'
 #' This block allows for column-wise combination of two data frames
 #' using [dplyr::bind_cols()]. It combines data frames side-by-side,
-#' requiring them to have the same number of rows.
+#' requiring them to have the same number of rows. Duplicate column names
+#' are automatically handled by dplyr.
 #'
-#' @param suffix Character vector of length 2, suffixes to add to duplicate column names
 #' @param ... Forwarded to [new_block()]
 #'
 #' @return A block object for bind_cols operations
@@ -190,7 +190,7 @@ new_bind_cols_block <- function(...) {
 
             if (!rows_compatible()) {
               return(paste0(
-                "⚠️ ERROR: Row count mismatch!\n",
+                "\u26A0\uFE0F ERROR: Row count mismatch!\n",
                 "Left dataset: ", nrow(x_data), " rows\n",
                 "Right dataset: ", nrow(y_data), " rows\n",
                 "bind_cols() requires both datasets to have the same number of rows."
