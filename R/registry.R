@@ -41,4 +41,3 @@ register_dplyr_blocks <- function() {
     overwrite = TRUE
   )
 }
-

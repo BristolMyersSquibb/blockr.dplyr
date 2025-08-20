@@ -303,4 +303,3 @@ new_slice_block <- function(
 
 # Helper function for NULL default
 `%||%` <- function(x, y) if (is.null(x)) y else x
-

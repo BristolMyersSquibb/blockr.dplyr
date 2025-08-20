@@ -368,4 +368,3 @@ run_multi_filter_example <- function() {
     }
   )
 }
-

@@ -210,4 +210,3 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated, s
   r_expr_validated(expr)
   r_renames_validated(renames)
 }
-

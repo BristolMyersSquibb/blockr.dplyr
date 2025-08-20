@@ -4,4 +4,3 @@
 
   invisible(NULL)
 } # nocov end
-

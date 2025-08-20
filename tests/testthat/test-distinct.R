@@ -52,4 +52,3 @@ test_that("distinct block is registered correctly", {
   block <- new_distinct_block()
   expect_equal(attr(block, "name"), "Distinct block")
 })
-

@@ -62,4 +62,3 @@ test_that("mutate block handles execution", {
   expect_equal(result$double_mpg, data$mpg * 2)
   expect_equal(result$hp_per_100, data$hp / 100)
 })
-
