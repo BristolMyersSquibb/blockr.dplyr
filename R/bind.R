@@ -176,32 +176,12 @@ new_bind_rows_block <- function(
 #'
 #' @return A block object for bind_cols operations
 #' @export
-new_bind_cols_block <- function(
-  suffix = c(".x", ".y"),
-  ...
-) {
+new_bind_cols_block <- function(...) {
   new_transform_block(
     function(id, x, y) {
       moduleServer(
         id,
         function(input, output, session) {
-          # Initialize reactive values
-          r_suffix_x <- reactiveVal(suffix[1])
-          r_suffix_y <- reactiveVal(suffix[2])
-          
-          # Update suffixes when inputs change
-          observeEvent(input$suffix_x, {
-            if (nzchar(input$suffix_x)) {
-              r_suffix_x(input$suffix_x)
-            }
-          })
-          
-          observeEvent(input$suffix_y, {
-            if (nzchar(input$suffix_y)) {
-              r_suffix_y(input$suffix_y)
-            }
-          })
-          
           # Check row count compatibility
           rows_compatible <- reactive({
             req(x(), y())
@@ -236,12 +216,10 @@ new_bind_cols_block <- function(
             if (length(duplicate_cols) > 0) {
               preview_text <- paste0(preview_text, "\n",
                 "Duplicate column names found: ", paste(duplicate_cols, collapse = ", "), "\n",
-                "Suffixes will be added:\n",
-                "- Left columns: ", r_suffix_x(), " (e.g., ", duplicate_cols[1], r_suffix_x(), ")\n",
-                "- Right columns: ", r_suffix_y(), " (e.g., ", duplicate_cols[1], r_suffix_y(), ")"
+                "dplyr will automatically rename them (e.g., ", duplicate_cols[1], "...1, ", duplicate_cols[1], "...2)"
               )
             } else {
-              preview_text <- paste0(preview_text, "\n", "No duplicate column names - no suffixes needed.")
+              preview_text <- paste0(preview_text, "\n", "No duplicate column names.")
             }
             
             preview_text
@@ -252,88 +230,17 @@ new_bind_cols_block <- function(
             shinyjs::toggleState("submit", condition = rows_compatible())
           })
           
-          # Build bind_cols expression
-          build_bind_expr <- function(suffix_x, suffix_y) {
-            bquote(
-              dplyr::bind_cols(x, y, .name_repair = ~ make.unique(.x, sep = "")),
-              list()
-            )
-          }
-          
           list(
             expr = eventReactive(input$submit, {
-              # Use custom column name handling for duplicates
-              quote({
-                result <- dplyr::bind_cols(x, y)
-                # Handle duplicate names with suffixes
-                x_cols <- colnames(x)
-                y_cols <- colnames(y)
-                duplicate_cols <- intersect(x_cols, y_cols)
-                
-                if (length(duplicate_cols) > 0) {
-                  new_names <- colnames(result)
-                  for (dup_col in duplicate_cols) {
-                    # Find positions of duplicate columns
-                    x_pos <- which(x_cols == dup_col)
-                    y_pos <- which(y_cols == dup_col) + ncol(x)
-                    
-                    # Add suffixes
-                    if (length(x_pos) > 0) {
-                      new_names[x_pos] <- paste0(dup_col, r_suffix_x())
-                    }
-                    if (length(y_pos) > 0 && y_pos <= length(new_names)) {
-                      new_names[y_pos] <- paste0(dup_col, r_suffix_y())
-                    }
-                  }
-                  colnames(result) <- new_names
-                }
-                result
-              })
+              quote(dplyr::bind_cols(x, y))
             }),
-            state = list(
-              suffix_x = r_suffix_x,
-              suffix_y = r_suffix_y
-            )
+            state = list()
           )
         }
       )
     },
     function(id) {
       tagList(
-        # Configuration options
-        div(
-          class = "mb-3",
-          h5("Bind Columns Configuration", style = "margin-bottom: 15px;"),
-          
-          # Suffix configuration
-          div(
-            class = "row",
-            div(
-              class = "col-md-6",
-              textInput(
-                NS(id, "suffix_x"),
-                label = "Left dataset suffix:",
-                value = suffix[1],
-                placeholder = "e.g., .x"
-              )
-            ),
-            div(
-              class = "col-md-6",
-              textInput(
-                NS(id, "suffix_y"),
-                label = "Right dataset suffix:",
-                value = suffix[2],
-                placeholder = "e.g., .y"
-              )
-            )
-          ),
-          
-          div(
-            class = "form-text text-muted",
-            "Suffixes are added to duplicate column names to make them unique."
-          )
-        ),
-        
         # Data preview
         div(
           class = "data-preview mb-3 p-3",
