@@ -210,19 +210,25 @@ When all major features are complete, consider these cleanup opportunities:
 
 ## Technical Issues & Solutions
 
-### Dynamic UI Input Registration Problem (Slice Block)
+### Dynamic UI Timing Issues (Slice Block - RESOLVED)
 
-**Issue**: Inputs created inside `renderUI()` dynamic UI sections are not properly registered with Shiny's input system, making them unavailable in `observeEvent(input$submit, ...)` handlers.
+**Issue**: When inputs are created inside `renderUI()` and the rendered content changes based on user interaction, there can be timing issues where:
+- Old inputs are destroyed when the renderUI content changes
+- New inputs take time to be registered with Shiny
+- Submit handlers may try to access inputs before they're fully available
 
 **Symptoms**:
-- Input appears visually in the UI and can be interacted with
-- `input$inputname` returns NULL in server functions
-- Input name missing from `names(input)` list
-- Submit handlers cannot read updated values
+- Inputs work visually but may be NULL when accessed immediately after type changes
+- Race conditions between UI rendering and submit button clicks
+- Inconsistent behavior depending on user interaction speed
 
-**Root Cause**: Shiny's reactive input registration has timing issues with dynamically rendered UI elements, especially when accessed immediately after user interaction.
+**Root Cause**: Dynamic UI recreation causes inputs to be destroyed and recreated, leading to potential timing gaps.
 
-**Solution**: Move critical inputs from dynamic UI (`renderUI()`) to static UI sections.
+**Solution**: Use static UI with `conditionalPanel()` instead of dynamic `renderUI()`:
+- All inputs exist from the start (hidden/shown via conditionalPanel)
+- No destruction/recreation of inputs
+- No timing issues or race conditions
+- Immediate availability of all inputs
 
 **Example**:
 ```r
