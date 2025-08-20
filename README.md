@@ -1,7 +1,7 @@
 # blockr.dplyr
 
 <!-- badges: start -->
-[![check](https://github.com/cynkra/blockr.dplyr/actions/workflows/check.yaml/badge.svg)](https://github.com/cynkra/blockr.dplyr/actions/workflows/check.yaml)
+[![check](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml/badge.svg)](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml)
 <!-- badges: end -->
 
 **Data wrangling blocks for blockr.core**
@@ -14,7 +14,7 @@ Install the development version from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("cynkra/blockr.dplyr")
+devtools::install_github("BristolMyersSquibb/blockr.dplyr")
 ```
 
 ## Quick Start
@@ -44,7 +44,7 @@ Choose which columns to keep in your dataset with an intuitive table interface.
 ```r
 library(blockr.dplyr)
 blockr.core::serve(
-  new_select_block(c("Species", "Sepal.Length")), 
+  new_select_block(c("Species", "Sepal.Length")),
   data = list(data = iris)
 )
 ```
@@ -67,13 +67,8 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Table interface** (default): Compact view with colored type tags, sortable columns
-- **Card interface**: Detailed column information with statistics  
-- **Search functionality**: Filter columns by name
-- **Selected columns on top**: Easy management with numbered badges
 
-### Filter Block - Row Filtering  
+### Filter Block - Row Filtering
 
 Filter rows based on conditions with support for multiple criteria and AND/OR logic.
 
@@ -81,7 +76,7 @@ Filter rows based on conditions with support for multiple criteria and AND/OR lo
 ```r
 library(blockr.dplyr)
 blockr.core::serve(
-  new_filter_block("mpg > 20"), 
+  new_filter_block("mpg > 20"),
   data = list(data = mtcars)
 )
 ```
@@ -104,11 +99,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Multi-condition interface**: Add/remove conditions dynamically
-- **AND/OR logic**: Choose operators between conditions
-- **Autocompletion**: Column names and dplyr functions
-- **Real-time validation**: Immediate syntax feedback
 
 ### Mutate Block - Add/Modify Columns
 
@@ -121,7 +111,7 @@ blockr.core::serve(
   new_mutate_block(list(
     power_to_weight = "hp / wt",
     mpg_doubled = "mpg * 2"
-  )), 
+  )),
   data = list(data = mtcars)
 )
 ```
@@ -144,11 +134,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Multi-expression support**: Add/remove expressions with dynamic UI
-- **Syntax highlighting**: ACE editor with R syntax highlighting
-- **Autocompletion**: Column names and dplyr function suggestions
-- **Real-time preview**: See results as you type
 
 ### Arrange Block - Sort Data
 
@@ -161,7 +146,7 @@ blockr.core::serve(
   new_arrange_block(list(
     list(column = "mpg", direction = "desc"),
     list(column = "cyl", direction = "asc")
-  )), 
+  )),
   data = list(data = mtcars)
 )
 ```
@@ -184,12 +169,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Multi-column sorting**: Priority-based sort order with visual indicators
-- **Individual direction control**: ASC/DESC for each column independently
-- **Add/remove columns**: Dynamic interface for sort criteria
-- **Visual priority**: Clear 1., 2., 3. numbering shows sort order
-
 ### Summarize Block - Aggregate Data
 
 Calculate summary statistics with support for grouping and multiple expressions.
@@ -205,7 +184,7 @@ blockr.core::serve(
       count = "n()"
     ),
     by = c("cyl")
-  ), 
+  ),
   data = list(data = mtcars)
 )
 ```
@@ -231,12 +210,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Multiple expressions**: Add/remove summary expressions dynamically
-- **Grouping support**: Built-in `.by` parameter for group-wise operations
-- **dplyr functions**: Access to `n()`, `mean()`, `sum()`, etc.
-- **Flexible output**: Name your summary columns
-
 ### Slice Block - Row Selection
 
 Select rows by position, value, or random sampling with comprehensive slice variants.
@@ -245,7 +218,7 @@ Select rows by position, value, or random sampling with comprehensive slice vari
 ```r
 library(blockr.dplyr)
 blockr.core::serve(
-  new_slice_block(type = "head", n = 5), 
+  new_slice_block(type = "head", n = 5),
   data = list(data = mtcars)
 )
 ```
@@ -285,7 +258,7 @@ blockr.core::serve(
   new_rename_block(list(
     miles_per_gallon = "mpg",
     cylinders = "cyl"
-  )), 
+  )),
   data = list(data = mtcars)
 )
 ```
@@ -322,7 +295,7 @@ Remove duplicate rows based on specified columns.
 ```r
 library(blockr.dplyr)
 blockr.core::serve(
-  new_distinct_block(columns = c("cyl", "gear"), .keep_all = TRUE), 
+  new_distinct_block(columns = c("cyl", "gear"), .keep_all = TRUE),
   data = list(data = mtcars)
 )
 ```
@@ -345,12 +318,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Multi-column selection**: Choose which columns define uniqueness
-- **Keep all option**: Control whether to keep all columns or just selected ones
-- **Duplicate count preview**: See impact before applying
-- **Flexible usage**: Leave empty to check all columns
-
 ### Join Block - Combine Datasets
 
 Join two datasets with support for all join types and multi-column keys.
@@ -361,7 +328,7 @@ library(blockr.dplyr)
 blockr.core::serve(
   new_join_block(type = "left_join", by = "name"),
   data = list(
-    x = dplyr::band_members, 
+    x = dplyr::band_members,
     y = dplyr::band_instruments
   )
 )
@@ -386,12 +353,6 @@ board <- blockr.ui::new_dag_board(
 
 blockr.core::serve(board)
 ```
-
-**Features:**
-- **All join types**: left, inner, right, full, semi, anti joins
-- **Multi-column joins**: Support for complex column mappings
-- **Visual interface**: Configure join keys with dropdown selectors
-- **Natural joins**: Automatic matching on same-name columns
 
 ### Bind Rows Block - Combine Vertically
 
@@ -431,12 +392,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Intelligent matching**: Automatically aligns columns by name
-- **Missing column handling**: Fills non-matching columns with NA
-- **Source tracking**: Optional ID column to identify row origins
-- **Real-time preview**: Shows column alignment before binding
-
 ### Bind Columns Block - Combine Horizontally
 
 Combine datasets side-by-side with duplicate column handling.
@@ -475,11 +430,6 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-**Features:**
-- **Row count validation**: Prevents binding incompatible datasets
-- **Duplicate handling**: Automatic column name disambiguation
-- **Real-time validation**: Immediate compatibility feedback
-- **Simple operation**: Straightforward side-by-side combination
 
 ## Comprehensive Example
 
@@ -490,81 +440,92 @@ library(blockr.core)
 library(blockr.dplyr)
 library(blockr.ui)
 
-# Sample business data
-sales_data <- data.frame(
-  customer_id = c(1, 2, 3, 1, 2),
-  product = c("A", "B", "A", "C", "A"),
-  amount = c(100, 200, 150, 75, 125),
-  date = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10", "2024-02-15", "2024-03-01"))
-)
-
-customer_data <- data.frame(
-  id = 1:3,
-  name = c("Alice", "Bob", "Charlie"),
-  region = c("East", "West", "North"),
-  tier = c("Gold", "Silver", "Gold")
-)
-
-# Comprehensive analysis pipeline
+# Comprehensive analysis pipeline using built-in R datasets
 analysis_board <- blockr.ui::new_dag_board(
   blocks = c(
-    # Data sources
-    sales_raw = new_dataset_block("sales_data"),
-    customers_raw = new_dataset_block("customer_data"),
-    
-    # Data preparation
-    sales_clean = new_filter_block("amount > 50"),
-    customers_select = new_select_block(c("id", "name", "region", "tier")),
-    
-    # Join operations  
-    sales_enhanced = new_join_block(type = "left_join"),
-    
-    # Data transformation
-    sales_mutated = new_mutate_block(list(
-      month = "format(date, '%Y-%m')",
-      amount_category = "case_when(amount > 150 ~ 'High', amount > 100 ~ 'Medium', TRUE ~ 'Low')"
+    # Data sources - using datasets from R's datasets package
+    bod_data = new_dataset_block("BOD", package = "datasets"),
+    chick_data = new_dataset_block("ChickWeight", package = "datasets"),
+
+    # Prepare BOD data
+    bod_select = new_select_block(c("Time", "demand")),
+    bod_filter = new_filter_block("demand > 10"),
+
+    # Prepare ChickWeight data
+    chick_select = new_select_block(c("Time", "weight", "Diet")),
+    chick_filter = new_filter_block("Time <= 10"),
+
+    # Join on shared Time column
+    joined_data = new_join_block(type = "inner_join", by = c("Time" = "Time")),
+
+    # Analysis with mtcars
+    cars_data = new_dataset_block("mtcars", package = "datasets"),
+
+    # Filter high-performance cars
+    fast_cars = new_filter_block("hp > 150"),
+
+    # Add calculated fields
+    cars_enhanced = new_mutate_block(list(
+      performance = "hp / wt",
+      efficiency = "mpg / cyl",
+      car_type = "dplyr::case_when(cyl <= 4 ~ 'Economy', cyl <= 6 ~ 'Standard', TRUE ~ 'Performance')"
     )),
-    
-    # Remove any duplicates
-    sales_distinct = new_distinct_block(columns = c("customer_id", "product", "date")),
-    
-    # Sort by date and amount
-    sales_arranged = new_arrange_block(list(
-      list(column = "date", direction = "desc"),
-      list(column = "amount", direction = "desc")
+
+    # Sort by multiple columns
+    cars_sorted = new_arrange_block(list(
+      list(column = "car_type", direction = "asc"),
+      list(column = "mpg", direction = "desc")
     )),
-    
-    # Analysis summaries
-    monthly_summary = new_summarize_block(
+
+    # Summarize by car type
+    summary_stats = new_summarize_block(
       string = list(
-        total_sales = "sum(amount)",
-        avg_order = "mean(amount)", 
-        customer_count = "n_distinct(customer_id)",
-        transaction_count = "n()"
+        avg_mpg = "mean(mpg)",
+        avg_hp = "mean(hp)",
+        avg_performance = "mean(performance)",
+        count = "n()"
       ),
-      by = c("month", "region")
+      by = c("car_type", "cyl")
     ),
-    
-    # Top performers
-    top_results = new_slice_block(type = "head", n = 10)
+
+    # Get top results
+    top_cars = new_slice_block(type = "head", n = 5),
+
+    # Analysis with iris dataset
+    iris_data = new_dataset_block("iris", package = "datasets"),
+
+    # Group by species and summarize
+    iris_summary = new_summarize_block(
+      string = list(
+        avg_sepal_length = "mean(Sepal.Length)",
+        avg_petal_length = "mean(Petal.Length)",
+        count = "n()"
+      ),
+      by = c("Species")
+    )
   ),
   links = c(
-    # Data cleaning (single-input blocks use "data")
-    sales_filter = new_link("sales_raw", "sales_clean", "data"),
-    customer_select = new_link("customers_raw", "customers_select", "data"),
-    
-    # Join operation (multi-input block uses "x" and "y") 
-    join_sales = new_link("sales_clean", "sales_enhanced", "x"),
-    join_customers = new_link("customers_select", "sales_enhanced", "y"),
-    
-    # Transformation pipeline (single-input blocks use "data")
-    enhance = new_link("sales_enhanced", "sales_mutated", "data"),
-    distinct = new_link("sales_mutated", "sales_distinct", "data"),
-    arrange = new_link("sales_distinct", "sales_arranged", "data"),
-    
-    # Analysis (single-input blocks use "data")
-    summarize = new_link("sales_arranged", "monthly_summary", "data"),
-    top_slice = new_link("monthly_summary", "top_results", "data")
+    # BOD pipeline
+    bod_link1 = new_link("bod_data", "bod_select", "data"),
+    bod_link2 = new_link("bod_select", "bod_filter", "data"),
+
+    # ChickWeight pipeline
+    chick_link1 = new_link("chick_data", "chick_select", "data"),
+    chick_link2 = new_link("chick_select", "chick_filter", "data"),
+
+    # Join BOD and ChickWeight on Time
+    join_bod = new_link("bod_filter", "joined_data", "x"),
+    join_chick = new_link("chick_filter", "joined_data", "y"),
+
+    # Cars analysis pipeline
+    filter_cars = new_link("cars_data", "fast_cars", "data"),
+    enhance_cars = new_link("fast_cars", "cars_enhanced", "data"),
+    sort_cars = new_link("cars_enhanced", "cars_sorted", "data"),
+    summarize_cars = new_link("cars_sorted", "summary_stats", "data"),
+    slice_top = new_link("summary_stats", "top_cars", "data"),
+
+    # Iris pipeline
+    iris_link = new_link("iris_data", "iris_summary", "data")
   )
 )
 
@@ -572,28 +533,8 @@ analysis_board <- blockr.ui::new_dag_board(
 blockr.core::serve(analysis_board)
 ```
 
-This pipeline demonstrates:
-
-- **Multi-table integration**: Joining sales and customer data
-- **Data cleaning**: Filtering out low-value transactions  
-- **Feature engineering**: Adding calculated columns for analysis
-- **Data quality**: Removing duplicates and sorting results
-- **Business analysis**: Monthly summaries by region with key metrics
-- **Result focusing**: Extracting top 10 results for dashboard display
-
-## Features
-
-- ✅ **Complete dplyr coverage**: All major data transformation operations
-- ✅ **Visual interfaces**: Intuitive UIs for complex operations  
-- ✅ **Multi-expression support**: Add/remove expressions dynamically
-- ✅ **Advanced joins**: Multi-column joins with visual configuration
-- ✅ **Interactive pipelines**: Drag-and-drop workflow building
-- ✅ **Real-time feedback**: See results as you configure blocks
-- ✅ **Professional UIs**: Clean, modern interfaces with validation
-- ✅ **Full integration**: Works seamlessly with blockr.core and blockr.ui
-
 ## Learn More
 
 - [blockr.core documentation](https://github.com/cynkra/blockr.core)
-- [blockr.ui documentation](https://github.com/cynkra/blockr.ui) 
+- [blockr.ui documentation](https://github.com/cynkra/blockr.ui)
 - [dplyr documentation](https://dplyr.tidyverse.org/)
