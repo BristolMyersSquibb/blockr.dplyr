@@ -69,10 +69,20 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Comprehensive testing** - 22 tests covering all input formats and integration
    - **Clean UI** - Simple interface without sorting arrows for intuitive use
 
+## Next Implementation Priority
+
+### Slice Block (In Development)
+- **slice** variants - Comprehensive row selection by position, value, or random sampling
+  - slice() for custom positions
+  - slice_head()/slice_tail() for first/last rows
+  - slice_min()/slice_max() for value-based selection
+  - slice_sample() for random sampling
+- **Grouping via .by parameter** - No need for separate group_by block
+- **Reactive UI** - Immediate updates without submit button
+
 ### Future New Blocks  
-- **group_by** - Explicit grouping block
+- **join** blocks - Table combining operations (after slice implementation)
 - **distinct** - Remove duplicates
-- **slice** variants - Row selection by position
 
 ### UI/UX Improvements
 - Drag-and-drop for reordering expressions/conditions

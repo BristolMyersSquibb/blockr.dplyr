@@ -328,6 +328,69 @@ In the UI, you can:
 4. Use autocompletion for column names and functions
 5. Remove conditions with the trash icon (keeping at least one)
 
+## Slice Block for Row Selection
+
+The `slice` block provides comprehensive row selection using all dplyr slice variants, with support for grouping via the `.by` parameter:
+
+### Select first/last rows
+
+```{r slice-head, eval = FALSE}
+library(blockr.dplyr)
+# Select first 5 rows
+blockr.core::serve(new_slice_block(type = "head", n = 5), data = list(data = mtcars))
+
+# Select last 10% of rows
+blockr.core::serve(new_slice_block(type = "tail", prop = 0.1), data = list(data = mtcars))
+```
+
+### Select by value
+
+```{r slice-minmax, eval = FALSE}
+# Select 3 cars with best fuel economy
+blockr.core::serve(
+  new_slice_block(type = "max", order_by = "mpg", n = 3), 
+  data = list(data = mtcars)
+)
+
+# Select worst mpg per cylinder group
+blockr.core::serve(
+  new_slice_block(type = "min", order_by = "mpg", n = 1, by = "cyl"), 
+  data = list(data = mtcars)
+)
+```
+
+### Random sampling
+
+```{r slice-sample, eval = FALSE}
+# Random sample of 10 rows
+blockr.core::serve(
+  new_slice_block(type = "sample", n = 10), 
+  data = list(data = mtcars)
+)
+
+# Weighted sampling with replacement
+blockr.core::serve(
+  new_slice_block(type = "sample", n = 50, weight_by = "hp", replace = TRUE), 
+  data = list(data = mtcars)
+)
+```
+
+### Custom row positions
+
+```{r slice-custom, eval = FALSE}
+# Select specific rows by position
+blockr.core::serve(
+  new_slice_block(type = "custom", rows = "c(1, 3, 5:10)"), 
+  data = list(data = mtcars)
+)
+
+# Remove first and last rows
+blockr.core::serve(
+  new_slice_block(type = "custom", rows = "-c(1, n())"), 
+  data = list(data = mtcars)
+)
+```
+
 ## Rename Block for Column Renaming
 
 The `dplyr::rename()` block provides an intuitive interface for renaming columns with visual new_name ← old_name mappings:
