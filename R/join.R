@@ -75,15 +75,6 @@ new_join_block <- function(
             )
           })
           
-          # Enable/disable submit based on join configuration
-          observe({
-            keys <- join_keys()
-            has_valid_keys <- length(keys) > 0 && 
-              (!is.list(keys) || any(vapply(keys, function(k) length(k) > 0, logical(1))))
-            
-            shinyjs::toggleState("submit", condition = has_valid_keys)
-          })
-          
           # Build join expression
           build_join_expr <- function(join_type, keys) {
             # Get the dplyr join function
@@ -115,8 +106,13 @@ new_join_block <- function(
           }
 
           list(
-            expr = eventReactive(input$submit, {
+            expr = reactive({
               keys <- join_keys()
+              # Only build expression if we have valid keys
+              req(length(keys) > 0)
+              if (is.list(keys)) {
+                req(any(vapply(keys, function(k) length(k) > 0, logical(1))))
+              }
               build_join_expr(r_join_type(), keys)
             }),
             state = list(
@@ -143,15 +139,6 @@ new_join_block <- function(
         # Join keys configuration module
         mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
         
-        # Submit button
-        div(
-          class = "mt-3 d-flex justify-content-end",
-          actionButton(
-            inputId = NS(id, "submit"),
-            label = "Apply Join",
-            class = "btn-primary"
-          )
-        )
       )
     },
     class = "join_block",

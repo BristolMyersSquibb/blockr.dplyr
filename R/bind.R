@@ -98,7 +98,7 @@ new_bind_rows_block <- function(
           }
           
           list(
-            expr = eventReactive(input$submit, {
+            expr = reactive({
               build_bind_expr(r_add_id(), r_id_name())
             }),
             state = list(
@@ -147,16 +147,6 @@ new_bind_rows_block <- function(
           style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
           h6("Operation Preview:", style = "margin-bottom: 10px; color: #495057;"),
           verbatimTextOutput(NS(id, "data_preview"))
-        ),
-        
-        # Submit button
-        div(
-          class = "d-flex justify-content-end",
-          actionButton(
-            inputId = NS(id, "submit"),
-            label = "Apply Bind Rows",
-            class = "btn-primary"
-          )
         )
       )
     },
@@ -225,13 +215,9 @@ new_bind_cols_block <- function(...) {
             preview_text
           })
           
-          # Enable/disable submit based on row compatibility
-          observe({
-            shinyjs::toggleState("submit", condition = rows_compatible())
-          })
-          
           list(
-            expr = eventReactive(input$submit, {
+            expr = reactive({
+              req(rows_compatible())  # Only proceed if rows are compatible
               quote(dplyr::bind_cols(x, y))
             }),
             state = list()
@@ -247,16 +233,6 @@ new_bind_cols_block <- function(...) {
           style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
           h6("Operation Preview:", style = "margin-bottom: 10px; color: #495057;"),
           verbatimTextOutput(NS(id, "data_preview"))
-        ),
-        
-        # Submit button
-        div(
-          class = "d-flex justify-content-end",
-          actionButton(
-            inputId = NS(id, "submit"),
-            label = "Apply Bind Columns",
-            class = "btn-primary"
-          )
         )
       )
     },

@@ -42,8 +42,7 @@ test_that("bind_rows block UI includes configuration options", {
   # Should include preview
   expect_true(grepl("Operation Preview", ui_str))
   
-  # Should include submit button
-  expect_true(grepl("Apply Bind Rows", ui_str))
+  # No submit button - immediate reactivity
 })
 
 test_that("bind_cols block UI includes configuration options", {
@@ -53,15 +52,10 @@ test_that("bind_cols block UI includes configuration options", {
   # Convert to character for easier testing
   ui_str <- as.character(ui)
   
-  # Should include suffix configuration
-  expect_true(grepl("Left dataset suffix", ui_str))
-  expect_true(grepl("Right dataset suffix", ui_str))
-  
-  # Should include preview
+  # Should include preview (no suffix configuration needed - dplyr handles automatically)
   expect_true(grepl("Operation Preview", ui_str))
   
-  # Should include submit button
-  expect_true(grepl("Apply Bind Columns", ui_str))
+  # No submit button - immediate reactivity
 })
 
 test_that("bind_rows block server functionality", {
