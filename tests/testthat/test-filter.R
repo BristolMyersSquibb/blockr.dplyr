@@ -11,12 +11,9 @@ test_that("filter block constructor", {
   blk <- new_filter_block("mpg > 20 & cyl == 6")
   expect_s3_class(blk, c("filter_block", "transform_block", "block"))
 
-  # Test multi_condition parameter
-  blk_multi <- new_filter_block(multi_condition = TRUE)
+  # Test that block always uses multi-condition interface
+  blk_multi <- new_filter_block()
   expect_s3_class(blk_multi, c("filter_block", "transform_block", "block"))
-
-  blk_single <- new_filter_block(multi_condition = FALSE)
-  expect_s3_class(blk_single, c("filter_block", "transform_block", "block"))
 })
 
 test_that("parse_filter function", {
@@ -119,14 +116,14 @@ test_that("filter block integration with real data", {
   expect_s3_class(blk3, "filter_block")
 })
 
-test_that("filter block backward compatibility", {
-  # Test that old single-condition interface still works
-  blk_old <- new_filter_block("mpg > 20", multi_condition = FALSE)
-  expect_s3_class(blk_old, c("filter_block", "transform_block", "block"))
-
+test_that("filter block default behavior", {
   # Test default TRUE condition
   blk_default <- new_filter_block()
   expect_s3_class(blk_default, c("filter_block", "transform_block", "block"))
+  
+  # Test with initial condition
+  blk_with_condition <- new_filter_block("mpg > 20")
+  expect_s3_class(blk_with_condition, c("filter_block", "transform_block", "block"))
 })
 
 test_that("multi_filter_condition_ui creates proper structure", {
@@ -154,22 +151,17 @@ test_that("mod_multi_filter_ui creates proper structure", {
   })))
 })
 
-test_that("filter block state includes multi_condition parameter", {
-  # Test that state includes multi_condition for proper restoration
-  blk <- new_filter_block("mpg > 20", multi_condition = TRUE)
+test_that("filter block state management", {
+  # Test that block includes proper state for restoration
+  blk <- new_filter_block("mpg > 20")
 
   # The block should be constructible
   expect_s3_class(blk, c("filter_block", "transform_block", "block"))
-
-  # Test with multi_condition = FALSE
-  blk_single <- new_filter_block("mpg > 20", multi_condition = FALSE)
-  expect_s3_class(blk_single, c("filter_block", "transform_block", "block"))
 })
 
-test_that("filter block with different multi_condition values", {
-  # Both should work without errors
-  expect_no_error(new_filter_block("TRUE", multi_condition = TRUE))
-  expect_no_error(new_filter_block("TRUE", multi_condition = FALSE))
-  expect_no_error(new_filter_block("mpg > 20", multi_condition = TRUE))
-  expect_no_error(new_filter_block("mpg > 20", multi_condition = FALSE))
+test_that("filter block construction with different conditions", {
+  # All should work without errors
+  expect_no_error(new_filter_block("TRUE"))
+  expect_no_error(new_filter_block("mpg > 20"))
+  expect_no_error(new_filter_block("mpg > 20 & cyl == 4"))
 })

@@ -124,9 +124,17 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Selected columns on top** - Optional display with numbered badges and easy removal
    - **Enhanced user experience** - Professional styling with visual feedback and intuitive controls
 
-## Current Status: Feature Complete! 🎉
+16. **Codebase Cleanup & API Simplification** - Removed legacy code paths and parameters:
+   - **Filter block simplification** - Removed `multi_condition = FALSE` parameter, always use multi-condition interface
+   - **Arrange block simplification** - Removed `desc` parameter, use list-based specifications only
+   - **Documentation cleanup** - Removed outdated examples and parameters from all documentation
+   - **Test suite refinement** - Updated tests to focus on current interfaces only
+   - **Reduced API surface** - Fewer confusing parameters, single implementation paths for each feature
+   - **Better maintainability** - Cleaner codebase with reduced complexity and technical debt
 
-The blockr.dplyr package is now **feature complete** with all major dplyr operations implemented as interactive blocks:
+## Current Status: Feature Complete & Cleaned Up! 🎉
+
+The blockr.dplyr package is now **feature complete** with all major dplyr operations implemented as interactive blocks, plus a cleaned-up codebase with simplified APIs:
 
 ### Complete Block Ecosystem ✅
 - **Single-table operations**: select (table + card interfaces), filter, mutate, arrange, summarize, slice, rename, distinct

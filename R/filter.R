@@ -6,8 +6,6 @@
 #'
 #' @param string Reactive expression returning character vector of
 #'   filter conditions (default: "TRUE" for no filtering)
-#' @param multi_condition Logical. If TRUE, use multi-condition interface.
-#'   If FALSE, use single expression interface (default: TRUE)
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for filter operations
@@ -19,9 +17,6 @@
 #' # Basic usage with mtcars dataset
 #' library(blockr.core)
 #' serve(new_filter_block(), list(data = mtcars))
-#'
-#' # With single condition interface
-#' serve(new_filter_block(multi_condition = FALSE), list(data = mtcars))
 #'
 #' # With custom initial condition
 #' serve(new_filter_block("mpg > 20"), list(data = mtcars))
@@ -41,27 +36,19 @@
 #' )
 #' }
 #' @export
-new_filter_block <- function(string = "TRUE", multi_condition = TRUE, ...) {
+new_filter_block <- function(string = "TRUE", ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
 
-          # Choose module based on multi_condition parameter
-          r_string <- if (multi_condition) {
-            mod_multi_filter_server(
-              id = "mf",
-              get_value = \() string,
-              get_cols = \() colnames(data())
-            )
-          } else {
-            mod_vexpr_server(
-              id = "v",
-              get_value = \() string,
-              get_cols = \() colnames(data())
-            )
-          }
+          # Use multi-condition filter interface
+          r_string <- mod_multi_filter_server(
+            id = "mf",
+            get_value = \() string,
+            get_cols = \() colnames(data())
+          )
 
           # Store the validated expression
           r_expr_validated <- reactiveVal(parse_filter(string))
@@ -80,8 +67,7 @@ new_filter_block <- function(string = "TRUE", multi_condition = TRUE, ...) {
           list(
             expr = r_expr_validated,
             state = list(
-              string = r_string_validated,
-              multi_condition = multi_condition
+              string = r_string_validated
             )
           )
         }
@@ -90,12 +76,8 @@ new_filter_block <- function(string = "TRUE", multi_condition = TRUE, ...) {
     function(id) {
       div(
         class = "m-3",
-        # Choose UI based on multi_condition parameter
-        if (multi_condition) {
-          mod_multi_filter_ui(NS(id, "mf"))
-        } else {
-          mod_vexpr_ui(NS(id, "v"))
-        },
+        # Use multi-condition filter UI
+        mod_multi_filter_ui(NS(id, "mf")),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(

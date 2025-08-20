@@ -3,18 +3,18 @@
 #' This block allows allows you to order the rows of a data frame by the values
 #' of selected columns (see [dplyr::arrange()]).
 #'
-#' @param columns Columns to arrange by.
-#' @param desc Should columns be sorted in descending order?
+#' @param columns Columns to arrange by. Can be a character vector (ascending order)
+#'   or a list of specifications with column and direction.
 #' @param ... Forwarded to [new_block()]
 #'
 #' @export
-new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
+new_arrange_block <- function(columns = character(), ...) {
 
   # Convert inputs to arrange specifications
   if (is.character(columns) && length(columns) > 0) {
-    # Simple character vector - use same desc for all
+    # Simple character vector - default to ascending order
     initial_arranges <- lapply(columns, function(col) {
-      list(column = col, direction = if (desc) "desc" else "asc")
+      list(column = col, direction = "asc")
     })
   } else if (is.list(columns)) {
     # Already in list format
@@ -60,25 +60,7 @@ new_arrange_block <- function(columns = character(), desc = FALSE, ...) {
               }
             }),
             state = list(
-              arranges = r_arranges,
-              # Backward compatibility - extract columns and desc from arranges
-              columns = reactive({
-                arranges <- r_arranges()
-                if (length(arranges) > 0) {
-                  sapply(arranges, function(arr) arr$column)
-                } else {
-                  character(0)
-                }
-              }),
-              desc = reactive({
-                arranges <- r_arranges()
-                if (length(arranges) > 0) {
-                  # Check if all are desc or mixed - return TRUE if any are desc
-                  any(sapply(arranges, function(arr) arr$direction == "desc"))
-                } else {
-                  FALSE
-                }
-              })
+              arranges = r_arranges
             )
           )
         }
