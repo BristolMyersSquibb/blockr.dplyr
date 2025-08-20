@@ -180,22 +180,13 @@ new_bind_cols_block <- function(...) {
 
           # Generate data preview
           output$data_preview <- renderText({
-            req(x(), y())
+            req(x(), y(), rows_compatible())
             x_data <- x()
             y_data <- y()
 
             x_cols <- colnames(x_data)
             y_cols <- colnames(y_data)
             duplicate_cols <- intersect(x_cols, y_cols)
-
-            if (!rows_compatible()) {
-              return(paste0(
-                "\u26A0\uFE0F ERROR: Row count mismatch!\n",
-                "Left dataset: ", nrow(x_data), " rows\n",
-                "Right dataset: ", nrow(y_data), " rows\n",
-                "bind_cols() requires both datasets to have the same number of rows."
-              ))
-            }
 
             preview_text <- paste0(
               "Left dataset: ", nrow(x_data), " rows, ", ncol(x_data), " columns\n",
