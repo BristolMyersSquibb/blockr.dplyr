@@ -23,70 +23,70 @@ new_bind_rows_block <- function(
           # Initialize reactive values
           r_add_id <- reactiveVal(add_id)
           r_id_name <- reactiveVal(id_name)
-          
+
           # Update settings when inputs change
           observeEvent(input$add_id, {
             r_add_id(input$add_id)
           })
-          
+
           observeEvent(input$id_name, {
             if (nzchar(input$id_name)) {
               r_id_name(input$id_name)
             }
           })
-          
+
           # Generate data preview
           output$data_preview <- renderText({
             req(x(), y())
             x_data <- x()
             y_data <- y()
-            
+
             x_cols <- colnames(x_data)
             y_cols <- colnames(y_data)
             common_cols <- intersect(x_cols, y_cols)
             x_only <- setdiff(x_cols, y_cols)
             y_only <- setdiff(y_cols, x_cols)
-            
+
             preview_text <- paste0(
               "Left dataset: ", nrow(x_data), " rows, ", ncol(x_data), " columns\n",
               "Right dataset: ", nrow(y_data), " rows, ", ncol(y_data), " columns\n",
-              "Result: ", nrow(x_data) + nrow(y_data), " rows, ", 
+              "Result: ", nrow(x_data) + nrow(y_data), " rows, ",
               length(union(x_cols, y_cols)), " columns\n\n"
             )
-            
+
             if (length(common_cols) > 0) {
-              preview_text <- paste0(preview_text, 
+              preview_text <- paste0(preview_text,
                 "Common columns: ", paste(common_cols, collapse = ", "), "\n")
             }
-            
+
             if (length(x_only) > 0) {
-              preview_text <- paste0(preview_text, 
-                "Left-only columns: ", paste(x_only, collapse = ", "), 
+              preview_text <- paste0(preview_text,
+                "Left-only columns: ", paste(x_only, collapse = ", "),
                 " (will be filled with NA in right data)\n")
             }
-            
+
             if (length(y_only) > 0) {
-              preview_text <- paste0(preview_text, 
-                "Right-only columns: ", paste(y_only, collapse = ", "), 
+              preview_text <- paste0(preview_text,
+                "Right-only columns: ", paste(y_only, collapse = ", "),
                 " (will be filled with NA in left data)\n")
             }
-            
+
             if (r_add_id()) {
               preview_text <- paste0(preview_text, "\n",
                 "ID column '", r_id_name(), "' will be added to identify source datasets")
             }
-            
+
             preview_text
           })
-          
+
           # Build bind_rows expression
           build_bind_expr <- function(add_id, id_name) {
             if (add_id) {
               # Create named list with ID labels
               bquote(
                 dplyr::bind_rows(
-                  `1` = x, 
-                  `2` = y, 
+                  `1` = x,
+                  `2` = y,
                   .id = .(id_col)
                 ),
                 list(id_col = id_name)
@@ -96,7 +96,7 @@ new_bind_rows_block <- function(
               quote(dplyr::bind_rows(x, y))
             }
           }
-          
+
           list(
             expr = reactive({
               build_bind_expr(r_add_id(), r_id_name())
@@ -115,7 +115,7 @@ new_bind_rows_block <- function(
         div(
           class = "mb-3",
           h5("Bind Rows Configuration", style = "margin-bottom: 15px;"),
-          
+
           # Add ID column option
           div(
             class = "form-group",
@@ -125,7 +125,7 @@ new_bind_rows_block <- function(
               value = add_id
             )
           ),
-          
+
           # ID column name input
           conditionalPanel(
             condition = sprintf("input['%s']", NS(id, "add_id")),
@@ -140,7 +140,7 @@ new_bind_rows_block <- function(
             )
           )
         ),
-        
+
         # Data preview
         div(
           class = "data-preview mb-3 p-3",
@@ -177,17 +177,17 @@ new_bind_cols_block <- function(...) {
             req(x(), y())
             nrow(x()) == nrow(y())
           })
-          
+
           # Generate data preview
           output$data_preview <- renderText({
             req(x(), y())
             x_data <- x()
             y_data <- y()
-            
+
             x_cols <- colnames(x_data)
             y_cols <- colnames(y_data)
             duplicate_cols <- intersect(x_cols, y_cols)
-            
+
             if (!rows_compatible()) {
               return(paste0(
                 "⚠️ ERROR: Row count mismatch!\n",
@@ -196,13 +196,13 @@ new_bind_cols_block <- function(...) {
                 "bind_cols() requires both datasets to have the same number of rows."
               ))
             }
-            
+
             preview_text <- paste0(
               "Left dataset: ", nrow(x_data), " rows, ", ncol(x_data), " columns\n",
               "Right dataset: ", nrow(y_data), " rows, ", ncol(y_data), " columns\n",
               "Result: ", nrow(x_data), " rows, ", ncol(x_data) + ncol(y_data), " columns\n"
             )
-            
+
             if (length(duplicate_cols) > 0) {
               preview_text <- paste0(preview_text, "\n",
                 "Duplicate column names found: ", paste(duplicate_cols, collapse = ", "), "\n",
@@ -211,10 +211,10 @@ new_bind_cols_block <- function(...) {
             } else {
               preview_text <- paste0(preview_text, "\n", "No duplicate column names.")
             }
-            
+
             preview_text
           })
-          
+
           list(
             expr = reactive({
               req(rows_compatible())  # Only proceed if rows are compatible

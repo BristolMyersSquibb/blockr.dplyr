@@ -17,7 +17,7 @@ new_join_block <- function(
 ) {
   join_types <- c(
     "left_join" = "Left Join - Keep all rows from left dataset",
-    "inner_join" = "Inner Join - Keep only matching rows from both datasets", 
+    "inner_join" = "Inner Join - Keep only matching rows from both datasets",
     "right_join" = "Right Join - Keep all rows from right dataset",
     "full_join" = "Full Join - Keep all rows from both datasets",
     "semi_join" = "Semi Join - Keep left rows that have matches in right",
@@ -38,18 +38,18 @@ new_join_block <- function(
           # Initialize state reactives
           r_join_type <- reactiveVal(type)
           r_join_keys <- reactiveVal(by)
-          
+
           # Column name providers for join keys module
           get_x_cols <- reactive({
             req(x())
             colnames(x())
           })
-          
+
           get_y_cols <- reactive({
             req(y())
             colnames(y())
           })
-          
+
           # Initialize join keys module
           join_keys <- mod_join_keys_server(
             "join_keys",
@@ -57,14 +57,14 @@ new_join_block <- function(
             get_y_cols = get_y_cols,
             initial_keys = by
           )
-          
+
           # Update join type when input changes
           observeEvent(input$type, {
             if (input$type %in% names(join_types)) {
               r_join_type(input$type)
             }
           })
-          
+
           # Update join type selector when data changes
           observe({
             updateSelectInput(
@@ -74,7 +74,7 @@ new_join_block <- function(
               selected = r_join_type()
             )
           })
-          
+
           # Build join expression
           build_join_expr <- function(join_type, keys) {
             # Get the dplyr join function
@@ -84,7 +84,7 @@ new_join_block <- function(
                 list(fun = as.name(join_type))
               )
             )
-            
+
             # Handle different join key formats
             if (is.character(keys) && length(keys) > 0) {
               # Simple character vector - natural join
@@ -135,10 +135,10 @@ new_join_block <- function(
             width = "100%"
           )
         ),
-        
+
         # Join keys configuration module
         mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
-        
+
       )
     },
     class = "join_block",
