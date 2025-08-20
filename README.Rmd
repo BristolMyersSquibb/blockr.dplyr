@@ -183,7 +183,7 @@ transactions <- data.frame(
 # Multi-dataframe operations with DAG board - correct syntax!
 board <- blockr.ui::new_dag_board(
   blocks = c(
-    customers_block = new_dataset_block("customers"), 
+    customers_block = new_dataset_block("customers"),
     transactions_block = new_dataset_block("transactions"),
     join_block = new_join_block()
   ),
@@ -263,12 +263,12 @@ library(blockr.ui)
 
 # Simple multi-dataframe example
 current_customers <- data.frame(
-  id = 1:3, name = c("Alice", "Bob", "Charlie"), 
+  id = 1:3, name = c("Alice", "Bob", "Charlie"),
   region = c("East", "West", "North")
 )
 
 new_customers <- data.frame(
-  id = 4:5, name = c("Diana", "Eve"), 
+  id = 4:5, name = c("Diana", "Eve"),
   region = c("South", "East")
 )
 
@@ -315,7 +315,7 @@ The enhanced multi-dataframe blocks feature:
 
 All multi-dataframe operations work seamlessly with the **blockr.ui visual DAG board interface**:
 
-- **Drag-and-drop pipeline building**: Visually connect blocks in the interactive interface  
+- **Drag-and-drop pipeline building**: Visually connect blocks in the interactive interface
 - **Multi-input block support**: Properly handles `x` and `y` inputs for joins and binding operations
 - **Real-time data flow**: See data flowing through your multi-table transformations
 - **Both approaches supported**: Use DAG boards for visual building or direct `blockr.core::serve()` for simplicity
@@ -325,7 +325,7 @@ All multi-dataframe operations work seamlessly with the **blockr.ui visual DAG b
 
 #### Join Block Features:
 - **Advanced join types**: All 6 dplyr join types with clear descriptions
-- **Multi-column joins**: Support for complex column mappings between different datasets  
+- **Multi-column joins**: Support for complex column mappings between different datasets
 - **Same-name joins**: Natural joins on common column names
 - **Different-name joins**: Visual interface for mapping columns with different names
 - **Real-time preview**: See join configuration and column mappings before applying
@@ -336,7 +336,7 @@ All multi-dataframe operations work seamlessly with the **blockr.ui visual DAG b
 - **Source tracking**: Optional ID column to identify which dataset each row came from
 - **Real-time preview**: Shows column differences and result structure
 
-#### Bind Columns Block Features:  
+#### Bind Columns Block Features:
 - **Row count validation**: Prevents binding datasets with different row counts
 - **Duplicate column handling**: Configurable suffixes for columns with same names
 - **Real-time validation**: Immediate feedback on compatibility and conflicts
@@ -358,7 +358,7 @@ blockr.core::serve(
       mean_mpg = "mean(mpg)",
       max_hp = "max(hp)",
       count = "n()"
-    ),
+  ),
     by = c("cyl", "am")
   ),
   data = list(data = mtcars)

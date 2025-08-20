@@ -90,8 +90,7 @@ test_that("join block UI includes enhanced components", {
   # Should include join keys configuration
   expect_true(grepl("join_keys", ui_str))
   
-  # Should include submit button
-  expect_true(grepl("Apply Join", ui_str))
+  # No submit button - immediate reactivity
 })
 
 test_that("join block handles empty by parameter gracefully", {
