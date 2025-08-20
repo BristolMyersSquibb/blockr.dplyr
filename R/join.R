@@ -138,4 +138,3 @@ new_join_block <- function(
     ...
   )
 }
-

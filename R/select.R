@@ -113,4 +113,3 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
     )
   }
 }
-

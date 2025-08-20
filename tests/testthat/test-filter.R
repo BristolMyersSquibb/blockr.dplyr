@@ -173,4 +173,3 @@ test_that("filter block with different multi_condition values", {
   expect_no_error(new_filter_block("mpg > 20", multi_condition = TRUE))
   expect_no_error(new_filter_block("mpg > 20", multi_condition = FALSE))
 })
-

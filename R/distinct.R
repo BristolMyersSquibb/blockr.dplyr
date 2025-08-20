@@ -203,4 +203,3 @@ run_distinct_example <- function() {
 
   shinyApp(ui, server)
 }
-

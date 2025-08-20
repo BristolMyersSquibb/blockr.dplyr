@@ -348,4 +348,3 @@ run_multi_rename_example <- function() {
     }
   )
 }
-
