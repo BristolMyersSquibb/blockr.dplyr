@@ -425,8 +425,8 @@ run_multi_select_example <- function() {
       r_result <- mod_multi_select_server(
         "ms",
         get_value = function() c("mpg", "cyl"),
-        get_cols = function() colnames(mtcars),
-        get_data_preview = function() mtcars
+        get_cols = function() colnames(datasets::mtcars),
+        get_data_preview = function() datasets::mtcars
       )
 
       output$selected <- renderPrint({

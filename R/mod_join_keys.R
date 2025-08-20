@@ -300,9 +300,6 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
   )
 }
 
-#' Helper function for NULL default
-#' @keywords internal
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 #' Keep function for filtering lists
 #' @keywords internal
