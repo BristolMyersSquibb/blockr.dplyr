@@ -60,7 +60,15 @@ new_arrange_block <- function(columns = character(), ...) {
               }
             }),
             state = list(
-              arranges = r_arranges
+              arranges = r_arranges,
+              columns = reactive({
+                arranges <- r_arranges()
+                if (length(arranges) > 0) {
+                  sapply(arranges, function(arr) arr$column)
+                } else {
+                  character(0)
+                }
+              })
             )
           )
         }
