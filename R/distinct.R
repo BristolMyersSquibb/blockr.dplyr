@@ -9,9 +9,6 @@
 #' @param ... Forwarded to [new_block()]
 #'
 #' @importFrom dplyr distinct
-#' @importFrom dplyr all_of
-#' @importFrom dplyr across
-#' @importFrom dplyr everything
 #' @importFrom glue glue
 #'
 #' @export
