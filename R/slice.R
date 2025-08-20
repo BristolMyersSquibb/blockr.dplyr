@@ -303,4 +303,3 @@ new_slice_block <- function(
     ...
   )
 }
-
