@@ -155,3 +155,4 @@ apply_filter <- function(data, string, r_expr_validated, r_string_validated) {
   r_expr_validated(expr)
   r_string_validated(string)
 }
+

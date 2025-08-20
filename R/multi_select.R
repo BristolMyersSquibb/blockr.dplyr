@@ -16,21 +16,21 @@
 mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     # Initialize with values from get_value
     initial_columns <- get_value()
     if (!is.character(initial_columns)) {
       initial_columns <- character(0)
     }
-    
+
     # Store selected columns as reactive value - validate against available columns
     r_selected <- reactiveVal()
     r_cols <- reactive(get_cols())
     r_data_preview <- reactive(get_data_preview())
-    
+
     # Track initialization to avoid overwriting user selections
     r_initialized <- reactiveVal(FALSE)
-    
+
     # Initialize selected columns once we have available columns
     observe({
       if (!r_initialized()) {
@@ -43,39 +43,39 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
         }
       }
     })
-    
+
     # Search filter
     r_search <- reactiveVal("")
-    
+
     # Update search when input changes
     observeEvent(input$search, {
       r_search(input$search)
     })
-    
+
     # Get filtered columns based on search
     r_filtered_cols <- reactive({
       cols <- r_cols()
       search_term <- r_search()
-      
+
       if (search_term == "" || is.null(search_term)) {
         return(cols)
       }
-      
+
       # Case-insensitive search
       grep(search_term, cols, value = TRUE, ignore.case = TRUE)
     })
-    
+
     # Handle individual column selection
     observe({
       cols <- r_cols()
-      
+
       # Watch for changes in any column checkbox
       lapply(cols, function(col) {
         input_id <- paste0("col_", make.names(col))
-        
+
         observeEvent(input[[input_id]], {
           current_selected <- r_selected()
-          
+
           if (isTRUE(input[[input_id]])) {
             # Add column if not already selected
             if (!col %in% current_selected) {
@@ -88,17 +88,17 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
         })
       })
     })
-    
+
     # Select All button
     observeEvent(input$select_all, {
       r_selected(r_filtered_cols())
     })
-    
+
     # Select None button
     observeEvent(input$select_none, {
       r_selected(character(0))
     })
-    
+
     # Invert Selection button
     observeEvent(input$invert_selection, {
       current_selected <- r_selected()
@@ -106,11 +106,11 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
       new_selection <- setdiff(available_cols, current_selected)
       r_selected(new_selection)
     })
-    
+
     # Get column information for display
     get_column_info <- function(col) {
       data_preview <- r_data_preview()
-      
+
       if (is.null(data_preview) || !col %in% names(data_preview)) {
         return(list(
           type = "unknown",
@@ -119,12 +119,12 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
           unique_count = 0
         ))
       }
-      
+
       col_data <- data_preview[[col]]
-      
+
       # Get column type
       col_type <- class(col_data)[1]
-      
+
       # Get sample values (first 3 non-NA values)
       sample_vals <- head(col_data[!is.na(col_data)], 3)
       sample_text <- if (length(sample_vals) > 0) {
@@ -132,13 +132,13 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
       } else {
         "All NA"
       }
-      
+
       # Get NA count
       na_count <- sum(is.na(col_data))
-      
+
       # Get unique count
       unique_count <- length(unique(col_data))
-      
+
       list(
         type = col_type,
         sample = sample_text,
@@ -147,29 +147,29 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
         total_count = length(col_data)
       )
     }
-    
+
     # Render column selection UI
     output$columns_ui <- renderUI({
       filtered_cols <- r_filtered_cols()
       selected_cols <- r_selected()
-      
+
       # Handle NULL selected_cols
       if (is.null(selected_cols)) {
         selected_cols <- character(0)
       }
-      
+
       if (length(filtered_cols) == 0) {
         return(div(
           class = "text-muted text-center p-3",
           "No columns match your search criteria"
         ))
       }
-      
+
       # Create column cards
       column_cards <- lapply(filtered_cols, function(col) {
         col_info <- get_column_info(col)
         is_selected <- col %in% selected_cols
-        
+
         multi_select_column_card(
           ns(paste0("col_", make.names(col))),
           column_name = col,
@@ -177,27 +177,27 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
           is_selected = is_selected
         )
       })
-      
+
       tagList(column_cards)
     })
-    
+
     # Render selection summary
     output$selection_summary <- renderUI({
       selected_cols <- r_selected()
       total_cols <- length(r_cols())
-      
+
       # Handle NULL selected_cols
       if (is.null(selected_cols)) {
         selected_cols <- character(0)
       }
-      
+
       if (length(selected_cols) == 0) {
         return(div(
           class = "alert alert-info",
           "No columns selected"
         ))
       }
-      
+
       div(
         class = "selection-summary p-2 border rounded",
         div(
@@ -216,7 +216,7 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
         )
       )
     })
-    
+
     # Return the reactive selected columns
     reactive({
       selected <- r_selected()
@@ -236,7 +236,7 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
 #' @export
 mod_multi_select_ui <- function(id) {
   ns <- NS(id)
-  
+
   tagList(
     shinyjs::useShinyjs(),
     tags$style("
@@ -244,7 +244,7 @@ mod_multi_select_ui <- function(id) {
         max-height: 600px;
         overflow-y: auto;
       }
-      
+
       .column-card {
         border: 1px solid var(--bs-border-color);
         border-radius: 0.375rem;
@@ -253,63 +253,63 @@ mod_multi_select_ui <- function(id) {
         transition: all 0.2s ease;
         cursor: pointer;
       }
-      
+
       .column-card:hover {
         border-color: var(--bs-primary);
         box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
       }
-      
+
       .column-card.selected {
         border-color: var(--bs-primary);
         background-color: rgba(var(--bs-primary-rgb), 0.1);
       }
-      
+
       .column-header {
         display: flex;
         align-items: center;
         font-weight: 600;
         margin-bottom: 0.25rem;
       }
-      
+
       .column-checkbox {
         margin-right: 0.5rem;
       }
-      
+
       .column-type {
         font-size: 0.875rem;
         color: var(--bs-secondary);
         margin-bottom: 0.25rem;
       }
-      
+
       .column-sample {
         font-size: 0.75rem;
         color: var(--bs-muted);
         font-family: monospace;
       }
-      
+
       .column-stats {
         font-size: 0.75rem;
         color: var(--bs-secondary);
         margin-top: 0.25rem;
       }
-      
+
       .selection-controls {
         display: flex;
         gap: 0.5rem;
         margin-bottom: 1rem;
         flex-wrap: wrap;
       }
-      
+
       .search-box {
         margin-bottom: 1rem;
       }
-      
+
       .selected-columns {
         display: flex;
         flex-wrap: wrap;
         gap: 0.25rem;
       }
-      
+
       .selection-summary {
         margin-top: 1rem;
         background-color: var(--bs-light);
@@ -362,7 +362,7 @@ mod_multi_select_ui <- function(id) {
 #' @return A div containing the column card UI
 multi_select_column_card <- function(id, column_name, column_info, is_selected = FALSE) {
   card_class <- paste("column-card", if (is_selected) "selected" else "")
-  
+
   div(
     class = card_class,
     onclick = sprintf("document.getElementById('%s').click()", id),
@@ -383,7 +383,7 @@ multi_select_column_card <- function(id, column_name, column_info, is_selected =
     if (nchar(column_info$sample) > 0 && column_info$sample != "All NA") {
       div(
         class = "column-sample",
-        sprintf("Sample: %s", 
+        sprintf("Sample: %s",
           if (nchar(column_info$sample) > 50) {
             paste0(substr(column_info$sample, 1, 47), "...")
           } else {
@@ -394,8 +394,8 @@ multi_select_column_card <- function(id, column_name, column_info, is_selected =
     },
     div(
       class = "column-stats",
-      sprintf("Unique: %d | NA: %d", 
-              column_info$unique_count, 
+      sprintf("Unique: %d | NA: %d",
+              column_info$unique_count,
               column_info$na_count)
     )
   )
@@ -428,7 +428,7 @@ run_multi_select_example <- function() {
         get_cols = function() colnames(mtcars),
         get_data_preview = function() mtcars
       )
-      
+
       output$selected <- renderPrint({
         selected <- r_result()
         if (length(selected) > 0) {
@@ -437,7 +437,7 @@ run_multi_select_example <- function() {
           cat("No columns selected")
         }
       })
-      
+
       output$code <- renderPrint({
         selected <- r_result()
         if (length(selected) > 0) {
@@ -450,3 +450,4 @@ run_multi_select_example <- function() {
     }
   )
 }
+

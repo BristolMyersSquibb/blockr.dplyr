@@ -9,7 +9,7 @@
 #'
 #' @export
 new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
-  
+
   if (enhanced) {
     # Use enhanced multi-select interface
     new_transform_block(
@@ -18,7 +18,7 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
           id,
           function(input, output, session) {
             cols <- reactive(colnames(data()))
-            
+
             # Use the multi select module
             r_selected <- mod_multi_select_server(
               "multi_select",
@@ -30,7 +30,7 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
             list(
               expr = reactive({
                 selected_cols <- r_selected()
-                
+
                 if (length(selected_cols) == 0) {
                   # No columns selected - select none (this will result in empty data frame)
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
@@ -113,3 +113,4 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
     )
   }
 }
+

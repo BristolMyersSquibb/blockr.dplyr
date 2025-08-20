@@ -16,7 +16,7 @@
 mod_multi_filter_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     # Initialize with values from get_value
     initial_value <- get_value()
     if (is.character(initial_value) && length(initial_value) == 1) {
@@ -32,18 +32,18 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
     } else {
       initial_conditions <- list("TRUE")
     }
-    
+
     # Store conditions as reactive value
     r_conditions <- reactiveVal(initial_conditions)
     r_cols <- reactive(get_cols())
-    
+
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
-    
+
     # Track AND/OR logic between conditions
     r_logic_operators <- reactiveVal(rep("&", max(0, length(initial_conditions) - 1)))
-    
+
     # Initialize ACE editors for existing conditions
     observe({
       indices <- r_condition_indices()
@@ -51,34 +51,34 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         initialize_ace_editor(session, ns(paste0("condition_", i)), r_cols())
       }
     })
-    
+
     # Collect current values from all inputs
     get_current_conditions <- function() {
       indices <- r_condition_indices()
       if (length(indices) == 0) return(list())
-      
+
       result <- list()
       for (i in indices) {
         condition_id <- paste0("condition_", i)
         condition <- input[[condition_id]]
-        
+
         if (!is.null(condition) && condition != "") {
           result <- append(result, condition)
         }
       }
-      
+
       if (length(result) == 0) {
         result <- list("TRUE")
       }
-      
+
       result
     }
-    
+
     # Get current logic operators
     get_current_logic <- function() {
       indices <- r_condition_indices()
       if (length(indices) <= 1) return(character(0))
-      
+
       operators <- character(0)
       for (i in seq_len(length(indices) - 1)) {
         logic_id <- paste0("logic_", i)
@@ -88,48 +88,48 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
       }
       operators
     }
-    
+
     # Add new condition
     observeEvent(input$add_condition, {
       current_indices <- r_condition_indices()
       new_index <- r_next_index()
-      
+
       # Add new index
       r_condition_indices(c(current_indices, new_index))
       r_next_index(new_index + 1)
-      
+
       # Add new logic operator if we have more than one condition
       current_logic <- r_logic_operators()
       if (length(current_indices) >= 1) {
         r_logic_operators(c(current_logic, "&"))  # Default to AND
       }
-      
+
       # Update conditions
       current <- get_current_conditions()
       current <- append(current, "TRUE")
       r_conditions(current)
     })
-    
+
     # Remove condition handlers - create them dynamically
     observe({
       indices <- r_condition_indices()
-      
+
       lapply(indices, function(i) {
         observeEvent(input[[paste0("condition_", i, "_remove")]], {
           current_indices <- r_condition_indices()
-          
+
           if (length(current_indices) > 1) {
             # Remove this index
             new_indices <- setdiff(current_indices, i)
             r_condition_indices(new_indices)
-            
+
             # Update logic operators (remove one if needed)
             current_logic <- r_logic_operators()
             if (length(current_logic) >= length(new_indices)) {
               # Remove the last operator
               r_logic_operators(current_logic[-length(current_logic)])
             }
-            
+
             # Update conditions
             current <- get_current_conditions()
             r_conditions(current)
@@ -137,7 +137,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         })
       })
     })
-    
+
     # Update logic operators when they change
     observe({
       indices <- r_condition_indices()
@@ -146,24 +146,24 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         r_logic_operators(new_logic)
       }
     })
-    
+
     # Render UI dynamically
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
       conditions <- r_conditions()
       logic_ops <- r_logic_operators()
-      
+
       if (length(indices) == 0) {
         return(NULL)
       }
-      
+
       # Create UI for each condition
       ui_elements <- list()
-      
+
       for (j in seq_along(indices)) {
         i <- indices[j]
         condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
-        
+
         # Add the condition row
         ui_elements <- append(ui_elements, list(
           multi_filter_condition_ui(
@@ -172,7 +172,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
             show_remove = (length(indices) > 1)
           )
         ))
-        
+
         # Add logic operator dropdown between conditions (except after last)
         if (j < length(indices)) {
           logic_value <- if (j <= length(logic_ops)) logic_ops[j] else "&"
@@ -190,10 +190,10 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
           ))
         }
       }
-      
+
       tagList(ui_elements)
     })
-    
+
     # Initialize ACE editors when new ones are added
     observeEvent(r_condition_indices(), {
       indices <- r_condition_indices()
@@ -205,7 +205,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         }
       }
     })
-    
+
     # Return the reactive conditions as a combined string
     reactive({
       # Check if any inputs exist yet - if not, use stored conditions
@@ -213,7 +213,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
       has_inputs <- any(sapply(indices, function(i) {
         paste0("condition_", i) %in% names(input)
       }))
-      
+
       if (has_inputs) {
         # Use current input values
         conditions <- get_current_conditions()
@@ -223,7 +223,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         conditions <- r_conditions()
         logic_ops <- r_logic_operators()
       }
-      
+
       if (length(conditions) == 0) {
         return("TRUE")
       } else if (length(conditions) == 1) {
@@ -248,7 +248,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
 #' @export
 mod_multi_filter_ui <- function(id) {
   ns <- NS(id)
-  
+
   tagList(
     shinyjs::useShinyjs(),
     tags$style("
@@ -257,11 +257,11 @@ mod_multi_filter_ui <- function(id) {
         margin: 7px;
         margin-bottom: 7.5px;
       }
-      
+
       .multi-filter-condition .condition-code {
         flex: 1;
       }
-      
+
       .multi-filter-condition .condition-delete {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
@@ -271,17 +271,17 @@ mod_multi_filter_ui <- function(id) {
         align-items: center;
         justify-content: center;
       }
-      
+
       .multi-filter-condition .condition-delete:hover {
         color: var(--bs-white);
         border-color: var(--bs-danger);
         background: var(--bs-danger);
       }
-      
+
       .multi-filter-condition .input-group {
         border: none !important;
       }
-      
+
       .input-group.multi-filter-condition {
         height: 38px !important;
       }
@@ -355,12 +355,12 @@ run_multi_filter_example <- function() {
         get_value = function() "mpg > 20",
         get_cols = function() c("mpg", "cyl", "hp", "wt", "am", "gear")
       )
-      
+
       output$filter <- renderPrint({
         filter_str <- r_result()
         cat(sprintf('"%s"', filter_str))
       })
-      
+
       output$code <- renderPrint({
         filter_str <- r_result()
         cat(sprintf("dplyr::filter(data, %s)", filter_str))
@@ -368,3 +368,4 @@ run_multi_filter_example <- function() {
     }
   )
 }
+

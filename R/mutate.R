@@ -101,7 +101,7 @@ apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
   if (is.list(string)) {
     string <- unlist(string)
   }
-  
+
   # If empty or only whitespace, return simple mutate
   if (all(trimws(unname(string)) == "")) {
     expr <- parse_mutate(string)
@@ -133,3 +133,4 @@ apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
   r_expr_validated(expr)
   r_string_validated(string)
 }
+
