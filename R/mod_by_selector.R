@@ -59,6 +59,12 @@ mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
   })
 }
 
-#' Helper function for NULL default
+#' NULL-coalescing operator
+#' 
+#' Returns the right-hand side if the left-hand side is NULL, otherwise returns the left-hand side.
+#' @param x Left-hand side value
+#' @param y Right-hand side value  
+#' @return x if x is not NULL, otherwise y
 #' @keywords internal
+#' @name null-coalescing
 `%||%` <- function(x, y) if (is.null(x)) y else x

@@ -4,7 +4,7 @@
 #' Supports adding, removing, and reordering sort columns dynamically.
 #'
 #' @param id The module ID
-#' @param get_value Function that returns initial values as a list of \\{column, direction\\} pairs
+#' @param get_value Function that returns initial values as a list of (column, direction) pairs
 #' @param get_cols Function that returns column names for dropdown selection
 #'
 #' @return A reactive expression containing the current arrange configuration

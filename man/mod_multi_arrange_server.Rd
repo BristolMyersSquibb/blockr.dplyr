@@ -9,7 +9,7 @@ mod_multi_arrange_server(id, get_value, get_cols)
 \arguments{
 \item{id}{The module ID}
 
-\item{get_value}{Function that returns initial values as a list of \\{column, direction\\} pairs}
+\item{get_value}{Function that returns initial values as a list of (column, direction) pairs}
 
 \item{get_cols}{Function that returns column names for dropdown selection}
 }

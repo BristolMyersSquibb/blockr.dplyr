@@ -4,12 +4,21 @@
 \alias{mod_by_selector_ui}
 \title{Unified Group By Column Selector Module}
 \usage{
-mod_by_selector_ui(id, label = "Group by columns (optional)")
+mod_by_selector_ui(
+  id,
+  label = "Group by columns (optional)",
+  initial_choices = character(),
+  initial_selected = character()
+)
 }
 \arguments{
 \item{id}{Character string. Module ID.}
 
 \item{label}{Character string. Label for the selector. Default: "Group by columns (optional)"}
+
+\item{initial_choices}{Character vector. Initial choices for the selector.}
+
+\item{initial_selected}{Character vector. Initial selected values.}
 }
 \value{
 For UI function, returns a shiny tag. For server function, returns a reactive
