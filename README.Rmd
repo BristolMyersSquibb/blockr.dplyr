@@ -365,6 +365,116 @@ blockr.core::serve(
 )
 ```
 
+### Comprehensive dplyr Analysis Pipeline
+
+Here's a complex DAG board that demonstrates most dplyr blocks in a realistic data analysis workflow:
+
+```{r comprehensive-dag, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create comprehensive data analysis pipeline
+comprehensive_board <- blockr.ui::new_dag_board(
+  blocks = c(
+    # Data sources
+    sales_raw = new_dataset_block("sales_data"),
+    customers_raw = new_dataset_block("customer_data"),
+    products_raw = new_dataset_block("product_data"),
+    
+    # Data cleaning and preparation
+    sales_clean = new_filter_block(),           # Remove invalid sales
+    customers_select = new_select_block(),      # Select relevant customer columns
+    products_rename = new_rename_block(),       # Standardize product column names
+    
+    # Multi-dataframe operations  
+    sales_customers = new_join_block(),         # Join sales with customer data
+    full_dataset = new_join_block(),            # Join with product data
+    
+    # Data transformations
+    sales_enhanced = new_mutate_block(),        # Add calculated columns
+    sales_distinct = new_distinct_block(),      # Remove duplicates
+    sales_arranged = new_arrange_block(),       # Sort by date and amount
+    
+    # Data binding operations
+    current_sales = new_filter_block(),         # This year's sales
+    previous_sales = new_filter_block(),        # Last year's sales  
+    all_sales = new_bind_rows_block(),          # Combine time periods
+    
+    # Analysis and summarization
+    region_summary = new_summarize_block(),     # Regional performance
+    product_summary = new_summarize_block(),    # Product performance
+    time_summary = new_summarize_block(),       # Time-based analysis
+    
+    # Final data slice for dashboard
+    top_performers = new_slice_block()          # Top 10 results
+  ),
+  links = c(
+    # Data cleaning pipeline (single-input blocks use "data")
+    sales_filter = new_link("sales_raw", "sales_clean", "data"),
+    customer_select = new_link("customers_raw", "customers_select", "data"),  
+    product_rename = new_link("products_raw", "products_rename", "data"),
+    
+    # Join operations (multi-input blocks use "x" and "y")
+    sales_join1 = new_link("sales_clean", "sales_customers", "x"),
+    customer_join1 = new_link("customers_select", "sales_customers", "y"),
+    sales_join2 = new_link("sales_customers", "full_dataset", "x"),
+    product_join2 = new_link("products_rename", "full_dataset", "y"),
+    
+    # Enhancement pipeline (single-input blocks use "data")
+    enhance = new_link("full_dataset", "sales_enhanced", "data"),
+    distinct = new_link("sales_enhanced", "sales_distinct", "data"),
+    arrange = new_link("sales_distinct", "sales_arranged", "data"),
+    
+    # Time-based splitting (single-input blocks use "data")
+    current_filter = new_link("sales_arranged", "current_sales", "data"),
+    previous_filter = new_link("sales_arranged", "previous_sales", "data"),
+    time_bind = new_link("current_sales", "all_sales", "x"),
+    time_bind2 = new_link("previous_sales", "all_sales", "y"),
+    
+    # Analysis branches (single-input blocks use "data")
+    region_analysis = new_link("all_sales", "region_summary", "data"),
+    product_analysis = new_link("all_sales", "product_summary", "data"),  
+    time_analysis = new_link("all_sales", "time_summary", "data"),
+    
+    # Final slice (single-input block uses "data")
+    top_slice = new_link("region_summary", "top_performers", "data")
+  )
+)
+
+blockr.core::serve(comprehensive_board)
+```
+
+This comprehensive pipeline demonstrates:
+
+**Data Sources & Input:**
+- Multiple datasets (sales, customers, products)
+- Real-world multi-table scenario
+
+**Data Cleaning & Preparation:**
+- `filter_block` - Remove invalid or unwanted rows
+- `select_block` - Choose relevant columns  
+- `rename_block` - Standardize column names
+
+**Multi-Dataframe Operations:**
+- `join_block` - Multiple join operations for data integration
+- `bind_rows_block` - Combine time periods or similar datasets
+
+**Data Transformation:**
+- `mutate_block` - Add calculated fields and derived columns
+- `distinct_block` - Remove duplicate records
+- `arrange_block` - Sort data for analysis
+
+**Analysis & Summarization:**
+- Multiple `summarize_block` - Different analytical perspectives
+- `slice_block` - Extract top performers or specific subsets
+
+**Complex Workflow Features:**
+- **Branching pipelines** - Data flows to multiple analysis paths
+- **Multi-input operations** - Joins and binds with proper input specification  
+- **Realistic data flow** - Mirrors actual business analysis workflows
+- **Modular design** - Each block handles a specific transformation step
+
 ### Full dashboard example
 
 Create a complete data analysis workflow by connecting multiple blocks:
