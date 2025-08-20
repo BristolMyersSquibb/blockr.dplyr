@@ -10,8 +10,8 @@ test_that("distinct block basic functionality works", {
 
 test_that("distinct block UI renders correctly", {
   block <- new_distinct_block()
-  # Blocks created with new_transform_block have ui as a function
-  layout <- block$ui("test")
+  # Blocks created with new_transform_block have expr_ui as a function
+  layout <- block[["expr_ui"]]("test")
 
   # Check that layout returns a UI element
   expect_s3_class(layout, "shiny.tag")
