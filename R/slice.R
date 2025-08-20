@@ -295,7 +295,7 @@ new_slice_block <- function(
         ),
 
         # Group by columns using unified componen
-        mod_by_selector_ui(ns("by_selector"))
+        mod_by_selector_ui(ns("by_selector"), initial_choices = by, initial_selected = by)
       )
     },
     class = "slice_block",
