@@ -4,7 +4,7 @@
 \alias{new_summarize_block}
 \title{Summarize block constructor}
 \usage{
-new_summarize_block(string = list(count = "n()"), by = character(), ...)
+new_summarize_block(string = list(count = "dplyr::n()"), by = character(), ...)
 }
 \arguments{
 \item{string}{Reactive expression returning character vector of
