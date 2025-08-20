@@ -8,8 +8,6 @@ new_bind_cols_block(...)
 }
 \arguments{
 \item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
-
-\item{suffix}{Character vector of length 2, suffixes to add to duplicate column names}
 }
 \value{
 A block object for bind_cols operations
@@ -17,5 +15,6 @@ A block object for bind_cols operations
 \description{
 This block allows for column-wise combination of two data frames
 using \code{\link[dplyr:bind_cols]{dplyr::bind_cols()}}. It combines data frames side-by-side,
-requiring them to have the same number of rows.
+requiring them to have the same number of rows. Duplicate column names
+are automatically handled by dplyr.
 }

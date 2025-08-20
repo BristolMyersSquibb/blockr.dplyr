@@ -213,7 +213,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         if (length(valid_mappings) == 0) {
           "No valid join mappings configured"
         } else {
-          join_specs <- map_chr(valid_mappings, ~paste(.x$x_col, "→", .x$y_col))
+          join_specs <- map_chr(valid_mappings, ~paste(.x$x_col, "\u2192", .x$y_col))
           paste("Custom join on:", paste(join_specs, collapse = ", "))
         }
       }

@@ -4,7 +4,7 @@
 \name{blockr.dplyr-package}
 \alias{blockr.dplyr}
 \alias{blockr.dplyr-package}
-\title{blockr.dplyr: Data wranglingling blocks for 'blockr.core'}
+\title{blockr.dplyr: Data Wrangling Blocks for 'blockr.core'}
 \description{
 Provides access to 'dplyr'-powered data wrangling as blocks for 'blockr.core'.
 }
