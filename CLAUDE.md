@@ -160,12 +160,38 @@ The blockr.dplyr package is now **feature complete** with all major dplyr operat
 
 ## Next Implementation Priority
 
-### Optional Extensions
+### High Priority Missing Functions
+Based on user demand and workflow completeness:
+
+1. **`pull()` Block** - Extract single column as vector
+   - **Use case**: Final step in pipelines to extract results
+   - **Implementation**: Simple single-column selector → vector output
+   - **Priority**: High - completes data extraction workflows
+
+2. **`count()` Block** - Shortcut for group + summarize counting  
+   - **Use case**: Quick frequency analysis and data exploration
+   - **Implementation**: Column selector + optional grouping
+   - **Priority**: High - very common operation
+
+3. **`relocate()` Block** - Change column order/positioning
+   - **Use case**: Reorder columns for better presentation
+   - **Implementation**: Column drag/drop or position specification
+   - **Priority**: Medium-High - useful for data presentation
+
+### Optional Extensions  
+4. **`glimpse()` Block** - Data overview/inspection
+   - **Use case**: Quick data structure overview
+   - **Implementation**: Read-only data preview with structure info
+   - **Priority**: Medium - useful for exploration
+
+### Architectural Enhancements
 - **Add .by support to filter block** - Less common but potentially useful for grouped filtering
 - **Add .by support to arrange block** - May be useful for some use cases
 
-### Future New Blocks
-- All core dplyr blocks are now implemented! 🎉
+### Advanced/Specialized (Lower Priority)
+- **Set operations**: `intersect()`, `union()`, `setdiff()`, `symdiff()` 
+- **Advanced joins**: `cross_join()`, `nest_join()`
+- **Row-wise operations**: `rowwise()` block
 
 ### UI/UX Improvements
 - Drag-and-drop for reordering expressions/conditions
