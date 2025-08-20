@@ -15,7 +15,6 @@ Authors@R:
              role = c("aut"),
              email = "christoph@cynkra.com")
     )
-Author: Nicolas Bennett [aut, cre], David Granjon [aut], Christoph Sax [aut]
 Maintainer: Nicolas Bennett <nicolas@cynkra.com>
 Description: Provides access to 'dplyr'-powered data wrangling as blocks for
     'blockr.core'.
