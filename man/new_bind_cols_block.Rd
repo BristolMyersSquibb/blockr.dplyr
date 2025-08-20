@@ -4,12 +4,12 @@
 \alias{new_bind_cols_block}
 \title{Bind Columns Block Constructor}
 \usage{
-new_bind_cols_block(suffix = c(".x", ".y"), ...)
+new_bind_cols_block(...)
 }
 \arguments{
-\item{suffix}{Character vector of length 2, suffixes to add to duplicate column names}
-
 \item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+
+\item{suffix}{Character vector of length 2, suffixes to add to duplicate column names}
 }
 \value{
 A block object for bind_cols operations

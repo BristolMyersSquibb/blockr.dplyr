@@ -4,12 +4,19 @@
 \alias{new_select_block}
 \title{Select block constructor}
 \usage{
-new_select_block(columns = character(), enhanced = TRUE, ...)
+new_select_block(
+  columns = character(),
+  interface = "table",
+  show_selected_on_top = TRUE,
+  ...
+)
 }
 \arguments{
 \item{columns}{Selected columns}
 
-\item{enhanced}{Use enhanced multi-select interface (default TRUE)}
+\item{interface}{Interface type: "table" or "cards" (default "table")}
+
+\item{show_selected_on_top}{Whether to show selected columns on top (default TRUE for table interface)}
 
 \item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
 }

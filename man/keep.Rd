@@ -4,7 +4,7 @@
 \alias{keep}
 \title{Keep function for filtering lists}
 \usage{
-keep(x, predicate)
+keep(x, .p)
 }
 \description{
 Keep function for filtering lists
