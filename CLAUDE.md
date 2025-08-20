@@ -219,6 +219,59 @@ Follow the existing patterns in the codebase:
 
 ## Technical Considerations
 
+### CRITICAL: UI Initialization Pattern for Blocks ⚠️
+
+**Block inputs MUST initialize with constructor parameters in the UI definition.** This is essential for proper state management and save/restore functionality in blockr.
+
+#### The Pattern (Required for all blocks)
+```r
+# In UI function - constructor parameters go directly in UI
+selectInput(
+  inputId = NS(id, "param"),
+  choices = param,      # ← Constructor parameter
+  selected = param      # ← Constructor parameter  
+)
+
+# In server function - use updateSelectInput for dynamic changes
+observeEvent(data_changes(), {
+  updateSelectInput(
+    session,
+    inputId = "param",
+    choices = new_choices,
+    selected = current_selection()  # ← Preserve current selection
+  )
+})
+```
+
+#### Why This Matters
+- **blockr.core compatibility** - All blockr.core blocks follow this exact pattern (see subset, head, scatter, merge examples)  
+- **Reliable initialization** - Constructor parameters appear immediately in UI without timing issues
+- **State persistence** - Save/restore functionality works correctly across sessions
+- **No renderUI for inputs** - Dynamic UI causes timing races and initialization failures
+
+#### Module Pattern (for reusable components)
+When using modules that need constructor parameters:
+```r
+# Module UI function
+mod_ui <- function(id, initial_choices = character(), initial_selected = character()) {
+  ns <- NS(id)
+  selectInput(ns("input"), choices = initial_choices, selected = initial_selected, multiple = TRUE)
+}
+
+# In block UI - pass constructor parameters
+mod_ui(NS(id, "module"), initial_choices = param, initial_selected = param)
+```
+
+#### What NOT to Do ❌
+```r
+# BAD: Empty UI with renderUI - causes timing issues
+selectInput(NS(id, "param"), choices = character(), selected = character())
+
+output$dynamic_ui <- renderUI({
+  selectInput(NS(id, "param"), choices = get_choices())  # Will be empty on startup
+})
+```
+
 ### Package Development
 - This package uses roxygen2 for documentation and NAMESPACE generation
 - After modifying imports (e.g., adding @importFrom statements), run `devtools::document()` or `roxygen2::roxygenise()` to regenerate NAMESPACE

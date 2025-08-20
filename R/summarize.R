@@ -79,7 +79,7 @@ new_summarize_block <- function(
       div(
         class = "m-3",
         mod_multi_kvexpr_ui(NS(id, "mkv")),
-        mod_by_selector_ui(NS(id, "by_selector")),
+        mod_by_selector_ui(NS(id, "by_selector"), initial_choices = by, initial_selected = by),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
