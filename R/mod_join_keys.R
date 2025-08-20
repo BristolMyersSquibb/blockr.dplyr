@@ -13,11 +13,11 @@
 #' @export
 mod_join_keys_ui <- function(id, label = "Join Keys") {
   ns <- NS(id)
-  
+
   div(
     class = "join-keys-container",
     h5(label, style = "margin-bottom: 15px;"),
-    
+
     # Natural join option (same column names)
     div(
       class = "form-group",
@@ -27,7 +27,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         value = TRUE
       )
     ),
-    
+
     # Natural join column selector
     conditionalPanel(
       condition = sprintf("input['%s']", ns("use_natural_join")),
@@ -39,7 +39,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         multiple = TRUE
       )
     ),
-    
+
     # Custom join mappings
     conditionalPanel(
       condition = sprintf("!input['%s']", ns("use_natural_join")),
@@ -57,7 +57,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         )
       )
     ),
-    
+
     # Join key summary
     div(
       class = "join-summary mt-3 p-2",
@@ -78,13 +78,13 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
 #' @export
 mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = character()) {
   moduleServer(id, function(input, output, session) {
-    
+
     # Reactive values for managing join mappings
     r_custom_mappings <- reactiveVal(list())
     r_natural_join <- reactiveVal(TRUE)
     r_x_cols <- reactiveVal(character())
     r_y_cols <- reactiveVal(character())
-    
+
     # Initialize with provided keys
     observe({
       if (length(initial_keys) > 0) {
@@ -100,17 +100,17 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         }
       }
     })
-    
+
     # Update column choices when data changes
     observe({
       req(get_x_cols, get_y_cols)
       x_cols <- get_x_cols()
       y_cols <- get_y_cols()
-      
+
       if (length(x_cols) > 0 && length(y_cols) > 0) {
         r_x_cols(x_cols)
         r_y_cols(y_cols)
-        
+
         # Update natural join choices
         common_cols <- intersect(x_cols, y_cols)
         updateSelectInput(
@@ -118,26 +118,32 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
           "natural_keys",
           choices = common_cols,
           selected = if (r_natural_join()) {
-            if (is.character(initial_keys)) initial_keys else common_cols
-          } else character()
+            if (is.character(initial_keys)) {
+              initial_keys
+            } else {
+              common_cols
+            }
+          } else {
+            character()
+          }
         )
       }
     })
-    
+
     # Track natural join toggle
     observeEvent(input$use_natural_join, {
       r_natural_join(input$use_natural_join)
-      
+
       # When switching to custom mode, ensure we have at least one mapping
       if (!input$use_natural_join && length(r_custom_mappings()) == 0) {
         r_custom_mappings(list(list(x_col = "", y_col = "")))
       }
     })
-    
+
     # Generate custom mapping UI
     output$join_mappings_ui <- renderUI({
       mappings <- r_custom_mappings()
-      
+
       # Only render if we have mappings (they should be initialized by now)
       if (length(mappings) > 0) {
         map(seq_along(mappings), function(i) {
@@ -145,14 +151,14 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         })
       }
     })
-    
+
     # Add new mapping
     observeEvent(input$add_mapping, {
       current <- r_custom_mappings()
       new_mapping <- list(x_col = "", y_col = "")
       r_custom_mappings(c(current, list(new_mapping)))
     }, ignoreInit = TRUE)
-    
+
     # Handle mapping updates and deletions
     observe({
       # Listen for all mapping input changes
@@ -163,14 +169,14 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
           y_col <- input[[paste0("y_col_", i)]]
           list(x_col = x_col %||% "", y_col = y_col %||% "")
         })
-        
+
         # Only update if changed to avoid infinite loops
         if (!identical(updated_mappings, mappings)) {
           r_custom_mappings(updated_mappings)
         }
       }
     })
-    
+
     # Handle mapping deletion
     observe({
       mappings <- r_custom_mappings()
@@ -188,7 +194,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         }
       }
     })
-    
+
     # Generate join summary
     output$join_summary <- renderText({
       if (r_natural_join()) {
@@ -203,7 +209,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
       } else {
         mappings <- r_custom_mappings()
         valid_mappings <- keep(mappings, ~nzchar(.x$x_col) && nzchar(.x$y_col))
-        
+
         if (length(valid_mappings) == 0) {
           "No valid join mappings configured"
         } else {
@@ -212,7 +218,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         }
       }
     })
-    
+
     # Return reactive join specification
     reactive({
       if (r_natural_join()) {
@@ -222,7 +228,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         # Custom join - return list of mappings
         mappings <- r_custom_mappings()
         valid_mappings <- keep(mappings, ~nzchar(.x$x_col) && nzchar(.x$y_col))
-        
+
         if (length(valid_mappings) == 0) {
           character()
         } else {
@@ -234,7 +240,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
               setNames(mapping$y_col, mapping$x_col)  # Different names
             }
           })
-          
+
           if (length(join_specs) == 1 && is.character(join_specs[[1]])) {
             join_specs[[1]]
           } else {
@@ -251,7 +257,7 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
   div(
     class = "join-mapping-row mb-2",
     style = "display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 10px; align-items: end;",
-    
+
     # Left dataset column
     div(
       selectInput(
@@ -262,14 +268,14 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
         width = "100%"
       )
     ),
-    
+
     # Arrow indicator
     div(
       style = "display: flex; align-items: center; height: 38px; margin-bottom: 15px;",
       icon("arrow-right", style = "color: #6c757d;")
     ),
-    
-    # Right dataset column  
+
+    # Right dataset column
     div(
       selectInput(
         ns(paste0("y_col_", index)),
@@ -279,7 +285,7 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
         width = "100%"
       )
     ),
-    
+
     # Delete button
     div(
       style = "display: flex; align-items: center; height: 38px; margin-bottom: 15px;",
@@ -302,7 +308,7 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
 #' @keywords internal
 keep <- function(x, .p) {
   if (length(x) == 0) return(x)
-  
+
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.p, "formula")) {
     # Extract the formula body and create a proper function
@@ -312,7 +318,7 @@ keep <- function(x, .p) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }
   }
-  
+
   # Use base R Filter function
   Filter(.p, x)
 }
@@ -328,7 +334,7 @@ map <- function(x, .f) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }
   }
-  
+
   lapply(x, .f)
 }
 
@@ -343,6 +349,6 @@ map_chr <- function(x, .f) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }
   }
-  
+
   vapply(x, .f, character(1))
 }

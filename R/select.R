@@ -13,7 +13,7 @@ new_select_block <- function(columns = character(), interface = "table", show_se
 
   # Determine interface type
   interface <- match.arg(interface, c("table", "cards"))
-  
+
   if (interface == "table") {
     # Use new table-based interface
     new_transform_block(

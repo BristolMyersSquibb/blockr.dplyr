@@ -104,7 +104,7 @@ test_that("arrange specifications format", {
   # Blocks should handle both specification formats
   blk1 <- new_arrange_block(specs_asc)
   expect_s3_class(blk1, c("arrange_block", "transform_block", "block"))
-  
-  blk2 <- new_arrange_block(specs_mixed)  
+
+  blk2 <- new_arrange_block(specs_mixed)
   expect_s3_class(blk2, c("arrange_block", "transform_block", "block"))
 })

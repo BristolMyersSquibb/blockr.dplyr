@@ -120,7 +120,7 @@ test_that("filter block default behavior", {
   # Test default TRUE condition
   blk_default <- new_filter_block()
   expect_s3_class(blk_default, c("filter_block", "transform_block", "block"))
-  
+
   # Test with initial condition
   blk_with_condition <- new_filter_block("mpg > 20")
   expect_s3_class(blk_with_condition, c("filter_block", "transform_block", "block"))

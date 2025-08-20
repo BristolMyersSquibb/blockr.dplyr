@@ -70,10 +70,10 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
         "data.frame" = list(class = "bg-dark", label = "df"),
         "unknown" = list(class = "bg-light text-dark", label = "?")
       )
-      
+
       # Default for unknown types
       info <- type_colors[["unknown"]]
-      
+
       # Find matching type
       for (type_name in names(type_colors)) {
         if (type_name %in% col_class) {
@@ -81,7 +81,7 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           break
         }
       }
-      
+
       info
     }
 
@@ -90,7 +90,7 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
       cols <- r_cols()
       data_preview <- r_data_preview()
       selected_cols <- r_selected()
-      
+
       if (is.null(selected_cols)) {
         selected_cols <- character(0)
       }
@@ -105,9 +105,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           } else {
             col_class <- class(data_preview[[col]])
           }
-          
+
           type_info <- get_type_info(col_class)
-          sprintf('<span class="badge %s" style="font-size: 0.75rem;">%s</span>', 
+          sprintf('<span class="badge %s" style="font-size: 0.75rem;">%s</span>',
                   type_info$class, type_info$label)
         }),
         Sample = sapply(cols, function(col) {
@@ -134,13 +134,13 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
     output$columns_table <- renderDT({
       columns_data <- get_columns_data()
       search_term <- r_search()
-      
+
       # Apply search filter
       if (!is.null(search_term) && search_term != "") {
         filtered_rows <- grepl(search_term, columns_data$Column, ignore.case = TRUE)
         columns_data <- columns_data[filtered_rows, , drop = FALSE]
       }
-      
+
       datatable(
         columns_data,
         selection = "none",
@@ -169,7 +169,7 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
               render = DT::JS("
                 function(data, type, row, meta) {
                   var checked = data ? 'checked' : '';
-                  return '<input type=\"checkbox\" class=\"column-checkbox\" data-column=\"' + 
+                  return '<input type=\"checkbox\" class=\"column-checkbox\" data-column=\"' +
                          row[1] + '\" ' + checked + '>';
                 }
               ")
@@ -180,7 +180,7 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
               className = "dt-left font-weight-bold"
             ),
             list(
-              targets = 2,  # Type  
+              targets = 2,  # Type
               width = "15%",
               className = "dt-center"
             ),
@@ -200,29 +200,29 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
     # Handle checkbox clicks in the table
     observeEvent(input$columns_table_cell_clicked, {
       clicked <- input$columns_table_cell_clicked
-      
+
       # Validate that we have all necessary information
-      if (!is.null(clicked) && 
-          !is.null(clicked$col) && 
+      if (!is.null(clicked) &&
+          !is.null(clicked$col) &&
           !is.null(clicked$row) &&
-          length(clicked$col) > 0 && 
+          length(clicked$col) > 0 &&
           length(clicked$row) > 0 &&
           clicked$col == 0) {  # Checkbox column
-        
+
         row_index <- clicked$row
         columns_data <- get_columns_data()
         search_term <- r_search()
-        
+
         # Apply same filtering as in table render
         if (!is.null(search_term) && search_term != "") {
           filtered_rows <- grepl(search_term, columns_data$Column, ignore.case = TRUE)
           columns_data <- columns_data[filtered_rows, , drop = FALSE]
         }
-        
+
         if (row_index > 0 && row_index <= nrow(columns_data)) {
           clicked_column <- columns_data$Column[row_index]
           current_selected <- r_selected()
-          
+
           if (!is.null(current_selected) && clicked_column %in% current_selected) {
             # Remove column
             r_selected(setdiff(current_selected, clicked_column))
@@ -259,9 +259,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
     # Render selected columns on top (if enabled)
     output$selected_columns_top <- renderUI({
       if (!show_selected_on_top) return(NULL)
-      
+
       selected_cols <- r_selected()
-      
+
       if (is.null(selected_cols) || length(selected_cols) == 0) {
         return(div(
           class = "alert alert-info",
@@ -392,7 +392,7 @@ mod_table_select_ui <- function(id, show_selected_on_top = TRUE) {
         letter-spacing: 0.025em;
       }
     "),
-    
+
     # Selected columns on top (if enabled)
     if (show_selected_on_top) {
       uiOutput(ns("selected_columns_top"))
