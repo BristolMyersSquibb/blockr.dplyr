@@ -1,6 +1,6 @@
 Package: blockr.dplyr
 Title: Data Wrangling Blocks for 'blockr.core'
-Version: 0.0.1
+Version: 0.0.2
 Authors@R:
     c(person(given = "Nicolas",
              family = "Bennett",
