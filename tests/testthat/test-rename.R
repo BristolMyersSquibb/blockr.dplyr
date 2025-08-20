@@ -203,4 +203,3 @@ test_that("rename validation works correctly", {
   # Duplicate old columns should be caught
   expect_silent(apply_rename(test_data, list(name1 = "mpg", name2 = "mpg"), r_expr, r_renames))
 })
-

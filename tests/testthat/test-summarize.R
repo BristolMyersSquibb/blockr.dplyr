@@ -134,4 +134,3 @@ test_that("summarize block handles multiple grouping columns", {
   expect_equal(nrow(result), 6)  # All combinations are unique in this case
   expect_true(all(c("group1", "group2", "mean_x", "sum_y") %in% names(result)))
 })
-

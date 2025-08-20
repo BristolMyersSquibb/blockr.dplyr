@@ -213,4 +213,3 @@ test_that("enhanced vs classic mode state differences", {
   expect_true("expr_server" %in% names(classic_blk))
   expect_true("expr_ui" %in% names(classic_blk))
 })
-

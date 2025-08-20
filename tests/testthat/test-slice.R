@@ -233,4 +233,3 @@ test_that("reactive updates work correctly", {
   expect_true("slice_block" %in% class(block))
   expect_true("transform_block" %in% class(block))
 })
-
