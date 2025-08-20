@@ -17,7 +17,7 @@
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for slice operations
-#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInpu
+#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInput
 #' @importFrom dplyr slice slice_head slice_tail slice_min slice_max slice_sample
 #' @seealso [new_transform_block()]
 #' @examples
@@ -35,7 +35,7 @@
 #' # Random sampling
 #' serve(new_slice_block(type = "sample", n = 10, replace = FALSE), list(data = mtcars))
 #' }
-#' @expor
+#' @export
 new_slice_block <- function(
   type = "head",
   n = 5,

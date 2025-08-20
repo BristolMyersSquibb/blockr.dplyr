@@ -14,7 +14,9 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 - **slice** - Row selection by position/value/sampling with `.by` parameter support ✅
 - **rename** - Column renaming with visual mapping interface ✅
 - **distinct** - Remove duplicate rows with multi-column selection ✅
-- **join** - Combining tables (lower priority)
+- **join** - Enhanced multi-column joins with visual interface ✅
+- **bind_rows** - Stack datasets vertically with column matching ✅
+- **bind_cols** - Combine datasets side-by-side with conflict resolution ✅
 
 ### Recently Completed ✅
 1. **Multi-expression support** - Both mutate and summarize blocks now support multiple expressions with dynamic add/remove functionality
@@ -89,9 +91,47 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Comprehensive testing** - 29+ tests covering unified component and block integrations
    - **No separate group_by block needed** - Integrated grouping eliminates UI complexity
 
-## Current Status: Unified .by Parameter Complete ✅
+12. **Enhanced Join Block** - Complete transformation to production-ready multi-dataframe operations:
+   - **Advanced join configuration** - `mod_join_keys` component for complex column mappings
+   - **Multi-column support** - Both same-name (natural) and different-name column joins
+   - **Enhanced UI** - Visual join key mapping with descriptive join type labels  
+   - **All join types** - Support for left, inner, right, full, semi, and anti joins
+   - **Comprehensive testing** - 39 passing tests covering all join scenarios
+   - **Backward compatibility** - Maintains all existing functionality
 
-All blocks that support grouping (mutate, summarize, slice) now have a unified visual interface for the `.by` parameter. This eliminates the need for a separate group_by block while providing consistent, integrated grouping functionality.
+13. **New Bind Rows Block** - Vertical dataset combination:
+   - **Intelligent column matching** - Automatically aligns columns by name across datasets
+   - **Missing column handling** - Fills non-matching columns with NA values
+   - **Source tracking** - Optional ID column to identify which dataset each row originated from
+   - **Real-time preview** - Shows column differences and result structure before applying
+   - **Comprehensive testing** - 41 tests covering various bind scenarios including edge cases
+   - **Clean UI** - Intuitive interface with operation preview and configuration options
+
+14. **New Bind Columns Block** - Horizontal dataset combination:
+   - **Row count validation** - Prevents binding datasets with different row counts with clear error messaging
+   - **Duplicate column handling** - Configurable suffixes for columns with identical names
+   - **Real-time validation** - Immediate feedback on compatibility issues and conflicts
+   - **Custom naming control** - Full user control over how duplicate columns are renamed
+   - **Comprehensive testing** - Included in 41-test bind suite covering compatibility scenarios
+   - **Error prevention UI** - Visual indicators and validation prevent invalid operations
+
+## Current Status: All Major Features Complete ✅
+
+The blockr.dplyr package now provides a comprehensive suite of data wrangling blocks with advanced multi-dataframe capabilities:
+
+### All Core Features Implemented ✅
+- **Single-table operations**: select, filter, mutate, arrange, summarize, slice, rename, distinct
+- **Multi-table operations**: enhanced joins, bind_rows, bind_cols
+- **Advanced UI components**: multi-expression editors, condition builders, column mappers
+- **Full autocompletion**: ACE editors with column names and dplyr function suggestions
+- **Comprehensive testing**: 376+ tests covering all functionality and edge cases
+- **Production ready**: Proper state management, error handling, and backward compatibility
+
+### Multi-Dataframe System Architecture ✅
+- **Reusable components**: `mod_join_keys` for complex join configurations
+- **Multi-input support**: All blocks use `function(id, x, y)` signature for two-dataset operations  
+- **Enhanced UI/UX**: Rich previews, real-time validation, and comprehensive user guidance
+- **Registry integration**: All blocks properly registered and available in blockr ecosystem
 
 ### Working Features ✅
 - **Unified .by interface** - Consistent multi-select dropdown across mutate, summarize, and slice blocks
@@ -99,6 +139,7 @@ All blocks that support grouping (mutate, summarize, slice) now have a unified v
 - **Visual consistency** - Same styling, behavior, and user experience across all blocks
 - **State management** - Proper save/restore of grouping selections
 - **dplyr syntax compliance** - Generates correct `.by` parameter syntax for all operations
+- **Multi-dataframe operations** - Complete join and bind functionality with advanced features
 
 ## Next Implementation Priority
 

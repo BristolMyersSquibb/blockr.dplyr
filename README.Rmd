@@ -111,15 +111,238 @@ library(blockr.dplyr)
 blockr.core::serve(new_mutate_block(), data = list(data = mtcars))
 ```
 
-And a two-table verb such as `dplyr::join()` is available as
+## Multi-Dataframe Operations
 
-```{r join, eval = FALSE}
+The package now includes comprehensive support for multi-dataframe operations with enhanced join and bind blocks, all fully integrated with the **blockr.ui visual DAG board interface** for interactive pipeline building.
+
+### Enhanced Join Block with Multi-Column Support
+
+The `dplyr::join()` block has been completely redesigned with advanced multi-column join capabilities:
+
+```{r join-enhanced, eval = FALSE}
 library(blockr.dplyr)
+# Enhanced join with natural join (same column names)
 blockr.core::serve(
-  new_join_block(by = "name"),
+  new_join_block(type = "left_join", by = "name"),
   data = list(x = dplyr::band_members, y = dplyr::band_instruments)
 )
 ```
+
+### Advanced Join Configuration
+
+The enhanced join block supports complex column mappings between datasets:
+
+```{r join-complex, eval = FALSE}
+library(blockr.dplyr)
+
+# Create sample datasets with different column names
+customers <- data.frame(
+  customer_id = 1:3,
+  customer_name = c("Alice", "Bob", "Charlie"),
+  region = c("East", "West", "North")
+)
+
+orders <- data.frame(
+  order_id = c(101, 102, 103, 104),
+  cust_id = c(1, 2, 1, 3),  # Different column name
+  product = c("A", "B", "A", "C"),
+  amount = c(100, 200, 150, 300)
+)
+
+# Join with different column names using the visual interface
+blockr.core::serve(
+  new_join_block(type = "left_join"),
+  data = list(x = customers, y = orders)
+)
+```
+
+### Complete Multi-Table Pipeline
+
+Create sophisticated multi-table workflows with the enhanced blocks:
+
+```{r join-pipeline, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Sample data
+customers <- data.frame(
+  id = 1:4,
+  name = c("Alice", "Bob", "Charlie", "Diana"),
+  region = c("East", "West", "North", "South"),
+  tier = c("Gold", "Silver", "Gold", "Bronze")
+)
+
+transactions <- data.frame(
+  customer_id = c(1, 1, 2, 3, 3, 4),
+  product = c("A", "B", "A", "C", "A", "B"),
+  amount = c(100, 150, 200, 75, 125, 90),
+  month = rep(c("Jan", "Feb", "Mar"), 2)
+)
+
+# Create enhanced pipeline with join and analysis
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    customers_block = new_dataset_block(customers),
+    transactions_block = new_dataset_block(transactions),
+    join_block = new_join_block(type = "left_join"),  # Will configure id = customer_id in UI
+    filter_block = new_filter_block("amount > 100"),
+    summary_block = new_summarize_block(
+      string = list(
+        total_amount = "sum(amount)",
+        avg_amount = "mean(amount)",
+        transaction_count = "n()"
+      ),
+      by = c("region", "tier")
+    )
+  ),
+  links = links(
+    from = c("customers_block", "transactions_block", "join_block", "filter_block"),
+    to = c("join_block", "join_block", "filter_block", "summary_block")
+  )
+)
+
+# Launch the interactive dashboard
+blockr.core::serve(board)
+```
+
+### Bind Rows Block for Vertical Combination
+
+Stack datasets vertically with intelligent column matching:
+
+```{r bind-rows, eval = FALSE}
+library(blockr.dplyr)
+
+# Sample datasets with different but overlapping columns
+q1_sales <- data.frame(
+  region = c("East", "West"),
+  product = c("A", "B"),
+  revenue = c(1000, 1200),
+  quarter = "Q1"
+)
+
+q2_sales <- data.frame(
+  region = c("North", "South"),
+  product = c("A", "C"),
+  profit = c(800, 950),  # Different column name
+  quarter = "Q2"
+)
+
+# Bind rows with ID column to track sources
+blockr.core::serve(
+  new_bind_rows_block(add_id = TRUE, id_name = "data_source"),
+  data = list(x = q1_sales, y = q2_sales)
+)
+```
+
+### Bind Columns Block for Horizontal Combination
+
+Combine datasets side-by-side with duplicate column handling:
+
+```{r bind-cols, eval = FALSE}
+library(blockr.dplyr)
+
+# Sample datasets with same row count
+customer_info <- data.frame(
+  id = 1:3,
+  name = c("Alice", "Bob", "Charlie"),
+  age = c(25, 30, 35)
+)
+
+customer_metrics <- data.frame(
+  id = 1:3,  # Duplicate column name
+  score = c(85, 92, 78),
+  tier = c("Gold", "Platinum", "Silver")
+)
+
+# Bind columns with custom suffixes for duplicates
+blockr.core::serve(
+  new_bind_cols_block(suffix = c("_info", "_metrics")),
+  data = list(x = customer_info, y = customer_metrics)
+)
+```
+
+### Complete Multi-Dataframe Workflow
+
+Demonstrate the full power of multi-dataframe operations:
+
+```{r multi-df-workflow, eval = FALSE}
+library(blockr.core)
+library(blockr.dplyr)
+library(blockr.ui)
+
+# Create comprehensive multi-dataframe pipeline
+board <- blockr.ui::new_dag_board(
+  blocks = list(
+    # Data sources
+    current_customers = new_dataset_block(data.frame(
+      id = 1:3, name = c("Alice", "Bob", "Charlie"), 
+      region = c("East", "West", "North"), active = c(TRUE, TRUE, FALSE)
+    )),
+    new_customers = new_dataset_block(data.frame(
+      id = 4:5, name = c("Diana", "Eve"), 
+      region = c("South", "East"), active = c(TRUE, TRUE)
+    )),
+    customer_details = new_dataset_block(data.frame(
+      customer_id = 1:5, tier = c("Gold", "Silver", "Gold", "Bronze", "Silver"),
+      signup_date = as.Date(c("2023-01-01", "2023-02-15", "2023-03-10", "2023-12-01", "2023-12-15"))
+    )),
+    
+    # Multi-dataframe operations
+    bind_customers = new_bind_rows_block(add_id = TRUE, id_name = "source"),
+    join_details = new_join_block(type = "left_join"),  # Configure id = customer_id in UI
+    
+    # Analysis blocks
+    filter_active = new_filter_block("active == TRUE"),
+    summary_by_region = new_summarize_block(
+      string = list(
+        customer_count = "n()",
+        gold_customers = "sum(tier == 'Gold')",
+        avg_days_since_signup = "mean(as.numeric(Sys.Date() - signup_date))"
+      ),
+      by = c("region")
+    )
+  ),
+  links = links(
+    from = c("current_customers", "new_customers", "bind_customers", "customer_details", "join_details", "filter_active"),
+    to = c("bind_customers", "bind_customers", "join_details", "join_details", "filter_active", "summary_by_region")
+  )
+)
+
+# Launch the comprehensive dashboard
+blockr.core::serve(board)
+```
+
+The enhanced multi-dataframe blocks feature:
+
+### Visual DAG Board Integration
+
+All multi-dataframe operations work seamlessly with the **blockr.ui visual DAG board interface**:
+
+- **Drag-and-drop pipeline building**: Visually connect blocks in the interactive interface
+- **Real-time data flow**: See data flowing through your multi-table transformations
+- **Interactive block configuration**: Click blocks to configure join keys, bind options, etc.
+- **Visual feedback**: Immediate visual indication of data structure changes
+- **Export workflows**: Save and share your multi-dataframe analysis pipelines
+
+#### Join Block Features:
+- **Advanced join types**: All 6 dplyr join types with clear descriptions
+- **Multi-column joins**: Support for complex column mappings between different datasets  
+- **Same-name joins**: Natural joins on common column names
+- **Different-name joins**: Visual interface for mapping columns with different names
+- **Real-time preview**: See join configuration and column mappings before applying
+
+#### Bind Rows Block Features:
+- **Intelligent column matching**: Automatically aligns columns by name
+- **Missing column handling**: Fills missing columns with NA values
+- **Source tracking**: Optional ID column to identify which dataset each row came from
+- **Real-time preview**: Shows column differences and result structure
+
+#### Bind Columns Block Features:  
+- **Row count validation**: Prevents binding datasets with different row counts
+- **Duplicate column handling**: Configurable suffixes for columns with same names
+- **Real-time validation**: Immediate feedback on compatibility and conflicts
+- **Custom naming**: Full control over how duplicate columns are renamed
 
 ## Summarize Example
 
