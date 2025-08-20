@@ -5,6 +5,7 @@
 #'
 #' @param string Reactive expression returning character vector of
 #'   expressions
+#' @param by Character vector of column names for grouping. Default is empty.
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for mutate operations
@@ -13,17 +14,18 @@
 #' @seealso [new_transform_block()]
 #' @examples
 #' \dontrun{
-#' # Basic usage with mtcars dataset
+#' # Basic usage with mtcars datase
 #' library(blockr.core)
 #' serve(new_mutate_block(), list(data = mtcars))
 #'
-#' # With a custom dataset
+#' # With a custom datase
 #' df <- data.frame(x = 1:5, y = letters[1:5])
 #' serve(new_mutate_block(), list(data = df))
 #' }
-#' @export
+#' @expor
 new_mutate_block <- function(
   string = list(new_col = "1"),
+  by = character(),
   ...
 ) {
   # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
@@ -41,24 +43,35 @@ new_mutate_block <- function(
             get_cols = \() colnames(data())
           )
 
-          # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_mutate(string))
-          r_string_validated <- reactiveVal(string)
+          # Group by selector
+          r_by_selection <- mod_by_selector_server(
+            id = "by_selector",
+            get_cols = \() colnames(data()),
+            initial_value = by
+          )
 
-          # Validate and update on submit
+          # Store the validated expression
+          r_expr_validated <- reactiveVal(parse_mutate(string, by))
+          r_string_validated <- reactiveVal(string)
+          r_by_validated <- reactiveVal(by)
+
+          # Validate and update on submi
           observeEvent(input$submit, {
             apply_mutate(
               data(),
               r_string(),
+              r_by_selection(),
               r_expr_validated,
-              r_string_validated
+              r_string_validated,
+              r_by_validated
             )
           })
 
           list(
             expr = r_expr_validated,
             state = list(
-              string = reactive(as.list(r_string_validated()))
+              string = reactive(as.list(r_string_validated())),
+              by = r_by_validated
             )
           )
         }
@@ -68,6 +81,7 @@ new_mutate_block <- function(
       div(
         class = "m-3",
         mod_multi_kvexpr_ui(NS(id, "mkv")),
+        mod_by_selector_ui(NS(id, "by_selector")),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
@@ -80,23 +94,37 @@ new_mutate_block <- function(
       )
     },
     class = "mutate_block",
+    allow_empty_state = c("by"),
     ...
   )
 }
 # serve(new_mutate_block(), list(data = mtcars))
 
-parse_mutate <- function(mutate_string = "") {
-  text <- if (identical(unname(mutate_string), "")) {
-    "dplyr::mutate(data)"
+parse_mutate <- function(mutate_string = "", by_selection = character()) {
+  # Handle empty string case
+  if (identical(unname(mutate_string), "")) {
+    text <- "dplyr::mutate(data)"
   } else {
     mutate_string <- glue::glue("{names(mutate_string)} = {unname(mutate_string)}")
     mutate_string <- glue::glue_collapse(mutate_string, sep = ", ")
-    glue::glue("dplyr::mutate(data, {mutate_string})")
+
+    # Add .by parameter if columns are selected
+    if (length(by_selection) > 0 && !all(by_selection == "")) {
+      by_cols <- by_selection[by_selection != ""]
+      if (length(by_cols) > 0) {
+        by_string <- paste0('c("', paste(by_cols, collapse = '", "'), '")')
+        text <- glue::glue("dplyr::mutate(data, {mutate_string}, .by = {by_string})")
+      } else {
+        text <- glue::glue("dplyr::mutate(data, {mutate_string})")
+      }
+    } else {
+      text <- glue::glue("dplyr::mutate(data, {mutate_string})")
+    }
   }
   parse(text = text)[1]
 }
 
-apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
+apply_mutate <- function(data, string, by_selection, r_expr_validated, r_string_validated, r_by_validated) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
   if (is.list(string)) {
     string <- unlist(string)
@@ -104,14 +132,15 @@ apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
 
   # If empty or only whitespace, return simple mutate
   if (all(trimws(unname(string)) == "")) {
-    expr <- parse_mutate(string)
+    expr <- parse_mutate(string, by_selection)
     r_expr_validated(expr)
+    r_by_validated(by_selection)
     return()
   }
 
   req(string)
   stopifnot(is.character(string), !is.null(names(string)))
-  expr <- try(parse_mutate(string))
+  expr <- try(parse_mutate(string, by_selection))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(
@@ -132,4 +161,5 @@ apply_mutate <- function(data, string, r_expr_validated, r_string_validated) {
   }
   r_expr_validated(expr)
   r_string_validated(string)
+  r_by_validated(by_selection)
 }

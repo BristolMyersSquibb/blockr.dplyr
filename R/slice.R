@@ -17,7 +17,7 @@
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for slice operations
-#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInput
+#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInpu
 #' @importFrom dplyr slice slice_head slice_tail slice_min slice_max slice_sample
 #' @seealso [new_transform_block()]
 #' @examples
@@ -35,7 +35,7 @@
 #' # Random sampling
 #' serve(new_slice_block(type = "sample", n = 10, replace = FALSE), list(data = mtcars))
 #' }
-#' @export
+#' @expor
 new_slice_block <- function(
   type = "head",
   n = 5,
@@ -54,6 +54,17 @@ new_slice_block <- function(
         id,
         function(input, output, session) {
 
+          # Group by selector using unified componen
+          r_by_selection <- mod_by_selector_server(
+            id = "by_selector",
+            get_cols = \() {
+              req(data())
+              cols <- colnames(data())
+              cols[nzchar(cols)]  # Filter out empty column names
+            },
+            initial_value = by
+          )
+
           # Update column choices when data changes
           observeEvent(data(), {
             req(data())
@@ -65,11 +76,9 @@ new_slice_block <- function(
             # Create choices safely
             order_choices <- c("", valid_cols)
             weight_choices <- c("", valid_cols)
-            by_choices <- valid_cols
 
             updateSelectInput(session, "order_by", choices = order_choices)
             updateSelectInput(session, "weight_by", choices = weight_choices)
-            updateSelectInput(session, "by", choices = by_choices)
           }, ignoreNULL = FALSE)
 
           # Helper function to build slice expression
@@ -156,7 +165,7 @@ new_slice_block <- function(
             weight_by_val <- if (is.null(input$weight_by)) weight_by else input$weight_by
             replace_val <- if (is.null(input$replace)) replace else input$replace
             rows_val <- if (is.null(input$rows)) rows else input$rows
-            by_val <- if (is.null(input$by)) by else input$by
+            by_val <- r_by_selection()
 
             build_slice_expr(
               input$type, n_val, prop_val, use_prop_val, order_by_val,
@@ -176,7 +185,7 @@ new_slice_block <- function(
               weight_by = weight_by,
               replace = replace,
               rows = rows,
-              by = by
+              by = r_by_selection
             )
           )
         }
@@ -214,7 +223,7 @@ new_slice_block <- function(
           )
         ),
 
-        # Number of rows input
+        # Number of rows inpu
         conditionalPanel(
           condition = sprintf("input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])",
                             ns("type"), ns("use_prop"), ns("use_prop")),
@@ -227,7 +236,7 @@ new_slice_block <- function(
           )
         ),
 
-        # Proportion input
+        # Proportion inpu
         conditionalPanel(
           condition = sprintf("input['%s'] != 'custom' && input['%s'] == 'prop'",
                             ns("type"), ns("use_prop")),
@@ -285,14 +294,8 @@ new_slice_block <- function(
           )
         ),
 
-        # Group by columns
-        selectInput(
-          ns("by"),
-          label = "Group by columns (optional)",
-          choices = character(),
-          selected = by,
-          multiple = TRUE
-        )
+        # Group by columns using unified componen
+        mod_by_selector_ui(ns("by_selector"))
       )
     },
     class = "slice_block",
@@ -301,5 +304,5 @@ new_slice_block <- function(
   )
 }
 
-# Helper function for NULL default
+# Helper function for NULL defaul
 `%||%` <- function(x, y) if (is.null(x)) y else x

@@ -37,20 +37,11 @@ new_summarize_block <- function(
         id,
         function(input, output, session) {
 
-          r_by_selection <- reactiveVal(by)
-          observeEvent(input$by, r_by_selection(input$by))
-
-          # Update by cols when upstream data change
-          observeEvent(
-            colnames(data()),
-            {
-              updateSelectInput(
-                session,
-                inputId = "by",
-                choices = colnames(data()),
-                selected = r_by_selection()
-              )
-            }
+          # Group by selector using unified component
+          r_by_selection <- mod_by_selector_server(
+            id = "by_selector",
+            get_cols = \() colnames(data()),
+            initial_value = by
           )
 
           r_string <- mod_multi_kvexpr_server(
@@ -88,12 +79,7 @@ new_summarize_block <- function(
       div(
         class = "m-3",
         mod_multi_kvexpr_ui(NS(id, "mkv")),
-        selectInput(
-          inputId = NS(id, "by"),
-          label = "By columns",
-          choices = list(),
-          multiple = TRUE
-        ),
+        mod_by_selector_ui(NS(id, "by_selector")),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
