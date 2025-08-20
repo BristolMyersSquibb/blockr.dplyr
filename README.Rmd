@@ -42,12 +42,20 @@ library(blockr.dplyr)
 blockr.core::serve(new_select_block(c("mpg", "cyl"), enhanced = FALSE), data = list(data = mtcars))
 ```
 
-### Enhanced visual interface (new default)
+### Table interface (new default)
 
 ```{r select-enhanced, eval = FALSE}
 library(blockr.dplyr)
-# Enhanced interface with column cards and information
-blockr.core::serve(new_select_block(c("mpg", "cyl")), data = list(data = mtcars))
+# Table interface (default) - space-efficient with colored type tags
+blockr.core::serve(new_select_block(c("Species")), data = list(data = iris))
+```
+
+Or use the card interface for detailed column information:
+
+```{r select-cards, eval = FALSE}
+library(blockr.dplyr)
+# Card interface - detailed column information with visual cards
+blockr.core::serve(new_select_block(c("mpg", "cyl"), interface = "cards"), data = list(data = mtcars))
 ```
 
 ### Complete data pipeline with enhanced select
@@ -67,13 +75,23 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
-The enhanced select block features:
-- **Visual column cards** - Show column type, sample data, and statistics (NA count, unique values)
+The select block offers two modern interfaces:
+
+**Table Interface (default, `interface = "table"`):**
+- **Space-efficient table** - Compact DataTable showing columns with essential information
+- **Colored type tags** - Visually distinct badges for different data types (num, chr, fct, etc.)
+- **Selected columns on top** - Optional display with numbered badges and remove buttons
 - **Search functionality** - Type to filter columns by name (case-insensitive)
-- **Quick selection controls** - Select All, Select None, and Invert Selection buttons
-- **Column information** - Display data types, sample values, and basic statistics
-- **Selection summary** - Clear overview of selected columns with numbering
-- **Backward compatibility** - Use `enhanced = FALSE` for classic dropdown interface
+- **Interactive selection** - Click checkboxes in table rows to select/deselect columns
+- **Sortable columns** - Click column headers to sort by selection status, name, or type
+- **Quick controls** - Select All, Select None, and Invert Selection buttons
+- **Sample data preview** - See actual values from your dataset for each column
+
+**Card Interface (`interface = "cards"`):**
+- **Visual column cards** - Detailed information cards for each column
+- **Column statistics** - Extended sample data and comprehensive statistics
+- **Individual selection** - Click cards to select/deselect with visual feedback
+- **Full column information** - More detailed view with expanded sample values
 
 ### Testing select functionality
 
@@ -89,9 +107,17 @@ run_multi_select_example()
 blockr.core::serve(new_select_block(), data = list(data = mtcars))
 ```
 
-In the enhanced UI, you can:
-1. View column cards with type information and sample data
-2. Use the search box to filter columns by name
+**In the table interface, you can:**
+1. View a compact table with column information (type, sample values, statistics)
+2. See selected columns at the top with numbered badges for easy management
+3. Use the search box to filter columns by name
+4. Click checkboxes in the table to select/deselect columns
+5. Use quick controls: "Select All", "Select None", and "Invert Selection"
+6. Remove selected columns by clicking the X on badges at the top
+
+**In the card interface, you can:**
+1. View detailed column cards with type information and extended sample data
+2. Use the search box to filter columns by name  
 3. Click "Select All" to select all visible columns
 4. Click "Select None" to clear all selections
 5. Click "Invert" to toggle selected/unselected columns

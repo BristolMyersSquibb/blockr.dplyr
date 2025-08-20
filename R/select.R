@@ -4,14 +4,18 @@
 #' [dplyr::select()]).
 #'
 #' @param columns Selected columns
-#' @param enhanced Use enhanced multi-select interface (default TRUE)
+#' @param interface Interface type: "table" or "cards" (default "table")
+#' @param show_selected_on_top Whether to show selected columns on top (default TRUE for table interface)
 #' @param ... Forwarded to [new_block()]
 #'
 #' @export
-new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
+new_select_block <- function(columns = character(), interface = "table", show_selected_on_top = TRUE, ...) {
 
-  if (enhanced) {
-    # Use enhanced multi-select interface
+  # Determine interface type
+  interface <- match.arg(interface, c("table", "cards"))
+  
+  if (interface == "table") {
+    # Use new table-based interface
     new_transform_block(
       function(id, data) {
         moduleServer(
@@ -19,12 +23,13 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
           function(input, output, session) {
             cols <- reactive(colnames(data()))
 
-            # Use the multi select module
-            r_selected <- mod_multi_select_server(
-              "multi_select",
-              get_value = function() columns,  # Return initial columns as-is
+            # Use the table select module
+            r_selected <- mod_table_select_server(
+              "table_select",
+              get_value = function() columns,
               get_cols = cols,
-              get_data_preview = data
+              get_data_preview = data,
+              show_selected_on_top = show_selected_on_top
             )
 
             list(
@@ -32,7 +37,7 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
                 selected_cols <- r_selected()
 
                 if (length(selected_cols) == 0) {
-                  # No columns selected - select none (this will result in empty data frame)
+                  # No columns selected - select none
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
                   # Build select expression
@@ -45,7 +50,55 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
               }),
               state = list(
                 columns = r_selected,
-                enhanced = reactive(TRUE)
+                interface = reactive("table"),
+                show_selected_on_top = reactive(show_selected_on_top)
+              )
+            )
+          }
+        )
+      },
+      function(id) {
+        mod_table_select_ui(NS(id, "table_select"), show_selected_on_top = show_selected_on_top)
+      },
+      class = "select_block",
+      ...
+    )
+  } else {
+    # Use enhanced multi-select interface (cards)
+    new_transform_block(
+      function(id, data) {
+        moduleServer(
+          id,
+          function(input, output, session) {
+            cols <- reactive(colnames(data()))
+
+            # Use the multi select module
+            r_selected <- mod_multi_select_server(
+              "multi_select",
+              get_value = function() columns,
+              get_cols = cols,
+              get_data_preview = data
+            )
+
+            list(
+              expr = reactive({
+                selected_cols <- r_selected()
+
+                if (length(selected_cols) == 0) {
+                  # No columns selected - select none
+                  parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
+                } else {
+                  # Build select expression
+                  bquote(
+                    dplyr::select(data, ..(cols)),
+                    list(cols = lapply(selected_cols, as.name)),
+                    splice = TRUE
+                  )
+                }
+              }),
+              state = list(
+                columns = r_selected,
+                interface = reactive("cards")
               )
             )
           }
@@ -53,60 +106,6 @@ new_select_block <- function(columns = character(), enhanced = TRUE, ...) {
       },
       function(id) {
         mod_multi_select_ui(NS(id, "multi_select"))
-      },
-      class = "select_block",
-      ...
-    )
-  } else {
-    # Use classic simple interface for backward compatibility
-    new_transform_block(
-      function(id, data) {
-        moduleServer(
-          id,
-          function(input, output, session) {
-
-            sels <- reactiveVal(columns)
-            cols <- reactive(colnames(data()))
-
-            observeEvent(
-              input$columns,
-              sels(intersect(input$columns, cols()))
-            )
-
-            observe(
-              {
-                updateSelectInput(
-                  session,
-                  inputId = "columns",
-                  choices = cols(),
-                  selected = sels()
-                )
-              }
-            )
-
-            list(
-              expr = reactive(
-                bquote(
-                  dplyr::select(data, ..(cols)),
-                  list(cols = lapply(sels(), as.name)),
-                  splice = TRUE
-                )
-              ),
-              state = list(
-                columns = sels,
-                enhanced = reactive(FALSE)
-              )
-            )
-          }
-        )
-      },
-      function(id) {
-        selectInput(
-          inputId = NS(id, "columns"),
-          label = "Columns",
-          choices = list(),
-          multiple = TRUE
-        )
       },
       class = "select_block",
       ...

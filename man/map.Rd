@@ -4,7 +4,7 @@
 \alias{map}
 \title{Map function for applying functions to lists}
 \usage{
-map(x, f)
+map(x, .f)
 }
 \description{
 Map function for applying functions to lists

@@ -4,7 +4,7 @@
 \alias{map_chr}
 \title{Map character function}
 \usage{
-map_chr(x, f)
+map_chr(x, .f)
 }
 \description{
 Map character function
