@@ -27,7 +27,7 @@ library(blockr.core)
 serve(new_rename_block(), list(data = mtcars))
 
 # With predefined renames
-serve(new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")), 
+serve(new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
       list(data = mtcars))
 
 # Connected blocks example

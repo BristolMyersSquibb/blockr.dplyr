@@ -7,7 +7,7 @@ test_that("enhanced select block constructor", {
   # Test enhanced mode (default)
   blk <- new_select_block(enhanced = TRUE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
-  
+
   # Test with initial columns
   blk <- new_select_block(c("mpg", "cyl"), enhanced = TRUE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
@@ -17,7 +17,7 @@ test_that("classic select block constructor", {
   # Test classic mode for backward compatibility
   blk <- new_select_block(enhanced = FALSE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
-  
+
   # Test with initial columns
   blk <- new_select_block(c("mpg", "cyl"), enhanced = FALSE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
@@ -27,11 +27,11 @@ test_that("select block with various column inputs", {
   # Test empty columns
   blk <- new_select_block(character(0))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
-  
+
   # Test single column
   blk <- new_select_block("mpg")
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
-  
+
   # Test multiple columns
   blk <- new_select_block(c("mpg", "cyl", "hp"))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
@@ -41,11 +41,11 @@ test_that("multi select module functionality", {
   # Test module server function exists
   expect_true(exists("mod_multi_select_server"))
   expect_true(is.function(mod_multi_select_server))
-  
+
   # Test module UI function exists
   expect_true(exists("mod_multi_select_ui"))
   expect_true(is.function(mod_multi_select_ui))
-  
+
   # Test example function exists
   expect_true(exists("run_multi_select_example"))
   expect_true(is.function(run_multi_select_example))
@@ -54,18 +54,18 @@ test_that("multi select module functionality", {
 test_that("select block expression generation", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("blockr.core")
-  
+
   # Create test data
   test_data <- data.frame(
     a = c(1, 2, 3),
     b = c("x", "y", "z"),
     c = c(10, 20, 30)
   )
-  
+
   # Test basic select block functionality
   blk <- new_select_block(c("a", "c"))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
-  
+
   # The block should be properly structured
   expect_true("expr_server" %in% names(blk))
   expect_true("expr_ui" %in% names(blk))
@@ -75,7 +75,7 @@ test_that("select block expression generation", {
 
 test_that("mod_multi_select_server basic functionality", {
   skip_if_not_installed("shiny")
-  
+
   # Test server module with mock functions
   shiny::testServer(
     mod_multi_select_server,
@@ -87,14 +87,14 @@ test_that("mod_multi_select_server basic functionality", {
     {
       # Force initialization by accessing r_cols() to trigger observe()
       cols <- r_cols()
-      
+
       # Wait for initialization to complete
       session$flushReact()
-      
+
       # Test initial selection after initialization
       result <- session$getReturned()()
       expect_equal(sort(result), sort(c("mpg", "cyl")))
-      
+
       # Test that reactive values are set up correctly
       expect_equal(sort(r_selected()), sort(c("mpg", "cyl")))
       expect_equal(sort(r_cols()), sort(c("mpg", "cyl", "hp", "wt")))
@@ -105,7 +105,7 @@ test_that("mod_multi_select_server basic functionality", {
 
 test_that("mod_multi_select_server search functionality", {
   skip_if_not_installed("shiny")
-  
+
   shiny::testServer(
     mod_multi_select_server,
     args = list(
@@ -117,10 +117,10 @@ test_that("mod_multi_select_server search functionality", {
       # Force initialization
       cols <- r_cols()
       session$flushReact()
-      
+
       # Test search functionality
       session$setInputs(search = "m")
-      
+
       # Should filter to columns containing "m"
       filtered <- r_filtered_cols()
       expect_true(all(grepl("m", filtered, ignore.case = TRUE)))
@@ -132,7 +132,7 @@ test_that("mod_multi_select_server search functionality", {
 
 test_that("mod_multi_select_server selection controls", {
   skip_if_not_installed("shiny")
-  
+
   shiny::testServer(
     mod_multi_select_server,
     args = list(
@@ -144,15 +144,15 @@ test_that("mod_multi_select_server selection controls", {
       # Force initialization
       cols <- r_cols()
       session$flushReact()
-      
+
       # Test select all
       session$setInputs(select_all = 1)
       expect_equal(sort(session$getReturned()()), sort(c("mpg", "cyl", "hp")))
-      
+
       # Test select none
       session$setInputs(select_none = 1)
       expect_equal(length(session$getReturned()()), 0)
-      
+
       # Test invert selection (from empty)
       session$setInputs(invert_selection = 1)
       expect_equal(sort(session$getReturned()()), sort(c("mpg", "cyl", "hp")))
@@ -169,14 +169,14 @@ test_that("multi_select_column_card UI generation", {
     unique_count = 25,
     total_count = 32
   )
-  
+
   card_ui <- multi_select_column_card(
     "test_id",
     "mpg",
     column_info,
     is_selected = TRUE
   )
-  
+
   expect_s3_class(card_ui, "shiny.tag")
   expect_true(grepl("column-card", as.character(card_ui)))
   expect_true(grepl("mpg", as.character(card_ui)))
@@ -189,7 +189,7 @@ test_that("column info extraction", {
     char_col = c("a", "b", "a", "c"),
     logical_col = c(TRUE, FALSE, TRUE, TRUE)
   )
-  
+
   # The function should handle different data types
   expect_true(is.data.frame(test_data))
   expect_equal(ncol(test_data), 3)
@@ -199,17 +199,18 @@ test_that("column info extraction", {
 test_that("enhanced vs classic mode state differences", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("blockr.core")
-  
+
   # Both modes should create valid blocks
   enhanced_blk <- new_select_block(enhanced = TRUE)
   classic_blk <- new_select_block(enhanced = FALSE)
-  
+
   expect_s3_class(enhanced_blk, c("select_block", "transform_block", "block"))
   expect_s3_class(classic_blk, c("select_block", "transform_block", "block"))
-  
+
   # Both should have the same basic structure
   expect_true("expr_server" %in% names(enhanced_blk))
   expect_true("expr_ui" %in% names(enhanced_blk))
   expect_true("expr_server" %in% names(classic_blk))
   expect_true("expr_ui" %in% names(classic_blk))
 })
+

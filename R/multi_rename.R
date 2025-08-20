@@ -15,7 +15,7 @@
 mod_multi_rename_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     # Initialize with values from get_value
     # Handle both list and named vector inputs
     initial_values <- get_value()
@@ -28,55 +28,55 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
       initial_values <- list(new_col = default_old_col)
     }
-    
+
     # Store renames as reactive value
     r_renames <- reactiveVal(initial_values)
     r_cols <- reactive(get_cols())
-    
+
     # Track which rename indices exist
     r_rename_indices <- reactiveVal(seq_along(initial_values))
     r_next_index <- reactiveVal(length(initial_values) + 1)
-    
+
     # Collect current values from all inputs
     get_current_renames <- function() {
       indices <- r_rename_indices()
       if (length(indices) == 0) return(list())
-      
+
       result <- list()
       for (i in indices) {
         new_name_id <- paste0("rename_", i, "_new")
         old_name_id <- paste0("rename_", i, "_old")
-        
+
         new_name <- input[[new_name_id]]
         old_name <- input[[old_name_id]]
-        
-        if (!is.null(new_name) && !is.null(old_name) && 
+
+        if (!is.null(new_name) && !is.null(old_name) &&
             new_name != "" && old_name != "") {
           result[[new_name]] <- old_name
         }
       }
-      
+
       if (length(result) == 0) {
         available_cols <- r_cols()
         default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
         result <- list(new_col = default_old_col)
       }
-      
+
       result
     }
-    
+
     # Add new rename pair
     observeEvent(input$add_rename, {
       current_indices <- r_rename_indices()
       new_index <- r_next_index()
-      
+
       # Add new index
       r_rename_indices(c(current_indices, new_index))
       r_next_index(new_index + 1)
-      
+
       # Get current renames and add new one
       current <- get_current_renames()
-      
+
       # Generate unique new name
       available_cols <- r_cols()
       new_name <- "new_col"
@@ -85,29 +85,29 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
         new_name <- paste0("new_col_", i)
         i <- i + 1
       }
-      
+
       # Choose first available old column not already used
       used_old_cols <- unname(unlist(current))
       available_old <- setdiff(available_cols, used_old_cols)
       old_name <- if (length(available_old) > 0) available_old[1] else available_cols[1]
-      
+
       current[[new_name]] <- old_name
       r_renames(current)
     })
-    
+
     # Remove rename handlers - create them dynamically
     observe({
       indices <- r_rename_indices()
-      
+
       lapply(indices, function(i) {
         observeEvent(input[[paste0("rename_", i, "_remove")]], {
           current_indices <- r_rename_indices()
-          
+
           if (length(current_indices) > 1) {
             # Remove this index
             new_indices <- setdiff(current_indices, i)
             r_rename_indices(new_indices)
-            
+
             # Update renames
             current <- get_current_renames()
             r_renames(current)
@@ -115,27 +115,27 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
         })
       })
     })
-    
+
     # Render UI dynamically
     output$renames_ui <- renderUI({
       indices <- r_rename_indices()
       renames <- r_renames()
       available_cols <- r_cols()
-      
+
       if (length(indices) == 0) {
         return(NULL)
       }
-      
+
       rename_names <- names(renames)
       rename_values <- unname(renames)
-      
+
       # Create UI for each rename pair
       tagList(
         lapply(seq_along(indices), function(j) {
           i <- indices[j]
           new_name <- if (j <= length(rename_names)) rename_names[j] else "new_col"
           old_name <- if (j <= length(rename_values)) rename_values[j] else available_cols[1]
-          
+
           multi_rename_row_ui(
             ns(paste0("rename_", i)),
             new_name = new_name,
@@ -146,16 +146,16 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
         })
       )
     })
-    
+
     # Return the reactive renames
     reactive({
       # Check if any inputs exist yet - if not, use stored renames
       indices <- r_rename_indices()
       has_inputs <- any(sapply(indices, function(i) {
-        paste0("rename_", i, "_new") %in% names(input) && 
+        paste0("rename_", i, "_new") %in% names(input) &&
         paste0("rename_", i, "_old") %in% names(input)
       }))
-      
+
       if (has_inputs) {
         # Use current input values
         get_current_renames()
@@ -174,7 +174,7 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
 #' @export
 mod_multi_rename_ui <- function(id) {
   ns <- NS(id)
-  
+
   tagList(
     shinyjs::useShinyjs(),
     tags$style("
@@ -184,11 +184,11 @@ mod_multi_rename_ui <- function(id) {
         align-items: stretch;
         gap: 8px;
       }
-      
+
       .multi-rename-pair .rename-new {
         flex: 0 0 35%;
       }
-      
+
       .multi-rename-pair .rename-arrow {
         flex: 0 0 auto;
         display: flex;
@@ -198,11 +198,11 @@ mod_multi_rename_ui <- function(id) {
         font-size: 1.2em;
         width: 30px;
       }
-      
+
       .multi-rename-pair .rename-old {
         flex: 1;
       }
-      
+
       .multi-rename-pair .rename-delete {
         flex: 0 0 auto;
         height: 38px;
@@ -211,18 +211,18 @@ mod_multi_rename_ui <- function(id) {
         align-items: center;
         justify-content: center;
       }
-      
+
       .multi-rename-pair .rename-delete:hover {
         color: var(--bs-white);
         border-color: var(--bs-danger);
         background: var(--bs-danger);
       }
-      
+
       /* Remove default margins from Shiny inputs */
       .multi-rename-pair .shiny-input-container {
         margin-bottom: 0 !important;
       }
-      
+
       /* Ensure inputs and selects fill their containers and align properly */
       .multi-rename-pair .form-control,
       .multi-rename-pair .selectize-control,
@@ -231,7 +231,7 @@ mod_multi_rename_ui <- function(id) {
         height: 38px !important;
         margin-bottom: 0 !important;
       }
-      
+
       .multi-rename-pair .selectize-input {
         min-height: 38px;
         line-height: 24px;
@@ -328,7 +328,7 @@ run_multi_rename_example <- function() {
         get_value = function() list(miles_per_gallon = "mpg"),
         get_cols = function() c("mpg", "cyl", "hp", "wt", "am", "gear")
       )
-      
+
       output$renames <- renderPrint({
         renames <- r_result()
         if (length(renames) > 0) {
@@ -337,7 +337,7 @@ run_multi_rename_example <- function() {
           }
         }
       })
-      
+
       output$code <- renderPrint({
         renames <- r_result()
         if (length(renames) > 0) {
@@ -348,3 +348,4 @@ run_multi_rename_example <- function() {
     }
   )
 }
+

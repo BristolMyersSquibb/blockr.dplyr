@@ -58,15 +58,15 @@ new_slice_block <- function(
           observeEvent(data(), {
             req(data())
             cols <- colnames(data())
-            
+
             # Filter out empty column names
             valid_cols <- cols[nzchar(cols)]
-            
+
             # Create choices safely
             order_choices <- c("", valid_cols)
             weight_choices <- c("", valid_cols)
             by_choices <- valid_cols
-            
+
             updateSelectInput(session, "order_by", choices = order_choices)
             updateSelectInput(session, "weight_by", choices = weight_choices)
             updateSelectInput(session, "by", choices = by_choices)
@@ -76,11 +76,11 @@ new_slice_block <- function(
           build_slice_expr <- function(type_val, n_val, prop_val, use_prop_val,
                                        order_by_val, with_ties_val, weight_by_val,
                                        replace_val, rows_val, by_val) {
-            
+
             # Validate inputs
             if (is.null(n_val) || n_val <= 0) n_val <- 1
             if (is.null(prop_val) || prop_val <= 0) prop_val <- 0.1
-            
+
             # Format .by parameter
             format_by <- function() {
               if (length(by_val) > 0 && !all(by_val == "") && !all(is.na(by_val))) {
@@ -91,25 +91,25 @@ new_slice_block <- function(
               }
               return(NULL)
             }
-            
+
             by_arg <- format_by()
-            
+
             # Build expression based on type
             if (type_val == "head") {
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_head(data, %s)", args)))
-              
+
             } else if (type_val == "tail") {
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_tail(data, %s)", args)))
-              
+
             } else if (type_val %in% c("min", "max")) {
               if (is.null(order_by_val) || order_by_val == "") {
                 return(parse(text = "data[0, , drop = FALSE]"))  # Return empty data frame
               }
-              
+
               func <- if (type_val == "min") "slice_min" else "slice_max"
               args <- paste0('"', order_by_val, '"')
               if (use_prop_val) {
@@ -120,7 +120,7 @@ new_slice_block <- function(
               args <- paste0(args, ", with_ties = ", if(with_ties_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::%s(data, %s)", func, args)))
-              
+
             } else if (type_val == "sample") {
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(weight_by_val) && weight_by_val != "") {
@@ -129,7 +129,7 @@ new_slice_block <- function(
               args <- paste0(args, ", replace = ", if(replace_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_sample(data, %s)", args)))
-              
+
             } else if (type_val == "custom") {
               if (is.null(rows_val) || rows_val == "") {
                 return(parse(text = "data[0, , drop = FALSE]"))  # Return empty data frame
@@ -138,7 +138,7 @@ new_slice_block <- function(
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice(data, %s)", args)))
             }
-            
+
             # Default fallback
             parse(text = "data[0, , drop = FALSE]")
           }
@@ -146,10 +146,10 @@ new_slice_block <- function(
           # Reactive expression that updates immediately
           slice_expr <- reactive({
             req(input$type)
-            
+
             # Get current input values with defaults
             n_val <- if (is.null(input$n)) n else as.integer(input$n)
-            prop_val <- if (is.null(input$prop)) prop else as.numeric(input$prop) 
+            prop_val <- if (is.null(input$prop)) prop else as.numeric(input$prop)
             use_prop_val <- if (is.null(input$use_prop)) FALSE else (input$use_prop == "prop")
             order_by_val <- if (is.null(input$order_by)) order_by else input$order_by
             with_ties_val <- if (is.null(input$with_ties)) with_ties else input$with_ties
@@ -157,9 +157,9 @@ new_slice_block <- function(
             replace_val <- if (is.null(input$replace)) replace else input$replace
             rows_val <- if (is.null(input$rows)) rows else input$rows
             by_val <- if (is.null(input$by)) by else input$by
-            
+
             build_slice_expr(
-              input$type, n_val, prop_val, use_prop_val, order_by_val, 
+              input$type, n_val, prop_val, use_prop_val, order_by_val,
               with_ties_val, weight_by_val, replace_val, rows_val, by_val
             )
           })
@@ -186,7 +186,7 @@ new_slice_block <- function(
       ns <- NS(id)  # Create namespace function
       div(
         class = "m-3",
-        
+
         # Main slice type selector
         selectInput(
           ns("type"),
@@ -201,8 +201,8 @@ new_slice_block <- function(
           ),
           selected = type
         ),
-        
-        # Selection method for applicable types  
+
+        # Selection method for applicable types
         conditionalPanel(
           condition = sprintf("input['%s'] != 'custom'", ns("type")),
           radioButtons(
@@ -213,10 +213,10 @@ new_slice_block <- function(
             inline = TRUE
           )
         ),
-        
+
         # Number of rows input
         conditionalPanel(
-          condition = sprintf("input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])", 
+          condition = sprintf("input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])",
                             ns("type"), ns("use_prop"), ns("use_prop")),
           numericInput(
             ns("n"),
@@ -226,10 +226,10 @@ new_slice_block <- function(
             step = 1
           )
         ),
-        
+
         # Proportion input
         conditionalPanel(
-          condition = sprintf("input['%s'] != 'custom' && input['%s'] == 'prop'", 
+          condition = sprintf("input['%s'] != 'custom' && input['%s'] == 'prop'",
                             ns("type"), ns("use_prop")),
           numericInput(
             ns("prop"),
@@ -240,10 +240,10 @@ new_slice_block <- function(
             step = 0.01
           )
         ),
-        
+
         # Order by column (for min/max)
         conditionalPanel(
-          condition = sprintf("input['%s'] == 'min' || input['%s'] == 'max'", 
+          condition = sprintf("input['%s'] == 'min' || input['%s'] == 'max'",
                             ns("type"), ns("type")),
           selectInput(
             ns("order_by"),
@@ -257,7 +257,7 @@ new_slice_block <- function(
             value = with_ties
           )
         ),
-        
+
         # Weight by column (for sample)
         conditionalPanel(
           condition = sprintf("input['%s'] == 'sample'", ns("type")),
@@ -273,7 +273,7 @@ new_slice_block <- function(
             value = replace
           )
         ),
-        
+
         # Custom row positions
         conditionalPanel(
           condition = sprintf("input['%s'] == 'custom'", ns("type")),
@@ -284,7 +284,7 @@ new_slice_block <- function(
             placeholder = "1:5"
           )
         ),
-        
+
         # Group by columns
         selectInput(
           ns("by"),
@@ -303,3 +303,4 @@ new_slice_block <- function(
 
 # Helper function for NULL default
 `%||%` <- function(x, y) if (is.null(x)) y else x
+

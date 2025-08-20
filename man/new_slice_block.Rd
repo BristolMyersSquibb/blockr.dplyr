@@ -7,7 +7,7 @@
 new_slice_block(
   type = "head",
   n = 5,
-  prop = NULL,
+  prop = 0.1,
   order_by = character(),
   with_ties = TRUE,
   weight_by = character(),
@@ -45,6 +45,7 @@ A block object for slice operations
 This block allows row selection using various dplyr slice functions
 (see \code{\link[dplyr:slice]{dplyr::slice()}}, \code{\link[dplyr:slice]{dplyr::slice_head()}}, \code{\link[dplyr:slice]{dplyr::slice_tail()}},
 \code{\link[dplyr:slice]{dplyr::slice_min()}}, \code{\link[dplyr:slice]{dplyr::slice_max()}}, \code{\link[dplyr:slice]{dplyr::slice_sample()}}).
+Features reactive UI with immediate updates and comprehensive grouping support.
 }
 \examples{
 \dontrun{

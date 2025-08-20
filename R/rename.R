@@ -19,7 +19,7 @@
 #' serve(new_rename_block(), list(data = mtcars))
 #'
 #' # With predefined renames
-#' serve(new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")), 
+#' serve(new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
 #'       list(data = mtcars))
 #'
 #' # Connected blocks example
@@ -64,7 +64,8 @@ new_rename_block <- function(
               data(),
               r_renames(),
               r_expr_validated,
-              r_renames_validated
+              r_renames_validated,
+              session
             )
           })
 
@@ -99,7 +100,7 @@ new_rename_block <- function(
 
 #' Parse rename pairs into dplyr expression
 #'
-#' @param rename_pairs Named list or vector where names are new column names 
+#' @param rename_pairs Named list or vector where names are new column names
 #'   and values are old column names
 #' @return Parsed expression for dplyr::rename()
 #' @noRd
@@ -122,20 +123,20 @@ parse_rename <- function(rename_pairs = list()) {
 #' @param r_expr_validated Reactive value for validated expression
 #' @param r_renames_validated Reactive value for validated renames
 #' @noRd
-apply_rename <- function(data, renames, r_expr_validated, r_renames_validated) {
+apply_rename <- function(data, renames, r_expr_validated, r_renames_validated, session = NULL) {
   # Convert list to character vector if needed
   if (is.list(renames)) {
     renames <- unlist(renames)
   }
-  
+
   # Validation: check if old column names exist
   if (length(renames) > 0) {
     old_cols <- unname(renames)
     data_cols <- colnames(data)
     missing_cols <- setdiff(old_cols, data_cols)
-    
+
     if (length(missing_cols) > 0) {
-      if (exists("session") && !is.null(session)) {
+      if (!is.null(session)) {
         showNotification(
           sprintf("Column(s) not found in data: %s", paste(missing_cols, collapse = ", ")),
           type = "error",
@@ -144,11 +145,11 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated) {
       }
       return()
     }
-    
+
     # Check for duplicate old column names
     if (any(duplicated(old_cols))) {
       duplicate_cols <- old_cols[duplicated(old_cols)]
-      if (exists("session") && !is.null(session)) {
+      if (!is.null(session)) {
         showNotification(
           sprintf("Cannot rename the same column multiple times: %s", paste(unique(duplicate_cols), collapse = ", ")),
           type = "error",
@@ -157,30 +158,30 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated) {
       }
       return()
     }
-    
+
     # Check for empty new names
     new_names <- names(renames)
     if (any(new_names == "" | is.na(new_names))) {
-      if (exists("session") && !is.null(session)) {
+      if (!is.null(session)) {
         showNotification(
           "All new column names must be provided",
-          type = "error", 
+          type = "error",
           duration = 5
         )
       }
       return()
     }
   }
-  
+
   if (length(renames) == 0) {
     expr <- parse_rename(list())
     r_expr_validated(expr)
     r_renames_validated(renames)
     return()
   }
-  
+
   expr <- try(parse_rename(renames))
-  
+
   # Validation
   if (inherits(expr, "try-error")) {
     if (exists("session") && !is.null(session)) {
@@ -205,7 +206,8 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated) {
     }
     return()
   }
-  
+
   r_expr_validated(expr)
   r_renames_validated(renames)
 }
+
