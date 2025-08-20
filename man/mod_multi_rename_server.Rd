@@ -20,3 +20,4 @@ A reactive expression containing the current rename pairs
 A Shiny module that manages multiple old_name -> new_name mappings for column renaming.
 Supports adding and removing rename pairs dynamically.
 }
+\keyword{internal}

@@ -156,7 +156,7 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
 #' pkgload::load_all(); run_ace_example()
 #' }
 #' @importFrom shiny NS
-#' @export
+#' @keywords internal
 run_ace_example <- function() {
   df <- data.frame(
     Sepal.Length = rnorm(10),

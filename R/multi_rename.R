@@ -11,7 +11,7 @@
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput textInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @export
+#' @keywords internal
 mod_multi_rename_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -171,7 +171,7 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_multi_rename_ui <- function(id) {
   ns <- NS(id)
 
@@ -308,7 +308,7 @@ multi_rename_row_ui <- function(id, new_name = "new_col", old_name = "", availab
 #' \dontrun{
 #' run_multi_rename_example()
 #' }
-#' @export
+#' @keywords internal
 run_multi_rename_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

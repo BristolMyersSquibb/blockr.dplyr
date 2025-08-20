@@ -28,3 +28,4 @@ serve(new_mutate_block(), list(data = mtcars))
 \seealso{
 \code{\link[=new_transform_block]{new_transform_block()}}
 }
+\keyword{internal}

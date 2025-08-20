@@ -15,7 +15,7 @@
 #' \dontrun{
 #' serve(new_filter_block(), list(data = mtcars))
 #' }
-#' @export
+#' @keywords internal
 mod_vexpr_server <- function(
   id,
   get_value,
@@ -71,7 +71,7 @@ mod_vexpr_server <- function(
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_vexpr_ui <- function(id) {
   ns <- NS(id)
 
@@ -119,7 +119,7 @@ mod_vexpr_ui <- function(id) {
 #' \dontrun{
 #' pkgload::load_all();run_vexpr_example()
 #' }
-#' @export
+#' @keywords internal
 run_vexpr_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

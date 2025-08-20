@@ -15,3 +15,4 @@ module functionality with a simple example.
 pkgload::load_all(); run_flexpr_example()
 }
 }
+\keyword{internal}

@@ -12,7 +12,7 @@
 #' @importFrom shinyAce aceEditor updateAceEditor
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @export
+#' @keywords internal
 mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -164,7 +164,7 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @export
+#' @keywords internal
 mod_multi_kvexpr_ui <- function(id) {
   ns <- NS(id)
 
@@ -294,7 +294,7 @@ multi_kvexpr_row_ui <- function(id, name = "new_col", value = "1", show_remove =
 #' \dontrun{
 #' run_multi_kvexpr_example()
 #' }
-#' @export
+#' @keywords internal
 run_multi_kvexpr_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

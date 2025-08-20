@@ -224,7 +224,7 @@ mod_flexpr_ui <- function(ns = function(x) x) {
 #' \dontrun{
 #' pkgload::load_all(); run_flexpr_example()
 #' }
-#' @export
+#' @keywords internal
 run_flexpr_example <- function() {
   df <- data.frame(x = 1:10, y = 11:20, z = 21:30)
 

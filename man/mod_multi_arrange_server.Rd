@@ -20,3 +20,4 @@ A reactive expression containing the current arrange configuration
 A Shiny module that manages multiple column sorting with individual ASC/DESC controls.
 Supports adding, removing, and reordering sort columns dynamically.
 }
+\keyword{internal}

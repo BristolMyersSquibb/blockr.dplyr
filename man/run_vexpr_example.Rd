@@ -15,3 +15,4 @@ functionality with a simple example.
 pkgload::load_all();run_vexpr_example()
 }
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ autocompletion functionality with a simple example.
 pkgload::load_all(); run_ace_example()
 }
 }
+\keyword{internal}

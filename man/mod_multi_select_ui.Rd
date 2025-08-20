@@ -15,3 +15,4 @@ A div containing the UI elements
 \description{
 Create multi select UI module
 }
+\keyword{internal}

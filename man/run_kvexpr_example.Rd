@@ -15,3 +15,4 @@ functionality with a simple example.
 pkgload::load_all();run_kvexpr_example()
 }
 }
+\keyword{internal}
