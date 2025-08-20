@@ -40,12 +40,9 @@ new_select_block <- function(columns = character(), interface = "table", show_se
                   # No columns selected - select none
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
-                  # Build select expression
-                  bquote(
-                    dplyr::select(data, ..(cols)),
-                    list(cols = lapply(selected_cols, as.name)),
-                    splice = TRUE
-                  )
+                  # Build select expression with column names
+                  cols_str <- paste(sprintf("`%s`", selected_cols), collapse = ", ")
+                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[1]]
                 }
               }),
               state = list(
@@ -88,12 +85,9 @@ new_select_block <- function(columns = character(), interface = "table", show_se
                   # No columns selected - select none
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
-                  # Build select expression
-                  bquote(
-                    dplyr::select(data, ..(cols)),
-                    list(cols = lapply(selected_cols, as.name)),
-                    splice = TRUE
-                  )
+                  # Build select expression with column names
+                  cols_str <- paste(sprintf("`%s`", selected_cols), collapse = ", ")
+                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[1]]
                 }
               }),
               state = list(
