@@ -47,7 +47,7 @@ mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
       if (length(current_cols) > 0) {
         updateSelectInput(
           session,
-          inputId = "by_columns", 
+          inputId = "by_columns",
           choices = current_cols,
           selected = r_by_selection()
         )
