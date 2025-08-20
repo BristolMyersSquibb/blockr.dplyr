@@ -407,6 +407,24 @@ function(id) {
 - Test input availability with `names(input)` during development
 - Consider `updateSelectInput()` etc. for dynamic updates instead of full re-rendering
 
+### Error Handling with `cond` Pattern (RESOLVED)
+
+**Issue**: PR feedback suggested using `cond` return values for error notifications instead of showing error text in UI previews.
+
+**Investigation**: The `cond` pattern in blockr.core is handled **automatically by the framework**, not by individual blocks.
+
+**How it works**:
+1. **blockr.core manages conditions**: The framework has built-in error handling through `rv$data_cond`, `rv$state_cond`, and `rv$eval_cond` reactive values
+2. **Individual blocks use `req()`**: Blocks should use `req()` to prevent execution when preconditions aren't met
+3. **Framework catches and reports**: blockr.core automatically catches errors during block evaluation and populates the `cond` structure
+
+**Solution applied**: 
+- Use `req(rows_compatible())` to prevent execution when conditions aren't met (e.g., bind_cols with mismatched row counts)
+- Let blockr.core's error handling system catch and display errors through the notification system
+- Remove manual error text from UI previews
+
+**Why no manual `cond` needed**: The framework handles error conditions automatically when `req()` fails or when block evaluation throws errors. Individual blocks don't need to manually create `cond` objects.
+
 ## Resources
 - Check git history for previous implementations
 - Look at existing modules for patterns
