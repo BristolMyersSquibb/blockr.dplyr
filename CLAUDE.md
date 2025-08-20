@@ -6,11 +6,14 @@ This document provides guidance for improving the `blockr.dplyr` package, which 
 ## Current State
 
 ### Existing Blocks
-- **select** - Column selection
-- **filter** - Row filtering with conditions
-- **mutate** - Add/modify columns with multi-expression support ✅
-- **arrange** - Row ordering
+- **select** - Column selection with enhanced visual interface ✅
+- **filter** - Row filtering with multi-condition support and AND/OR logic ✅
+- **mutate** - Add/modify columns with multi-expression and `.by` parameter support ✅
+- **arrange** - Row ordering with multi-column sorting ✅
 - **summarize** - Group summaries with `.by` parameter and multi-expression support ✅
+- **slice** - Row selection by position/value/sampling with `.by` parameter support ✅
+- **rename** - Column renaming with visual mapping interface ✅
+- **distinct** - Remove duplicate rows with multi-column selection ✅
 - **join** - Combining tables (lower priority)
 
 ### Recently Completed ✅
@@ -77,16 +80,31 @@ All core blocks (mutate, summarize, filter) now have advanced multi-expression/m
    - **Comprehensive testing** - 10 tests covering various scenarios including NA handling
    - **Clean UI** - Simple interface with informative duplicate count display
 
+11. **Unified .by Parameter Implementation** - Consistent grouping across all blocks:
+   - **Unified mod_by_selector component** - Reusable Shiny module for column selection across all blocks
+   - **Added .by support to mutate block** - Grouped mutations with proper dplyr syntax
+   - **Refactored summarize and slice blocks** - Now use unified component for consistency
+   - **Visual consistency** - Same "Group by columns (optional)" interface across all blocks
+   - **State management** - Proper save/restore functionality for .by parameter
+   - **Comprehensive testing** - 29+ tests covering unified component and block integrations
+   - **No separate group_by block needed** - Integrated grouping eliminates UI complexity
+
+## Current Status: Unified .by Parameter Complete ✅
+
+All blocks that support grouping (mutate, summarize, slice) now have a unified visual interface for the `.by` parameter. This eliminates the need for a separate group_by block while providing consistent, integrated grouping functionality.
+
+### Working Features ✅
+- **Unified .by interface** - Consistent multi-select dropdown across mutate, summarize, and slice blocks
+- **Integrated grouping** - No need for separate group_by block in workflows
+- **Visual consistency** - Same styling, behavior, and user experience across all blocks
+- **State management** - Proper save/restore of grouping selections
+- **dplyr syntax compliance** - Generates correct `.by` parameter syntax for all operations
+
 ## Next Implementation Priority
 
-### Slice Block (In Development)
-- **slice** variants - Comprehensive row selection by position, value, or random sampling
-  - slice() for custom positions
-  - slice_head()/slice_tail() for first/last rows
-  - slice_min()/slice_max() for value-based selection
-  - slice_sample() for random sampling
-- **Grouping via .by parameter** - No need for separate group_by block
-- **Reactive UI** - Immediate updates without submit button
+### Optional Extensions
+- **Add .by support to filter block** - Less common but potentially useful for grouped filtering
+- **Add .by support to arrange block** - May be useful for some use cases
 
 ### Future New Blocks
 - **join** blocks - Table combining operations (needs enhancement for multi-column joins)
