@@ -83,14 +83,7 @@ new_bind_rows_block <- function(
           build_bind_expr <- function(add_id, id_name) {
             if (add_id) {
               # Create named list with ID labels
-              bquote(
-                dplyr::bind_rows(
-                  `1` = x,
-                  `2` = y,
-                  .id = .(id_col)
-                ),
-                list(id_col = id_name)
-              )
+              parse(text = glue::glue("dplyr::bind_rows(`1` = x, `2` = y, .id = \"{id_name}\")"))[[1]]
             } else {
               # Simple bind without ID
               quote(dplyr::bind_rows(x, y))

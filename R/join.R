@@ -77,18 +77,11 @@ new_join_block <- function(
 
           # Build join expression
           build_join_expr <- function(join_type, keys) {
-            # Get the dplyr join function
-            join_func <- eval(
-              bquote(
-                as.call(c(as.symbol("::"), quote(dplyr), quote(.(fun)))),
-                list(fun = as.name(join_type))
-              )
-            )
-
             # Handle different join key formats
             if (is.character(keys) && length(keys) > 0) {
               # Simple character vector - natural join
-              bquote(.(func)(x, y, by = .(keys)), list(func = join_func, keys = keys))
+              keys_str <- deparse(keys)
+              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})"))[[1]]
             } else if (is.list(keys) && length(keys) > 0) {
               # Complex join - handle different name mappings
               # Convert to dplyr join_by() compatible format
@@ -97,11 +90,11 @@ new_join_block <- function(
               } else {
                 keys
               }
-              bquote(.(func)(x, y, by = .(join_spec)), list(func = join_func, join_spec = join_spec))
+              join_spec_str <- deparse(join_spec)
+              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {join_spec_str})"))[[1]]
             } else {
               # Fallback to natural join on common columns
-              common_cols <- quote(intersect(colnames(x), colnames(y)))
-              bquote(.(func)(x, y, by = .(common_cols)), list(func = join_func, common_cols = common_cols))
+              parse(text = glue::glue("dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"))[[1]]
             }
           }
 
