@@ -4,10 +4,12 @@
 \alias{new_select_block}
 \title{Select block constructor}
 \usage{
-new_select_block(columns = character(), ...)
+new_select_block(columns = character(), enhanced = TRUE, ...)
 }
 \arguments{
 \item{columns}{Selected columns}
+
+\item{enhanced}{Use enhanced multi-select interface (default TRUE)}
 
 \item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
 }

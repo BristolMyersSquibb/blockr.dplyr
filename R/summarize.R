@@ -24,7 +24,7 @@
 #' }
 #' @export
 new_summarize_block <- function(
-  string = list(count = "n()"),
+  string = list(count = "dplyr::n()"),
   by = character(),
   ...
 ) {
@@ -131,7 +131,7 @@ apply_summarize <- function(data, string, r_expr_validated, r_string_validated, 
   if (is.list(string)) {
     string <- unlist(string)
   }
-  
+
   # If empty or only whitespace, return simple summarize
   if (all(trimws(unname(string)) == "")) {
     expr <- parse_summarize(string)
