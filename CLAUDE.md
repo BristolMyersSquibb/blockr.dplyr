@@ -208,6 +208,44 @@ When all major features are complete, consider these cleanup opportunities:
 
 **Note**: These cleanups should only be considered after users have had time to adopt the new multi-condition interface and confirm it meets all their needs.
 
+## Technical Issues & Solutions
+
+### Dynamic UI Input Registration Problem (Slice Block)
+
+**Issue**: Inputs created inside `renderUI()` dynamic UI sections are not properly registered with Shiny's input system, making them unavailable in `observeEvent(input$submit, ...)` handlers.
+
+**Symptoms**:
+- Input appears visually in the UI and can be interacted with
+- `input$inputname` returns NULL in server functions
+- Input name missing from `names(input)` list
+- Submit handlers cannot read updated values
+
+**Root Cause**: Shiny's reactive input registration has timing issues with dynamically rendered UI elements, especially when accessed immediately after user interaction.
+
+**Solution**: Move critical inputs from dynamic UI (`renderUI()`) to static UI sections.
+
+**Example**:
+```r
+# PROBLEMATIC: Input in dynamic UI
+output$dynamic_ui <- renderUI({
+  selectInput(NS(id, "n"), "Number", choices = 1:10)  # Won't be available in input$n
+})
+
+# SOLUTION: Input in static UI
+function(id) {
+  div(
+    selectInput(NS(id, "n"), "Number", choices = 1:10),  # Available in input$n
+    uiOutput(NS(id, "dynamic_ui"))  # Keep only non-critical elements dynamic
+  )
+}
+```
+
+**Best Practices**:
+- Use static UI for inputs that need to be read in submit handlers
+- Reserve `renderUI()` for truly dynamic content (conditional panels, varying choices)
+- Test input availability with `names(input)` during development
+- Consider `updateSelectInput()` etc. for dynamic updates instead of full re-rendering
+
 ## Resources
 - Check git history for previous implementations
 - Look at existing modules for patterns

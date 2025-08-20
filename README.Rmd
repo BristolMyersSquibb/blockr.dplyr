@@ -54,23 +54,12 @@ blockr.core::serve(new_select_block(c("mpg", "cyl")), data = list(data = mtcars)
 
 ```{r select-pipeline, eval = FALSE}
 library(blockr.core)
-library(blockr.dplyr)
 library(blockr.ui)
 
 # Create a dashboard demonstrating the enhanced select capabilities
 board <- blockr.ui::new_dag_board(
   blocks = list(
-    data_block = new_dataset_block("mtcars"),
-    select_block = new_select_block(c("mpg", "cyl", "hp", "wt")),
-    filter_block = new_filter_block("mpg > 20"),
-    arrange_block = new_arrange_block(list(
-      list(column = "mpg", direction = "desc"),
-      list(column = "hp", direction = "asc")
-    ))
-  ),
-  links = links(
-    from = c("data_block", "select_block", "filter_block"),
-    to = c("select_block", "filter_block", "arrange_block")
+    data_block = new_dataset_block("mtcars")
   )
 )
 
@@ -247,7 +236,7 @@ The `dplyr::filter()` block now supports multiple conditions with visual AND/OR 
 library(blockr.dplyr)
 # Single condition interface (backward compatible)
 blockr.core::serve(
-  new_filter_block("mpg > 20", multi_condition = FALSE), 
+  new_filter_block("mpg > 20", multi_condition = FALSE),
   data = list(data = mtcars)
 )
 ```
@@ -258,7 +247,7 @@ blockr.core::serve(
 library(blockr.dplyr)
 # Multi-condition interface with visual builder
 blockr.core::serve(
-  new_filter_block("mpg > 20"), 
+  new_filter_block("mpg > 20"),
   data = list(data = mtcars)
 )
 ```
@@ -323,7 +312,7 @@ blockr.core::serve(new_filter_block(), data = list(data = mtcars))
 
 In the UI, you can:
 1. Start with one condition (e.g., "mpg > 20")
-2. Click "Add Condition" to add more (e.g., "cyl == 4") 
+2. Click "Add Condition" to add more (e.g., "cyl == 4")
 3. Choose AND/OR between conditions using the dropdown
 4. Use autocompletion for column names and functions
 5. Remove conditions with the trash icon (keeping at least one)
@@ -337,7 +326,7 @@ The `slice` block provides comprehensive row selection using all dplyr slice var
 ```{r slice-head, eval = FALSE}
 library(blockr.dplyr)
 # Select first 5 rows
-blockr.core::serve(new_slice_block(type = "head", n = 5), data = list(data = mtcars))
+pkgload::load_all(); blockr.core::serve(new_slice_block(type = "head", n = 5), data = list(data = mtcars))
 
 # Select last 10% of rows
 blockr.core::serve(new_slice_block(type = "tail", prop = 0.1), data = list(data = mtcars))
@@ -348,13 +337,13 @@ blockr.core::serve(new_slice_block(type = "tail", prop = 0.1), data = list(data 
 ```{r slice-minmax, eval = FALSE}
 # Select 3 cars with best fuel economy
 blockr.core::serve(
-  new_slice_block(type = "max", order_by = "mpg", n = 3), 
+  new_slice_block(type = "max", order_by = "mpg", n = 3),
   data = list(data = mtcars)
 )
 
 # Select worst mpg per cylinder group
 blockr.core::serve(
-  new_slice_block(type = "min", order_by = "mpg", n = 1, by = "cyl"), 
+  new_slice_block(type = "min", order_by = "mpg", n = 1, by = "cyl"),
   data = list(data = mtcars)
 )
 ```
@@ -364,13 +353,13 @@ blockr.core::serve(
 ```{r slice-sample, eval = FALSE}
 # Random sample of 10 rows
 blockr.core::serve(
-  new_slice_block(type = "sample", n = 10), 
+  new_slice_block(type = "sample", n = 10),
   data = list(data = mtcars)
 )
 
 # Weighted sampling with replacement
 blockr.core::serve(
-  new_slice_block(type = "sample", n = 50, weight_by = "hp", replace = TRUE), 
+  new_slice_block(type = "sample", n = 50, weight_by = "hp", replace = TRUE),
   data = list(data = mtcars)
 )
 ```
@@ -380,13 +369,13 @@ blockr.core::serve(
 ```{r slice-custom, eval = FALSE}
 # Select specific rows by position
 blockr.core::serve(
-  new_slice_block(type = "custom", rows = "c(1, 3, 5:10)"), 
+  new_slice_block(type = "custom", rows = "c(1, 3, 5:10)"),
   data = list(data = mtcars)
 )
 
 # Remove first and last rows
 blockr.core::serve(
-  new_slice_block(type = "custom", rows = "-c(1, n())"), 
+  new_slice_block(type = "custom", rows = "-c(1, n())"),
   data = list(data = mtcars)
 )
 ```
@@ -401,7 +390,7 @@ The `dplyr::rename()` block provides an intuitive interface for renaming columns
 library(blockr.dplyr)
 # Rename with predefined mappings
 blockr.core::serve(
-  new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")), 
+  new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
   data = list(data = mtcars)
 )
 ```
@@ -474,7 +463,7 @@ blockr.core::serve(new_rename_block(), data = list(data = mtcars))
 
 In the UI, you can:
 1. Set new column names in the left text inputs
-2. Select existing columns from dropdowns on the right  
+2. Select existing columns from dropdowns on the right
 3. Add more rename pairs with "Add Rename" button
 4. Remove pairs with trash icons (keeping at least one)
 5. See the arrow (←) indicating the rename direction
@@ -489,7 +478,7 @@ The `dplyr::distinct()` block allows you to remove duplicate rows from your data
 library(blockr.dplyr)
 # Remove duplicates based on specific columns
 blockr.core::serve(
-  new_distinct_block(columns = c("cyl", "gear"), .keep_all = TRUE), 
+  new_distinct_block(columns = c("cyl", "gear"), .keep_all = TRUE),
   data = list(data = mtcars)
 )
 ```
@@ -571,7 +560,7 @@ The `dplyr::arrange()` block now supports enhanced multi-column sorting with ind
 library(blockr.dplyr)
 # Classic approach with character vector
 blockr.core::serve(
-  new_arrange_block(c("mpg", "cyl"), desc = TRUE), 
+  new_arrange_block(c("mpg", "cyl"), desc = TRUE),
   data = list(data = mtcars)
 )
 ```
@@ -586,7 +575,7 @@ blockr.core::serve(
     list(column = "mpg", direction = "desc"),
     list(column = "cyl", direction = "asc"),
     list(column = "hp", direction = "desc")
-  )), 
+  )),
   data = list(data = mtcars)
 )
 ```
@@ -626,7 +615,7 @@ blockr.core::serve(board)
 
 The enhanced arrange block features:
 - **Multi-column interface**: Add/remove sort columns with individual controls
-- **Individual ASC/DESC**: Choose ascending or descending for each column independently  
+- **Individual ASC/DESC**: Choose ascending or descending for each column independently
 - **Visual priority**: Clear 1., 2., 3. indicators showing sort order priority
 - **Add/remove controls**: Dynamic interface to add/remove sort columns
 - **Backward compatibility**: Accepts both character vectors and list specifications
