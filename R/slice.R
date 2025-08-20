@@ -89,7 +89,7 @@ new_slice_block <- function(
                   return(paste0(".by = c(", paste0('"', by_cols, '"', collapse = ", "), ")"))
                 }
               }
-              return(NULL)
+              NULL
             }
 
             by_arg <- format_by()
@@ -117,7 +117,7 @@ new_slice_block <- function(
               } else {
                 args <- paste0(args, ", n = ", n_val)
               }
-              args <- paste0(args, ", with_ties = ", if(with_ties_val) "TRUE" else "FALSE")
+              args <- paste0(args, ", with_ties = ", if (with_ties_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::%s(data, %s)", func, args)))
 
@@ -126,7 +126,7 @@ new_slice_block <- function(
               if (!is.null(weight_by_val) && weight_by_val != "") {
                 args <- paste0(args, ', weight_by = "', weight_by_val, '"')
               }
-              args <- paste0(args, ", replace = ", if(replace_val) "TRUE" else "FALSE")
+              args <- paste0(args, ", replace = ", if (replace_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_sample(data, %s)", args)))
 
