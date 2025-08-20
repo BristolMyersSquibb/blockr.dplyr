@@ -183,12 +183,13 @@ new_slice_block <- function(
       )
     },
     function(id) {
+      ns <- NS(id)  # Create namespace function
       div(
         class = "m-3",
         
         # Main slice type selector
         selectInput(
-          NS(id, "type"),
+          ns("type"),
           label = "Slice type",
           choices = list(
             "First rows" = "head",
@@ -203,9 +204,9 @@ new_slice_block <- function(
         
         # Selection method for applicable types  
         conditionalPanel(
-          condition = "input.type != 'custom'",
+          condition = sprintf("input['%s'] != 'custom'", ns("type")),
           radioButtons(
-            NS(id, "use_prop"),
+            ns("use_prop"),
             label = "Selection method",
             choices = list("Number of rows" = "n", "Proportion" = "prop"),
             selected = "n",
@@ -215,9 +216,10 @@ new_slice_block <- function(
         
         # Number of rows input
         conditionalPanel(
-          condition = "input.type != 'custom' && (input.use_prop == 'n' || !input.use_prop)",
+          condition = sprintf("input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])", 
+                            ns("type"), ns("use_prop"), ns("use_prop")),
           numericInput(
-            NS(id, "n"),
+            ns("n"),
             label = "Number of rows",
             value = n,
             min = 1,
@@ -227,9 +229,10 @@ new_slice_block <- function(
         
         # Proportion input
         conditionalPanel(
-          condition = "input.type != 'custom' && input.use_prop == 'prop'",
+          condition = sprintf("input['%s'] != 'custom' && input['%s'] == 'prop'", 
+                            ns("type"), ns("use_prop")),
           numericInput(
-            NS(id, "prop"),
+            ns("prop"),
             label = "Proportion (0 to 1)",
             value = prop,
             min = 0,
@@ -240,15 +243,16 @@ new_slice_block <- function(
         
         # Order by column (for min/max)
         conditionalPanel(
-          condition = "input.type == 'min' || input.type == 'max'",
+          condition = sprintf("input['%s'] == 'min' || input['%s'] == 'max'", 
+                            ns("type"), ns("type")),
           selectInput(
-            NS(id, "order_by"),
+            ns("order_by"),
             label = "Order by column",
             choices = character(),
             selected = order_by
           ),
           checkboxInput(
-            NS(id, "with_ties"),
+            ns("with_ties"),
             label = "Include ties",
             value = with_ties
           )
@@ -256,15 +260,15 @@ new_slice_block <- function(
         
         # Weight by column (for sample)
         conditionalPanel(
-          condition = "input.type == 'sample'",
+          condition = sprintf("input['%s'] == 'sample'", ns("type")),
           selectInput(
-            NS(id, "weight_by"),
+            ns("weight_by"),
             label = "Weight by column (optional)",
             choices = character(),
             selected = weight_by
           ),
           checkboxInput(
-            NS(id, "replace"),
+            ns("replace"),
             label = "Sample with replacement",
             value = replace
           )
@@ -272,9 +276,9 @@ new_slice_block <- function(
         
         # Custom row positions
         conditionalPanel(
-          condition = "input.type == 'custom'",
+          condition = sprintf("input['%s'] == 'custom'", ns("type")),
           textInput(
-            NS(id, "rows"),
+            ns("rows"),
             label = "Row positions (e.g., 1:5, c(1,3,5), -c(2,4))",
             value = rows,
             placeholder = "1:5"
@@ -283,7 +287,7 @@ new_slice_block <- function(
         
         # Group by columns
         selectInput(
-          NS(id, "by"),
+          ns("by"),
           label = "Group by columns (optional)",
           choices = character(),
           selected = by,
