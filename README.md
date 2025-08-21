@@ -433,7 +433,7 @@ blockr.core::serve(board)
 
 ## Comprehensive Example
 
-Here's a realistic data analysis pipeline demonstrating multiple blocks working together:
+Here's a realistic data analysis pipeline demonstrating multiple blocks working together, organized with stacks for better visual management of complex workflows:
 
 ```r
 library(blockr.core)
@@ -563,6 +563,33 @@ analysis_board <- blockr.ui::new_dag_board(
     # Add metadata to cars
     cars_bind_main = new_link("cars_enhanced", "cars_with_ids", "x"),
     cars_bind_meta = new_link("cars_original_subset", "cars_with_ids", "y")
+  ),
+  stacks = blockr.core::stacks(
+    # Organize blocks into logical groups for better pipeline management
+    data_sources = blockr.core::new_stack(
+      c("bod_data", "chick_data", "cars_data", "iris_data"),
+      "Data Sources"
+    ),
+    bod_analysis = blockr.core::new_stack(
+      c("bod_select", "bod_filter"),
+      "BOD Analysis"
+    ),
+    chick_analysis = blockr.core::new_stack(
+      c("chick_select", "chick_filter"), 
+      "ChickWeight Analysis"
+    ),
+    cars_analysis = blockr.core::new_stack(
+      c("fast_cars", "cars_enhanced", "cars_sorted", "summary_stats", "top_cars"),
+      "Cars Analysis Pipeline"
+    ),
+    iris_analysis = blockr.core::new_stack(
+      c("iris_renamed", "iris_summary"),
+      "Iris Analysis"
+    ),
+    data_combination = blockr.core::new_stack(
+      c("joined_data", "distinct_data", "combined_summaries", "cars_original_subset", "cars_with_ids"),
+      "Data Combination Operations"
+    )
   )
 )
 
