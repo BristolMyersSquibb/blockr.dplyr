@@ -10,7 +10,9 @@ register_dplyr_blocks <- function() {
       "new_filter_block",
       "new_distinct_block",
       "new_bind_rows_block",
-      "new_bind_cols_block"
+      "new_bind_cols_block",
+      "new_rename_block",
+      "new_slice_block"
     ),
     name = c(
       "select block",
@@ -21,7 +23,9 @@ register_dplyr_blocks <- function() {
       "filter block",
       "distinct block",
       "bind rows block",
-      "bind columns block"
+      "bind columns block",
+      "rename block",
+      "slice block"
     ),
     description = c(
       "Subset columns in a data.frame",
@@ -32,9 +36,13 @@ register_dplyr_blocks <- function() {
       "Filter rows in a data.frame based on conditions",
       "Remove duplicate rows from a data.frame",
       "Stack data.frames vertically by matching column names",
-      "Combine data.frames side-by-side (requires same row count)"
+      "Combine data.frames side-by-side (requires same row count)",
+      "Rename columns in a data.frame",
+      "Select rows by position, value, or sampling with optional grouping"
     ),
     category = c(
+      "transform",
+      "transform",
       "transform",
       "transform",
       "transform",
