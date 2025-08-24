@@ -29,13 +29,13 @@ library(blockr.core)
 options(webshot.app.timeout = 120)
 
 # Configuration
-SCREENSHOT_WIDTH <- 1200
-SCREENSHOT_HEIGHT <- 800
-OUTPUT_DIR <- "man/figures"
+screenshot_width <- 1200
+screenshot_height <- 800
+output_dir <- "man/figures"
 
 # Create output directory if it doesn't exist
-if (!dir.exists(OUTPUT_DIR)) {
-  dir.create(OUTPUT_DIR, recursive = TRUE)
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
 }
 
 # Default to select if not specified
@@ -81,9 +81,9 @@ blockr.core::serve(
       # Take screenshot
       webshot2::appshot(
         app = temp_dir,
-        file = file.path(OUTPUT_DIR, filename),
-        vwidth = SCREENSHOT_WIDTH,
-        vheight = SCREENSHOT_HEIGHT,
+        file = file.path(output_dir, filename),
+        vwidth = screenshot_width,
+        vheight = screenshot_height,
         delay = 5 # Wait for app to load
       )
 
@@ -178,4 +178,4 @@ switch(
 )
 
 cat(sprintf("Screenshot generation complete for %s!\n", block_type))
-cat(sprintf("Screenshot saved to: %s/\n", OUTPUT_DIR))
+cat(sprintf("Screenshot saved to: %s/\n", output_dir))
