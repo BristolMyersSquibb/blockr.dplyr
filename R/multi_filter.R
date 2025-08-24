@@ -42,7 +42,10 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
 
     # Track AND/OR logic between conditions
-    r_logic_operators <- reactiveVal(rep("&", max(0, length(initial_conditions) - 1)))
+    r_logic_operators <- reactiveVal(rep(
+      "&",
+      max(0, length(initial_conditions) - 1)
+    ))
 
     # Initialize ACE editors for existing conditions
     observe({
@@ -87,7 +90,9 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
       for (i in seq_len(length(indices) - 1)) {
         logic_id <- paste0("logic_", i)
         op <- input[[logic_id]]
-        if (is.null(op)) op <- "&" # Default to AND
+        if (is.null(op)) {
+          op <- "&"
+        } # Default to AND
         operators <- c(operators, op)
       }
       operators
@@ -169,29 +174,35 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
         condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
 
         # Add the condition row
-        ui_elements <- append(ui_elements, list(
-          multi_filter_condition_ui(
-            ns(paste0("condition_", i)),
-            value = condition,
-            show_remove = (length(indices) > 1)
+        ui_elements <- append(
+          ui_elements,
+          list(
+            multi_filter_condition_ui(
+              ns(paste0("condition_", i)),
+              value = condition,
+              show_remove = (length(indices) > 1)
+            )
           )
-        ))
+        )
 
         # Add logic operator dropdown between conditions (except after last)
         if (j < length(indices)) {
           logic_value <- if (j <= length(logic_ops)) logic_ops[j] else "&"
-          ui_elements <- append(ui_elements, list(
-            div(
-              class = "d-flex justify-content-start my-2", # Changed from center to start
-              selectInput(
-                ns(paste0("logic_", j)),
-                label = NULL,
-                choices = list("AND" = "&", "OR" = "|"),
-                selected = logic_value,
-                width = "80px"
+          ui_elements <- append(
+            ui_elements,
+            list(
+              div(
+                class = "d-flex justify-content-start my-2", # Changed from center to start
+                selectInput(
+                  ns(paste0("logic_", j)),
+                  label = NULL,
+                  choices = list("AND" = "&", "OR" = "|"),
+                  selected = logic_value,
+                  width = "80px"
+                )
               )
             )
-          ))
+          )
         }
       }
 
@@ -255,7 +266,8 @@ mod_multi_filter_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .multi-filter-condition .shiny-ace {
         border: none;
         margin: 7px;
@@ -289,7 +301,8 @@ mod_multi_filter_ui <- function(id) {
       .input-group.multi-filter-condition {
         height: 38px !important;
       }
-    "),
+    "
+    ),
     div(
       class = "multi-filter-container",
       uiOutput(ns("conditions_ui")),

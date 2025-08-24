@@ -3,13 +3,29 @@
 get_default_categories <- function() {
   list(
     arithmetic = c(
-      "abs", "sign", "ceiling", "floor", "round", "trunc",
-      "log", "log2", "log10", "exp", "sqrt"
+      "abs",
+      "sign",
+      "ceiling",
+      "floor",
+      "round",
+      "trunc",
+      "log",
+      "log2",
+      "log10",
+      "exp",
+      "sqrt"
     ),
     aggregate = c("mean", "sum", "min", "max"),
     offset = c("lead", "lag", "cumsum", "cumprod", "cummin", "cummax"),
     logical = c("if_else", "case_when"),
-    string = c("str_c", "paste", "paste0", "str_sub", "str_to_lower", "str_to_upper"),
+    string = c(
+      "str_c",
+      "paste",
+      "paste0",
+      "str_sub",
+      "str_to_lower",
+      "str_to_upper"
+    ),
     ranking = c("row_number", "min_rank", "dense_rank", "percent_rank", "ntile")
   )
 }
@@ -22,7 +38,8 @@ get_default_categories <- function() {
 #' @noRd
 setup_ace_editor <- function(id, value = "") {
   # Custom completer script
-  custom_completer <- sprintf('
+  custom_completer <- sprintf(
+    '
     var customCompleter = {
       getCompletions: function(editor, session, pos, prefix, callback) {
         // Categories will be updated dynamically from the server
@@ -80,10 +97,14 @@ setup_ace_editor <- function(id, value = "") {
         setTimeout(addCompleter, 100);
       }
     })();
-  ', jsonlite::toJSON(get_default_categories(), auto_unbox = TRUE), id)
+  ',
+    jsonlite::toJSON(get_default_categories(), auto_unbox = TRUE),
+    id
+  )
 
   tagList(
-    tags$style(".mutate-expression .shiny-ace {
+    tags$style(
+      ".mutate-expression .shiny-ace {
       border: none;
       margin: 7px;
       margin-bottom: 7.5px;   // to align with select box
@@ -91,7 +112,8 @@ setup_ace_editor <- function(id, value = "") {
 
     .mutate-expression .mutate-code {
       width: 100%;
-    }"),
+    }"
+    ),
     # Initialize completer immediately after Ace is loaded
     tags$script(HTML(custom_completer)),
     div(
@@ -144,7 +166,8 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
   # Wait until the editor DOM is present before configuring options
   shinyjs::runjs(sprintf(
     "(function(){\n  function setup(){\n    if (typeof ace === 'undefined') { setTimeout(setup, 100); return; }\n    var el = document.getElementById('%s');\n    if (!el) { setTimeout(setup, 100); return; }\n    var editor = ace.edit('%s');\n    if (!editor) { setTimeout(setup, 100); return; }\n    editor.setOptions({\n      enableLiveAutocompletion: true,\n      enableBasicAutocompletion: true\n    });\n  }\n  setup();\n})();",
-    editor_id, editor_id
+    editor_id,
+    editor_id
   ))
 }
 

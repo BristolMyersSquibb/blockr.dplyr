@@ -41,7 +41,12 @@ test_that("slice block with grouping", {
   block <- new_slice_block(type = "head", n = 2, by = "cyl")
   expect_s3_class(block, "slice_block")
 
-  block2 <- new_slice_block(type = "max", order_by = "mpg", n = 1, by = c("cyl", "am"))
+  block2 <- new_slice_block(
+    type = "max",
+    order_by = "mpg",
+    n = 1,
+    by = c("cyl", "am")
+  )
   expect_s3_class(block2, "slice_block")
 })
 
@@ -51,10 +56,20 @@ test_that("slice block with weights", {
 })
 
 test_that("slice block with ties", {
-  block <- new_slice_block(type = "min", order_by = "mpg", n = 3, with_ties = TRUE)
+  block <- new_slice_block(
+    type = "min",
+    order_by = "mpg",
+    n = 3,
+    with_ties = TRUE
+  )
   expect_s3_class(block, "slice_block")
 
-  block2 <- new_slice_block(type = "max", order_by = "hp", n = 2, with_ties = FALSE)
+  block2 <- new_slice_block(
+    type = "max",
+    order_by = "hp",
+    n = 2,
+    with_ties = FALSE
+  )
   expect_s3_class(block2, "slice_block")
 })
 
@@ -218,7 +233,12 @@ test_that("block initialization and basic properties", {
   skip_if_not_installed("blockr.core")
 
   # Test basic construction
-  block <- new_slice_block(type = "max", n = 3, order_by = "mpg", with_ties = TRUE)
+  block <- new_slice_block(
+    type = "max",
+    n = 3,
+    order_by = "mpg",
+    with_ties = TRUE
+  )
   expect_s3_class(block, "slice_block")
 
   # Test with grouping

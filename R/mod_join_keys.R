@@ -45,7 +45,10 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
       condition = sprintf("!input['%s']", ns("use_natural_join")),
       div(
         id = ns("custom_mappings"),
-        h6("Custom Column Mappings", style = "margin-top: 15px; margin-bottom: 10px;"),
+        h6(
+          "Custom Column Mappings",
+          style = "margin-top: 15px; margin-bottom: 10px;"
+        ),
         uiOutput(ns("join_mappings_ui")),
         div(
           style = "margin-top: 10px;",
@@ -76,7 +79,12 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
 #' @param initial_keys List or character vector. Initial join keys.
 #'
 #' @export
-mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = character()) {
+mod_join_keys_server <- function(
+  id,
+  get_x_cols,
+  get_y_cols,
+  initial_keys = character()
+) {
   moduleServer(id, function(input, output, session) {
     # Reactive values for managing join mappings
     r_custom_mappings <- reactiveVal(list())
@@ -146,13 +154,20 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
       # Only render if we have mappings (they should be initialized by now)
       if (length(mappings) > 0) {
         map(seq_along(mappings), function(i) {
-          create_mapping_row(session$ns, i, mappings[[i]], r_x_cols(), r_y_cols())
+          create_mapping_row(
+            session$ns,
+            i,
+            mappings[[i]],
+            r_x_cols(),
+            r_y_cols()
+          )
         })
       }
     })
 
     # Add new mapping
-    observeEvent(input$add_mapping,
+    observeEvent(
+      input$add_mapping,
       {
         current <- r_custom_mappings()
         new_mapping <- list(x_col = "", y_col = "")
@@ -186,10 +201,12 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         for (i in seq_along(mappings)) {
           local({
             idx <- i
-            observeEvent(input[[paste0("delete_", idx)]],
+            observeEvent(
+              input[[paste0("delete_", idx)]],
               {
                 current <- r_custom_mappings()
-                if (length(current) > 1) { # Keep at least one mapping
+                if (length(current) > 1) {
+                  # Keep at least one mapping
                   r_custom_mappings(current[-idx])
                 }
               },
@@ -218,7 +235,10 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         if (length(valid_mappings) == 0) {
           "No valid join mappings configured"
         } else {
-          join_specs <- map_chr(valid_mappings, ~ paste(.x$x_col, "\u2192", .x$y_col))
+          join_specs <- map_chr(
+            valid_mappings,
+            ~ paste(.x$x_col, "\u2192", .x$y_col)
+          )
           paste("Custom join on:", paste(join_specs, collapse = ", "))
         }
       }

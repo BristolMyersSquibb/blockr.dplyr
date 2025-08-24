@@ -9,7 +9,12 @@
 #' @param ... Forwarded to [new_block()]
 #'
 #' @export
-new_select_block <- function(columns = character(), interface = "table", show_selected_on_top = TRUE, ...) {
+new_select_block <- function(
+  columns = character(),
+  interface = "table",
+  show_selected_on_top = TRUE,
+  ...
+) {
   # Determine interface type
   interface <- match.arg(interface, c("table", "cards"))
 
@@ -40,8 +45,13 @@ new_select_block <- function(columns = character(), interface = "table", show_se
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
                   # Build select expression with column names
-                  cols_str <- paste(sprintf("`%s`", selected_cols), collapse = ", ")
-                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[1]]
+                  cols_str <- paste(
+                    sprintf("`%s`", selected_cols),
+                    collapse = ", "
+                  )
+                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[
+                    1
+                  ]]
                 }
               }),
               state = list(
@@ -54,7 +64,10 @@ new_select_block <- function(columns = character(), interface = "table", show_se
         )
       },
       function(id) {
-        mod_table_select_ui(NS(id, "table_select"), show_selected_on_top = show_selected_on_top)
+        mod_table_select_ui(
+          NS(id, "table_select"),
+          show_selected_on_top = show_selected_on_top
+        )
       },
       class = "select_block",
       ...
@@ -85,8 +98,13 @@ new_select_block <- function(columns = character(), interface = "table", show_se
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
                   # Build select expression with column names
-                  cols_str <- paste(sprintf("`%s`", selected_cols), collapse = ", ")
-                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[1]]
+                  cols_str <- paste(
+                    sprintf("`%s`", selected_cols),
+                    collapse = ", "
+                  )
+                  parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[
+                    1
+                  ]]
                 }
               }),
               state = list(

@@ -16,7 +16,13 @@
 #' @importFrom htmltools tags
 #' @importFrom utils head
 #' @export
-mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, show_selected_on_top = TRUE) {
+mod_table_select_server <- function(
+  id,
+  get_value,
+  get_cols,
+  get_data_preview,
+  show_selected_on_top = TRUE
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -110,7 +116,8 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           type_info <- get_type_info(col_class)
           sprintf(
             '<span class="badge %s" style="font-size: 0.75rem;">%s</span>',
-            type_info$class, type_info$label
+            type_info$class,
+            type_info$label
           )
         }),
         Sample = sapply(cols, function(col) {
@@ -124,7 +131,10 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
             if (nchar(sample_str) > 40) {
               sample_str <- paste0(substr(sample_str, 1, 37), "\u2026")
             }
-            sprintf('<span class="font-monospace text-muted">%s</span>', sample_str)
+            sprintf(
+              '<span class="font-monospace text-muted">%s</span>',
+              sample_str
+            )
           } else {
             '<span class="text-muted font-monospace">All NA</span>'
           }
@@ -140,7 +150,11 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
 
       # Apply search filter
       if (!is.null(search_term) && search_term != "") {
-        filtered_rows <- grepl(search_term, columns_data$Column, ignore.case = TRUE)
+        filtered_rows <- grepl(
+          search_term,
+          columns_data$Column,
+          ignore.case = TRUE
+        )
         columns_data <- columns_data[filtered_rows, , drop = FALSE]
       }
 
@@ -155,7 +169,8 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           searching = FALSE, # We handle search ourselves
           info = TRUE,
           ordering = TRUE,
-          rowCallback = DT::JS("
+          rowCallback = DT::JS(
+            "
             function(row, data) {
               if (data[0] === true) {
                 $(row).addClass('selected-row');
@@ -163,7 +178,8 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
                 $(row).removeClass('selected-row');
               }
             }
-          "),
+          "
+          ),
           columnDefs = list(
             list(
               targets = 0, # Selected column
@@ -171,13 +187,15 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
               orderable = TRUE, # Enable sorting on selection column
               className = "dt-center",
               width = "60px",
-              render = DT::JS("
+              render = DT::JS(
+                "
                 function(data, type, row, meta) {
                   var checked = data ? 'checked' : '';
                   return '<input type=\"checkbox\" class=\"column-checkbox\" data-column=\"' +
                          row[1] + '\" ' + checked + '>';
                 }
-              ")
+              "
+              )
             ),
             list(
               targets = 1, # Column name
@@ -207,12 +225,15 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
       clicked <- input$columns_table_cell_clicked
 
       # Validate that we have all necessary information
-      if (!is.null(clicked) &&
-        !is.null(clicked$col) &&
-        !is.null(clicked$row) &&
-        length(clicked$col) > 0 &&
-        length(clicked$row) > 0 &&
-        clicked$col == 0) { # Checkbox column
+      if (
+        !is.null(clicked) &&
+          !is.null(clicked$col) &&
+          !is.null(clicked$row) &&
+          length(clicked$col) > 0 &&
+          length(clicked$row) > 0 &&
+          clicked$col == 0
+      ) {
+        # Checkbox column
 
         row_index <- clicked$row
         columns_data <- get_columns_data()
@@ -220,7 +241,11 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
 
         # Apply same filtering as in table render
         if (!is.null(search_term) && search_term != "") {
-          filtered_rows <- grepl(search_term, columns_data$Column, ignore.case = TRUE)
+          filtered_rows <- grepl(
+            search_term,
+            columns_data$Column,
+            ignore.case = TRUE
+          )
           columns_data <- columns_data[filtered_rows, , drop = FALSE]
         }
 
@@ -228,7 +253,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           clicked_column <- columns_data$Column[row_index]
           current_selected <- r_selected()
 
-          if (!is.null(current_selected) && clicked_column %in% current_selected) {
+          if (
+            !is.null(current_selected) && clicked_column %in% current_selected
+          ) {
             # Remove column
             r_selected(setdiff(current_selected, clicked_column))
           } else {
@@ -272,7 +299,8 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
       if (is.null(selected_cols) || length(selected_cols) == 0) {
         return(div(
           class = "alert alert-info",
-          icon("info-circle"), " No columns selected"
+          icon("info-circle"),
+          " No columns selected"
         ))
       }
 
@@ -280,8 +308,14 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
         class = "selected-columns-top mb-3 p-3 border rounded bg-light",
         div(
           class = "d-flex justify-content-between align-items-center mb-2",
-          h6(class = "mb-0", sprintf("Selected Columns (%d)", length(selected_cols))),
-          tags$small(class = "text-muted", "Order determines final column sequence")
+          h6(
+            class = "mb-0",
+            sprintf("Selected Columns (%d)", length(selected_cols))
+          ),
+          tags$small(
+            class = "text-muted",
+            "Order determines final column sequence"
+          )
         ),
         div(
           class = "selected-chips",
@@ -295,7 +329,11 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
                 type = "button",
                 class = "btn-close btn-close-white ms-1",
                 style = "font-size: 0.6rem;",
-                onclick = sprintf("Shiny.setInputValue('%s', '%s', {priority: 'event'})", ns("remove_column"), col),
+                onclick = sprintf(
+                  "Shiny.setInputValue('%s', '%s', {priority: 'event'})",
+                  ns("remove_column"),
+                  col
+                ),
                 `aria-label` = "Remove"
               )
             )
@@ -333,7 +371,8 @@ mod_table_select_ui <- function(id, show_selected_on_top = TRUE) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .table-select-container {
         /* Removed max-height and overflow-y as DataTable handles scrolling internally */
       }
@@ -397,7 +436,8 @@ mod_table_select_ui <- function(id, show_selected_on_top = TRUE) {
         font-weight: 500;
         letter-spacing: 0.025em;
       }
-    "),
+    "
+    ),
 
     # Selected columns on top (if enabled)
     if (show_selected_on_top) {

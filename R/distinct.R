@@ -13,9 +13,10 @@
 #'
 #' @export
 new_distinct_block <- function(
-    columns = character(),
-    .keep_all = TRUE,
-    ...) {
+  columns = character(),
+  .keep_all = TRUE,
+  ...
+) {
   new_transform_block(
     function(id, data) {
       moduleServer(
@@ -92,7 +93,11 @@ new_distinct_block <- function(
                 icon("info-circle"),
                 " ",
                 if (duplicate_count() > 0) {
-                  paste0("Found ", duplicate_count(), " duplicate row(s) that will be removed")
+                  paste0(
+                    "Found ",
+                    duplicate_count(),
+                    " duplicate row(s) that will be removed"
+                  )
                 } else {
                   "No duplicate rows found"
                 }
@@ -109,11 +114,22 @@ new_distinct_block <- function(
                 parse(text = "dplyr::distinct(data)")[[1]]
               } else {
                 # Remove duplicates based on selected columns
-                cols_expr <- paste(sprintf("`%s`", selected_columns()), collapse = ", ")
+                cols_expr <- paste(
+                  sprintf("`%s`", selected_columns()),
+                  collapse = ", "
+                )
                 if (keep_all()) {
-                  parse(text = glue::glue("dplyr::distinct(data, {cols_expr}, .keep_all = TRUE)"))[[1]]
+                  parse(
+                    text = glue::glue(
+                      "dplyr::distinct(data, {cols_expr}, .keep_all = TRUE)"
+                    )
+                  )[[1]]
                 } else {
-                  parse(text = glue::glue("dplyr::distinct(data, {cols_expr}, .keep_all = FALSE)"))[[1]]
+                  parse(
+                    text = glue::glue(
+                      "dplyr::distinct(data, {cols_expr}, .keep_all = FALSE)"
+                    )
+                  )[[1]]
                 }
               }
             }),

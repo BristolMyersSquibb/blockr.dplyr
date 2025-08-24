@@ -4,7 +4,10 @@ test_that("bind_rows block constructor", {
 
   # Test with parameters
   block_with_id <- new_bind_rows_block(add_id = TRUE, id_name = "source")
-  expect_s3_class(block_with_id, c("bind_rows_block", "transform_block", "block"))
+  expect_s3_class(
+    block_with_id,
+    c("bind_rows_block", "transform_block", "block")
+  )
 })
 
 test_that("bind_cols block constructor", {
@@ -13,7 +16,10 @@ test_that("bind_cols block constructor", {
 
   # Test with custom suffixes
   block_custom <- new_bind_cols_block(suffix = c("_left", "_right"))
-  expect_s3_class(block_custom, c("bind_cols_block", "transform_block", "block"))
+  expect_s3_class(
+    block_custom,
+    c("bind_cols_block", "transform_block", "block")
+  )
 })
 
 test_that("bind blocks have correct structure", {

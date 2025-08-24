@@ -40,8 +40,9 @@
 #' }
 #' @export
 new_rename_block <- function(
-    renames = list(new_col = "old_col"),
-    ...) {
+  renames = list(new_col = "old_col"),
+  ...
+) {
   # The state must be a list with named elements
   new_transform_block(
     function(id, data) {
@@ -105,12 +106,18 @@ new_rename_block <- function(
 #' @return Parsed expression for dplyr::rename()
 #' @noRd
 parse_rename <- function(rename_pairs = list()) {
-  if (length(rename_pairs) == 0 || all(names(rename_pairs) == "" | is.na(names(rename_pairs)))) {
+  if (
+    length(rename_pairs) == 0 ||
+      all(names(rename_pairs) == "" | is.na(names(rename_pairs)))
+  ) {
     # No renames specified
     text <- "dplyr::rename(data)"
   } else {
     # Convert to rename syntax: new_name = old_name
-    rename_exprs <- paste(sprintf("%s = %s", names(rename_pairs), rename_pairs), collapse = ", ")
+    rename_exprs <- paste(
+      sprintf("%s = %s", names(rename_pairs), rename_pairs),
+      collapse = ", "
+    )
     text <- glue::glue("dplyr::rename(data, {rename_exprs})")
   }
   parse(text = text)[1]
@@ -123,7 +130,13 @@ parse_rename <- function(rename_pairs = list()) {
 #' @param r_expr_validated Reactive value for validated expression
 #' @param r_renames_validated Reactive value for validated renames
 #' @noRd
-apply_rename <- function(data, renames, r_expr_validated, r_renames_validated, session = NULL) {
+apply_rename <- function(
+  data,
+  renames,
+  r_expr_validated,
+  r_renames_validated,
+  session = NULL
+) {
   # Convert list to character vector if needed
   if (is.list(renames)) {
     renames <- unlist(renames)
@@ -138,7 +151,10 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated, s
     if (length(missing_cols) > 0) {
       if (!is.null(session)) {
         showNotification(
-          sprintf("Column(s) not found in data: %s", paste(missing_cols, collapse = ", ")),
+          sprintf(
+            "Column(s) not found in data: %s",
+            paste(missing_cols, collapse = ", ")
+          ),
           type = "error",
           duration = 5
         )
@@ -151,7 +167,10 @@ apply_rename <- function(data, renames, r_expr_validated, r_renames_validated, s
       duplicate_cols <- old_cols[duplicated(old_cols)]
       if (!is.null(session)) {
         showNotification(
-          sprintf("Cannot rename the same column multiple times: %s", paste(unique(duplicate_cols), collapse = ", ")),
+          sprintf(
+            "Cannot rename the same column multiple times: %s",
+            paste(unique(duplicate_cols), collapse = ", ")
+          ),
           type = "error",
           duration = 5
         )

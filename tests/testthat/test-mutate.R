@@ -46,7 +46,8 @@ test_that("mutate block with .by executes correctly", {
   unique_cyls <- unique(result$cyl)
   for (cyl_val in unique_cyls) {
     cyl_rows <- result[result$cyl == cyl_val, ]
-    expect_true(all(cyl_rows$avg_mpg == cyl_rows$avg_mpg[1]),
+    expect_true(
+      all(cyl_rows$avg_mpg == cyl_rows$avg_mpg[1]),
       info = paste("avg_mpg should be consistent within cyl =", cyl_val)
     )
   }

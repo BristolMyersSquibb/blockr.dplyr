@@ -202,7 +202,11 @@ mod_multi_select_server <- function(id, get_value, get_cols, get_data_preview) {
         class = "selection-summary p-2 border rounded",
         div(
           class = "fw-bold mb-2",
-          sprintf("Selected %d of %d columns:", length(selected_cols), total_cols)
+          sprintf(
+            "Selected %d of %d columns:",
+            length(selected_cols),
+            total_cols
+          )
         ),
         div(
           class = "selected-columns",
@@ -239,7 +243,8 @@ mod_multi_select_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .multi-select-container {
         max-height: 600px;
         overflow-y: auto;
@@ -314,7 +319,8 @@ mod_multi_select_ui <- function(id) {
         margin-top: 1rem;
         background-color: var(--bs-light);
       }
-    "),
+    "
+    ),
     div(
       class = "multi-select-container",
       div(
@@ -360,7 +366,12 @@ mod_multi_select_ui <- function(id) {
 #' @param column_info List with column information (type, sample, stats)
 #' @param is_selected Whether the column is currently selected
 #' @return A div containing the column card UI
-multi_select_column_card <- function(id, column_name, column_info, is_selected = FALSE) {
+multi_select_column_card <- function(
+  id,
+  column_name,
+  column_info,
+  is_selected = FALSE
+) {
   card_class <- paste("column-card", if (is_selected) "selected" else "")
 
   div(

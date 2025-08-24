@@ -53,7 +53,10 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
         direction <- input[[direction_id]]
 
         if (!is.null(column) && !is.null(direction) && column != "") {
-          result <- append(result, list(list(column = column, direction = direction)))
+          result <- append(
+            result,
+            list(list(column = column, direction = direction))
+          )
         }
       }
 
@@ -85,9 +88,16 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
       available_cols <- r_cols()
       used_cols <- sapply(current, function(x) x$column)
       available_cols <- setdiff(available_cols, used_cols)
-      new_column <- if (length(available_cols) > 0) available_cols[1] else r_cols()[1]
+      new_column <- if (length(available_cols) > 0) {
+        available_cols[1]
+      } else {
+        r_cols()[1]
+      }
 
-      current <- append(current, list(list(column = new_column, direction = "asc")))
+      current <- append(
+        current,
+        list(list(column = new_column, direction = "asc"))
+      )
       r_arranges(current)
     })
 
@@ -112,7 +122,6 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
       })
     })
 
-
     # Render UI dynamically
     output$arranges_ui <- renderUI({
       indices <- r_arrange_indices()
@@ -127,7 +136,11 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
       tagList(
         lapply(seq_along(indices), function(j) {
           i <- indices[j]
-          arrange_spec <- if (j <= length(arranges)) arranges[[j]] else list(column = "", direction = "asc")
+          arrange_spec <- if (j <= length(arranges)) {
+            arranges[[j]]
+          } else {
+            list(column = "", direction = "asc")
+          }
 
           multi_arrange_row_ui(
             ns(paste0("arrange_", i)),
@@ -146,7 +159,8 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
       # Check if any inputs exist yet - if not, use stored arranges
       indices <- r_arrange_indices()
       has_inputs <- any(sapply(indices, function(i) {
-        paste0("arrange_", i, "_column") %in% names(input) &&
+        paste0("arrange_", i, "_column") %in%
+          names(input) &&
           paste0("arrange_", i, "_direction") %in% names(input)
       }))
 
@@ -171,7 +185,8 @@ mod_multi_arrange_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .multi-arrange-row {
         display: flex;
         width: 100%;
@@ -242,7 +257,8 @@ mod_multi_arrange_ui <- function(id) {
         display: flex;
         align-items: center;
       }
-    "),
+    "
+    ),
     div(
       class = "multi-arrange-container",
       uiOutput(ns("arranges_ui")),
@@ -268,8 +284,14 @@ mod_multi_arrange_ui <- function(id) {
 #' @param position Position in sort order (1, 2, 3, ...)
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-multi_arrange_row_ui <- function(id, column = "", direction = "asc", available_cols = character(),
-                                 position = 1, show_remove = TRUE) {
+multi_arrange_row_ui <- function(
+  id,
+  column = "",
+  direction = "asc",
+  available_cols = character(),
+  position = 1,
+  show_remove = TRUE
+) {
   div(
     class = "multi-arrange-row border border-dark-subtle rounded p-2",
     div(

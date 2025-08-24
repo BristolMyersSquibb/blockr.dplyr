@@ -55,7 +55,9 @@ new_arrange_block <- function(columns = character(), ...) {
                 })
 
                 arrange_str <- paste(arrange_exprs, collapse = ", ")
-                parse(text = glue::glue("dplyr::arrange(data, {arrange_str})"))[1]
+                parse(text = glue::glue("dplyr::arrange(data, {arrange_str})"))[
+                  1
+                ]
               }
             }),
             state = list(

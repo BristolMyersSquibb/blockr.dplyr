@@ -17,9 +17,10 @@
 #' }
 #' @keywords internal
 mod_vexpr_server <- function(
-    id,
-    get_value,
-    get_cols) {
+  id,
+  get_value,
+  get_cols
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -76,7 +77,8 @@ mod_vexpr_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .filter-expression .shiny-ace {
         border: none;
         margin: 7px;
@@ -94,7 +96,8 @@ mod_vexpr_ui <- function(id) {
       .input-group.filter-expression {
         height: 38px !important;
       }
-    "),
+    "
+    ),
     div(
       id = ns("pl"),
       class = paste(

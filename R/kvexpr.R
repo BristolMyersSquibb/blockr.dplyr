@@ -17,9 +17,10 @@
 #' }
 #' @keywords internal
 mod_kvexpr_server <- function(
-    id,
-    get_value,
-    get_cols) {
+  id,
+  get_value,
+  get_cols
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -82,7 +83,8 @@ mod_kvexpr_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .mutate-expression .shiny-ace {
         border: none;
         margin: 7px;
@@ -118,7 +120,8 @@ mod_kvexpr_ui <- function(id) {
         height: 36px;
       }
 
-    "),
+    "
+    ),
     div(
       id = ns("pl"),
       class = paste(

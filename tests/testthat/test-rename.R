@@ -38,7 +38,12 @@ test_that("apply_rename function handles validation", {
 
   # Test with valid renames
   expect_silent(
-    apply_rename(mtcars, list(miles_per_gallon = "mpg"), r_expr_validated, r_renames_validated)
+    apply_rename(
+      mtcars,
+      list(miles_per_gallon = "mpg"),
+      r_expr_validated,
+      r_renames_validated
+    )
   )
 
   # Test with empty renames
@@ -53,12 +58,22 @@ test_that("apply_rename validation catches errors", {
 
   # Test with non-existent column (should not call req, so returns silently)
   expect_silent(
-    apply_rename(mtcars, list(new_name = "nonexistent_col"), r_expr_validated, r_renames_validated)
+    apply_rename(
+      mtcars,
+      list(new_name = "nonexistent_col"),
+      r_expr_validated,
+      r_renames_validated
+    )
   )
 
   # Test with duplicate old columns
   expect_silent(
-    apply_rename(mtcars, list(name1 = "mpg", name2 = "mpg"), r_expr_validated, r_renames_validated)
+    apply_rename(
+      mtcars,
+      list(name1 = "mpg", name2 = "mpg"),
+      r_expr_validated,
+      r_renames_validated
+    )
   )
 
   # Test with empty new names - this case is handled by validation
@@ -66,7 +81,8 @@ test_that("apply_rename validation catches errors", {
 
 test_that("mod_multi_rename_server basic functionality", {
   # Test server module with simple setup
-  testServer(mod_multi_rename_server,
+  testServer(
+    mod_multi_rename_server,
     args = list(
       get_value = function() list(miles_per_gallon = "mpg"),
       get_cols = function() c("mpg", "cyl", "hp", "wt")
@@ -85,7 +101,8 @@ test_that("mod_multi_rename_server basic functionality", {
 })
 
 test_that("mod_multi_rename_server with multiple renames", {
-  testServer(mod_multi_rename_server,
+  testServer(
+    mod_multi_rename_server,
     args = list(
       get_value = function() list(hp_new = "hp", wt_new = "wt"),
       get_cols = function() c("mpg", "cyl", "hp", "wt")
@@ -103,7 +120,8 @@ test_that("mod_multi_rename_server with multiple renames", {
 })
 
 test_that("mod_multi_rename_server handles empty renames", {
-  testServer(mod_multi_rename_server,
+  testServer(
+    mod_multi_rename_server,
     args = list(
       get_value = function() list(),
       get_cols = function() c("mpg", "cyl", "hp")
@@ -137,7 +155,13 @@ test_that("rename block integration with real data", {
 })
 
 test_that("multi_rename_row_ui creates proper structure", {
-  ui <- multi_rename_row_ui("test", "new_name", "old_name", c("col1", "col2"), TRUE)
+  ui <- multi_rename_row_ui(
+    "test",
+    "new_name",
+    "old_name",
+    c("col1", "col2"),
+    TRUE
+  )
 
   # Should be a div with proper classes
   expect_s3_class(ui, c("shiny.tag", "list"))
@@ -201,8 +225,18 @@ test_that("rename validation works correctly", {
   expect_silent(apply_rename(test_data, list(miles = "mpg"), r_expr, r_renames))
 
   # Invalid old column should be caught
-  expect_silent(apply_rename(test_data, list(new_name = "nonexistent"), r_expr, r_renames))
+  expect_silent(apply_rename(
+    test_data,
+    list(new_name = "nonexistent"),
+    r_expr,
+    r_renames
+  ))
 
   # Duplicate old columns should be caught
-  expect_silent(apply_rename(test_data, list(name1 = "mpg", name2 = "mpg"), r_expr, r_renames))
+  expect_silent(apply_rename(
+    test_data,
+    list(name1 = "mpg", name2 = "mpg"),
+    r_expr,
+    r_renames
+  ))
 })

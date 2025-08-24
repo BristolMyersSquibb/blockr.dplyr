@@ -11,9 +11,10 @@
 #'
 #' @export
 new_join_block <- function(
-    type = character(),
-    by = character(),
-    ...) {
+  type = character(),
+  by = character(),
+  ...
+) {
   join_types <- c(
     "left_join" = "Left Join - Keep all rows from left dataset",
     "inner_join" = "Inner Join - Keep only matching rows from both datasets",
@@ -80,7 +81,9 @@ new_join_block <- function(
             if (is.character(keys) && length(keys) > 0) {
               # Simple character vector - natural join
               keys_str <- deparse(keys)
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})"))[[1]]
+              parse(
+                text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})")
+              )[[1]]
             } else if (is.list(keys) && length(keys) > 0) {
               # Complex join - handle different name mappings
               # Convert to dplyr join_by() compatible format
@@ -90,10 +93,18 @@ new_join_block <- function(
                 keys
               }
               join_spec_str <- deparse(join_spec)
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {join_spec_str})"))[[1]]
+              parse(
+                text = glue::glue(
+                  "dplyr::{join_type}(x, y, by = {join_spec_str})"
+                )
+              )[[1]]
             } else {
               # Fallback to natural join on common columns
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"))[[1]]
+              parse(
+                text = glue::glue(
+                  "dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"
+                )
+              )[[1]]
             }
           }
 

@@ -49,11 +49,12 @@ expr_to_cols <- function(expr, cols) {
 #' }
 #' @export
 mod_flexpr_server <- function(
-    id,
-    get_value,
-    get_cols,
-    get_cols_expr = get_cols,
-    submit = TRUE) {
+  id,
+  get_value,
+  get_cols,
+  get_cols_expr = get_cols,
+  submit = TRUE
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -119,7 +120,8 @@ mod_flexpr_server <- function(
     })
 
     # Update value when mode changes
-    observeEvent(r_current(),
+    observeEvent(
+      r_current(),
       {
         r_value(r_current())
       },
@@ -179,7 +181,8 @@ mod_flexpr_ui <- function(ns = function(x) x) {
     ),
 
     # Add custom CSS
-    tags$style("
+    tags$style(
+      "
       .mode-toggle {
         display: flex;
         align-items: center;
@@ -215,7 +218,8 @@ mod_flexpr_ui <- function(ns = function(x) x) {
         border: none !important;
         box-shadow: none !important;
       }
-    ")
+    "
+    )
   )
 }
 

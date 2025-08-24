@@ -25,7 +25,11 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
     }
     if (length(initial_values) == 0 || is.null(initial_values)) {
       available_cols <- get_cols()
-      default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
+      default_old_col <- if (length(available_cols) > 0) {
+        available_cols[1]
+      } else {
+        "old_col"
+      }
       initial_values <- list(new_col = default_old_col)
     }
 
@@ -52,15 +56,23 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
         new_name <- input[[new_name_id]]
         old_name <- input[[old_name_id]]
 
-        if (!is.null(new_name) && !is.null(old_name) &&
-          new_name != "" && old_name != "") {
+        if (
+          !is.null(new_name) &&
+            !is.null(old_name) &&
+            new_name != "" &&
+            old_name != ""
+        ) {
           result[[new_name]] <- old_name
         }
       }
 
       if (length(result) == 0) {
         available_cols <- r_cols()
-        default_old_col <- if (length(available_cols) > 0) available_cols[1] else "old_col"
+        default_old_col <- if (length(available_cols) > 0) {
+          available_cols[1]
+        } else {
+          "old_col"
+        }
         result <- list(new_col = default_old_col)
       }
 
@@ -91,7 +103,11 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       # Choose first available old column not already used
       used_old_cols <- unname(unlist(current))
       available_old <- setdiff(available_cols, used_old_cols)
-      old_name <- if (length(available_old) > 0) available_old[1] else available_cols[1]
+      old_name <- if (length(available_old) > 0) {
+        available_old[1]
+      } else {
+        available_cols[1]
+      }
 
       current[[new_name]] <- old_name
       r_renames(current)
@@ -135,8 +151,16 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       tagList(
         lapply(seq_along(indices), function(j) {
           i <- indices[j]
-          new_name <- if (j <= length(rename_names)) rename_names[j] else "new_col"
-          old_name <- if (j <= length(rename_values)) rename_values[j] else available_cols[1]
+          new_name <- if (j <= length(rename_names)) {
+            rename_names[j]
+          } else {
+            "new_col"
+          }
+          old_name <- if (j <= length(rename_values)) {
+            rename_values[j]
+          } else {
+            available_cols[1]
+          }
 
           multi_rename_row_ui(
             ns(paste0("rename_", i)),
@@ -154,7 +178,8 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       # Check if any inputs exist yet - if not, use stored renames
       indices <- r_rename_indices()
       has_inputs <- any(sapply(indices, function(i) {
-        paste0("rename_", i, "_new") %in% names(input) &&
+        paste0("rename_", i, "_new") %in%
+          names(input) &&
           paste0("rename_", i, "_old") %in% names(input)
       }))
 
@@ -179,7 +204,8 @@ mod_multi_rename_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .multi-rename-pair {
         display: flex;
         width: 100%;
@@ -242,7 +268,8 @@ mod_multi_rename_ui <- function(id) {
         display: flex;
         align-items: center;
       }
-    "),
+    "
+    ),
     div(
       class = "multi-rename-container",
       uiOutput(ns("renames_ui")),
@@ -267,7 +294,13 @@ mod_multi_rename_ui <- function(id) {
 #' @param available_cols Available column names for dropdown
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-multi_rename_row_ui <- function(id, new_name = "new_col", old_name = "", available_cols = character(), show_remove = TRUE) {
+multi_rename_row_ui <- function(
+  id,
+  new_name = "new_col",
+  old_name = "",
+  available_cols = character(),
+  show_remove = TRUE
+) {
   div(
     class = "multi-rename-pair mb-2 border border-dark-subtle rounded p-2",
     div(
@@ -343,7 +376,10 @@ run_multi_rename_example <- function() {
       output$code <- renderPrint({
         renames <- r_result()
         if (length(renames) > 0) {
-          pairs <- paste(sprintf("%s = %s", names(renames), renames), collapse = ",\n  ")
+          pairs <- paste(
+            sprintf("%s = %s", names(renames), renames),
+            collapse = ",\n  "
+          )
           cat(sprintf("dplyr::rename(data,\n  %s\n)", pairs))
         }
       })
