@@ -146,7 +146,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
         columns_data,
         selection = "none",
         options = list(
-          pageLength = 15,
+          paging = FALSE,  # Disable pagination for infinite scroll
+          scrollY = "400px",  # Set fixed height for scrolling
+          scrollCollapse = TRUE,  # Allow table to shrink if fewer rows
           lengthChange = FALSE,
           searching = FALSE,  # We handle search ourselves
           info = TRUE,
@@ -329,8 +331,7 @@ mod_table_select_ui <- function(id, show_selected_on_top = TRUE) {
     shinyjs::useShinyjs(),
     tags$style("
       .table-select-container {
-        max-height: 500px;
-        overflow-y: auto;
+        /* Removed max-height and overflow-y as DataTable handles scrolling internally */
       }
 
       .selected-columns-top {
