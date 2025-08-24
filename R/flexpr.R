@@ -6,17 +6,19 @@
 #' @examples
 #' # Valid cases (return column names)
 #' df <- data.frame(x = 1:3, y = 4:6, z = 7:9)
-#' expr_to_cols("x, y", colnames(df))  # c("x", "y")
-#' expr_to_cols("z", colnames(df))     # "z"
+#' expr_to_cols("x, y", colnames(df)) # c("x", "y")
+#' expr_to_cols("z", colnames(df)) # "z"
 #'
 #' # Invalid cases (return NULL)
-#' expr_to_cols("paste(x, y)", colnames(df))  # NULL (not comma-separated)
-#' expr_to_cols("foo, bar", colnames(df))     # NULL (invalid columns)
-#' expr_to_cols("", colnames(df))             # NULL (empty)
-#' expr_to_cols(NULL, colnames(df))           # NULL
+#' expr_to_cols("paste(x, y)", colnames(df)) # NULL (not comma-separated)
+#' expr_to_cols("foo, bar", colnames(df)) # NULL (invalid columns)
+#' expr_to_cols("", colnames(df)) # NULL (empty)
+#' expr_to_cols(NULL, colnames(df)) # NULL
 #' @noRd
 expr_to_cols <- function(expr, cols) {
-  if (is.null(expr) || !nzchar(expr)) return(NULL)
+  if (is.null(expr) || !nzchar(expr)) {
+    return(NULL)
+  }
 
   # Split by comma and trim whitespace
   potential_cols <- trimws(strsplit(expr, ",")[[1]])
@@ -118,9 +120,13 @@ mod_flexpr_server <- function(
     })
 
     # Update value when mode changes
-    observeEvent(r_current(), {
-      r_value(r_current())
-    }, ignoreInit = TRUE)
+    observeEvent(
+      r_current(),
+      {
+        r_value(r_current())
+      },
+      ignoreInit = TRUE
+    )
 
     reactive(r_value())
   })
@@ -175,7 +181,8 @@ mod_flexpr_ui <- function(ns = function(x) x) {
     ),
 
     # Add custom CSS
-    tags$style("
+    tags$style(
+      "
       .mode-toggle {
         display: flex;
         align-items: center;
@@ -211,7 +218,8 @@ mod_flexpr_ui <- function(ns = function(x) x) {
         border: none !important;
         box-shadow: none !important;
       }
-    ")
+    "
+    )
   )
 }
 
@@ -222,7 +230,8 @@ mod_flexpr_ui <- function(ns = function(x) x) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all(); run_flexpr_example()
+#' pkgload::load_all()
+#' run_flexpr_example()
 #' }
 #' @keywords internal
 run_flexpr_example <- function() {

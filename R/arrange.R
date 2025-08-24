@@ -9,7 +9,6 @@
 #'
 #' @export
 new_arrange_block <- function(columns = character(), ...) {
-
   # Convert inputs to arrange specifications
   if (is.character(columns) && length(columns) > 0) {
     # Simple character vector - default to ascending order
@@ -56,7 +55,9 @@ new_arrange_block <- function(columns = character(), ...) {
                 })
 
                 arrange_str <- paste(arrange_exprs, collapse = ", ")
-                parse(text = glue::glue("dplyr::arrange(data, {arrange_str})"))[1]
+                parse(text = glue::glue("dplyr::arrange(data, {arrange_str})"))[
+                  1
+                ]
               }
             }),
             state = list(

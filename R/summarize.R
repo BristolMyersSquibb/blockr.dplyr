@@ -36,7 +36,6 @@ new_summarize_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-
           # Group by selector using unified component
           r_by_selection <- mod_by_selector_server(
             id = "by_selector",
@@ -79,7 +78,11 @@ new_summarize_block <- function(
       div(
         class = "m-3",
         mod_multi_kvexpr_ui(NS(id, "mkv")),
-        mod_by_selector_ui(NS(id, "by_selector"), initial_choices = by, initial_selected = by),
+        mod_by_selector_ui(
+          NS(id, "by_selector"),
+          initial_choices = by,
+          initial_selected = by
+        ),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
@@ -100,11 +103,15 @@ parse_summarize <- function(summarize_string = "", by_selection = character()) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
-    summarize_string <- glue::glue("{names(summarize_string)} = {unname(summarize_string)}")
+    summarize_string <- glue::glue(
+      "{names(summarize_string)} = {unname(summarize_string)}"
+    )
     summarize_string <- glue::glue_collapse(summarize_string, sep = ", ")
     if (length(by_selection) > 0 && !all(by_selection == "")) {
       by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
-      glue::glue("dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))")
+      glue::glue(
+        "dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))"
+      )
     } else {
       glue::glue("dplyr::summarize(data, {summarize_string})")
     }
@@ -112,7 +119,13 @@ parse_summarize <- function(summarize_string = "", by_selection = character()) {
   parse(text = text)[1]
 }
 
-apply_summarize <- function(data, string, r_expr_validated, r_string_validated, by_selection) {
+apply_summarize <- function(
+  data,
+  string,
+  r_expr_validated,
+  r_string_validated,
+  by_selection
+) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
   if (is.list(string)) {
     string <- unlist(string)

@@ -27,7 +27,7 @@ new_join_block <- function(
   if (length(type)) {
     type <- match.arg(type, names(join_types))
   } else {
-    type <- "left_join"  # Default to left_join (most common)
+    type <- "left_join" # Default to left_join (most common)
   }
 
   new_transform_block(
@@ -81,7 +81,9 @@ new_join_block <- function(
             if (is.character(keys) && length(keys) > 0) {
               # Simple character vector - natural join
               keys_str <- deparse(keys)
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})"))[[1]]
+              parse(
+                text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})")
+              )[[1]]
             } else if (is.list(keys) && length(keys) > 0) {
               # Complex join - handle different name mappings
               # Convert to dplyr join_by() compatible format
@@ -91,10 +93,18 @@ new_join_block <- function(
                 keys
               }
               join_spec_str <- deparse(join_spec)
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = {join_spec_str})"))[[1]]
+              parse(
+                text = glue::glue(
+                  "dplyr::{join_type}(x, y, by = {join_spec_str})"
+                )
+              )[[1]]
             } else {
               # Fallback to natural join on common columns
-              parse(text = glue::glue("dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"))[[1]]
+              parse(
+                text = glue::glue(
+                  "dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"
+                )
+              )[[1]]
             }
           }
 
@@ -131,7 +141,6 @@ new_join_block <- function(
 
         # Join keys configuration module
         mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
-
       )
     },
     class = "join_block",

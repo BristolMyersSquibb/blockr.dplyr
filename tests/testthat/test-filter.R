@@ -57,11 +57,13 @@ test_that("apply_filter function handles errors", {
 
 test_that("mod_multi_filter_server basic functionality", {
   # Test server module with simple setup
-  testServer(mod_multi_filter_server,
+  testServer(
+    mod_multi_filter_server,
     args = list(
       get_value = function() "mpg > 20",
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test initialization
       expect_true(is.reactive(session$returned))
 
@@ -74,11 +76,13 @@ test_that("mod_multi_filter_server basic functionality", {
 })
 
 test_that("mod_multi_filter_server with multiple conditions", {
-  testServer(mod_multi_filter_server,
+  testServer(
+    mod_multi_filter_server,
     args = list(
       get_value = function() "TRUE",
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test adding conditions
       session$setInputs(add_condition = 1)
 
@@ -90,14 +94,16 @@ test_that("mod_multi_filter_server with multiple conditions", {
 })
 
 test_that("mod_multi_filter_server handles empty conditions", {
-  testServer(mod_multi_filter_server,
+  testServer(
+    mod_multi_filter_server,
     args = list(
       get_value = function() "",
       get_cols = function() c("mpg", "cyl", "hp")
-    ), {
+    ),
+    {
       result <- session$returned()
       expect_type(result, "character")
-      expect_equal(result, "TRUE")  # Should default to TRUE
+      expect_equal(result, "TRUE") # Should default to TRUE
     }
   )
 })
@@ -123,7 +129,10 @@ test_that("filter block default behavior", {
 
   # Test with initial condition
   blk_with_condition <- new_filter_block("mpg > 20")
-  expect_s3_class(blk_with_condition, c("filter_block", "transform_block", "block"))
+  expect_s3_class(
+    blk_with_condition,
+    c("filter_block", "transform_block", "block")
+  )
 })
 
 test_that("multi_filter_condition_ui creates proper structure", {

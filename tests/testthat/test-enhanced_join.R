@@ -63,8 +63,12 @@ test_that("enhanced join block server functionality", {
 
 test_that("join block handles different join types", {
   join_types <- c(
-    "left_join", "inner_join", "right_join",
-    "full_join", "semi_join", "anti_join"
+    "left_join",
+    "inner_join",
+    "right_join",
+    "full_join",
+    "semi_join",
+    "anti_join"
   )
 
   for (join_type in join_types) {
@@ -105,7 +109,14 @@ test_that("join block handles empty by parameter gracefully", {
 
 test_that("join block validates join types", {
   # Valid join types should work
-  valid_types <- c("left_join", "inner_join", "right_join", "full_join", "semi_join", "anti_join")
+  valid_types <- c(
+    "left_join",
+    "inner_join",
+    "right_join",
+    "full_join",
+    "semi_join",
+    "anti_join"
+  )
 
   for (type in valid_types) {
     expect_no_error(new_join_block(type = type))

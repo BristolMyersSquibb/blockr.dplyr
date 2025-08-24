@@ -12,7 +12,12 @@
 #'   containing selected column names.
 #'
 #' @export
-mod_by_selector_ui <- function(id, label = "Group by columns (optional)", initial_choices = character(), initial_selected = character()) {
+mod_by_selector_ui <- function(
+  id,
+  label = "Group by columns (optional)",
+  initial_choices = character(),
+  initial_selected = character()
+) {
   ns <- NS(id)
   selectInput(
     inputId = ns("by_columns"),
@@ -32,14 +37,17 @@ mod_by_selector_ui <- function(id, label = "Group by columns (optional)", initia
 #' @export
 mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
   moduleServer(id, function(input, output, session) {
-
     # Reactive to store current selection
     r_by_selection <- reactiveVal(initial_value)
 
     # Update reactive value when selection changes
-    observeEvent(input$by_columns, {
-      r_by_selection(input$by_columns %||% character())
-    }, ignoreNULL = FALSE)
+    observeEvent(
+      input$by_columns,
+      {
+        r_by_selection(input$by_columns %||% character())
+      },
+      ignoreNULL = FALSE
+    )
 
     # Update choices when data changes, preserving selection
     observeEvent(get_cols(), {

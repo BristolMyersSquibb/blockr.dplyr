@@ -36,7 +36,6 @@ new_mutate_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-
           r_string <- mod_multi_kvexpr_server(
             id = "mkv",
             get_value = \() string,
@@ -81,7 +80,11 @@ new_mutate_block <- function(
       div(
         class = "m-3",
         mod_multi_kvexpr_ui(NS(id, "mkv")),
-        mod_by_selector_ui(NS(id, "by_selector"), initial_choices = by, initial_selected = by),
+        mod_by_selector_ui(
+          NS(id, "by_selector"),
+          initial_choices = by,
+          initial_selected = by
+        ),
         div(
           style = "text-align: right; margin-top: 10px;",
           actionButton(
@@ -105,7 +108,9 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
   if (identical(unname(mutate_string), "")) {
     text <- "dplyr::mutate(data)"
   } else {
-    mutate_string <- glue::glue("{names(mutate_string)} = {unname(mutate_string)}")
+    mutate_string <- glue::glue(
+      "{names(mutate_string)} = {unname(mutate_string)}"
+    )
     mutate_string <- glue::glue_collapse(mutate_string, sep = ", ")
 
     # Add .by parameter if columns are selected
@@ -113,7 +118,9 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
       by_cols <- by_selection[by_selection != ""]
       if (length(by_cols) > 0) {
         by_string <- paste0('c("', paste(by_cols, collapse = '", "'), '")')
-        text <- glue::glue("dplyr::mutate(data, {mutate_string}, .by = {by_string})")
+        text <- glue::glue(
+          "dplyr::mutate(data, {mutate_string}, .by = {by_string})"
+        )
       } else {
         text <- glue::glue("dplyr::mutate(data, {mutate_string})")
       }
@@ -124,7 +131,14 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
   parse(text = text)[1]
 }
 
-apply_mutate <- function(data, string, by_selection, r_expr_validated, r_string_validated, r_by_validated) {
+apply_mutate <- function(
+  data,
+  string,
+  by_selection,
+  r_expr_validated,
+  r_string_validated,
+  r_by_validated
+) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
   if (is.list(string)) {
     string <- unlist(string)

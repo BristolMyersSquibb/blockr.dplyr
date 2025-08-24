@@ -42,7 +42,6 @@ new_filter_block <- function(string = "TRUE", ...) {
       moduleServer(
         id,
         function(input, output, session) {
-
           # Use multi-condition filter interface
           r_string <- mod_multi_filter_server(
             id = "mf",

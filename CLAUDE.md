@@ -278,6 +278,48 @@ output$dynamic_ui <- renderUI({
 - Do not edit NAMESPACE directly - use roxygen comments in R files
 - **README.md is generated from README.Rmd** - Always edit README.Rmd, never edit README.md directly
 
+### Code Formatting
+This project uses **Air**, an extremely fast R code formatter written in Rust. Air is the preferred formatting tool, replacing styler for better performance and CI/CD integration.
+
+#### Why Air?
+- **~100x faster than styler**: Written in Rust vs R, no R dependency required
+- **Easy CI/CD integration**: Pre-compiled binary works across platforms
+- **Editor integration**: Format-on-save support in VS Code, RStudio, Positron
+- **Consistent formatting**: Follows Tidyverse style guide with minimal configuration
+
+#### Installation & Usage
+
+**Command Line Installation:**
+```bash
+# Unix/macOS
+curl -LsSf https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.ps1 | iex"
+```
+
+**Basic Usage:**
+```bash
+# Format entire project
+air format .
+
+# Check formatting (useful for CI/CD)
+air format . --check
+```
+
+#### Configuration
+Air uses minimal configuration via `air.toml` file:
+- **Default indentation**: 2 spaces
+- **Default line width**: 80 characters
+- **Limited but sufficient**: Focus on consistency over extensive customization
+
+#### Editor Integration
+- **VS Code/Positron**: Install Air extension from marketplace
+- **RStudio**: Install command-line tool first (experimental support)
+- **Format-on-save**: Automatically formats code when saving files
+
+**Important Note**: Air is currently in beta. Use version control (git) to track formatting changes and expect potential breaking changes in future releases.
+
 ### Shiny Reactivity
 - Be mindful of reactive dependencies
 - Use `isolate()` when needed to prevent circular updates
@@ -424,6 +466,73 @@ function(id) {
 - Remove manual error text from UI previews
 
 **Why no manual `cond` needed**: The framework handles error conditions automatically when `req()` fails or when block evaluation throws errors. Individual blocks don't need to manually create `cond` objects.
+
+## SCREENSHOT VALIDATION METHOD
+
+### 🔍 **Visual Block Diagnostics**
+
+The **Screenshot Validation Method** is a powerful diagnostic technique for validating blockr block implementations by generating screenshots of live Shiny apps. This method reveals both UI and rendering issues that traditional unit tests miss.
+
+**⭐ PROVEN EFFECTIVENESS**: This method has been instrumental in fixing broken blocks in blockr.ggplot. It instantly identifies UI-only vs UI+output blocks, guides the debugging process, and provides immediate visual confirmation when fixes work. **This is now the PRIMARY debugging tool for blockr blocks.**
+
+#### **Core Principle**
+- **✅ Working Block**: Screenshot shows both configuration UI and rendered output (table/plot)
+- **❌ Broken Block**: Screenshot shows only configuration UI, no output
+
+#### **Implementation**
+
+**Single Block Testing:**
+```bash
+# Test individual block type
+R -e "block_type <- 'select'; source('inst/scripts/generate_single_screenshot.R')"
+```
+
+**Batch Testing:**
+```bash
+# Test all blocks at once
+R -e "source('inst/scripts/generate_screenshots.R')"
+```
+
+**File Structure:**
+- `inst/scripts/generate_single_screenshot.R` - Individual block testing
+- `inst/scripts/generate_screenshots.R` - Batch testing all blocks
+- `man/figures/*.png` - Generated screenshots for validation/documentation
+
+#### **Advantages over Traditional Testing**
+
+1. **Real-world validation**: Tests in actual Shiny environment with real data flow
+2. **Visual feedback**: Immediately obvious success/failure from screenshots
+3. **Comprehensive coverage**: Tests UI, reactivity, data processing, and output rendering
+4. **Integration testing**: Validates entire block pipeline, not just individual functions
+5. **Debug efficiency**: Quickly identifies which blocks need attention
+6. **Documentation bonus**: Screenshots serve as block gallery for README
+
+#### **Common Issues Revealed**
+
+- **Missing `allow_empty_state`**: Blocks won't evaluate due to empty optional fields
+- **Malformed expressions**: Syntax errors preventing output rendering
+- **Broken reactive flows**: Field validation failures blocking data flow
+- **UI timing issues**: Dynamic UI elements not properly initialized
+- **State management issues**: Missing or incorrect state list configurations
+
+#### **Development Workflow Integration**
+
+1. **Block Creation**: Generate screenshot after implementing new block
+2. **Refactoring**: Validate changes don't break rendering
+3. **Debugging**: First diagnostic step when blocks misbehave
+4. **PR Validation**: Visual proof that blocks work end-to-end
+5. **Regression Testing**: Ensure fixes don't break existing functionality
+
+#### **Technical Implementation Details**
+
+The screenshot generation uses webshot2 to capture live Shiny apps:
+- Creates temporary Shiny app for each block
+- Saves data as RDS files to avoid deparse() width issues
+- Configures realistic block parameters with sample data
+- Captures full UI including both controls and output
+- 5-second delay ensures app fully loads before screenshot
+
+**Key Insight**: This method transforms screenshot generation from a documentation task into a powerful diagnostic tool, providing immediate visual feedback on block health and functionality.
 
 ## Resources
 - Check git history for previous implementations

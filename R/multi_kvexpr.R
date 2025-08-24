@@ -47,7 +47,9 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
     # Collect current values from all inputs
     get_current_expressions <- function() {
       indices <- r_expr_indices()
-      if (length(indices) == 0) return(list())
+      if (length(indices) == 0) {
+        return(list())
+      }
 
       result <- list()
       for (i in indices) {
@@ -148,7 +150,11 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
       for (i in indices) {
         if (!paste0("expr_", i, "_val") %in% names(input)) {
           # New editor, initialize it
-          initialize_ace_editor(session, ns(paste0("expr_", i, "_val")), r_cols())
+          initialize_ace_editor(
+            session,
+            ns(paste0("expr_", i, "_val")),
+            r_cols()
+          )
         }
       }
     })
@@ -170,7 +176,8 @@ mod_multi_kvexpr_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .multi-kvexpr-expression .shiny-ace {
         border: none;
         margin: 7px;
@@ -221,7 +228,8 @@ mod_multi_kvexpr_ui <- function(id) {
         padding-bottom: 0;
         height: 36px;
       }
-    "),
+    "
+    ),
     div(
       class = "multi-kvexpr-container",
       uiOutput(ns("expressions_ui")),
@@ -245,7 +253,12 @@ mod_multi_kvexpr_ui <- function(id) {
 #' @param value Expression value
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-multi_kvexpr_row_ui <- function(id, name = "new_col", value = "1", show_remove = TRUE) {
+multi_kvexpr_row_ui <- function(
+  id,
+  name = "new_col",
+  value = "1",
+  show_remove = TRUE
+) {
   div(
     class = paste(
       "input-group mb-2",
@@ -332,7 +345,10 @@ run_multi_kvexpr_example <- function() {
       output$code <- renderPrint({
         vals <- r_result()
         if (length(vals) > 0) {
-          exprs <- paste(sprintf("%s = %s", names(vals), vals), collapse = ",\n  ")
+          exprs <- paste(
+            sprintf("%s = %s", names(vals), vals),
+            collapse = ",\n  "
+          )
           cat(sprintf("dplyr::mutate(data,\n  %s\n)", exprs))
         }
       })

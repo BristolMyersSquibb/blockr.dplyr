@@ -83,7 +83,8 @@ mod_kvexpr_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .mutate-expression .shiny-ace {
         border: none;
         margin: 7px;
@@ -119,7 +120,8 @@ mod_kvexpr_ui <- function(id) {
         height: 36px;
       }
 
-    "),
+    "
+    ),
     div(
       id = ns("pl"),
       class = paste(
@@ -163,7 +165,8 @@ mod_kvexpr_ui <- function(id) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all();run_kvexpr_example()
+#' pkgload::load_all()
+#' run_kvexpr_example()
 #' }
 #' @keywords internal
 run_kvexpr_example <- function() {

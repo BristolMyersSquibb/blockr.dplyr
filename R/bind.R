@@ -48,32 +48,58 @@ new_bind_rows_block <- function(
             y_only <- setdiff(y_cols, x_cols)
 
             preview_text <- paste0(
-              "Left dataset: ", nrow(x_data), " rows, ", ncol(x_data), " columns\n",
-              "Right dataset: ", nrow(y_data), " rows, ", ncol(y_data), " columns\n",
-              "Result: ", nrow(x_data) + nrow(y_data), " rows, ",
-              length(union(x_cols, y_cols)), " columns\n\n"
+              "Left dataset: ",
+              nrow(x_data),
+              " rows, ",
+              ncol(x_data),
+              " columns\n",
+              "Right dataset: ",
+              nrow(y_data),
+              " rows, ",
+              ncol(y_data),
+              " columns\n",
+              "Result: ",
+              nrow(x_data) + nrow(y_data),
+              " rows, ",
+              length(union(x_cols, y_cols)),
+              " columns\n\n"
             )
 
             if (length(common_cols) > 0) {
-              preview_text <- paste0(preview_text,
-                "Common columns: ", paste(common_cols, collapse = ", "), "\n")
+              preview_text <- paste0(
+                preview_text,
+                "Common columns: ",
+                paste(common_cols, collapse = ", "),
+                "\n"
+              )
             }
 
             if (length(x_only) > 0) {
-              preview_text <- paste0(preview_text,
-                "Left-only columns: ", paste(x_only, collapse = ", "),
-                " (will be filled with NA in right data)\n")
+              preview_text <- paste0(
+                preview_text,
+                "Left-only columns: ",
+                paste(x_only, collapse = ", "),
+                " (will be filled with NA in right data)\n"
+              )
             }
 
             if (length(y_only) > 0) {
-              preview_text <- paste0(preview_text,
-                "Right-only columns: ", paste(y_only, collapse = ", "),
-                " (will be filled with NA in left data)\n")
+              preview_text <- paste0(
+                preview_text,
+                "Right-only columns: ",
+                paste(y_only, collapse = ", "),
+                " (will be filled with NA in left data)\n"
+              )
             }
 
             if (r_add_id()) {
-              preview_text <- paste0(preview_text, "\n",
-                "ID column '", r_id_name(), "' will be added to identify source datasets")
+              preview_text <- paste0(
+                preview_text,
+                "\n",
+                "ID column '",
+                r_id_name(),
+                "' will be added to identify source datasets"
+              )
             }
 
             preview_text
@@ -83,7 +109,11 @@ new_bind_rows_block <- function(
           build_bind_expr <- function(add_id, id_name) {
             if (add_id) {
               # Create named list with ID labels
-              parse(text = glue::glue("dplyr::bind_rows(`1` = x, `2` = y, .id = \"{id_name}\")"))[[1]]
+              parse(
+                text = glue::glue(
+                  "dplyr::bind_rows(`1` = x, `2` = y, .id = \"{id_name}\")"
+                )
+              )[[1]]
             } else {
               # Simple bind without ID
               quote(dplyr::bind_rows(x, y))
@@ -138,7 +168,10 @@ new_bind_rows_block <- function(
         div(
           class = "data-preview mb-3 p-3",
           style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
-          h6("Operation Preview:", style = "margin-bottom: 10px; color: #495057;"),
+          h6(
+            "Operation Preview:",
+            style = "margin-bottom: 10px; color: #495057;"
+          ),
           verbatimTextOutput(NS(id, "data_preview"))
         )
       )
@@ -182,18 +215,42 @@ new_bind_cols_block <- function(...) {
             duplicate_cols <- intersect(x_cols, y_cols)
 
             preview_text <- paste0(
-              "Left dataset: ", nrow(x_data), " rows, ", ncol(x_data), " columns\n",
-              "Right dataset: ", nrow(y_data), " rows, ", ncol(y_data), " columns\n",
-              "Result: ", nrow(x_data), " rows, ", ncol(x_data) + ncol(y_data), " columns\n"
+              "Left dataset: ",
+              nrow(x_data),
+              " rows, ",
+              ncol(x_data),
+              " columns\n",
+              "Right dataset: ",
+              nrow(y_data),
+              " rows, ",
+              ncol(y_data),
+              " columns\n",
+              "Result: ",
+              nrow(x_data),
+              " rows, ",
+              ncol(x_data) + ncol(y_data),
+              " columns\n"
             )
 
             if (length(duplicate_cols) > 0) {
-              preview_text <- paste0(preview_text, "\n",
-                "Duplicate column names found: ", paste(duplicate_cols, collapse = ", "), "\n",
-                "dplyr will automatically rename them (e.g., ", duplicate_cols[1], "...1, ", duplicate_cols[1], "...2)"
+              preview_text <- paste0(
+                preview_text,
+                "\n",
+                "Duplicate column names found: ",
+                paste(duplicate_cols, collapse = ", "),
+                "\n",
+                "dplyr will automatically rename them (e.g., ",
+                duplicate_cols[1],
+                "...1, ",
+                duplicate_cols[1],
+                "...2)"
               )
             } else {
-              preview_text <- paste0(preview_text, "\n", "No duplicate column names.")
+              preview_text <- paste0(
+                preview_text,
+                "\n",
+                "No duplicate column names."
+              )
             }
 
             preview_text
@@ -201,7 +258,7 @@ new_bind_cols_block <- function(...) {
 
           list(
             expr = reactive({
-              req(rows_compatible())  # Only proceed if rows are compatible
+              req(rows_compatible()) # Only proceed if rows are compatible
               quote(dplyr::bind_cols(x, y))
             }),
             state = list()
@@ -215,7 +272,10 @@ new_bind_cols_block <- function(...) {
         div(
           class = "data-preview mb-3 p-3",
           style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
-          h6("Operation Preview:", style = "margin-bottom: 10px; color: #495057;"),
+          h6(
+            "Operation Preview:",
+            style = "margin-bottom: 10px; color: #495057;"
+          ),
           verbatimTextOutput(NS(id, "data_preview"))
         )
       )

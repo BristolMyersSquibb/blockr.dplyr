@@ -109,7 +109,7 @@ test_that("helper functions work correctly", {
     list(x_col = "", y_col = ""),
     list(x_col = "name", y_col = "customer_name")
   )
-  valid_mappings <- keep(mappings, ~nzchar(.x$x_col) && nzchar(.x$y_col))
+  valid_mappings <- keep(mappings, ~ nzchar(.x$x_col) && nzchar(.x$y_col))
   expect_length(valid_mappings, 2)
   expect_equal(valid_mappings[[1]]$x_col, "id")
   expect_equal(valid_mappings[[2]]$x_col, "name")
@@ -133,7 +133,7 @@ test_that("mod_join_keys_server initializes custom mappings properly", {
       # (This tests the fix for the "Add Join Key" button requiring two clicks)
       expect_true(is.reactive(session$returned))
       result <- session$returned()
-      expect_equal(result, character())  # Empty since no valid mappings yet
+      expect_equal(result, character()) # Empty since no valid mappings yet
     }
   )
 })

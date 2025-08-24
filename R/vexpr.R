@@ -77,7 +77,8 @@ mod_vexpr_ui <- function(id) {
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style("
+    tags$style(
+      "
       .filter-expression .shiny-ace {
         border: none;
         margin: 7px;
@@ -95,7 +96,8 @@ mod_vexpr_ui <- function(id) {
       .input-group.filter-expression {
         height: 38px !important;
       }
-    "),
+    "
+    ),
     div(
       id = ns("pl"),
       class = paste(
@@ -117,7 +119,8 @@ mod_vexpr_ui <- function(id) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all();run_vexpr_example()
+#' pkgload::load_all()
+#' run_vexpr_example()
 #' }
 #' @keywords internal
 run_vexpr_example <- function() {

@@ -47,7 +47,7 @@ test_that("mutate block handles execution", {
   data <- mtcars[1:3, c("mpg", "hp")]
   result <- eval(expr)
 
-  expect_equal(ncol(result), 3)  # Original 2 + 1 new
+  expect_equal(ncol(result), 3) # Original 2 + 1 new
   expect_equal(result$double_mpg, data$mpg * 2)
 
   # Test multiple expression execution
@@ -58,7 +58,7 @@ test_that("mutate block handles execution", {
   expr <- parse_mutate(multi_expr)
   result <- eval(expr)
 
-  expect_equal(ncol(result), 4)  # Original 2 + 2 new
+  expect_equal(ncol(result), 4) # Original 2 + 2 new
   expect_equal(result$double_mpg, data$mpg * 2)
   expect_equal(result$hp_per_100, data$hp / 100)
 })
