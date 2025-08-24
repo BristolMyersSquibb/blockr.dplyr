@@ -278,6 +278,48 @@ output$dynamic_ui <- renderUI({
 - Do not edit NAMESPACE directly - use roxygen comments in R files
 - **README.md is generated from README.Rmd** - Always edit README.Rmd, never edit README.md directly
 
+### Code Formatting
+This project uses **Air**, an extremely fast R code formatter written in Rust. Air is the preferred formatting tool, replacing styler for better performance and CI/CD integration.
+
+#### Why Air?
+- **~100x faster than styler**: Written in Rust vs R, no R dependency required
+- **Easy CI/CD integration**: Pre-compiled binary works across platforms
+- **Editor integration**: Format-on-save support in VS Code, RStudio, Positron
+- **Consistent formatting**: Follows Tidyverse style guide with minimal configuration
+
+#### Installation & Usage
+
+**Command Line Installation:**
+```bash
+# Unix/macOS
+curl -LsSf https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.ps1 | iex"
+```
+
+**Basic Usage:**
+```bash
+# Format entire project
+air format .
+
+# Check formatting (useful for CI/CD)
+air format . --check
+```
+
+#### Configuration
+Air uses minimal configuration via `air.toml` file:
+- **Default indentation**: 2 spaces
+- **Default line width**: 80 characters
+- **Limited but sufficient**: Focus on consistency over extensive customization
+
+#### Editor Integration
+- **VS Code/Positron**: Install Air extension from marketplace
+- **RStudio**: Install command-line tool first (experimental support)
+- **Format-on-save**: Automatically formats code when saving files
+
+**Important Note**: Air is currently in beta. Use version control (git) to track formatting changes and expect potential breaking changes in future releases.
+
 ### Shiny Reactivity
 - Be mindful of reactive dependencies
 - Use `isolate()` when needed to prevent circular updates

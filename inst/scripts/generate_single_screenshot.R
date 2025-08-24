@@ -59,7 +59,8 @@ create_screenshot <- function(block, filename, data = list(data = mtcars)) {
       saveRDS(data, file.path(temp_dir, "data.rds"))
 
       # Create minimal app.R file
-      app_content <- sprintf('
+      app_content <- sprintf(
+        '
 library(blockr.dplyr)
 library(blockr.core)
 
@@ -71,7 +72,9 @@ blockr.core::serve(
   %s,
   data = data
 )
-    ', deparse(substitute(block), width.cutoff = 500))
+    ',
+        deparse(substitute(block), width.cutoff = 500)
+      )
 
       writeLines(app_content, file.path(temp_dir, "app.R"))
 
@@ -96,7 +99,8 @@ blockr.core::serve(
 }
 
 # Generate screenshot based on block_type
-switch(block_type,
+switch(
+  block_type,
   "select" = create_screenshot(
     new_select_block(
       columns = c("mpg", "cyl", "disp", "hp"),
@@ -167,7 +171,10 @@ switch(block_type,
     ),
     "slice-head.png"
   ),
-  stop(sprintf("Unknown block_type: %s. Valid options: select, select-cards, filter, mutate, arrange, summarize, rename, distinct, slice", block_type))
+  stop(sprintf(
+    "Unknown block_type: %s. Valid options: select, select-cards, filter, mutate, arrange, summarize, rename, distinct, slice",
+    block_type
+  ))
 )
 
 cat(sprintf("Screenshot generation complete for %s!\n", block_type))
