@@ -48,17 +48,18 @@ cat(sprintf("Generating screenshot for: %s\n", block_type))
 # Helper function to create temporary app and take screenshot
 create_screenshot <- function(block, filename, data = list(data = mtcars)) {
   cat(sprintf("Generating %s...\n", filename))
-  
-  tryCatch({
-    # Create temporary directory for the app
-    temp_dir <- tempfile("blockr_app")
-    dir.create(temp_dir)
-    
-    # Save data to RDS file
-    saveRDS(data, file.path(temp_dir, "data.rds"))
-    
-    # Create minimal app.R file
-    app_content <- sprintf('
+
+  tryCatch(
+    {
+      # Create temporary directory for the app
+      temp_dir <- tempfile("blockr_app")
+      dir.create(temp_dir)
+
+      # Save data to RDS file
+      saveRDS(data, file.path(temp_dir, "data.rds"))
+
+      # Create minimal app.R file
+      app_content <- sprintf('
 library(blockr.dplyr)
 library(blockr.core)
 
@@ -71,26 +72,27 @@ blockr.core::serve(
   data = data
 )
     ', deparse(substitute(block), width.cutoff = 500))
-    
-    writeLines(app_content, file.path(temp_dir, "app.R"))
-    
-    # Take screenshot
-    webshot2::appshot(
-      app = temp_dir,
-      file = file.path(OUTPUT_DIR, filename),
-      vwidth = SCREENSHOT_WIDTH,
-      vheight = SCREENSHOT_HEIGHT,
-      delay = 5  # Wait for app to load
-    )
-    
-    # Cleanup
-    unlink(temp_dir, recursive = TRUE)
-    
-    cat(sprintf("✓ %s created\n", filename))
-    
-  }, error = function(e) {
-    cat(sprintf("✗ Failed to create %s: %s\n", filename, e$message))
-  })
+
+      writeLines(app_content, file.path(temp_dir, "app.R"))
+
+      # Take screenshot
+      webshot2::appshot(
+        app = temp_dir,
+        file = file.path(OUTPUT_DIR, filename),
+        vwidth = SCREENSHOT_WIDTH,
+        vheight = SCREENSHOT_HEIGHT,
+        delay = 5 # Wait for app to load
+      )
+
+      # Cleanup
+      unlink(temp_dir, recursive = TRUE)
+
+      cat(sprintf("✓ %s created\n", filename))
+    },
+    error = function(e) {
+      cat(sprintf("✗ Failed to create %s: %s\n", filename, e$message))
+    }
+  )
 }
 
 # Generate screenshot based on block_type
@@ -102,7 +104,6 @@ switch(block_type,
     ),
     "select-table.png"
   ),
-  
   "select-cards" = create_screenshot(
     new_select_block(
       columns = c("mpg", "cyl", "disp"),
@@ -110,14 +111,12 @@ switch(block_type,
     ),
     "select-cards.png"
   ),
-  
   "filter" = create_screenshot(
     new_filter_block(
       multi_condition = TRUE
     ),
     "filter-multi.png"
   ),
-  
   "mutate" = create_screenshot(
     new_mutate_block(
       exprs = list(
@@ -127,7 +126,6 @@ switch(block_type,
     ),
     "mutate-multi.png"
   ),
-  
   "arrange" = create_screenshot(
     new_arrange_block(
       columns = list(
@@ -137,7 +135,6 @@ switch(block_type,
     ),
     "arrange-multi.png"
   ),
-  
   "summarize" = create_screenshot(
     new_summarize_block(
       .by = c("cyl"),
@@ -148,7 +145,6 @@ switch(block_type,
     ),
     "summarize-grouped.png"
   ),
-  
   "rename" = create_screenshot(
     new_rename_block(
       columns = list(
@@ -158,14 +154,12 @@ switch(block_type,
     ),
     "rename-multi.png"
   ),
-  
   "distinct" = create_screenshot(
     new_distinct_block(
       columns = c("cyl", "gear")
     ),
     "distinct.png"
   ),
-  
   "slice" = create_screenshot(
     new_slice_block(
       type = "head",
@@ -173,7 +167,6 @@ switch(block_type,
     ),
     "slice-head.png"
   ),
-  
   stop(sprintf("Unknown block_type: %s. Valid options: select, select-cards, filter, mutate, arrange, summarize, rename, distinct, slice", block_type))
 )
 
