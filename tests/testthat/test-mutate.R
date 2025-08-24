@@ -38,7 +38,7 @@ test_that("mutate block with .by executes correctly", {
   result <- eval(expr)
 
   # Should have original columns plus new column
-  expect_equal(ncol(result), 4)  # mpg, cyl, hp, avg_mpg
+  expect_equal(ncol(result), 4) # mpg, cyl, hp, avg_mpg
   expect_true("avg_mpg" %in% names(result))
 
   # Check that grouping worked correctly
@@ -47,7 +47,8 @@ test_that("mutate block with .by executes correctly", {
   for (cyl_val in unique_cyls) {
     cyl_rows <- result[result$cyl == cyl_val, ]
     expect_true(all(cyl_rows$avg_mpg == cyl_rows$avg_mpg[1]),
-                info = paste("avg_mpg should be consistent within cyl =", cyl_val))
+      info = paste("avg_mpg should be consistent within cyl =", cyl_val)
+    )
   }
 })
 

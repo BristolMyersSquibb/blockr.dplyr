@@ -24,10 +24,9 @@
 #' }
 #' @export
 new_mutate_block <- function(
-  string = list(new_col = "1"),
-  by = character(),
-  ...
-) {
+    string = list(new_col = "1"),
+    by = character(),
+    ...) {
   # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
   # the state must be a list with named elements, rather than a named vector.
   # internally, we still work with named vectors.
@@ -36,7 +35,6 @@ new_mutate_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-
           r_string <- mod_multi_kvexpr_server(
             id = "mkv",
             get_value = \() string,

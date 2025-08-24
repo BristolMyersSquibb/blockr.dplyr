@@ -2,8 +2,10 @@
 #' @noRd
 get_default_categories <- function() {
   list(
-    arithmetic = c("abs", "sign", "ceiling", "floor", "round", "trunc",
-                  "log", "log2", "log10", "exp", "sqrt"),
+    arithmetic = c(
+      "abs", "sign", "ceiling", "floor", "round", "trunc",
+      "log", "log2", "log10", "exp", "sqrt"
+    ),
     aggregate = c("mean", "sum", "min", "max"),
     offset = c("lead", "lag", "cumsum", "cumprod", "cummin", "cummax"),
     logical = c("if_else", "case_when"),
@@ -153,7 +155,8 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all(); run_ace_example()
+#' pkgload::load_all()
+#' run_ace_example()
 #' }
 #' @importFrom shiny NS
 #' @keywords internal

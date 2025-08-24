@@ -47,7 +47,9 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
     # Collect current values from all inputs
     get_current_expressions <- function() {
       indices <- r_expr_indices()
-      if (length(indices) == 0) return(list())
+      if (length(indices) == 0) {
+        return(list())
+      }
 
       result <- list()
       for (i in indices) {

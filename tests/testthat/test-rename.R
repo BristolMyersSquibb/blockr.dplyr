@@ -70,7 +70,8 @@ test_that("mod_multi_rename_server basic functionality", {
     args = list(
       get_value = function() list(miles_per_gallon = "mpg"),
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test initialization
       expect_true(is.reactive(session$returned))
 
@@ -88,7 +89,8 @@ test_that("mod_multi_rename_server with multiple renames", {
     args = list(
       get_value = function() list(hp_new = "hp", wt_new = "wt"),
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test adding renames
       session$setInputs(add_rename = 1)
 
@@ -105,11 +107,12 @@ test_that("mod_multi_rename_server handles empty renames", {
     args = list(
       get_value = function() list(),
       get_cols = function() c("mpg", "cyl", "hp")
-    ), {
+    ),
+    {
       result <- session$returned()
       expect_type(result, "list")
-      expect_equal(names(result), "new_col")  # Should default
-      expect_true(result[[1]] %in% c("mpg", "cyl", "hp"))  # Should be a valid column
+      expect_equal(names(result), "new_col") # Should default
+      expect_true(result[[1]] %in% c("mpg", "cyl", "hp")) # Should be a valid column
     }
   )
 })

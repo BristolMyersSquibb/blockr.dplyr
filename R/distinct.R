@@ -13,10 +13,9 @@
 #'
 #' @export
 new_distinct_block <- function(
-  columns = character(),
-  .keep_all = TRUE,
-  ...
-) {
+    columns = character(),
+    .keep_all = TRUE,
+    ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(

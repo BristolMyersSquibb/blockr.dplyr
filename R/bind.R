@@ -11,10 +11,9 @@
 #' @return A block object for bind_rows operations
 #' @export
 new_bind_rows_block <- function(
-  add_id = FALSE,
-  id_name = ".id",
-  ...
-) {
+    add_id = FALSE,
+    id_name = ".id",
+    ...) {
   new_transform_block(
     function(id, x, y) {
       moduleServer(
@@ -55,25 +54,33 @@ new_bind_rows_block <- function(
             )
 
             if (length(common_cols) > 0) {
-              preview_text <- paste0(preview_text,
-                "Common columns: ", paste(common_cols, collapse = ", "), "\n")
+              preview_text <- paste0(
+                preview_text,
+                "Common columns: ", paste(common_cols, collapse = ", "), "\n"
+              )
             }
 
             if (length(x_only) > 0) {
-              preview_text <- paste0(preview_text,
+              preview_text <- paste0(
+                preview_text,
                 "Left-only columns: ", paste(x_only, collapse = ", "),
-                " (will be filled with NA in right data)\n")
+                " (will be filled with NA in right data)\n"
+              )
             }
 
             if (length(y_only) > 0) {
-              preview_text <- paste0(preview_text,
+              preview_text <- paste0(
+                preview_text,
                 "Right-only columns: ", paste(y_only, collapse = ", "),
-                " (will be filled with NA in left data)\n")
+                " (will be filled with NA in left data)\n"
+              )
             }
 
             if (r_add_id()) {
-              preview_text <- paste0(preview_text, "\n",
-                "ID column '", r_id_name(), "' will be added to identify source datasets")
+              preview_text <- paste0(
+                preview_text, "\n",
+                "ID column '", r_id_name(), "' will be added to identify source datasets"
+              )
             }
 
             preview_text
@@ -188,7 +195,8 @@ new_bind_cols_block <- function(...) {
             )
 
             if (length(duplicate_cols) > 0) {
-              preview_text <- paste0(preview_text, "\n",
+              preview_text <- paste0(
+                preview_text, "\n",
                 "Duplicate column names found: ", paste(duplicate_cols, collapse = ", "), "\n",
                 "dplyr will automatically rename them (e.g., ", duplicate_cols[1], "...1, ", duplicate_cols[1], "...2)"
               )
@@ -201,7 +209,7 @@ new_bind_cols_block <- function(...) {
 
           list(
             expr = reactive({
-              req(rows_compatible())  # Only proceed if rows are compatible
+              req(rows_compatible()) # Only proceed if rows are compatible
               quote(dplyr::bind_cols(x, y))
             }),
             state = list()

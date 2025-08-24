@@ -10,7 +10,6 @@
 #'
 #' @export
 new_select_block <- function(columns = character(), interface = "table", show_selected_on_top = TRUE, ...) {
-
   # Determine interface type
   interface <- match.arg(interface, c("table", "cards"))
 

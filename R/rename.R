@@ -19,8 +19,10 @@
 #' serve(new_rename_block(), list(data = mtcars))
 #'
 #' # With predefined renames
-#' serve(new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
-#'       list(data = mtcars))
+#' serve(
+#'   new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
+#'   list(data = mtcars)
+#' )
 #'
 #' # Connected blocks example
 #' serve(
@@ -38,16 +40,14 @@
 #' }
 #' @export
 new_rename_block <- function(
-  renames = list(new_col = "old_col"),
-  ...
-) {
+    renames = list(new_col = "old_col"),
+    ...) {
   # The state must be a list with named elements
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
-
           r_renames <- mod_multi_rename_server(
             id = "mr",
             get_value = \() renames,

@@ -24,10 +24,9 @@
 #' }
 #' @export
 new_summarize_block <- function(
-  string = list(count = "dplyr::n()"),
-  by = character(),
-  ...
-) {
+    string = list(count = "dplyr::n()"),
+    by = character(),
+    ...) {
   # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
   # the state must be a list with named elements, rather than a named vector.
   # internally, we still work with named vectors.
@@ -36,7 +35,6 @@ new_summarize_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-
           # Group by selector using unified component
           r_by_selection <- mod_by_selector_server(
             id = "by_selector",

@@ -40,7 +40,9 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
     # Collect current values from all inputs
     get_current_arranges <- function() {
       indices <- r_arrange_indices()
-      if (length(indices) == 0) return(list())
+      if (length(indices) == 0) {
+        return(list())
+      }
 
       result <- list()
       for (i in indices) {
@@ -145,7 +147,7 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
       indices <- r_arrange_indices()
       has_inputs <- any(sapply(indices, function(i) {
         paste0("arrange_", i, "_column") %in% names(input) &&
-        paste0("arrange_", i, "_direction") %in% names(input)
+          paste0("arrange_", i, "_direction") %in% names(input)
       }))
 
       if (has_inputs) {

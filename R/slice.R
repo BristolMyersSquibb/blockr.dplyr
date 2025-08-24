@@ -37,55 +37,55 @@
 #' }
 #' @export
 new_slice_block <- function(
-  type = "head",
-  n = 5,
-  prop = 0.1,
-  order_by = character(),
-  with_ties = TRUE,
-  weight_by = character(),
-  replace = FALSE,
-  rows = "1:5",
-  by = character(),
-  ...
-) {
+    type = "head",
+    n = 5,
+    prop = 0.1,
+    order_by = character(),
+    with_ties = TRUE,
+    weight_by = character(),
+    replace = FALSE,
+    rows = "1:5",
+    by = character(),
+    ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
-
           # Group by selector using unified componen
           r_by_selection <- mod_by_selector_server(
             id = "by_selector",
             get_cols = \() {
               req(data())
               cols <- colnames(data())
-              cols[nzchar(cols)]  # Filter out empty column names
+              cols[nzchar(cols)] # Filter out empty column names
             },
             initial_value = by
           )
 
           # Update column choices when data changes
-          observeEvent(data(), {
-            req(data())
-            cols <- colnames(data())
+          observeEvent(data(),
+            {
+              req(data())
+              cols <- colnames(data())
 
-            # Filter out empty column names
-            valid_cols <- cols[nzchar(cols)]
+              # Filter out empty column names
+              valid_cols <- cols[nzchar(cols)]
 
-            # Create choices safely
-            order_choices <- c("", valid_cols)
-            weight_choices <- c("", valid_cols)
+              # Create choices safely
+              order_choices <- c("", valid_cols)
+              weight_choices <- c("", valid_cols)
 
-            updateSelectInput(session, "order_by", choices = order_choices)
-            updateSelectInput(session, "weight_by", choices = weight_choices)
-          }, ignoreNULL = FALSE)
+              updateSelectInput(session, "order_by", choices = order_choices)
+              updateSelectInput(session, "weight_by", choices = weight_choices)
+            },
+            ignoreNULL = FALSE
+          )
 
           # Helper function to build slice expression
           build_slice_expr <- function(type_val, n_val, prop_val, use_prop_val,
                                        order_by_val, with_ties_val, weight_by_val,
                                        replace_val, rows_val, by_val) {
-
             # Validate inputs
             if (is.null(n_val) || n_val <= 0) n_val <- 1
             if (is.null(prop_val) || prop_val <= 0) prop_val <- 0.1
@@ -108,15 +108,13 @@ new_slice_block <- function(
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_head(data, %s)", args)))
-
             } else if (type_val == "tail") {
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_tail(data, %s)", args)))
-
             } else if (type_val %in% c("min", "max")) {
               if (is.null(order_by_val) || order_by_val == "") {
-                return(parse(text = "data[0, , drop = FALSE]"))  # Return empty data frame
+                return(parse(text = "data[0, , drop = FALSE]")) # Return empty data frame
               }
 
               func <- if (type_val == "min") "slice_min" else "slice_max"
@@ -129,7 +127,6 @@ new_slice_block <- function(
               args <- paste0(args, ", with_ties = ", if (with_ties_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::%s(data, %s)", func, args)))
-
             } else if (type_val == "sample") {
               args <- if (use_prop_val) paste0("prop = ", prop_val) else paste0("n = ", n_val)
               if (!is.null(weight_by_val) && weight_by_val != "") {
@@ -138,10 +135,9 @@ new_slice_block <- function(
               args <- paste0(args, ", replace = ", if (replace_val) "TRUE" else "FALSE")
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
               return(parse(text = sprintf("dplyr::slice_sample(data, %s)", args)))
-
             } else if (type_val == "custom") {
               if (is.null(rows_val) || rows_val == "") {
-                return(parse(text = "data[0, , drop = FALSE]"))  # Return empty data frame
+                return(parse(text = "data[0, , drop = FALSE]")) # Return empty data frame
               }
               args <- rows_val
               if (!is.null(by_arg)) args <- paste(args, by_arg, sep = ", ")
@@ -192,7 +188,7 @@ new_slice_block <- function(
       )
     },
     function(id) {
-      ns <- NS(id)  # Create namespace function
+      ns <- NS(id) # Create namespace function
       div(
         class = "m-3",
 
@@ -225,8 +221,10 @@ new_slice_block <- function(
 
         # Number of rows inpu
         conditionalPanel(
-          condition = sprintf("input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])",
-                            ns("type"), ns("use_prop"), ns("use_prop")),
+          condition = sprintf(
+            "input['%s'] != 'custom' && (input['%s'] == 'n' || !input['%s'])",
+            ns("type"), ns("use_prop"), ns("use_prop")
+          ),
           numericInput(
             ns("n"),
             label = "Number of rows",
@@ -238,8 +236,10 @@ new_slice_block <- function(
 
         # Proportion inpu
         conditionalPanel(
-          condition = sprintf("input['%s'] != 'custom' && input['%s'] == 'prop'",
-                            ns("type"), ns("use_prop")),
+          condition = sprintf(
+            "input['%s'] != 'custom' && input['%s'] == 'prop'",
+            ns("type"), ns("use_prop")
+          ),
           numericInput(
             ns("prop"),
             label = "Proportion (0 to 1)",
@@ -252,8 +252,10 @@ new_slice_block <- function(
 
         # Order by column (for min/max)
         conditionalPanel(
-          condition = sprintf("input['%s'] == 'min' || input['%s'] == 'max'",
-                            ns("type"), ns("type")),
+          condition = sprintf(
+            "input['%s'] == 'min' || input['%s'] == 'max'",
+            ns("type"), ns("type")
+          ),
           selectInput(
             ns("order_by"),
             label = "Order by column",

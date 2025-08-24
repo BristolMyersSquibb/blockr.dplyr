@@ -108,8 +108,10 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           }
 
           type_info <- get_type_info(col_class)
-          sprintf('<span class="badge %s" style="font-size: 0.75rem;">%s</span>',
-                  type_info$class, type_info$label)
+          sprintf(
+            '<span class="badge %s" style="font-size: 0.75rem;">%s</span>',
+            type_info$class, type_info$label
+          )
         }),
         Sample = sapply(cols, function(col) {
           if (is.null(data_preview) || !col %in% names(data_preview)) {
@@ -146,11 +148,11 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
         columns_data,
         selection = "none",
         options = list(
-          paging = FALSE,  # Disable pagination for infinite scroll
-          scrollY = "400px",  # Set fixed height for scrolling
-          scrollCollapse = TRUE,  # Allow table to shrink if fewer rows
+          paging = FALSE, # Disable pagination for infinite scroll
+          scrollY = "400px", # Set fixed height for scrolling
+          scrollCollapse = TRUE, # Allow table to shrink if fewer rows
           lengthChange = FALSE,
-          searching = FALSE,  # We handle search ourselves
+          searching = FALSE, # We handle search ourselves
           info = TRUE,
           ordering = TRUE,
           rowCallback = DT::JS("
@@ -164,9 +166,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
           "),
           columnDefs = list(
             list(
-              targets = 0,  # Selected column
+              targets = 0, # Selected column
               searchable = FALSE,
-              orderable = TRUE,  # Enable sorting on selection column
+              orderable = TRUE, # Enable sorting on selection column
               className = "dt-center",
               width = "60px",
               render = DT::JS("
@@ -178,17 +180,17 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
               ")
             ),
             list(
-              targets = 1,  # Column name
+              targets = 1, # Column name
               width = "25%",
               className = "dt-left font-weight-bold"
             ),
             list(
-              targets = 2,  # Type
+              targets = 2, # Type
               width = "15%",
               className = "dt-center"
             ),
             list(
-              targets = 3,  # Sample
+              targets = 3, # Sample
               width = "60%",
               className = "dt-left"
             )
@@ -206,11 +208,11 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
 
       # Validate that we have all necessary information
       if (!is.null(clicked) &&
-          !is.null(clicked$col) &&
-          !is.null(clicked$row) &&
-          length(clicked$col) > 0 &&
-          length(clicked$row) > 0 &&
-          clicked$col == 0) {  # Checkbox column
+        !is.null(clicked$col) &&
+        !is.null(clicked$row) &&
+        length(clicked$col) > 0 &&
+        length(clicked$row) > 0 &&
+        clicked$col == 0) { # Checkbox column
 
         row_index <- clicked$row
         columns_data <- get_columns_data()
@@ -261,7 +263,9 @@ mod_table_select_server <- function(id, get_value, get_cols, get_data_preview, s
 
     # Render selected columns on top (if enabled)
     output$selected_columns_top <- renderUI({
-      if (!show_selected_on_top) return(NULL)
+      if (!show_selected_on_top) {
+        return(NULL)
+      }
 
       selected_cols <- r_selected()
 
@@ -399,7 +403,6 @@ mod_table_select_ui <- function(id, show_selected_on_top = TRUE) {
     if (show_selected_on_top) {
       uiOutput(ns("selected_columns_top"))
     },
-
     div(
       class = "table-select-container",
       div(

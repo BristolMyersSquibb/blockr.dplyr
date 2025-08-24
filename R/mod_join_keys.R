@@ -78,7 +78,6 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
 #' @export
 mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = character()) {
   moduleServer(id, function(input, output, session) {
-
     # Reactive values for managing join mappings
     r_custom_mappings <- reactiveVal(list())
     r_natural_join <- reactiveVal(TRUE)
@@ -153,11 +152,14 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
     })
 
     # Add new mapping
-    observeEvent(input$add_mapping, {
-      current <- r_custom_mappings()
-      new_mapping <- list(x_col = "", y_col = "")
-      r_custom_mappings(c(current, list(new_mapping)))
-    }, ignoreInit = TRUE)
+    observeEvent(input$add_mapping,
+      {
+        current <- r_custom_mappings()
+        new_mapping <- list(x_col = "", y_col = "")
+        r_custom_mappings(c(current, list(new_mapping)))
+      },
+      ignoreInit = TRUE
+    )
 
     # Handle mapping updates and deletions
     observe({
@@ -184,12 +186,15 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         for (i in seq_along(mappings)) {
           local({
             idx <- i
-            observeEvent(input[[paste0("delete_", idx)]], {
-              current <- r_custom_mappings()
-              if (length(current) > 1) {  # Keep at least one mapping
-                r_custom_mappings(current[-idx])
-              }
-            }, ignoreInit = TRUE)
+            observeEvent(input[[paste0("delete_", idx)]],
+              {
+                current <- r_custom_mappings()
+                if (length(current) > 1) { # Keep at least one mapping
+                  r_custom_mappings(current[-idx])
+                }
+              },
+              ignoreInit = TRUE
+            )
           })
         }
       }
@@ -208,12 +213,12 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
         }
       } else {
         mappings <- r_custom_mappings()
-        valid_mappings <- keep(mappings, ~nzchar(.x$x_col) && nzchar(.x$y_col))
+        valid_mappings <- keep(mappings, ~ nzchar(.x$x_col) && nzchar(.x$y_col))
 
         if (length(valid_mappings) == 0) {
           "No valid join mappings configured"
         } else {
-          join_specs <- map_chr(valid_mappings, ~paste(.x$x_col, "\u2192", .x$y_col))
+          join_specs <- map_chr(valid_mappings, ~ paste(.x$x_col, "\u2192", .x$y_col))
           paste("Custom join on:", paste(join_specs, collapse = ", "))
         }
       }
@@ -227,7 +232,7 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
       } else {
         # Custom join - return list of mappings
         mappings <- r_custom_mappings()
-        valid_mappings <- keep(mappings, ~nzchar(.x$x_col) && nzchar(.x$y_col))
+        valid_mappings <- keep(mappings, ~ nzchar(.x$x_col) && nzchar(.x$y_col))
 
         if (length(valid_mappings) == 0) {
           character()
@@ -235,9 +240,9 @@ mod_join_keys_server <- function(id, get_x_cols, get_y_cols, initial_keys = char
           # Return in dplyr join_by() format
           join_specs <- map(valid_mappings, function(mapping) {
             if (mapping$x_col == mapping$y_col) {
-              mapping$x_col  # Same name
+              mapping$x_col # Same name
             } else {
-              setNames(mapping$y_col, mapping$x_col)  # Different names
+              setNames(mapping$y_col, mapping$x_col) # Different names
             }
           })
 
@@ -304,13 +309,15 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
 #' Keep function for filtering lists
 #' @keywords internal
 keep <- function(x, .p) {
-  if (length(x) == 0) return(x)
+  if (length(x) == 0) {
+    return(x)
+  }
 
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.p, "formula")) {
     # Extract the formula body and create a proper function
     f_env <- environment(.p)
-    f_body <- .p[[2]]  # Get the RHS of the formula
+    f_body <- .p[[2]] # Get the RHS of the formula
     .p <- function(.x) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }
@@ -326,7 +333,7 @@ map <- function(x, .f) {
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.f, "formula")) {
     f_env <- environment(.f)
-    f_body <- .f[[2]]  # Get the RHS of the formula
+    f_body <- .f[[2]] # Get the RHS of the formula
     .f <- function(.x) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }
@@ -341,7 +348,7 @@ map_chr <- function(x, .f) {
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.f, "formula")) {
     f_env <- environment(.f)
-    f_body <- .f[[2]]  # Get the RHS of the formula
+    f_body <- .f[[2]] # Get the RHS of the formula
     .f <- function(.x) {
       eval(f_body, envir = list(.x = .x), enclos = f_env)
     }

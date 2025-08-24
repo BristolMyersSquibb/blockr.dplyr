@@ -40,7 +40,9 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
     # Collect current values from all inputs
     get_current_renames <- function() {
       indices <- r_rename_indices()
-      if (length(indices) == 0) return(list())
+      if (length(indices) == 0) {
+        return(list())
+      }
 
       result <- list()
       for (i in indices) {
@@ -51,7 +53,7 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
         old_name <- input[[old_name_id]]
 
         if (!is.null(new_name) && !is.null(old_name) &&
-            new_name != "" && old_name != "") {
+          new_name != "" && old_name != "") {
           result[[new_name]] <- old_name
         }
       }
@@ -153,7 +155,7 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
       indices <- r_rename_indices()
       has_inputs <- any(sapply(indices, function(i) {
         paste0("rename_", i, "_new") %in% names(input) &&
-        paste0("rename_", i, "_old") %in% names(input)
+          paste0("rename_", i, "_old") %in% names(input)
       }))
 
       if (has_inputs) {

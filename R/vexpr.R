@@ -17,10 +17,9 @@
 #' }
 #' @keywords internal
 mod_vexpr_server <- function(
-  id,
-  get_value,
-  get_cols
-) {
+    id,
+    get_value,
+    get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -117,7 +116,8 @@ mod_vexpr_ui <- function(id) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all();run_vexpr_example()
+#' pkgload::load_all()
+#' run_vexpr_example()
 #' }
 #' @keywords internal
 run_vexpr_example <- function() {

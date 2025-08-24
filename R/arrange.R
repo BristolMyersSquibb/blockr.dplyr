@@ -9,7 +9,6 @@
 #'
 #' @export
 new_arrange_block <- function(columns = character(), ...) {
-
   # Convert inputs to arrange specifications
   if (is.character(columns) && length(columns) > 0) {
     # Simple character vector - default to ascending order

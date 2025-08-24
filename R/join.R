@@ -11,10 +11,9 @@
 #'
 #' @export
 new_join_block <- function(
-  type = character(),
-  by = character(),
-  ...
-) {
+    type = character(),
+    by = character(),
+    ...) {
   join_types <- c(
     "left_join" = "Left Join - Keep all rows from left dataset",
     "inner_join" = "Inner Join - Keep only matching rows from both datasets",
@@ -27,7 +26,7 @@ new_join_block <- function(
   if (length(type)) {
     type <- match.arg(type, names(join_types))
   } else {
-    type <- "left_join"  # Default to left_join (most common)
+    type <- "left_join" # Default to left_join (most common)
   }
 
   new_transform_block(
@@ -131,7 +130,6 @@ new_join_block <- function(
 
         # Join keys configuration module
         mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
-
       )
     },
     class = "join_block",

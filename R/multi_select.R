@@ -383,7 +383,8 @@ multi_select_column_card <- function(id, column_name, column_info, is_selected =
     if (nchar(column_info$sample) > 0 && column_info$sample != "All NA") {
       div(
         class = "column-sample",
-        sprintf("Sample: %s",
+        sprintf(
+          "Sample: %s",
           if (nchar(column_info$sample) > 50) {
             paste0(substr(column_info$sample, 1, 47), "...")
           } else {
@@ -394,9 +395,11 @@ multi_select_column_card <- function(id, column_name, column_info, is_selected =
     },
     div(
       class = "column-stats",
-      sprintf("Unique: %d | NA: %d",
-              column_info$unique_count,
-              column_info$na_count)
+      sprintf(
+        "Unique: %d | NA: %d",
+        column_info$unique_count,
+        column_info$na_count
+      )
     )
   )
 }

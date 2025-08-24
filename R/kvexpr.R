@@ -17,10 +17,9 @@
 #' }
 #' @keywords internal
 mod_kvexpr_server <- function(
-  id,
-  get_value,
-  get_cols
-) {
+    id,
+    get_value,
+    get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -163,7 +162,8 @@ mod_kvexpr_ui <- function(id) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all();run_kvexpr_example()
+#' pkgload::load_all()
+#' run_kvexpr_example()
 #' }
 #' @keywords internal
 run_kvexpr_example <- function() {

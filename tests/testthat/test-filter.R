@@ -61,7 +61,8 @@ test_that("mod_multi_filter_server basic functionality", {
     args = list(
       get_value = function() "mpg > 20",
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test initialization
       expect_true(is.reactive(session$returned))
 
@@ -78,7 +79,8 @@ test_that("mod_multi_filter_server with multiple conditions", {
     args = list(
       get_value = function() "TRUE",
       get_cols = function() c("mpg", "cyl", "hp", "wt")
-    ), {
+    ),
+    {
       # Test adding conditions
       session$setInputs(add_condition = 1)
 
@@ -94,10 +96,11 @@ test_that("mod_multi_filter_server handles empty conditions", {
     args = list(
       get_value = function() "",
       get_cols = function() c("mpg", "cyl", "hp")
-    ), {
+    ),
+    {
       result <- session$returned()
       expect_type(result, "character")
-      expect_equal(result, "TRUE")  # Should default to TRUE
+      expect_equal(result, "TRUE") # Should default to TRUE
     }
   )
 })

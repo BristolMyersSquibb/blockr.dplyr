@@ -103,7 +103,7 @@ test_that("slice_head functionality", {
 
   # Test head with prop
   expr_result2 <- dplyr::slice_head(data, prop = 0.2)
-  expected_rows <- floor(0.2 * nrow(data))  # dplyr uses floor, not ceiling
+  expected_rows <- floor(0.2 * nrow(data)) # dplyr uses floor, not ceiling
   expect_equal(nrow(expr_result2), expected_rows)
 })
 
@@ -126,12 +126,12 @@ test_that("slice_min and slice_max functionality", {
   skip_if_not_installed("blockr.core")
 
   # Test slice_min - testing dplyr function directly
-  output <- dplyr::slice_min(data, mpg, n = 3)  # Use unquoted column name
+  output <- dplyr::slice_min(data, mpg, n = 3) # Use unquoted column name
   expect_equal(nrow(output), 3)
   expect_true(all(output$mpg <= sort(data$mpg)[3]))
 
   # Test slice_max
-  output2 <- dplyr::slice_max(data, hp, n = 2, with_ties = FALSE)  # Use unquoted column name
+  output2 <- dplyr::slice_max(data, hp, n = 2, with_ties = FALSE) # Use unquoted column name
   expect_equal(nrow(output2), 2)
   expect_true(all(output2$hp >= sort(data$hp, decreasing = TRUE)[2]))
 
@@ -179,13 +179,19 @@ test_that("grouping with .by parameter", {
   skip_if_not_installed("blockr.core")
 
   # Test grouped slice_head - testing dplyr function directly
-  output <- data |> dplyr::group_by(cyl) |> dplyr::slice_head(n = 1) |> dplyr::ungroup()
+  output <- data |>
+    dplyr::group_by(cyl) |>
+    dplyr::slice_head(n = 1) |>
+    dplyr::ungroup()
   unique_cyls <- unique(data$cyl)
   expect_equal(nrow(output), length(unique_cyls))
   expect_equal(sort(unique(output$cyl)), sort(unique_cyls))
 
   # Test grouped slice_max
-  output2 <- data |> dplyr::group_by(cyl, am) |> dplyr::slice_max(hp, n = 1, with_ties = FALSE) |> dplyr::ungroup()
+  output2 <- data |>
+    dplyr::group_by(cyl, am) |>
+    dplyr::slice_max(hp, n = 1, with_ties = FALSE) |>
+    dplyr::ungroup()
   unique_combinations <- unique(data[, c("cyl", "am")])
   expect_equal(nrow(output2), nrow(unique_combinations))
 

@@ -55,7 +55,9 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
     # Collect current values from all inputs
     get_current_conditions <- function() {
       indices <- r_condition_indices()
-      if (length(indices) == 0) return(list())
+      if (length(indices) == 0) {
+        return(list())
+      }
 
       result <- list()
       for (i in indices) {
@@ -77,13 +79,15 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
     # Get current logic operators
     get_current_logic <- function() {
       indices <- r_condition_indices()
-      if (length(indices) <= 1) return(character(0))
+      if (length(indices) <= 1) {
+        return(character(0))
+      }
 
       operators <- character(0)
       for (i in seq_len(length(indices) - 1)) {
         logic_id <- paste0("logic_", i)
         op <- input[[logic_id]]
-        if (is.null(op)) op <- "&"  # Default to AND
+        if (is.null(op)) op <- "&" # Default to AND
         operators <- c(operators, op)
       }
       operators
@@ -101,7 +105,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
       # Add new logic operator if we have more than one condition
       current_logic <- r_logic_operators()
       if (length(current_indices) >= 1) {
-        r_logic_operators(c(current_logic, "&"))  # Default to AND
+        r_logic_operators(c(current_logic, "&")) # Default to AND
       }
 
       # Update conditions
@@ -178,7 +182,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
           logic_value <- if (j <= length(logic_ops)) logic_ops[j] else "&"
           ui_elements <- append(ui_elements, list(
             div(
-              class = "d-flex justify-content-start my-2",  # Changed from center to start
+              class = "d-flex justify-content-start my-2", # Changed from center to start
               selectInput(
                 ns(paste0("logic_", j)),
                 label = NULL,
