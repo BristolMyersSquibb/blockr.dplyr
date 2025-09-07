@@ -9,7 +9,8 @@
 #' @param get_data Function that returns the data frame for extracting unique values
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp
+#' @importFrom utils str
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
 #' @keywords internal
@@ -580,12 +581,12 @@ run_value_filter_example <- function() {
       r_result <- mod_value_filter_server(
         "vf",
         get_value = function() list(),
-        get_data = function() iris
+        get_data = function() datasets::iris
       )
 
       output$conditions <- renderPrint({
         conditions <- r_result()$conditions()
-        str(conditions)
+        utils::str(conditions)
       })
 
       output$code <- renderPrint({

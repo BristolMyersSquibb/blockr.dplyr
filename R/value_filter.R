@@ -122,15 +122,13 @@ parse_value_filter <- function(
       values <- condition$values
       mode <- condition$mode %||% "include"
 
-      # Handle empty values
+      # Handle empty values - skip conditions with no values
       if (is.null(values) || length(values) == 0) {
-        values <- character(0)
+        next  # Skip conditions without values
       }
 
       # Format values for R expression
-      if (length(values) == 0) {
-        values_str <- "" # Empty vector: c()
-      } else if (is.numeric(values)) {
+      if (is.numeric(values)) {
         values_str <- paste(values, collapse = ", ")
       } else {
         values_str <- paste(sprintf('"%s"', values), collapse = ", ")
@@ -171,11 +169,3 @@ parse_value_filter <- function(
   parse(text = text)[1]
 }
 
-
-#' Default value operator
-#' @param x First value
-#' @param y Default value if x is NULL
-#' @return x if not NULL, otherwise y
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}
