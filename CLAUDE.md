@@ -469,70 +469,77 @@ function(id) {
 
 ## SCREENSHOT VALIDATION METHOD
 
-### 🔍 **Visual Block Diagnostics**
+### 🔍 **Visual Block Diagnostics with Validation Agent**
 
-The **Screenshot Validation Method** is a powerful diagnostic technique for validating blockr block implementations by generating screenshots of live Shiny apps. This method reveals both UI and rendering issues that traditional unit tests miss.
+**⚡ ALWAYS USE THE VALIDATION AGENT FOR BLOCK VALIDATION**
 
-**⭐ PROVEN EFFECTIVENESS**: This method has been instrumental in fixing broken blocks in blockr.ggplot. It instantly identifies UI-only vs UI+output blocks, guides the debugging process, and provides immediate visual confirmation when fixes work. **This is now the PRIMARY debugging tool for blockr blocks.**
+The blockr ecosystem includes a specialized `blockr-validate-blocks` agent that handles screenshot validation automatically. This agent is the ONLY recommended method for validating block implementations.
 
 #### **Core Principle**
 - **✅ Working Block**: Screenshot shows both configuration UI and rendered output (table/plot)
 - **❌ Broken Block**: Screenshot shows only configuration UI, no output
 
-#### **Implementation**
+#### **Using the Validation Agent**
 
-**Single Block Testing:**
-```bash
-# Test individual block type
-R -e "block_type <- 'select'; source('inst/scripts/generate_single_screenshot.R')"
-```
+The validation agent automatically:
+- Uses the built-in `validate_block_screenshot()` and `validate_blocks_batch()` functions from blockr.ggplot
+- Configures realistic test scenarios for each block type  
+- Generates screenshots with proper error handling and reporting
+- Provides immediate visual feedback on block health
+- Creates comprehensive validation reports
 
-**Batch Testing:**
-```bash
-# Test all blocks at once
-R -e "source('inst/scripts/generate_screenshots.R')"
-```
+#### **Key Benefits**
 
-**File Structure:**
-- `inst/scripts/generate_single_screenshot.R` - Individual block testing
-- `inst/scripts/generate_screenshots.R` - Batch testing all blocks
-- `man/figures/*.png` - Generated screenshots for validation/documentation
-
-#### **Advantages over Traditional Testing**
-
-1. **Real-world validation**: Tests in actual Shiny environment with real data flow
-2. **Visual feedback**: Immediately obvious success/failure from screenshots
-3. **Comprehensive coverage**: Tests UI, reactivity, data processing, and output rendering
-4. **Integration testing**: Validates entire block pipeline, not just individual functions
-5. **Debug efficiency**: Quickly identifies which blocks need attention
-6. **Documentation bonus**: Screenshots serve as block gallery for README
+1. **Automated Configuration**: Agent knows how to configure each block type optimally
+2. **Comprehensive Testing**: Tests all block types systematically  
+3. **Error Analysis**: Provides detailed diagnosis when blocks fail
+4. **Consistent Results**: Standardized validation across all blockr packages
+5. **Expert Knowledge**: Agent incorporates best practices and lessons learned
 
 #### **Common Issues Revealed**
 
+The validation process identifies:
 - **Missing `allow_empty_state`**: Blocks won't evaluate due to empty optional fields
-- **Malformed expressions**: Syntax errors preventing output rendering
+- **Malformed dplyr expressions**: Syntax errors preventing table rendering
 - **Broken reactive flows**: Field validation failures blocking data flow
-- **UI timing issues**: Dynamic UI elements not properly initialized
+- **UI timing issues**: Dynamic UI elements not properly initialized  
 - **State management issues**: Missing or incorrect state list configurations
 
-#### **Development Workflow Integration**
+#### **Development Workflow**
 
-1. **Block Creation**: Generate screenshot after implementing new block
+1. **Block Creation**: Use validation agent after implementing new block
 2. **Refactoring**: Validate changes don't break rendering
-3. **Debugging**: First diagnostic step when blocks misbehave
-4. **PR Validation**: Visual proof that blocks work end-to-end
-5. **Regression Testing**: Ensure fixes don't break existing functionality
+3. **Debugging**: First diagnostic step when blocks misbehave  
+4. **Code Review**: Visual proof that blocks work end-to-end
 
-#### **Technical Implementation Details**
+#### **Manual Validation (Advanced)**
 
-The screenshot generation uses webshot2 to capture live Shiny apps:
-- Creates temporary Shiny app for each block
-- Saves data as RDS files to avoid deparse() width issues
-- Configures realistic block parameters with sample data
-- Captures full UI including both controls and output
-- 5-second delay ensures app fully loads before screenshot
+For manual testing, you can use the validation functions from blockr.ggplot:
 
-**Key Insight**: This method transforms screenshot generation from a documentation task into a powerful diagnostic tool, providing immediate visual feedback on block health and functionality.
+```r
+# Single block validation
+library(blockr.ggplot)  # Provides validation functions
+result <- validate_block_screenshot(
+  new_select_block(columns = c("mpg", "cyl", "hp")),
+  data = mtcars,
+  filename = "select-test.png"
+)
+
+# Batch validation
+blocks <- list(
+  select = new_select_block(columns = c("mpg", "cyl")),
+  filter = new_filter_block(),
+  mutate = new_mutate_block()
+)
+results <- validate_blocks_batch(blocks)
+```
+
+#### **File Locations**
+
+Generated screenshots are saved to:
+- `man/figures/*.png` - Screenshots for validation and documentation
+
+**🎯 KEY RULE**: Always use the `blockr-validate-blocks` agent for screenshot validation. This is the primary debugging tool for blockr blocks.
 
 ## Resources
 - Check git history for previous implementations
