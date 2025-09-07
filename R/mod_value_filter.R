@@ -9,7 +9,7 @@
 #' @param get_data Function that returns the data frame for extracting unique values
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput radioButtons updateSelectInput
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
 #' @keywords internal
@@ -91,7 +91,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
 
         column <- input[[column_id]]
         values <- input[[values_id]]
-        mode <- input[[mode_id]] %||% "include"
+        mode <- if (isTRUE(input[[mode_id]])) "exclude" else "include"
 
         # Include condition if column is selected, even if values is empty/NULL
         if (!is.null(column) && column != "") {
@@ -344,14 +344,14 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       conditions = reactive({
         # Force reactivity on all condition inputs
         indices <- r_condition_indices()
-        
+
         # Touch all relevant input values to create dependencies
         for (i in indices) {
           input[[paste0("condition_", i, "_column")]]
           input[[paste0("condition_", i, "_values")]]
           input[[paste0("condition_", i, "_mode")]]
         }
-        
+
         # Check if any inputs exist yet
         has_inputs <- any(sapply(indices, function(i) {
           paste0("condition_", i, "_column") %in% names(input)
@@ -401,18 +401,8 @@ mod_value_filter_ui <- function(id) {
     tags$style(
       "
       .value-filter-condition {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        background-color: #f8f9fa;
-      }
-      
-      .value-filter-condition .condition-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         margin-bottom: 10px;
+        background: none;
       }
       
       .value-filter-condition .condition-controls {
@@ -423,35 +413,47 @@ mod_value_filter_ui <- function(id) {
       
       .value-filter-condition .column-selector {
         flex: 1;
-        min-width: 150px;
+        min-width: 120px;
       }
       
       .value-filter-condition .values-selector {
         flex: 2;
-        min-width: 200px;
+        min-width: 180px;
       }
       
       .value-filter-condition .mode-selector {
-        flex: 1;
-        min-width: 120px;
+        flex: 0 0 auto;
+        min-width: 80px;
+      }
+      
+      .value-filter-condition .delete-selector {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: end;
+        padding-bottom: 5px;
+      }
+      
+      .value-filter-condition label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 2px;
       }
       
       .condition-remove {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        padding: 0;
+        background: none;
+        border: none;
+        color: #6c757d;
+        padding: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
+        min-height: 32px;
       }
       
       .condition-remove:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
+        color: #dc3545;
+        background: none;
+        border: none;
       }
       
       .condition-count {
@@ -503,35 +505,17 @@ value_filter_condition_ui <- function(
     list()
   }
 
-  # Count selected values for display
-  values_count <- if (length(values) > 0) {
-    glue::glue("({length(values)} selected)")
-  } else {
-    ""
-  }
+  # Remove static count - it doesn't update with user interactions
 
   div(
     class = "value-filter-condition",
-    div(
-      class = "condition-header",
-      tags$strong("Filter Condition"),
-      if (show_remove) {
-        actionButton(
-          paste0(id, "_remove"),
-          label = NULL,
-          icon = icon("times"),
-          class = "condition-remove",
-          title = "Remove this condition"
-        )
-      }
-    ),
     div(
       class = "condition-controls",
       div(
         class = "column-selector",
         selectInput(
           paste0(id, "_column"),
-          label = "Column:",
+          label = "Column",
           choices = c("Select column..." = "", available_columns),
           selected = column,
           width = "100%"
@@ -541,7 +525,7 @@ value_filter_condition_ui <- function(
         class = "values-selector",
         selectInput(
           paste0(id, "_values"),
-          label = glue::glue("Values {values_count}:"),
+          label = "Values",
           choices = unique_values,
           selected = values,
           multiple = TRUE,
@@ -550,14 +534,24 @@ value_filter_condition_ui <- function(
       ),
       div(
         class = "mode-selector",
-        radioButtons(
+        checkboxInput(
           paste0(id, "_mode"),
-          label = "Mode:",
-          choices = list("Include" = "include", "Exclude" = "exclude"),
-          selected = mode,
-          inline = FALSE
+          label = "Exclude",
+          value = (mode == "exclude")
         )
-      )
+      ),
+      if (show_remove) {
+        div(
+          class = "delete-selector",
+          actionButton(
+            paste0(id, "_remove"),
+            label = NULL,
+            icon = icon("trash-can"),
+            class = "condition-remove",
+            title = "Remove this condition"
+          )
+        )
+      }
     )
   )
 }
