@@ -48,30 +48,33 @@ new_value_filter_block <- function(conditions = list(), ...) {
         id,
         function(input, output, session) {
           # Use value filter interface
-          r_conditions <- mod_value_filter_server(
+          filter_result <- mod_value_filter_server(
             id = "vf",
             get_value = \() conditions,
             get_data = data
           )
+          
+          r_conditions <- filter_result$conditions
+          r_logic_operators <- filter_result$logic_operators
 
-          # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_value_filter(list()))
-          r_conditions_validated <- reactiveVal(conditions)
-
-          # Validate and update on submit
-          observeEvent(input$submit, {
-            apply_value_filter(
-              data(),
-              r_conditions(),
-              r_expr_validated,
-              r_conditions_validated
-            )
+          # Reactive expression that updates automatically when conditions change
+          r_expr <- reactive({
+            current_conditions <- r_conditions()
+            current_logic <- r_logic_operators()
+            
+            # Always try to parse, even with empty/invalid conditions
+            tryCatch({
+              parse_value_filter(current_conditions, current_logic)
+            }, error = function(e) {
+              # Fallback to identity filter if parsing fails
+              parse(text = "dplyr::filter(data, TRUE)")[1]
+            })
           })
 
           list(
-            expr = r_expr_validated,
+            expr = r_expr,
             state = list(
-              conditions = r_conditions_validated
+              conditions = r_conditions
             )
           )
         }
@@ -80,17 +83,8 @@ new_value_filter_block <- function(conditions = list(), ...) {
     function(id) {
       div(
         class = "m-3",
-        # Use value filter UI
-        mod_value_filter_ui(NS(id, "vf")),
-        div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
-          )
-        )
+        # Use value filter UI - no Submit button needed for reactive filtering
+        mod_value_filter_ui(NS(id, "vf"))
       )
     },
     class = "value_filter_block",
@@ -101,8 +95,9 @@ new_value_filter_block <- function(conditions = list(), ...) {
 #' Parse value filter conditions into dplyr expression
 #'
 #' @param conditions List of filter conditions
+#' @param logic_operators Character vector of logic operators ("&" or "|")
 #' @return A parsed expression object
-parse_value_filter <- function(conditions = list()) {
+parse_value_filter <- function(conditions = list(), logic_operators = character()) {
   if (length(conditions) == 0) {
     # No conditions - return identity filter
     text <- "dplyr::filter(data, TRUE)"
@@ -113,17 +108,23 @@ parse_value_filter <- function(conditions = list()) {
     for (i in seq_along(conditions)) {
       condition <- conditions[[i]]
       
-      if (is.null(condition$column) || is.null(condition$values) || 
-          length(condition$values) == 0) {
-        next  # Skip invalid conditions
+      if (is.null(condition$column) || condition$column == "") {
+        next  # Skip conditions without a column
       }
       
       column <- condition$column
       values <- condition$values
       mode <- condition$mode %||% "include"
       
+      # Handle empty values
+      if (is.null(values) || length(values) == 0) {
+        values <- character(0)
+      }
+      
       # Format values for R expression
-      if (is.numeric(values)) {
+      if (length(values) == 0) {
+        values_str <- ""  # Empty vector: c()
+      } else if (is.numeric(values)) {
         values_str <- paste(values, collapse = ", ")
       } else {
         values_str <- paste(sprintf('"%s"', values), collapse = ", ")
@@ -142,8 +143,18 @@ parse_value_filter <- function(conditions = list()) {
     if (length(filter_parts) == 0) {
       text <- "dplyr::filter(data, TRUE)"
     } else {
-      # Combine with AND logic (can be extended for OR logic later)
-      combined_filter <- paste(filter_parts, collapse = " & ")
+      # Combine with logic operators
+      if (length(logic_operators) == 0 || length(logic_operators) != (length(filter_parts) - 1)) {
+        # Default to AND logic if no operators or wrong count
+        combined_filter <- paste(filter_parts, collapse = " & ")
+      } else {
+        # Use provided logic operators
+        combined_filter <- filter_parts[1]
+        for (i in seq_along(logic_operators)) {
+          op <- if (logic_operators[i] == "|") " | " else " & "
+          combined_filter <- paste(combined_filter, op, filter_parts[i + 1])
+        }
+      }
       text <- glue::glue("dplyr::filter(data, {combined_filter})")
     }
   }
@@ -151,49 +162,6 @@ parse_value_filter <- function(conditions = list()) {
   parse(text = text)[1]
 }
 
-#' Apply value filter conditions with validation
-#'
-#' @param data Input data frame
-#' @param conditions List of filter conditions
-#' @param r_expr_validated Reactive value for validated expression
-#' @param r_conditions_validated Reactive value for validated conditions
-apply_value_filter <- function(data, conditions, r_expr_validated, r_conditions_validated) {
-  # Validate conditions
-  if (!is.list(conditions)) {
-    showNotification(
-      "Invalid filter conditions format",
-      type = "error",
-      duration = 5
-    )
-    return()
-  }
-  
-  # Parse and validate expression
-  expr <- try(parse_value_filter(conditions))
-  if (inherits(expr, "try-error")) {
-    showNotification(
-      paste("Filter parsing error:", expr),
-      type = "error",
-      duration = 5
-    )
-    return()
-  }
-  
-  # Test evaluation
-  ans <- try(eval(expr))
-  if (inherits(ans, "try-error")) {
-    showNotification(
-      paste("Filter evaluation error:", ans),
-      type = "error",
-      duration = 5
-    )
-    return()
-  }
-  
-  # Update reactive values
-  r_expr_validated(expr)
-  r_conditions_validated(conditions)
-}
 
 #' Default value operator
 #' @param x First value

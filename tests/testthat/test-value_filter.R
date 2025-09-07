@@ -239,13 +239,46 @@ test_that("mod_value_filter_server handles initial conditions", {
     ),
     {
       # Test that initial conditions are set correctly
-      conditions <- session$getReturned()()
+      result <- session$getReturned()
+      conditions <- result$conditions()
       expect_length(conditions, 1)
       expect_equal(conditions[[1]]$column, "Species")
       expect_equal(conditions[[1]]$values, c("setosa"))
       expect_equal(conditions[[1]]$mode, "include")
+      
+      # Test that logic operators are empty for single condition
+      logic_ops <- result$logic_operators()
+      expect_length(logic_ops, 0)
     }
   )
+})
+
+test_that("parse_value_filter supports logic operators", {
+  # Test OR logic between conditions
+  conditions <- list(
+    list(column = "Species", values = c("setosa"), mode = "include"),
+    list(column = "Species", values = c("versicolor"), mode = "include")
+  )
+  logic_operators <- c("|")
+  expr <- parse_value_filter(conditions, logic_operators)
+  
+  result <- eval(expr, envir = list(data = iris))
+  expect_s3_class(result, "data.frame")
+  expect_true(all(result$Species %in% c("setosa", "versicolor")))
+  expect_false("virginica" %in% result$Species)
+  
+  # Test mixed AND/OR logic
+  conditions <- list(
+    list(column = "Species", values = c("setosa"), mode = "include"),
+    list(column = "Sepal.Length", values = c(5.1), mode = "exclude"),
+    list(column = "Species", values = c("versicolor"), mode = "include")
+  )
+  logic_operators <- c("&", "|")
+  expr <- parse_value_filter(conditions, logic_operators)
+  
+  # Should be: (Species == "setosa" & Sepal.Length != 5.1) | Species == "versicolor"
+  result <- eval(expr, envir = list(data = iris))
+  expect_s3_class(result, "data.frame")
 })
 
 test_that("default operator %||% works correctly", {

@@ -24,7 +24,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     } else {
       initial_conditions <- initial_value
     }
-    
+
     # Add default condition if none provided
     if (length(initial_conditions) == 0) {
       initial_conditions <- list(
@@ -40,7 +40,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
 
-    # Track AND/OR logic between conditions  
+    # Track AND/OR logic between conditions
     r_logic_operators <- reactiveVal(rep(
       "&",
       max(0, length(initial_conditions) - 1)
@@ -58,16 +58,16 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       if (!column %in% colnames(r_data())) {
         return(character(0))
       }
-      
+
       values <- unique(r_data()[[column]])
       # Remove NA values for display
       values <- values[!is.na(values)]
-      
+
       # Convert factors to character for consistent handling
       if (is.factor(values)) {
         values <- as.character(values)
       }
-      
+
       # Sort values for better UX
       if (is.numeric(values)) {
         sort(values)
@@ -93,12 +93,23 @@ mod_value_filter_server <- function(id, get_value, get_data) {
         values <- input[[values_id]]
         mode <- input[[mode_id]] %||% "include"
 
-        if (!is.null(column) && !is.null(values) && length(values) > 0) {
-          result <- append(result, list(list(
-            column = column,
-            values = values,
-            mode = mode
-          )))
+        # Include condition if column is selected, even if values is empty/NULL
+        if (!is.null(column) && column != "") {
+          # Ensure values is a character vector, even if empty
+          values <- if (is.null(values) || length(values) == 0) {
+            character(0)
+          } else {
+            values
+          }
+
+          result <- append(
+            result,
+            list(list(
+              column = column,
+              values = values,
+              mode = mode
+            ))
+          )
         }
       }
 
@@ -141,11 +152,14 @@ mod_value_filter_server <- function(id, get_value, get_data) {
 
       # Update conditions
       current <- get_current_conditions()
-      current <- append(current, list(list(
-        column = NULL,
-        values = character(0),
-        mode = "include"
-      )))
+      current <- append(
+        current,
+        list(list(
+          column = NULL,
+          values = character(0),
+          mode = "include"
+        ))
+      )
       r_conditions(current)
     })
 
@@ -201,9 +215,15 @@ mod_value_filter_server <- function(id, get_value, get_data) {
 
       for (j in seq_along(indices)) {
         i <- indices[j]
-        condition <- if (j <= length(conditions)) conditions[[j]] else list(
-          column = NULL, values = character(0), mode = "include"
-        )
+        condition <- if (j <= length(conditions)) {
+          conditions[[j]]
+        } else {
+          list(
+            column = NULL,
+            values = character(0),
+            mode = "include"
+          )
+        }
 
         # Add the condition row
         ui_elements <- append(
@@ -248,22 +268,35 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     # Update value choices when column selection changes
     observe({
       indices <- r_condition_indices()
-      
+
       for (i in indices) {
         local({
           index <- i
           column_id <- paste0("condition_", index, "_column")
           values_id <- paste0("condition_", index, "_values")
-          
+
           observeEvent(input[[column_id]], {
             column <- input[[column_id]]
-            if (!is.null(column) && column != "" && column %in% available_columns()) {
+            if (
+              !is.null(column) &&
+                column != "" &&
+                column %in% available_columns()
+            ) {
               unique_vals <- get_unique_values(column)
+
+              # Preserve existing selections if they're valid for the new column
+              current_selection <- input[[values_id]]
+              valid_selection <- if (!is.null(current_selection)) {
+                intersect(current_selection, unique_vals)
+              } else {
+                character(0)
+              }
+
               updateSelectInput(
                 session,
                 values_id,
                 choices = unique_vals,
-                selected = character(0)  # Reset selection when column changes
+                selected = valid_selection # Preserve valid existing selections
               )
             } else {
               updateSelectInput(
@@ -277,19 +310,23 @@ mod_value_filter_server <- function(id, get_value, get_data) {
         })
       }
     })
-    
+
     # Initialize value choices for existing conditions - simple blockr.core pattern
     observe({
       indices <- r_condition_indices()
       conditions <- r_conditions()
-      
+
       for (j in seq_along(indices)) {
         local({
           index <- indices[j]
           condition <- if (j <= length(conditions)) conditions[[j]] else NULL
           values_id <- paste0("condition_", index, "_values")
-          
-          if (!is.null(condition) && !is.null(condition$column) && condition$column != "") {
+
+          if (
+            !is.null(condition) &&
+              !is.null(condition$column) &&
+              condition$column != ""
+          ) {
             unique_vals <- get_unique_values(condition$column)
             updateSelectInput(
               session,
@@ -302,20 +339,52 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       }
     })
 
-    # Return the reactive conditions
-    reactive({
-      # Check if any inputs exist yet
-      indices <- r_condition_indices()
-      has_inputs <- any(sapply(indices, function(i) {
-        paste0("column_", i) %in% names(input)
-      }))
+    # Return the reactive conditions and logic operators
+    list(
+      conditions = reactive({
+        # Force reactivity on all condition inputs
+        indices <- r_condition_indices()
+        
+        # Touch all relevant input values to create dependencies
+        for (i in indices) {
+          input[[paste0("condition_", i, "_column")]]
+          input[[paste0("condition_", i, "_values")]]
+          input[[paste0("condition_", i, "_mode")]]
+        }
+        
+        # Check if any inputs exist yet
+        has_inputs <- any(sapply(indices, function(i) {
+          paste0("condition_", i, "_column") %in% names(input)
+        }))
 
-      if (has_inputs) {
-        get_current_conditions()
-      } else {
-        r_conditions()
-      }
-    })
+        if (has_inputs) {
+          get_current_conditions()
+        } else {
+          r_conditions()
+        }
+      }),
+      logic_operators = reactive({
+        indices <- r_condition_indices()
+        if (length(indices) <= 1) {
+          return(character(0))
+        }
+
+        # Force reactivity on logic operator inputs
+        for (i in seq_len(length(indices) - 1)) {
+          input[[paste0("logic_", i)]]
+        }
+
+        has_inputs <- any(sapply(seq_len(length(indices) - 1), function(i) {
+          paste0("logic_", i) %in% names(input)
+        }))
+
+        if (has_inputs) {
+          get_current_logic()
+        } else {
+          r_logic_operators()
+        }
+      })
+    )
   })
 }
 
@@ -418,22 +487,29 @@ mod_value_filter_ui <- function(id) {
 #' @param get_unique_values Function to get unique values for a column
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-value_filter_condition_ui <- function(id, column = NULL, values = character(0), 
-                                     mode = "include", available_columns = character(0),
-                                     get_unique_values = function(col) character(0),
-                                     show_remove = TRUE) {
-  
-  # Initialize with empty list() to match blockr.core pattern
-  # Values will be populated by server-side updates
-  unique_values <- list()
-  
+value_filter_condition_ui <- function(
+  id,
+  column = NULL,
+  values = character(0),
+  mode = "include",
+  available_columns = character(0),
+  get_unique_values = function(col) character(0),
+  show_remove = TRUE
+) {
+  # Initialize choices - populate with actual values if we have a column
+  unique_values <- if (!is.null(column) && column != "") {
+    get_unique_values(column)
+  } else {
+    list()
+  }
+
   # Count selected values for display
   values_count <- if (length(values) > 0) {
     glue::glue("({length(values)} selected)")
   } else {
     ""
   }
-  
+
   div(
     class = "value-filter-condition",
     div(
@@ -514,13 +590,14 @@ run_value_filter_example <- function() {
       )
 
       output$conditions <- renderPrint({
-        conditions <- r_result()
+        conditions <- r_result()$conditions()
         str(conditions)
       })
 
       output$code <- renderPrint({
-        conditions <- r_result()
-        expr <- parse_value_filter(conditions)
+        conditions <- r_result()$conditions()
+        logic_ops <- r_result()$logic_operators()
+        expr <- parse_value_filter(conditions, logic_ops)
         cat(deparse(expr))
       })
     }
