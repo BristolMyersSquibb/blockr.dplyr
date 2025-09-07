@@ -8,6 +8,7 @@ register_dplyr_blocks <- function() {
       "new_mutate_block",
       "new_summarize_block",
       "new_filter_block",
+      "new_value_filter_block",
       "new_distinct_block",
       "new_bind_rows_block",
       "new_bind_cols_block",
@@ -21,6 +22,7 @@ register_dplyr_blocks <- function() {
       "mutate block",
       "summarize block",
       "filter block",
+      "value filter block",
       "distinct block",
       "bind rows block",
       "bind columns block",
@@ -34,6 +36,7 @@ register_dplyr_blocks <- function() {
       "Add or modify columns in a data.frame",
       "Summarize row groups in a data.frame",
       "Filter rows in a data.frame based on conditions",
+      "Filter rows by selecting values from columns",
       "Remove duplicate rows from a data.frame",
       "Stack data.frames vertically by matching column names",
       "Combine data.frames side-by-side (requires same row count)",
@@ -41,6 +44,7 @@ register_dplyr_blocks <- function() {
       "Select rows by position, value, or sampling with optional grouping"
     ),
     category = c(
+      "transform",
       "transform",
       "transform",
       "transform",

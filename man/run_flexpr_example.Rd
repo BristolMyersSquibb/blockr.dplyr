@@ -12,7 +12,8 @@ module functionality with a simple example.
 }
 \examples{
 \dontrun{
-pkgload::load_all(); run_flexpr_example()
+pkgload::load_all()
+run_flexpr_example()
 }
 }
 \keyword{internal}

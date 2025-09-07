@@ -99,6 +99,52 @@ board <- blockr.ui::new_dag_board(
 blockr.core::serve(board)
 ```
 
+### Value Filter Block - Visual Row Filtering
+
+Filter rows by selecting specific values from columns - no R expressions needed! Perfect for users who prefer a point-and-click interface over writing filter conditions.
+
+**Simple usage:**
+```r
+library(blockr.dplyr)
+blockr.core::serve(
+  new_value_filter_block(
+    conditions = list(
+      list(column = "Species", values = c("setosa", "versicolor"), mode = "include")
+    )
+  ),
+  data = list(data = iris)
+)
+```
+
+**Key Features:**
+- 🎯 **Visual column selection** - Choose from dropdown
+- 🔍 **Dynamic value selection** - See all unique values, select multiple
+- ✅ **Include/Exclude modes** - Toggle between positive and negative filtering  
+- ➕ **Multiple conditions** - Add conditions with AND/OR logic
+- 🚫 **No coding required** - Pure point-and-click interface
+
+**DAG board integration:**
+```r
+library(blockr.core)
+library(blockr.ui)
+
+board <- blockr.ui::new_dag_board(
+  blocks = c(
+    data_block = new_dataset_block("iris"),
+    value_filter_block = new_value_filter_block(
+      conditions = list(
+        list(column = "Species", values = c("setosa"), mode = "include"),
+        list(column = "Sepal.Length", values = c(4.9, 5.0), mode = "exclude")
+      )
+    )
+  ),
+  links = c(
+    filter_link = new_link("data_block", "value_filter_block", "data")
+  )
+)
+
+blockr.core::serve(board)
+```
 
 ### Mutate Block - Add/Modify Columns
 

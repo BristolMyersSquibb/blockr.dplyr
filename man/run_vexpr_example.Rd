@@ -12,7 +12,8 @@ functionality with a simple example.
 }
 \examples{
 \dontrun{
-pkgload::load_all();run_vexpr_example()
+pkgload::load_all()
+run_vexpr_example()
 }
 }
 \keyword{internal}

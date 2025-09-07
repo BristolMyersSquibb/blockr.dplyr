@@ -12,7 +12,8 @@ functionality with a simple example.
 }
 \examples{
 \dontrun{
-pkgload::load_all();run_kvexpr_example()
+pkgload::load_all()
+run_kvexpr_example()
 }
 }
 \keyword{internal}
