@@ -124,7 +124,7 @@ parse_value_filter <- function(
 
       # Handle empty values - skip conditions with no values
       if (is.null(values) || length(values) == 0) {
-        next  # Skip conditions without values
+        next # Skip conditions without values
       }
 
       # Format values for R expression
