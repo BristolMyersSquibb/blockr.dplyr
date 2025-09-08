@@ -168,4 +168,3 @@ parse_value_filter <- function(
 
   parse(text = text)[1]
 }
-
