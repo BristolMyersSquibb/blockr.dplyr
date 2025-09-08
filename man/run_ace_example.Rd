@@ -12,7 +12,8 @@ autocompletion functionality with a simple example.
 }
 \examples{
 \dontrun{
-pkgload::load_all(); run_ace_example()
+pkgload::load_all()
+run_ace_example()
 }
 }
 \keyword{internal}
