@@ -35,76 +35,6 @@ new_bind_rows_block <- function(
             }
           })
 
-          # Generate data preview
-          output$data_preview <- renderText({
-            req(x(), y())
-            x_data <- x()
-            y_data <- y()
-
-            x_cols <- colnames(x_data)
-            y_cols <- colnames(y_data)
-            common_cols <- intersect(x_cols, y_cols)
-            x_only <- setdiff(x_cols, y_cols)
-            y_only <- setdiff(y_cols, x_cols)
-
-            preview_text <- paste0(
-              "Left dataset: ",
-              nrow(x_data),
-              " rows, ",
-              ncol(x_data),
-              " columns\n",
-              "Right dataset: ",
-              nrow(y_data),
-              " rows, ",
-              ncol(y_data),
-              " columns\n",
-              "Result: ",
-              nrow(x_data) + nrow(y_data),
-              " rows, ",
-              length(union(x_cols, y_cols)),
-              " columns\n\n"
-            )
-
-            if (length(common_cols) > 0) {
-              preview_text <- paste0(
-                preview_text,
-                "Common columns: ",
-                paste(common_cols, collapse = ", "),
-                "\n"
-              )
-            }
-
-            if (length(x_only) > 0) {
-              preview_text <- paste0(
-                preview_text,
-                "Left-only columns: ",
-                paste(x_only, collapse = ", "),
-                " (will be filled with NA in right data)\n"
-              )
-            }
-
-            if (length(y_only) > 0) {
-              preview_text <- paste0(
-                preview_text,
-                "Right-only columns: ",
-                paste(y_only, collapse = ", "),
-                " (will be filled with NA in left data)\n"
-              )
-            }
-
-            if (r_add_id()) {
-              preview_text <- paste0(
-                preview_text,
-                "\n",
-                "ID column '",
-                r_id_name(),
-                "' will be added to identify source datasets"
-              )
-            }
-
-            preview_text
-          })
-
           # Build bind_rows expression
           build_bind_expr <- function(add_id, id_name) {
             if (add_id) {
@@ -137,14 +67,16 @@ new_bind_rows_block <- function(
         # Configuration options
         div(
           class = "mb-3",
-          h5("Bind Rows Configuration", style = "margin-bottom: 15px;"),
 
           # Add ID column option
           div(
             class = "form-group",
             checkboxInput(
               NS(id, "add_id"),
-              label = "Add ID column to identify source datasets",
+              label = tags$small(
+                class = "text-muted",
+                "Add column to identify dataset"
+              ),
               value = add_id
             )
           ),
@@ -156,23 +88,15 @@ new_bind_rows_block <- function(
               class = "form-group",
               textInput(
                 NS(id, "id_name"),
-                label = "ID column name:",
+                label = tags$small(
+                  class = "text-muted",
+                  "ID column name:"
+                ),
                 value = id_name,
                 placeholder = "Enter column name"
               )
             )
           )
-        ),
-
-        # Data preview
-        div(
-          class = "data-preview mb-3 p-3",
-          style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
-          h6(
-            "Operation Preview:",
-            style = "margin-bottom: 10px; color: #495057;"
-          ),
-          verbatimTextOutput(NS(id, "data_preview"))
         )
       )
     },
@@ -204,58 +128,6 @@ new_bind_cols_block <- function(...) {
             nrow(x()) == nrow(y())
           })
 
-          # Generate data preview
-          output$data_preview <- renderText({
-            req(x(), y(), rows_compatible())
-            x_data <- x()
-            y_data <- y()
-
-            x_cols <- colnames(x_data)
-            y_cols <- colnames(y_data)
-            duplicate_cols <- intersect(x_cols, y_cols)
-
-            preview_text <- paste0(
-              "Left dataset: ",
-              nrow(x_data),
-              " rows, ",
-              ncol(x_data),
-              " columns\n",
-              "Right dataset: ",
-              nrow(y_data),
-              " rows, ",
-              ncol(y_data),
-              " columns\n",
-              "Result: ",
-              nrow(x_data),
-              " rows, ",
-              ncol(x_data) + ncol(y_data),
-              " columns\n"
-            )
-
-            if (length(duplicate_cols) > 0) {
-              preview_text <- paste0(
-                preview_text,
-                "\n",
-                "Duplicate column names found: ",
-                paste(duplicate_cols, collapse = ", "),
-                "\n",
-                "dplyr will automatically rename them (e.g., ",
-                duplicate_cols[1],
-                "...1, ",
-                duplicate_cols[1],
-                "...2)"
-              )
-            } else {
-              preview_text <- paste0(
-                preview_text,
-                "\n",
-                "No duplicate column names."
-              )
-            }
-
-            preview_text
-          })
-
           list(
             expr = reactive({
               req(rows_compatible()) # Only proceed if rows are compatible
@@ -267,18 +139,7 @@ new_bind_cols_block <- function(...) {
       )
     },
     function(id) {
-      tagList(
-        # Data preview
-        div(
-          class = "data-preview mb-3 p-3",
-          style = "background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;",
-          h6(
-            "Operation Preview:",
-            style = "margin-bottom: 10px; color: #495057;"
-          ),
-          verbatimTextOutput(NS(id, "data_preview"))
-        )
-      )
+      tagList()
     },
     class = "bind_cols_block",
     ...

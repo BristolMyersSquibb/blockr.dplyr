@@ -42,11 +42,8 @@ test_that("bind_rows block UI includes configuration options", {
   ui_str <- as.character(ui)
 
   # Should include ID configuration
-  expect_true(grepl("Add ID column", ui_str))
+  expect_true(grepl("Add column to identify dataset", ui_str))
   expect_true(grepl("ID column name", ui_str))
-
-  # Should include preview
-  expect_true(grepl("Operation Preview", ui_str))
 
   # No submit button - immediate reactivity
 })
@@ -58,8 +55,9 @@ test_that("bind_cols block UI includes configuration options", {
   # Convert to character for easier testing
   ui_str <- as.character(ui)
 
-  # Should include preview (no suffix configuration needed - dplyr handles automatically)
-  expect_true(grepl("Operation Preview", ui_str))
+  # bind_cols has minimal UI (no configuration options needed)
+  # Just check that UI is not NULL
+  expect_false(is.null(ui))
 
   # No submit button - immediate reactivity
 })
