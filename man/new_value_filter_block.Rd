@@ -8,7 +8,9 @@ new_value_filter_block(conditions = list(), ...)
 }
 \arguments{
 \item{conditions}{List of filter conditions. Each condition should be a list
-with elements: column (character), values (vector), mode ("include" or "exclude")}
+with elements: column (character), values (vector), mode ("include" or "exclude"),
+optionally type ("values" or "range") for numeric filters, and optionally
+operator ("&" or "|") specifying how this condition connects to the previous one}
 
 \item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
 }
