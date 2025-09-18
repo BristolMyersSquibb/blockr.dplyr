@@ -728,8 +728,7 @@ run_value_filter_example <- function() {
 
       output$code <- renderPrint({
         conditions <- r_result()$conditions()
-        logic_ops <- r_result()$logic_operators()
-        expr <- parse_value_filter(conditions, logic_ops)
+        expr <- parse_value_filter(conditions)
         cat(deparse(expr))
       })
     }
