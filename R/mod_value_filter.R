@@ -9,7 +9,7 @@
 #' @param get_data Function that returns the data frame for extracting unique values
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp sliderInput conditionalPanel
 #' @importFrom utils str
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
@@ -37,6 +37,9 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     r_conditions <- reactiveVal(initial_conditions)
     r_data <- get_data
 
+    # Track which conditions use sliders (for numeric columns)
+    r_use_slider <- reactiveVal(list())
+
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
@@ -52,6 +55,22 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       req(r_data())
       colnames(r_data())
     })
+
+    # Check if a column is numeric
+    is_numeric_column <- function(column) {
+      if (is.null(column) || column == "" || !column %in% colnames(r_data())) {
+        return(FALSE)
+      }
+      is.numeric(r_data()[[column]])
+    }
+
+    # Get range for numeric column
+    get_numeric_range <- function(column) {
+      if (!is_numeric_column(column)) {
+        return(c(0, 1))
+      }
+      range(r_data()[[column]], na.rm = TRUE)
+    }
 
     # Get unique values for a column
     get_unique_values <- function(column) {
@@ -85,32 +104,59 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       }
 
       result <- list()
+      use_slider <- r_use_slider()
+
       for (i in indices) {
         column_id <- paste0("condition_", i, "_column")
-        values_id <- paste0("condition_", i, "_values")
-        mode_id <- paste0("condition_", i, "_mode")
 
         column <- input[[column_id]]
-        values <- input[[values_id]]
-        mode <- if (isTRUE(input[[mode_id]])) "exclude" else "include"
 
-        # Include condition if column is selected, even if values is empty/NULL
-        if (!is.null(column) && column != "") {
-          # Ensure values is a character vector, even if empty
-          values <- if (is.null(values) || length(values) == 0) {
-            character(0)
-          } else {
-            values
+        # Check if using slider for this condition
+        if (!is.null(use_slider[[as.character(i)]]) && use_slider[[as.character(i)]]) {
+          # Get slider values
+          slider_id <- paste0("condition_", i, "_slider")
+          slider_val <- input[[slider_id]]
+          mode_id <- paste0("condition_", i, "_mode")
+          mode <- if (isTRUE(input[[mode_id]])) "exclude" else "include"
+
+          if (!is.null(column) && column != "" && !is.null(slider_val)) {
+            result <- append(
+              result,
+              list(list(
+                column = column,
+                values = slider_val,  # Store range as values
+                mode = mode,
+                type = "range"  # Mark this as a range condition
+              ))
+            )
           }
+        } else {
+          # Original multi-select logic
+          values_id <- paste0("condition_", i, "_values")
+          mode_id <- paste0("condition_", i, "_mode")
 
-          result <- append(
-            result,
-            list(list(
-              column = column,
-              values = values,
-              mode = mode
-            ))
-          )
+          values <- input[[values_id]]
+          mode <- if (isTRUE(input[[mode_id]])) "exclude" else "include"
+
+          # Include condition if column is selected, even if values is empty/NULL
+          if (!is.null(column) && column != "") {
+            # Ensure values is a character vector, even if empty
+            values <- if (is.null(values) || length(values) == 0) {
+              character(0)
+            } else {
+              values
+            }
+
+            result <- append(
+              result,
+              list(list(
+                column = column,
+                values = values,
+                mode = mode,
+                type = "values"  # Mark this as a values condition
+              ))
+            )
+          }
         }
       }
 
@@ -164,6 +210,18 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       r_conditions(current)
     })
 
+    # Track use_slider checkbox changes
+    observe({
+      indices <- r_condition_indices()
+      lapply(indices, function(i) {
+        observeEvent(input[[paste0("condition_", i, "_use_slider")]], {
+          use_slider <- r_use_slider()
+          use_slider[[as.character(i)]] <- input[[paste0("condition_", i, "_use_slider")]]
+          r_use_slider(use_slider)
+        })
+      })
+    })
+
     # Remove condition handlers
     observe({
       indices <- r_condition_indices()
@@ -186,6 +244,11 @@ mod_value_filter_server <- function(id, get_value, get_data) {
             # Update conditions
             current <- get_current_conditions()
             r_conditions(current)
+
+            # Clean up use_slider tracking
+            use_slider <- r_use_slider()
+            use_slider[[as.character(i)]] <- NULL
+            r_use_slider(use_slider)
           }
         })
       })
@@ -226,7 +289,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
           )
         }
 
-        # Add the condition row
+        # Add the condition row with standard UI
         ui_elements <- append(
           ui_elements,
           list(
@@ -266,7 +329,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       tagList(ui_elements)
     })
 
-    # Update value choices when column selection changes
+    # Render dynamic UI elements for each condition
     observe({
       indices <- r_condition_indices()
 
@@ -274,37 +337,67 @@ mod_value_filter_server <- function(id, get_value, get_data) {
         local({
           index <- i
           column_id <- paste0("condition_", index, "_column")
+          checkbox_ui_id <- paste0("condition_", index, "_checkbox_ui")
+          values_ui_id <- paste0("condition_", index, "_values_ui")
           values_id <- paste0("condition_", index, "_values")
+          use_slider_id <- paste0("condition_", index, "_use_slider")
+          slider_id <- paste0("condition_", index, "_slider")
 
-          observeEvent(input[[column_id]], {
+          # Render checkbox UI based on column selection
+          output[[checkbox_ui_id]] <- renderUI({
             column <- input[[column_id]]
-            if (
-              !is.null(column) &&
-                column != "" &&
-                column %in% available_columns()
-            ) {
-              unique_vals <- get_unique_values(column)
-
-              # Preserve existing selections if they're valid for the new column
-              current_selection <- input[[values_id]]
-              valid_selection <- if (!is.null(current_selection)) {
-                intersect(current_selection, unique_vals)
-              } else {
-                character(0)
-              }
-
-              updateSelectInput(
-                session,
-                values_id,
-                choices = unique_vals,
-                selected = valid_selection # Preserve valid existing selections
+            if (!is.null(column) && column != "" && is_numeric_column(column)) {
+              div(
+                class = "mb-2",
+                checkboxInput(
+                  ns(use_slider_id),
+                  label = "Use range slider",
+                  value = isolate(r_use_slider()[[as.character(index)]]) %||% FALSE
+                )
               )
             } else {
-              updateSelectInput(
-                session,
-                values_id,
+              NULL
+            }
+          })
+
+          # Render values UI based on column and checkbox state
+          output[[values_ui_id]] <- renderUI({
+            column <- input[[column_id]]
+            use_slider <- input[[use_slider_id]]
+
+            if (!is.null(column) && column != "") {
+              if (is_numeric_column(column) && isTRUE(use_slider)) {
+                # Render slider
+                range_vals <- get_numeric_range(column)
+                sliderInput(
+                  ns(slider_id),
+                  label = "Range",
+                  min = range_vals[1],
+                  max = range_vals[2],
+                  value = range_vals,
+                  width = "100%"
+                )
+              } else {
+                # Render multi-select
+                unique_vals <- get_unique_values(column)
+                selectInput(
+                  ns(values_id),
+                  label = "Values",
+                  choices = unique_vals,
+                  selected = isolate(input[[values_id]]),
+                  multiple = TRUE,
+                  width = "100%"
+                )
+              }
+            } else {
+              # Empty column - show empty multi-select
+              selectInput(
+                ns(values_id),
+                label = "Values",
                 choices = list(),
-                selected = character(0)
+                selected = character(0),
+                multiple = TRUE,
+                width = "100%"
               )
             }
           })
@@ -312,33 +405,6 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       }
     })
 
-    # Initialize value choices for existing conditions - simple blockr.core pattern
-    observe({
-      indices <- r_condition_indices()
-      conditions <- r_conditions()
-
-      for (j in seq_along(indices)) {
-        local({
-          index <- indices[j]
-          condition <- if (j <= length(conditions)) conditions[[j]] else NULL
-          values_id <- paste0("condition_", index, "_values")
-
-          if (
-            !is.null(condition) &&
-              !is.null(condition$column) &&
-              condition$column != ""
-          ) {
-            unique_vals <- get_unique_values(condition$column)
-            updateSelectInput(
-              session,
-              values_id,
-              choices = unique_vals,
-              selected = condition$values
-            )
-          }
-        })
-      }
-    })
 
     # Return the reactive conditions and logic operators
     list(
@@ -490,6 +556,7 @@ mod_value_filter_ui <- function(id) {
 #' @param get_unique_values Function to get unique values for a column
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
+#' @importFrom shiny sliderInput conditionalPanel
 value_filter_condition_ui <- function(
   id,
   column = NULL,
@@ -506,10 +573,13 @@ value_filter_condition_ui <- function(
     list()
   }
 
-  # Remove static count - it doesn't update with user interactions
+  # Extract base ID for consistent naming
+  base_id <- gsub(".*-", "", id)
 
   div(
     class = "value-filter-condition",
+    # Render checkbox dynamically based on column selection
+    uiOutput(paste0(id, "_checkbox_ui")),
     div(
       class = "condition-controls",
       div(
@@ -522,16 +592,10 @@ value_filter_condition_ui <- function(
           width = "100%"
         )
       ),
+      # Values selector - render dynamically based on column and checkbox
       div(
         class = "values-selector",
-        selectInput(
-          paste0(id, "_values"),
-          label = "Values",
-          choices = unique_values,
-          selected = values,
-          multiple = TRUE,
-          width = "100%"
-        )
+        uiOutput(paste0(id, "_values_ui"))
       ),
       div(
         class = "mode-selector",

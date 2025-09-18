@@ -121,24 +121,37 @@ parse_value_filter <- function(
       column <- condition$column
       values <- condition$values
       mode <- condition$mode %||% "include"
+      type <- condition$type %||% "values"
 
-      # Handle empty values - skip conditions with no values
-      if (is.null(values) || length(values) == 0) {
-        next # Skip conditions without values
-      }
+      # Handle range conditions (from slider)
+      if (type == "range" && length(values) == 2 && is.numeric(values)) {
+        min_val <- values[1]
+        max_val <- values[2]
 
-      # Format values for R expression
-      if (is.numeric(values)) {
-        values_str <- paste(values, collapse = ", ")
+        if (mode == "include") {
+          filter_part <- glue::glue("`{column}` >= {min_val} & `{column}` <= {max_val}")
+        } else {
+          filter_part <- glue::glue("!(`{column}` >= {min_val} & `{column}` <= {max_val})")
+        }
       } else {
-        values_str <- paste(sprintf('"%s"', values), collapse = ", ")
-      }
+        # Handle empty values - skip conditions with no values
+        if (is.null(values) || length(values) == 0) {
+          next # Skip conditions without values
+        }
 
-      # Build the condition string
-      if (mode == "include") {
-        filter_part <- glue::glue("`{column}` %in% c({values_str})")
-      } else {
-        filter_part <- glue::glue("!(`{column}` %in% c({values_str}))")
+        # Format values for R expression
+        if (is.numeric(values)) {
+          values_str <- paste(values, collapse = ", ")
+        } else {
+          values_str <- paste(sprintf('"%s"', values), collapse = ", ")
+        }
+
+        # Build the condition string
+        if (mode == "include") {
+          filter_part <- glue::glue("`{column}` %in% c({values_str})")
+        } else {
+          filter_part <- glue::glue("!(`{column}` %in% c({values_str}))")
+        }
       }
 
       filter_parts <- c(filter_parts, filter_part)
