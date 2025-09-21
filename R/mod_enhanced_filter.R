@@ -136,18 +136,8 @@ mod_enhanced_filter_server <- function(
       # Append to existing conditions (use list() to preserve structure)
       r_conditions(append(current_conditions, list(new_cond)))
 
-      print(r_conditions())
-
       # Add new index
-      message(
-        "BEFORE updating indices, r_conditions()[[1]]$expression = ",
-        r_conditions()[[1]]$expression
-      )
       r_condition_indices(c(current_indices, new_index))
-      message(
-        "AFTER updating indices, r_conditions()[[1]]$expression = ",
-        r_conditions()[[1]]$expression
-      )
       r_next_index(new_index + 1)
 
       # Add new logic operator if we have more than one condition
@@ -416,8 +406,6 @@ mod_enhanced_filter_server <- function(
 
               # Validate that we have exactly one matching index
               if (length(cond_index) != 1) {
-                message("WARNING: Index mismatch for condition ", idx,
-                        " - found ", length(cond_index), " matches")
                 return()
               }
 
@@ -463,8 +451,6 @@ mod_enhanced_filter_server <- function(
 
               # Validate that we have exactly one matching index
               if (length(cond_index) != 1) {
-                message("WARNING: Index mismatch for condition ", idx,
-                        " - found ", length(cond_index), " matches")
                 return()
               }
 
@@ -559,15 +545,6 @@ mod_enhanced_filter_server <- function(
                 if (in_simple_mode
                 ) {
                   expr <- build_simple_expression(idx)
-
-                  message(
-                    "Updating ACE editor for condition ",
-                    idx,
-                    " with expression: ",
-                    expr,
-                    "idx:",
-                    idx
-                  )
                   updateAceEditor(
                     session,
                     paste0("condition_", idx),
@@ -699,8 +676,6 @@ mod_enhanced_filter_server <- function(
                     if (is.list(current_conditions[[j + 1]])) {
                       current_conditions[[j + 1]]$logical_op <- logic_val
                       r_conditions(current_conditions)
-
-                      message("Updated logical_op for condition ", j + 1, " to: ", logic_val)
                     }
                   }
 
@@ -745,21 +720,6 @@ mod_enhanced_filter_server <- function(
                 cond_index <- which(current_indices == i)
 
                 if (cond_index <= length(conditions)) {
-                  message(
-                    "ACE observer for condition ",
-                    i,
-                    " (index ",
-                    cond_index,
-                    ") fired with value: '",
-                    ace_val,
-                    "'"
-                  )
-                  message(
-                    "  Current stored expression: '",
-                    conditions[[cond_index]]$expression,
-                    "'"
-                  )
-
                   # Update or create condition object
                   if (is.list(conditions[[cond_index]])) {
                     conditions[[cond_index]]$expression <- ace_val
@@ -772,11 +732,6 @@ mod_enhanced_filter_server <- function(
                   }
                   # Update immediately
                   r_conditions(conditions)
-                  message(
-                    "  After update, expression: '",
-                    conditions[[cond_index]]$expression,
-                    "'"
-                  )
                 }
               }
             },
@@ -786,46 +741,8 @@ mod_enhanced_filter_server <- function(
       }
     })
 
-    # Debug output to show current state
-    output$debug_state <- renderPrint({
-      indices <- r_condition_indices()
-      conditions <- r_conditions()
-
-      # Get current ACE values
-      ace_values <- list()
-      for (i in indices) {
-        ace_id <- paste0("condition_", i)
-        ace_val <- input[[ace_id]]
-        if (!is.null(ace_val)) {
-          ace_values[[as.character(i)]] <- ace_val
-        }
-      }
-
-      cat("=== CURRENT STATE ===\n")
-      cat("Indices:", paste(indices, collapse = ", "), "\n")
-
-      cat("\nr_conditions() - Full structure:\n")
-      for (i in seq_along(conditions)) {
-        cat(paste0("\nCondition ", i, ":\n"))
-        cond <- conditions[[i]]
-        if (is.list(cond)) {
-          cat("  expression: ", cond$expression %||% "NULL", "\n")
-          cat("  logical_op: ", cond$logical_op %||% "NULL", "\n")
-          cat("  mode: ", cond$mode %||% "NULL", "\n")
-        } else {
-          # Legacy string format (for backwards compatibility)
-          cat("  [string]: ", cond, "\n")
-        }
-      }
-
-      cat("\nCurrent ACE values:\n")
-      print(ace_values)
-      cat("\n==================\n")
-    })
-
     # Render UI dynamically
     output$conditions_ui <- renderUI({
-      message("RRRRRRRRRRRRRR")
       indices <- r_condition_indices()
       # Isolate these so we don't re-render on content changes
       conditions <- isolate(r_conditions())
@@ -863,21 +780,6 @@ mod_enhanced_filter_server <- function(
           mode <- "simple"
         }
 
-        message("r_condition_indices(): ", r_condition_indices())
-
-        message(
-          "DEBUG - Condition ID ",
-          condition_id,
-          " (position=",
-          position,
-          "): '",
-          condition,
-          "' (indices: ",
-          paste(indices, collapse = ", "),
-          ", conditions length: ",
-          length(conditions),
-          ")"
-        )
         # Add the condition row with mode toggle
         ui_elements <- append(
           ui_elements,
@@ -1040,13 +942,6 @@ mod_enhanced_filter_ui <- function(id) {
           icon = icon("plus"),
           class = "btn btn-success btn-sm"
         )
-      ),
-      # Debug output - OPEN by default for debugging
-      tags$details(
-        open = TRUE, # Keep open for debugging
-        style = "margin-top: 10px; padding: 10px; background: #f5f5f5;",
-        tags$summary("Debug: Current State"),
-        verbatimTextOutput(ns("debug_state"))
       )
     )
   )
