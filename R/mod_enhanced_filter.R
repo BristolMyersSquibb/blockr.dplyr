@@ -159,27 +159,30 @@ mod_enhanced_filter_server <- function(
             # Find position of i in current_indices
             position_to_remove <- which(current_indices == i)
 
-            # Remove the condition from r_conditions at the correct position
-            current_conditions <- r_conditions()
-            if (position_to_remove <= length(current_conditions)) {
-              current_conditions <- current_conditions[-position_to_remove]
-              r_conditions(current_conditions)
-            }
-
-            # Remove this index from indices
-            new_indices <- setdiff(current_indices, i)
-            r_condition_indices(new_indices)
-
-            # Update logic operators (remove one if needed)
-            current_logic <- r_logic_operators()
-            if (length(current_logic) >= length(new_indices)) {
-              # Remove the corresponding operator
-              if (position_to_remove <= length(current_logic)) {
-                current_logic <- current_logic[-position_to_remove]
-              } else if (length(current_logic) > 0) {
-                current_logic <- current_logic[-length(current_logic)]
+            # Only proceed if we found the position
+            if (length(position_to_remove) > 0) {
+              # Remove the condition from r_conditions at the correct position
+              current_conditions <- r_conditions()
+              if (position_to_remove <= length(current_conditions)) {
+                current_conditions <- current_conditions[-position_to_remove]
+                r_conditions(current_conditions)
               }
-              r_logic_operators(current_logic)
+
+              # Remove this index from indices
+              new_indices <- setdiff(current_indices, i)
+              r_condition_indices(new_indices)
+
+              # Update logic operators (remove one if needed)
+              current_logic <- r_logic_operators()
+              if (length(current_logic) >= length(new_indices)) {
+                # Remove the corresponding operator
+                if (position_to_remove <= length(current_logic)) {
+                  current_logic <- current_logic[-position_to_remove]
+                } else if (length(current_logic) > 0) {
+                  current_logic <- current_logic[-length(current_logic)]
+                }
+                r_logic_operators(current_logic)
+              }
             }
           }
         })
@@ -719,7 +722,7 @@ mod_enhanced_filter_server <- function(
                 current_indices <- r_condition_indices()
                 cond_index <- which(current_indices == i)
 
-                if (cond_index <= length(conditions)) {
+                if (length(cond_index) > 0 && cond_index <= length(conditions)) {
                   # Update or create condition object
                   if (is.list(conditions[[cond_index]])) {
                     conditions[[cond_index]]$expression <- ace_val
