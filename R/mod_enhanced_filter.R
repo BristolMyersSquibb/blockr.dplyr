@@ -1015,8 +1015,8 @@ enhanced_filter_condition_ui <- function(
   selected_values <- NULL
   include_mode <- "include"
 
-  if (mode == "simple" && value != "TRUE" && value != "" && !is.null(data)) {
-    # Try to parse the expression
+  if (value != "TRUE" && value != "" && !is.null(data)) {
+    # Always parse the expression to get values, regardless of mode
     parsed <- parse_simple(value, available_columns, data)
     if (!is.null(parsed)) {
       selected_column <- parsed$column
