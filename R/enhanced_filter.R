@@ -50,7 +50,8 @@ new_enhanced_filter_block <- function(string = "TRUE", ...) {
           r_string <- mod_enhanced_filter_server(
             id = "ef",
             get_value = \() string,
-            get_cols = \() colnames(data())
+            get_cols = \() colnames(data()),
+            get_data = data
           )
 
           # Store the validated expression

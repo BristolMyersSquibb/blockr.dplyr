@@ -4,7 +4,7 @@
 \alias{mod_enhanced_filter_server}
 \title{Enhanced filter condition module with simple/advanced toggle}
 \usage{
-mod_enhanced_filter_server(id, get_value, get_cols)
+mod_enhanced_filter_server(id, get_value, get_cols, get_data = NULL)
 }
 \arguments{
 \item{id}{The module ID}
@@ -12,6 +12,8 @@ mod_enhanced_filter_server(id, get_value, get_cols)
 \item{get_value}{Function that returns initial values as a character vector or list}
 
 \item{get_cols}{Function that returns column names for autocompletion}
+
+\item{get_data}{Function that returns the current data frame (optional)}
 }
 \value{
 A reactive expression containing the current filter conditions

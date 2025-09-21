@@ -7,14 +7,15 @@
 #' @param id The module ID
 #' @param get_value Function that returns initial values as a character vector or list
 #' @param get_cols Function that returns column names for autocompletion
+#' @param get_data Function that returns the current data frame (optional)
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput
 #' @importFrom shinyAce aceEditor updateAceEditor
-#' @importFrom shinyjs useShinyjs
+#' @importFrom shinyjs useShinyjs runjs show hide delay
 #' @importFrom htmltools tags
 #' @keywords internal
-mod_enhanced_filter_server <- function(id, get_value, get_cols) {
+mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -72,13 +73,79 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
       }
 
       result <- list()
-      for (i in indices) {
-        # For now, always use ACE editor (advanced mode)
-        condition_id <- paste0("condition_", i)
-        condition <- input[[condition_id]]
+      modes <- r_condition_modes()
 
-        if (!is.null(condition) && condition != "") {
-          result <- append(result, condition)
+      for (i in indices) {
+        mode <- modes[[as.character(i)]] %||% "advanced"
+
+        if (mode == "simple") {
+          # Build expression from simple UI inputs
+          column_id <- paste0("condition_", i, "_column")
+          selected_col <- input[[column_id]]
+
+          if (!is.null(selected_col) && selected_col != "") {
+            # Check if data is available to determine column type
+            if (!is.null(get_data)) {
+              data <- get_data()
+              if (is.data.frame(data) && selected_col %in% colnames(data)) {
+                col_data <- data[[selected_col]]
+
+                if (is.numeric(col_data)) {
+                  # Numeric column - use range slider values
+                  range_id <- paste0("condition_", i, "_range")
+                  range_val <- input[[range_id]]
+
+                  if (!is.null(range_val) && length(range_val) == 2) {
+                    if (range_val[1] == range_val[2]) {
+                      # Single value
+                      expr <- paste0(selected_col, " == ", range_val[1])
+                    } else {
+                      # Range
+                      expr <- paste0(selected_col, " >= ", range_val[1], " & ",
+                                   selected_col, " <= ", range_val[2])
+                    }
+                    result <- append(result, expr)
+                  }
+                } else {
+                  # Character/factor column - use multi-select values
+                  values_id <- paste0("condition_", i, "_values")
+                  include_id <- paste0("condition_", i, "_include")
+
+                  selected_vals <- input[[values_id]]
+                  include_mode <- input[[include_id]] %||% "include"
+
+                  if (!is.null(selected_vals) && length(selected_vals) > 0) {
+                    # Quote character values
+                    quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
+
+                    if (include_mode == "include") {
+                      if (length(selected_vals) == 1) {
+                        expr <- paste0(selected_col, ' == "', selected_vals, '"')
+                      } else {
+                        expr <- paste0(selected_col, " %in% c(", quoted_vals, ")")
+                      }
+                    } else {
+                      # Exclude mode
+                      if (length(selected_vals) == 1) {
+                        expr <- paste0(selected_col, ' != "', selected_vals, '"')
+                      } else {
+                        expr <- paste0("!", selected_col, " %in% c(", quoted_vals, ")")
+                      }
+                    }
+                    result <- append(result, expr)
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          # Advanced mode - use ACE editor
+          condition_id <- paste0("condition_", i)
+          condition <- input[[condition_id]]
+
+          if (!is.null(condition) && condition != "") {
+            result <- append(result, condition)
+          }
         }
       }
 
@@ -167,7 +234,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
       })
     })
 
-    # Track mode changes
+    # Track mode changes and update conditionalPanel
     observe({
       indices <- r_condition_indices()
       modes <- r_condition_modes()
@@ -178,10 +245,107 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
 
         if (!is.null(current_mode)) {
           modes[[as.character(i)]] <- current_mode
+
+          # Use shinyjs to toggle visibility based on mode
+          if (current_mode == "simple") {
+            shinyjs::show(paste0("condition_", i, "_simple_panel"))
+            shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+          } else {
+            shinyjs::hide(paste0("condition_", i, "_simple_panel"))
+            shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+          }
         }
       }
 
       r_condition_modes(modes)
+    })
+
+    # Update column dropdowns when data changes or UI is created
+    observe({
+      indices <- r_condition_indices()
+      cols <- r_cols()
+
+      if (length(cols) == 0) return()
+
+      for (i in indices) {
+        column_id <- paste0("condition_", i, "_column")
+
+        # Update column choices
+        updateSelectInput(
+          session,
+          inputId = column_id,
+          choices = cols,
+          selected = input[[column_id]] %||% cols[1]
+        )
+      }
+    })
+
+    # Render simple UI for each condition based on column type
+    observe({
+      indices <- r_condition_indices()
+
+      # Skip if no get_data function provided
+      if (is.null(get_data)) {
+        return()
+      }
+
+      data <- get_data()  # Get current data to check column types
+
+      # If data is not a data frame, we can't determine column types yet
+      if (!is.data.frame(data)) {
+        return()
+      }
+
+      for (i in indices) {
+        local({
+          idx <- i  # Capture i in local scope
+
+          output[[paste0("condition_", idx, "_simple_ui")]] <- renderUI({
+            column_id <- paste0("condition_", idx, "_column")
+            selected_col <- input[[column_id]]
+
+            if (is.null(selected_col) || !selected_col %in% colnames(data)) {
+              return(div("Select a column"))
+            }
+
+            col_data <- data[[selected_col]]
+
+            if (is.numeric(col_data)) {
+              # Numeric column: range slider
+              col_range <- range(col_data, na.rm = TRUE)
+              sliderInput(
+                ns(paste0("condition_", idx, "_range")),
+                label = "Range",
+                min = col_range[1],
+                max = col_range[2],
+                value = col_range,
+                step = if (all(col_data == floor(col_data), na.rm = TRUE)) 1 else 0.01
+              )
+            } else {
+              # Character/factor column: multi-select
+              unique_vals <- unique(as.character(col_data))
+              unique_vals <- unique_vals[!is.na(unique_vals)]
+
+              tagList(
+                selectInput(
+                  ns(paste0("condition_", idx, "_values")),
+                  label = "Values",
+                  choices = unique_vals,
+                  selected = unique_vals[1],
+                  multiple = TRUE
+                ),
+                radioButtons(
+                  ns(paste0("condition_", idx, "_include")),
+                  label = NULL,
+                  choices = c("Include" = "include", "Exclude" = "exclude"),
+                  selected = "include",
+                  inline = TRUE
+                )
+              )
+            }
+          })
+        })
+      }
     })
 
     # Update logic operators when they change
@@ -199,6 +363,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
       conditions <- r_conditions()
       logic_ops <- r_logic_operators()
       modes <- r_condition_modes()
+      cols <- r_cols()
 
       if (length(indices) == 0) {
         return(NULL)
@@ -220,7 +385,8 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
               ns(paste0("condition_", i)),
               value = condition,
               mode = mode,
-              show_remove = (length(indices) > 1)
+              show_remove = (length(indices) > 1),
+              available_columns = cols
             )
           )
         )
@@ -249,14 +415,16 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols) {
       tagList(ui_elements)
     })
 
-    # Initialize ACE editors when new ones are added
+    # Initialize ACE editors when new conditions are added
     observeEvent(r_condition_indices(), {
       indices <- r_condition_indices()
+      cols <- r_cols()
+
       for (i in indices) {
         condition_id <- paste0("condition_", i)
         if (!condition_id %in% names(input)) {
           # New editor, initialize it
-          initialize_ace_editor(session, ns(condition_id), r_cols())
+          initialize_ace_editor(session, ns(condition_id), cols)
         }
       }
     })
@@ -369,7 +537,8 @@ mod_enhanced_filter_ui <- function(id) {
 #' @param mode Current mode (simple/advanced)
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced", show_remove = TRUE) {
+enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced",
+                                        show_remove = TRUE, available_columns = character()) {
   div(
     class = "enhanced-filter-condition",
 
@@ -393,11 +562,40 @@ enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced", 
       }
     ),
 
-    # For now, always show ACE editor (Phase 1)
-    # Later we'll add conditionalPanel for simple mode
-    div(
-      class = "condition-code",
-      setup_ace_editor(id, value = value)
+    # Simple vs advanced mode panels
+    tagList(
+      # Simple mode UI (initially hidden if mode is advanced)
+      div(
+        id = paste0(id, "_simple_panel"),
+        style = if (mode != "simple") "display: none;" else "",
+        class = "condition-simple",
+        div(
+          class = "row mb-2",
+          div(
+            class = "col-md-4",
+            selectInput(
+              paste0(id, "_column"),
+              label = "Column",
+              choices = c("Select column..." = "", available_columns),
+              selected = NULL,
+              width = "100%"
+            )
+          ),
+          div(
+            class = "col-md-8",
+            # Placeholder for operation-specific UI (Phase 3)
+            uiOutput(paste0(id, "_simple_ui"))
+          )
+        )
+      ),
+
+      # Advanced mode UI (ACE editor)
+      div(
+        id = paste0(id, "_advanced_panel"),
+        style = if (mode == "simple") "display: none;" else "",
+        class = "condition-code",
+        setup_ace_editor(id, value = value)
+      )
     )
   )
 }
