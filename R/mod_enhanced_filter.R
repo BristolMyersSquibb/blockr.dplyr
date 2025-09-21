@@ -195,15 +195,18 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       new_index <- r_next_index()
 
       # CRITICAL: Update r_conditions with current ACE values before adding new condition
+      # Note: r_conditions stores conditions SEQUENTIALLY (1, 2, 3...)
+      # while r_condition_indices may be SPARSE (1, 3, 5...) after removals
       updated_conditions <- list()
       current_conditions <- r_conditions()
 
+      # Build updated conditions maintaining sequential storage
       for (i in seq_along(current_indices)) {
-        idx <- current_indices[i]
+        idx <- current_indices[i]  # The actual UI index (might be 1, 3, 5...)
         ace_id <- paste0("condition_", idx)
         ace_val <- input[[ace_id]]
 
-        # Start with existing condition or create new
+        # Get the condition from sequential storage position i
         if (i <= length(current_conditions)) {
           condition <- current_conditions[[i]]
           # Handle legacy string format
@@ -211,6 +214,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
             condition <- new_filter_condition(condition, if (i == 1) NULL else "&")
           }
         } else {
+          # Create new condition if we don't have one at this position
           condition <- new_filter_condition("TRUE", if (i == 1) NULL else "&")
         }
 
@@ -219,6 +223,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
           condition$expression <- ace_val
         }
 
+        # Store at sequential position i
         updated_conditions[[i]] <- condition
       }
 
@@ -252,23 +257,36 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
           current_indices <- r_condition_indices()
 
           if (length(current_indices) > 1) {
-            # Remove this index
+            # Find position of i in current_indices
+            position_to_remove <- which(current_indices == i)
+
+            # Remove the condition from r_conditions at the correct position
+            current_conditions <- r_conditions()
+            if (position_to_remove <= length(current_conditions)) {
+              current_conditions <- current_conditions[-position_to_remove]
+              r_conditions(current_conditions)
+            }
+
+            # Remove this index from indices
             new_indices <- setdiff(current_indices, i)
             r_condition_indices(new_indices)
 
             # Update logic operators (remove one if needed)
             current_logic <- r_logic_operators()
             if (length(current_logic) >= length(new_indices)) {
-              # Remove the last operator
-              r_logic_operators(current_logic[-length(current_logic)])
+              # Remove the corresponding operator
+              if (position_to_remove <= length(current_logic)) {
+                current_logic <- current_logic[-position_to_remove]
+              } else if (length(current_logic) > 0) {
+                current_logic <- current_logic[-length(current_logic)]
+              }
+              r_logic_operators(current_logic)
             }
 
             # Remove mode for this condition
             current_modes <- r_condition_modes()
             current_modes[[as.character(i)]] <- NULL
             r_condition_modes(current_modes)
-
-            # Don't update conditions here - let the reactive system handle it
           }
         })
       })
@@ -554,7 +572,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       }
     })
 
-    # Render simple UI for each condition based on column type
+    # Update simple UI based on column selection
     observe({
       indices <- r_condition_indices()
 
@@ -573,48 +591,54 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       for (i in indices) {
         local({
           idx <- i  # Capture i in local scope
+          column_id <- paste0("condition_", idx, "_column")
 
-          output[[paste0("condition_", idx, "_simple_ui")]] <- renderUI({
-            column_id <- paste0("condition_", idx, "_column")
+          # Watch for column changes
+          observeEvent(input[[column_id]], {
             selected_col <- input[[column_id]]
 
-            if (is.null(selected_col) || !selected_col %in% colnames(data)) {
-              return(div("Select a column"))
+            # Get the namespace-qualified IDs for UI elements
+            numeric_ui_id <- paste0("condition_", idx, "_numeric_ui")
+            character_ui_id <- paste0("condition_", idx, "_character_ui")
+
+            if (is.null(selected_col) || selected_col == "" || !selected_col %in% colnames(data)) {
+              # Hide both UIs if no valid column selected
+              shinyjs::hide(numeric_ui_id)
+              shinyjs::hide(character_ui_id)
+              return()
             }
 
             col_data <- data[[selected_col]]
 
             if (is.numeric(col_data)) {
-              # Numeric column: range slider
+              # Show numeric UI, hide character UI
+              shinyjs::show(numeric_ui_id)
+              shinyjs::hide(character_ui_id)
+
+              # Update slider range and values
               col_range <- range(col_data, na.rm = TRUE)
-              sliderInput(
-                ns(paste0("condition_", idx, "_range")),
-                label = "Range",
+              updateSliderInput(
+                session,
+                paste0("condition_", idx, "_range"),
                 min = col_range[1],
                 max = col_range[2],
                 value = col_range,
                 step = if (all(col_data == floor(col_data), na.rm = TRUE)) 1 else 0.01
               )
             } else {
-              # Character/factor column: multi-select
+              # Show character UI, hide numeric UI
+              shinyjs::hide(numeric_ui_id)
+              shinyjs::show(character_ui_id)
+
+              # Update multi-select choices
               unique_vals <- unique(as.character(col_data))
               unique_vals <- unique_vals[!is.na(unique_vals)]
 
-              tagList(
-                selectInput(
-                  ns(paste0("condition_", idx, "_values")),
-                  label = "Values",
-                  choices = unique_vals,
-                  selected = unique_vals[1],
-                  multiple = TRUE
-                ),
-                radioButtons(
-                  ns(paste0("condition_", idx, "_include")),
-                  label = NULL,
-                  choices = c("Include" = "include", "Exclude" = "exclude"),
-                  selected = "include",
-                  inline = TRUE
-                )
+              updateSelectInput(
+                session,
+                paste0("condition_", idx, "_values"),
+                choices = unique_vals,
+                selected = if (length(unique_vals) > 0) unique_vals[1] else NULL
               )
             }
           })
@@ -1123,8 +1147,38 @@ enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced",
           ),
           div(
             class = "col-md-8",
-            # Placeholder for operation-specific UI (Phase 3)
-            uiOutput(paste0(id, "_simple_ui"))
+            # Static UI elements that are shown/hidden based on column type
+            # Numeric column: range slider (hidden by default)
+            div(
+              id = paste0(id, "_numeric_ui"),
+              style = "display: none;",
+              sliderInput(
+                paste0(id, "_range"),
+                label = "Range",
+                min = 0,
+                max = 100,
+                value = c(0, 100)
+              )
+            ),
+            # Character/factor column: multi-select (hidden by default)
+            div(
+              id = paste0(id, "_character_ui"),
+              style = "display: none;",
+              selectInput(
+                paste0(id, "_values"),
+                label = "Values",
+                choices = character(0),
+                selected = NULL,
+                multiple = TRUE
+              ),
+              radioButtons(
+                paste0(id, "_include"),
+                label = NULL,
+                choices = c("Include" = "include", "Exclude" = "exclude"),
+                selected = "include",
+                inline = TRUE
+              )
+            )
           )
         )
       ),
