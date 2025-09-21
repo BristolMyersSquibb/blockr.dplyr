@@ -24,8 +24,8 @@ library(blockr.dplyr)
 
 # Create and serve a simple filter block
 blockr.core::serve(
-  new_enhanced_filter_block("mpg > 20"),
-  data = list(data = mtcars)
+  new_enhanced_filter_block("Petal.Length > 5"),
+  data = list(data = iris)
 )
 ```
 
