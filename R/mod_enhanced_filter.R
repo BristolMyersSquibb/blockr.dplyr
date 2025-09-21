@@ -249,28 +249,36 @@ mod_enhanced_filter_server <- function(
                     selected = parsed$column
                   )
 
-                  # Small delay to allow column change to process
-                  shinyjs::delay(50, {
-                    if (!is.null(parsed$range)) {
-                      # Update range slider
-                      updateSliderInput(
-                        session,
-                        paste0("condition_", i, "_range"),
-                        value = parsed$range
-                      )
-                    } else if (!is.null(parsed$values)) {
-                      # Update multi-select and include/exclude
-                      updateSelectInput(
-                        session,
-                        paste0("condition_", i, "_values"),
-                        selected = parsed$values
-                      )
-                      updateRadioButtons(
-                        session,
-                        paste0("condition_", i, "_include"),
-                        selected = if (parsed$include) "include" else "exclude"
-                      )
-                    }
+                  # Capture values in local scope before delay
+                  local({
+                    local_i <- i
+                    local_range <- parsed$range
+                    local_values <- parsed$values
+                    local_include <- parsed$include
+
+                    # Small delay to allow column change to process
+                    shinyjs::delay(50, {
+                      if (!is.null(local_range)) {
+                        # Update range slider
+                        updateSliderInput(
+                          session,
+                          paste0("condition_", local_i, "_range"),
+                          value = local_range
+                        )
+                      } else if (!is.null(local_values)) {
+                        # Update multi-select and include/exclude
+                        updateSelectInput(
+                          session,
+                          paste0("condition_", local_i, "_values"),
+                          selected = local_values
+                        )
+                        updateRadioButtons(
+                          session,
+                          paste0("condition_", local_i, "_include"),
+                          selected = if (local_include) "include" else "exclude"
+                        )
+                      }
+                    })
                   })
                 }
               }
@@ -361,6 +369,18 @@ mod_enhanced_filter_server <- function(
           observeEvent(input[[column_id]], {
             selected_col <- input[[column_id]]
 
+            # Store previous value to detect actual changes
+            prev_col_key <- paste0("prev_col_", idx)
+            prev_col <- isolate(session$userData[[prev_col_key]])
+
+            # Only proceed if column actually changed
+            if (!is.null(prev_col) && identical(prev_col, selected_col)) {
+              return()  # No change, don't update
+            }
+
+            # Update stored previous value
+            session$userData[[prev_col_key]] <- selected_col
+
             # Get the namespace-qualified IDs for UI elements
             numeric_ui_id <- paste0("condition_", idx, "_numeric_ui")
             character_ui_id <- paste0("condition_", idx, "_character_ui")
@@ -391,6 +411,13 @@ mod_enhanced_filter_server <- function(
               current_indices <- r_condition_indices()
               cond_index <- which(current_indices == idx)
               slider_value <- col_range  # Default to full range
+
+              # Validate that we have exactly one matching index
+              if (length(cond_index) != 1) {
+                message("WARNING: Index mismatch for condition ", idx,
+                        " - found ", length(cond_index), " matches")
+                return()
+              }
 
               if (cond_index <= length(current_conditions)) {
                 cond_obj <- current_conditions[[cond_index]]
@@ -431,6 +458,13 @@ mod_enhanced_filter_server <- function(
               current_indices <- r_condition_indices()
               cond_index <- which(current_indices == idx)
               selected_vals <- if (length(unique_vals) > 0) unique_vals[1] else NULL  # Default
+
+              # Validate that we have exactly one matching index
+              if (length(cond_index) != 1) {
+                message("WARNING: Index mismatch for condition ", idx,
+                        " - found ", length(cond_index), " matches")
+                return()
+              }
 
               if (cond_index <= length(current_conditions)) {
                 cond_obj <- current_conditions[[cond_index]]
