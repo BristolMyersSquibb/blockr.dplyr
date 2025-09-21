@@ -11,7 +11,7 @@
 
 #### Simplified Parsed Internal Structure
 
-**Key Simplification**: Store minimal information, derive the rest.
+**Key Simplification**: Store only what's essential. Parse on-demand.
 
 ```r
 conditions <- list(
@@ -19,59 +19,68 @@ conditions <- list(
   list(
     expression = "mpg > 20",        # The R expression (source of truth)
     logical_op = NULL,               # First condition has no operator
-    mode = "simple",                 # or "advanced"
-    # For simple mode only (parsed from expression):
-    column = "mpg",
-    values = 20                      # Single value or vector - that's all we need!
+    mode = "simple"                  # or "advanced" for complex expressions
   ),
 
   # Condition 2
   list(
     expression = "cyl %in% c(4, 6)",
     logical_op = "&",                # Connects THIS to PREVIOUS condition
-    mode = "simple",
-    column = "cyl",
-    values = c(4, 6),                # Multiple values automatically means %in%
-    include = TRUE                   # Only needed for exclude patterns like !(x %in% y)
+    mode = "simple"                  # Can be shown in simple UI
   ),
 
   # Condition 3
   list(
     expression = "gear == 5",
-    logical_op = "|",
-    mode = "simple",
-    column = "gear",
-    values = 5                       # Single value - context determines == vs > vs <
+    logical_op = "|",                # OR with previous
+    mode = "simple"                  # Simple comparison
+  ),
+
+  # Condition 4 - Complex expression
+  list(
+    expression = "hp / wt > 50",     # Too complex for simple UI
+    logical_op = "&",
+    mode = "advanced"                # Must use ACE editor
   )
 )
 ```
 
+**Note**: Column names, operators, and values are NOT stored. They are parsed from the expression when needed for the UI using helper functions like `parse_simple_expression()`.
+
 ### Why This Simplification Works
 
-1. **No need for `type` field**:
-   - Length of `values` tells us if it's single or multiple
-   - Column data type tells us if it's numeric or character
+1. **Single source of truth**: The expression contains everything
+2. **No redundancy**: We don't store what can be parsed
+3. **Flexible**: Can handle any valid R expression
+4. **Clean**: Only 3 fields instead of 6+
 
-2. **No need for `operator` field**:
-   - For character/factor: always `%in%` (even for single value)
-   - For numeric with length(values) == 1: parse from expression
-   - For numeric with length(values) == 2: always range
-   - For numeric with length(values) > 2: always `%in%`
+### Parsing When Needed
 
-3. **Derive operations when building UI**:
+When we implement the simple UI, we'll parse expressions on-demand:
+
 ```r
-get_operation_type <- function(column, values, data) {
+# Parse simple expression to get column and values
+parse_result <- parse_simple_expression("mpg > 20")
+# Returns: list(column = "mpg", values = 20)
+
+# Determine UI type based on parsed values and data type
+get_ui_type <- function(parsed, data) {
+  column <- parsed$column
+  values <- parsed$values
+
+  if (!column %in% colnames(data)) return("advanced")
+
   is_numeric <- is.numeric(data[[column]])
 
   if (!is_numeric) {
-    return("select")  # Always multi-select for character/factor
+    return("multi_select")  # Character/factor columns
   }
 
-  # Numeric column
+  # Numeric columns
   if (length(values) == 2) {
-    return("range")   # Use range slider
+    return("range_slider")  # Between/range values
   } else {
-    return("select")  # Use multi-select (even for single numeric)
+    return("range_slider")  # Single value comparisons too
   }
 }
 ```
@@ -169,17 +178,49 @@ This simplifies both UI layout and string building.
 The `expression` field is always authoritative. UI values are derived from it when needed, and UI changes generate new expressions.
 
 ### 3. Minimal State
-Store only what can't be derived:
-- `expression`: The filter expression
-- `logical_op`: Connection to previous
-- `mode`: Simple or advanced
-- `column`, `values`: Parsed from expression for simple mode
+Store only what's absolutely necessary:
+- `expression`: The filter expression (source of truth)
+- `logical_op`: Connection to previous condition
+- `mode`: Whether expression can be shown in simple UI
 
-### 4. Context-Aware UI
-The UI adapts based on:
-- Column data type (numeric vs character/factor)
-- Number of values (single vs multiple)
-- Not based on stored "type" or "operator" fields
+### 4. On-Demand Parsing
+- Parse expressions only when building the UI
+- Extract column names and values using `parse_simple_expression()`
+- Determine UI controls based on parsed results and data types
+- No need to keep parsed fields in sync with expression
+
+## UI Rendering Strategy
+
+### Reactive Isolation for Performance
+The UI uses selective reactivity to prevent unnecessary re-renders:
+
+**Reactive triggers (cause UI re-render):**
+- `r_condition_indices()` - When conditions are added or removed
+- `r_cols()` - When available columns change (rare)
+
+**Isolated (don't trigger re-render):**
+- `r_conditions()` - Content changes in ACE editors or simple mode
+- `r_logic_operators()` - Dropdown value changes
+- `r_condition_modes()` - Mode toggle changes
+
+This design ensures:
+1. **Stable editing experience** - No UI flicker while typing
+2. **Efficient rendering** - Only re-renders for structural changes
+3. **Preserved state** - Content updates don't disrupt user interaction
+
+```r
+# In renderUI:
+output$conditions_ui <- renderUI({
+  indices <- r_condition_indices()  # Reactive - triggers on add/remove
+
+  # Isolated - content changes don't trigger re-render
+  conditions <- isolate(r_conditions())
+  logic_ops <- isolate(r_logic_operators())
+  modes <- isolate(r_condition_modes())
+
+  # Build UI based on current state...
+})
+```
 
 ## Implementation Phases
 

@@ -19,29 +19,29 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # Use condition constructor from filter_utils.R
+
     # Initialize with values from get_value
     initial_value <- get_value()
     if (is.character(initial_value) && length(initial_value) == 1) {
-      # Parse single string into conditions (basic implementation)
-      if (initial_value == "" || is.null(initial_value)) {
-        initial_conditions <- list("TRUE")
-      } else {
-        # Preserve the actual condition
-        initial_conditions <- list(initial_value)
-      }
+      # Parse single string into conditions
+      initial_conditions <- parse_filter_string(initial_value)
     } else if (is.list(initial_value)) {
+      # Already list of conditions (for state restoration)
       initial_conditions <- initial_value
     } else {
-      initial_conditions <- list("TRUE")
+      initial_conditions <- list(create_condition("TRUE"))
     }
 
-    # Store conditions as reactive value
+    # Store conditions as reactive value (now stores full objects)
     r_conditions <- reactiveVal(initial_conditions)
     r_cols <- reactive(get_cols())
 
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
+
+    # (removed r_current_values - we now update r_conditions directly)
 
     # Track AND/OR logic between conditions
     r_logic_operators <- reactiveVal(rep(
@@ -194,6 +194,39 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       current_indices <- r_condition_indices()
       new_index <- r_next_index()
 
+      # CRITICAL: Update r_conditions with current ACE values before adding new condition
+      updated_conditions <- list()
+      current_conditions <- r_conditions()
+
+      for (i in seq_along(current_indices)) {
+        idx <- current_indices[i]
+        ace_id <- paste0("condition_", idx)
+        ace_val <- input[[ace_id]]
+
+        # Start with existing condition or create new
+        if (i <= length(current_conditions)) {
+          condition <- current_conditions[[i]]
+          # Handle legacy string format
+          if (!is.list(condition)) {
+            condition <- new_filter_condition(condition, if (i == 1) NULL else "&")
+          }
+        } else {
+          condition <- new_filter_condition("TRUE", if (i == 1) NULL else "&")
+        }
+
+        # Update expression from ACE if available
+        if (!is.null(ace_val)) {
+          condition$expression <- ace_val
+        }
+
+        updated_conditions[[i]] <- condition
+      }
+
+      # Add the new condition
+      new_cond <- new_filter_condition("TRUE", if (length(updated_conditions) > 0) "&" else NULL)
+      updated_conditions[[length(updated_conditions) + 1]] <- new_cond
+      r_conditions(updated_conditions)
+
       # Add new index
       r_condition_indices(c(current_indices, new_index))
       r_next_index(new_index + 1)
@@ -208,8 +241,6 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       current_modes <- r_condition_modes()
       current_modes[[as.character(new_index)]] <- "advanced"
       r_condition_modes(current_modes)
-
-      # Don't update conditions here - the new ACE editor will initialize with "TRUE"
     })
 
     # Remove condition handlers - create them dynamically
@@ -744,11 +775,92 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       }
     })
 
+    # Create observers for each ACE editor to update r_conditions immediately
+    ace_observers <- list()
+    observe({
+      indices <- r_condition_indices()
+      current_conditions <- isolate(r_conditions())
+
+      for (j in seq_along(indices)) {
+        i <- indices[j]
+        ace_id <- paste0("condition_", i)
+        observer_id <- paste0("ace_observer_", i)
+
+        # Create observer if it doesn't exist
+        if (is.null(ace_observers[[observer_id]])) {
+          ace_observers[[observer_id]] <<- observeEvent(input[[ace_id]], {
+            ace_val <- input[[ace_id]]
+            if (!is.null(ace_val)) {
+              # Get current conditions
+              conditions <- r_conditions()
+
+              # Find index of this condition
+              current_indices <- r_condition_indices()
+              cond_index <- which(current_indices == i)
+
+              if (cond_index <= length(conditions)) {
+                # Update or create condition object
+                if (is.list(conditions[[cond_index]])) {
+                  conditions[[cond_index]]$expression <- ace_val
+                } else {
+                  # Legacy string - convert to object
+                  conditions[[cond_index]] <- create_condition(
+                    ace_val,
+                    if (cond_index == 1) NULL else "&"
+                  )
+                }
+                # Update immediately
+                r_conditions(conditions)
+              }
+            }
+          }, ignoreInit = TRUE)
+        }
+      }
+    })
+
+    # Debug output to show current state
+    output$debug_state <- renderPrint({
+      indices <- r_condition_indices()
+      conditions <- r_conditions()
+
+      # Get current ACE values
+      ace_values <- list()
+      for (i in indices) {
+        ace_id <- paste0("condition_", i)
+        ace_val <- input[[ace_id]]
+        if (!is.null(ace_val)) {
+          ace_values[[as.character(i)]] <- ace_val
+        }
+      }
+
+      cat("=== CURRENT STATE ===\n")
+      cat("Indices:", paste(indices, collapse = ", "), "\n")
+
+      cat("\nr_conditions() - Full structure:\n")
+      for (i in seq_along(conditions)) {
+        cat(paste0("\nCondition ", i, ":\n"))
+        cond <- conditions[[i]]
+        if (is.list(cond)) {
+          cat("  expression: ", cond$expression %||% "NULL", "\n")
+          cat("  logical_op: ", cond$logical_op %||% "NULL", "\n")
+          cat("  mode: ", cond$mode %||% "NULL", "\n")
+        } else {
+          # Legacy string format (for backwards compatibility)
+          cat("  [string]: ", cond, "\n")
+        }
+      }
+
+      cat("\nCurrent ACE values:\n")
+      print(ace_values)
+      cat("\n==================\n")
+    })
+
     # Render UI dynamically
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
-      conditions <- r_conditions()
-      logic_ops <- r_logic_operators()
+      # Isolate these so we don't re-render on content changes
+      conditions <- isolate(r_conditions())
+      logic_ops <- isolate(r_logic_operators())
       # Don't react to modes changes - we handle that with shinyjs
       modes <- isolate(r_condition_modes())
       cols <- r_cols()
@@ -765,9 +877,23 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
       for (j in seq_along(indices)) {
         i <- indices[j]
-        # Use stored condition
-        condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
-        mode <- modes[[as.character(i)]] %||% "advanced"
+        # Use stored condition from r_conditions (our single source of truth)
+        if (j <= length(conditions)) {
+          cond_obj <- conditions[[j]]
+          # Extract expression from condition object
+          if (is.list(cond_obj)) {
+            condition <- cond_obj$expression %||% "TRUE"
+            # Use mode from condition object if available
+            mode <- cond_obj$mode %||% modes[[as.character(i)]] %||% "advanced"
+          } else {
+            # Legacy string format
+            condition <- cond_obj
+            mode <- modes[[as.character(i)]] %||% "advanced"
+          }
+        } else {
+          condition <- "TRUE"
+          mode <- "advanced"
+        }
 
         # Add the condition row with mode toggle
         ui_elements <- append(
@@ -842,13 +968,28 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       if (length(conditions) == 0) {
         return("TRUE")
       } else if (length(conditions) == 1) {
-        return(conditions[[1]])
+        # Extract expression from condition object if needed
+        cond <- conditions[[1]]
+        if (is.list(cond)) {
+          return(cond$expression %||% "TRUE")
+        } else {
+          return(cond)
+        }
       } else {
+        # Extract expressions and combine with logic operators
+        expressions <- lapply(conditions, function(cond) {
+          if (is.list(cond)) {
+            cond$expression %||% "TRUE"
+          } else {
+            cond
+          }
+        })
+
         # Combine conditions with logic operators
-        result <- conditions[[1]]
-        for (i in seq_len(length(conditions) - 1)) {
+        result <- expressions[[1]]
+        for (i in seq_len(length(expressions) - 1)) {
           op <- if (i <= length(logic_ops)) logic_ops[i] else "&"
-          result <- paste(result, op, conditions[[i + 1]])
+          result <- paste(result, op, expressions[[i + 1]])
         }
         return(result)
       }
@@ -917,6 +1058,13 @@ mod_enhanced_filter_ui <- function(id) {
           icon = icon("plus"),
           class = "btn btn-success btn-sm"
         )
+      ),
+      # Debug output - OPEN by default for debugging
+      tags$details(
+        open = TRUE,  # Keep open for debugging
+        style = "margin-top: 10px; padding: 10px; background: #f5f5f5;",
+        tags$summary("Debug: Current State"),
+        verbatimTextOutput(ns("debug_state"))
       )
     )
   )
