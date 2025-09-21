@@ -327,45 +327,322 @@ parse_simple_expression <- function(expression) {
   return(NULL)
 }
 
-#' Build a simple filter expression
+#' Parse expression for simple mode
 #'
-#' Creates a filter expression string from column, operator and values
+#' Extracts column name, values, and operation from filter expression
+#'
+#' @param expr_str Filter expression string
+#' @param cols Available column names
+#' @param data Optional data frame for type checking
+#' @return List with column, values/range, and include mode, or NULL
+#' @keywords internal
+parse_simple <- function(expr_str, cols, data = NULL) {
+  if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
+    return(NULL)
+  }
+
+  # Find which column is referenced
+  col_found <- NULL
+  for (col in cols) {
+    if (grepl(paste0("\\b", col, "\\b"), expr_str)) {
+      col_found <- col
+      break
+    }
+  }
+
+  if (is.null(col_found)) {
+    return(NULL)
+  }
+
+  # If we have data, determine column type
+  if (!is.null(data) && is.data.frame(data) && col_found %in% colnames(data)) {
+    col_data <- data[[col_found]]
+
+    if (is.numeric(col_data)) {
+      # Parse numeric patterns
+      parsed <- parse_numeric_filter(expr_str, col_found, range(col_data, na.rm = TRUE))
+      if (!is.null(parsed)) return(parsed)
+    } else {
+      # Parse character patterns
+      parsed <- parse_character_filter(expr_str, col_found)
+      if (!is.null(parsed)) return(parsed)
+    }
+  }
+
+  return(NULL)
+}
+
+#' Parse numeric filter expression
+#'
+#' @param expr_str Filter expression string
+#' @param col_name Column name
+#' @param col_range Numeric range of column values
+#' @return List with column and range, or NULL
+#' @keywords internal
+parse_numeric_filter <- function(expr_str, col_name, col_range) {
+  # Pattern: col >= X & col <= Y
+  range_pattern <- paste0("\\b", col_name, "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
+                        col_name, "\\s*<=\\s*([0-9.-]+)")
+  if (grepl(range_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(range_pattern, expr_str))[[1]]
+    if (length(matches) == 3) {
+      return(list(
+        column = col_name,
+        range = as.numeric(c(matches[2], matches[3]))
+      ))
+    }
+  }
+
+  # Pattern: col == X
+  eq_pattern <- paste0("\\b", col_name, "\\s*==\\s*([0-9.-]+)")
+  if (grepl(eq_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(eq_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      val <- as.numeric(matches[2])
+      return(list(column = col_name, range = c(val, val)))
+    }
+  }
+
+  # Pattern: col >= X
+  gte_pattern <- paste0("\\b", col_name, "\\s*>=\\s*([0-9.-]+)")
+  if (grepl(gte_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(gte_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      return(list(
+        column = col_name,
+        range = c(as.numeric(matches[2]), col_range[2])
+      ))
+    }
+  }
+
+  # Pattern: col > X
+  gt_pattern <- paste0("\\b", col_name, "\\s*>\\s*([0-9.-]+)")
+  if (grepl(gt_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(gt_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      val <- as.numeric(matches[2])
+      return(list(
+        column = col_name,
+        range = c(val + 0.01, col_range[2])
+      ))
+    }
+  }
+
+  # Pattern: col <= X
+  lte_pattern <- paste0("\\b", col_name, "\\s*<=\\s*([0-9.-]+)")
+  if (grepl(lte_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(lte_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      return(list(
+        column = col_name,
+        range = c(col_range[1], as.numeric(matches[2]))
+      ))
+    }
+  }
+
+  # Pattern: col < X
+  lt_pattern <- paste0("\\b", col_name, "\\s*<\\s*([0-9.-]+)")
+  if (grepl(lt_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(lt_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      val <- as.numeric(matches[2])
+      return(list(
+        column = col_name,
+        range = c(col_range[1], val - 0.01)
+      ))
+    }
+  }
+
+  return(NULL)
+}
+
+#' Parse character filter expression
+#'
+#' @param expr_str Filter expression string
+#' @param col_name Column name
+#' @return List with column, values, and include mode, or NULL
+#' @keywords internal
+parse_character_filter <- function(expr_str, col_name) {
+  # Pattern: !col %in% c("val1", "val2") - check negated pattern first
+  not_in_pattern <- paste0("!\\s*", col_name, "\\s*%in%\\s*c\\(([^)]+)\\)")
+  if (grepl(not_in_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(not_in_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      val_str <- matches[2]
+      values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
+      values <- gsub('"', '', values)
+      return(list(
+        column = col_name,
+        values = values,
+        include = FALSE
+      ))
+    }
+  }
+
+  # Pattern: col %in% c("val1", "val2")
+  in_pattern <- paste0("\\b", col_name, "\\s*%in%\\s*c\\(([^)]+)\\)")
+  if (grepl(in_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(in_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      val_str <- matches[2]
+      values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
+      values <- gsub('"', '', values)
+      return(list(
+        column = col_name,
+        values = values,
+        include = TRUE
+      ))
+    }
+  }
+
+  # Pattern: col == "val"
+  eq_pattern <- paste0("\\b", col_name, '\\s*==\\s*"([^"]*)"')
+  if (grepl(eq_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(eq_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      return(list(
+        column = col_name,
+        values = matches[2],
+        include = TRUE
+      ))
+    }
+  }
+
+  # Pattern: col != "val"
+  neq_pattern <- paste0("\\b", col_name, '\\s*!=\\s*"([^"]*)"')
+  if (grepl(neq_pattern, expr_str)) {
+    matches <- regmatches(expr_str, regexec(neq_pattern, expr_str))[[1]]
+    if (length(matches) == 2) {
+      return(list(
+        column = col_name,
+        values = matches[2],
+        include = FALSE
+      ))
+    }
+  }
+
+  return(NULL)
+}
+
+#' Build simple filter expression from inputs
+#'
+#' Creates a filter expression from column name and values
 #'
 #' @param column Column name
-#' @param operator Comparison operator
-#' @param values Values to compare against
-#' @return Character string with the filter expression
+#' @param data Data frame for type checking
+#' @param range_val Numeric range values (for numeric columns)
+#' @param selected_vals Selected values (for character columns)
+#' @param include_mode "include" or "exclude" for character columns
+#' @return Character string with filter expression
 #' @keywords internal
-build_simple_expression <- function(column, operator, values) {
-  if (is.null(column) || column == "" || is.null(operator)) {
+build_simple <- function(column, data = NULL, range_val = NULL,
+                        selected_vals = NULL, include_mode = "include") {
+  if (is.null(column) || column == "") {
     return("TRUE")
   }
 
-  # Handle different operators
-  if (operator == "between") {
-    if (length(values) >= 2) {
-      return(sprintf("between(%s, %s, %s)", column, values[1], values[2]))
-    }
-  } else if (operator == "%in%") {
-    if (length(values) > 0) {
-      # Quote character values
-      if (is.character(values)) {
-        value_str <- paste0('"', values, '"', collapse = ", ")
-      } else {
-        value_str <- paste(values, collapse = ", ")
+  if (!is.null(data) && is.data.frame(data) && column %in% colnames(data)) {
+    col_data <- data[[column]]
+
+    if (is.numeric(col_data)) {
+      # Numeric column - use range values
+      if (!is.null(range_val) && length(range_val) == 2) {
+        return(format_range(column, range_val, range(col_data, na.rm = TRUE)))
       }
-      return(sprintf("%s %%in%% c(%s)", column, value_str))
-    }
-  } else if (operator %in% c("==", "!=", ">", "<", ">=", "<=")) {
-    if (length(values) > 0) {
-      # Quote character values
-      if (is.character(values[[1]])) {
-        return(sprintf('%s %s "%s"', column, operator, values[[1]]))
-      } else {
-        return(sprintf("%s %s %s", column, operator, values[[1]]))
+    } else {
+      # Character column - use selected values
+      if (!is.null(selected_vals) && length(selected_vals) > 0) {
+        return(format_values(column, selected_vals, include_mode))
       }
     }
   }
 
   return("TRUE")
+}
+
+#' Format numeric range filter
+#'
+#' @param column Column name
+#' @param range_val Range values
+#' @param col_range Full column range
+#' @return Filter expression string
+#' @keywords internal
+format_range <- function(column, range_val, col_range) {
+  # Check if values are at the extremes
+  at_min <- abs(range_val[1] - col_range[1]) < 0.001
+  at_max <- abs(range_val[2] - col_range[2]) < 0.001
+
+  if (range_val[1] == range_val[2]) {
+    # Single value
+    return(paste0(column, " == ", range_val[1]))
+  } else if (at_min && at_max) {
+    # Full range - no filter needed
+    return("TRUE")
+  } else if (at_min) {
+    # Only upper bound
+    return(paste0(column, " <= ", range_val[2]))
+  } else if (at_max) {
+    # Only lower bound
+    return(paste0(column, " >= ", range_val[1]))
+  } else {
+    # Both bounds
+    return(paste0(column, " >= ", range_val[1], " & ",
+                 column, " <= ", range_val[2]))
+  }
+}
+
+#' Format value-based filter
+#'
+#' @param column Column name
+#' @param values Selected values
+#' @param include_mode "include" or "exclude"
+#' @return Filter expression string
+#' @keywords internal
+format_values <- function(column, values, include_mode = "include") {
+  # Quote character values
+  quoted_vals <- paste0('"', values, '"', collapse = ", ")
+
+  if (include_mode == "include") {
+    if (length(values) == 1) {
+      return(paste0(column, ' == "', values, '"'))
+    } else {
+      return(paste0(column, " %in% c(", quoted_vals, ")"))
+    }
+  } else {
+    # Exclude mode
+    if (length(values) == 1) {
+      return(paste0(column, ' != "', values, '"'))
+    } else {
+      return(paste0("!", column, " %in% c(", quoted_vals, ")"))
+    }
+  }
+}
+
+#' Combine filter conditions with logic operators
+#'
+#' @param conditions List of condition strings
+#' @param operators Character vector of operators ("&" or "|")
+#' @return Combined filter expression
+#' @keywords internal
+combine_filters <- function(conditions, operators = NULL) {
+  if (length(conditions) == 0) {
+    return("TRUE")
+  }
+
+  if (length(conditions) == 1) {
+    return(conditions[[1]])
+  }
+
+  # Default to AND if no operators provided
+  if (is.null(operators) || length(operators) < length(conditions) - 1) {
+    operators <- rep("&", length(conditions) - 1)
+  }
+
+  # Combine conditions with operators
+  result <- conditions[[1]]
+  for (i in seq_len(length(conditions) - 1)) {
+    result <- paste(result, operators[i], conditions[[i + 1]])
+  }
+
+  return(result)
 }

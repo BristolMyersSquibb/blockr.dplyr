@@ -79,78 +79,10 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         mode <- modes[[as.character(i)]] %||% "advanced"
 
         if (mode == "simple") {
-          # Build expression from simple UI inputs
-          column_id <- paste0("condition_", i, "_column")
-          selected_col <- input[[column_id]]
-
-          if (!is.null(selected_col) && selected_col != "") {
-            # Check if data is available to determine column type
-            if (!is.null(get_data)) {
-              data <- get_data()
-              if (is.data.frame(data) && selected_col %in% colnames(data)) {
-                col_data <- data[[selected_col]]
-
-                if (is.numeric(col_data)) {
-                  # Numeric column - use range slider values
-                  range_id <- paste0("condition_", i, "_range")
-                  range_val <- input[[range_id]]
-                  col_range <- range(col_data, na.rm = TRUE)
-
-                  if (!is.null(range_val) && length(range_val) == 2) {
-                    # Check if values are at the extremes
-                    at_min <- abs(range_val[1] - col_range[1]) < 0.001
-                    at_max <- abs(range_val[2] - col_range[2]) < 0.001
-
-                    if (range_val[1] == range_val[2]) {
-                      # Single value
-                      expr <- paste0(selected_col, " == ", range_val[1])
-                    } else if (at_min && at_max) {
-                      # Full range - no filter needed
-                      expr <- "TRUE"
-                    } else if (at_min) {
-                      # Only upper bound
-                      expr <- paste0(selected_col, " <= ", range_val[2])
-                    } else if (at_max) {
-                      # Only lower bound
-                      expr <- paste0(selected_col, " >= ", range_val[1])
-                    } else {
-                      # Both bounds
-                      expr <- paste0(selected_col, " >= ", range_val[1], " & ",
-                                   selected_col, " <= ", range_val[2])
-                    }
-                    result <- append(result, expr)
-                  }
-                } else {
-                  # Character/factor column - use multi-select values
-                  values_id <- paste0("condition_", i, "_values")
-                  include_id <- paste0("condition_", i, "_include")
-
-                  selected_vals <- input[[values_id]]
-                  include_mode <- input[[include_id]] %||% "include"
-
-                  if (!is.null(selected_vals) && length(selected_vals) > 0) {
-                    # Quote character values
-                    quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
-
-                    if (include_mode == "include") {
-                      if (length(selected_vals) == 1) {
-                        expr <- paste0(selected_col, ' == "', selected_vals, '"')
-                      } else {
-                        expr <- paste0(selected_col, " %in% c(", quoted_vals, ")")
-                      }
-                    } else {
-                      # Exclude mode
-                      if (length(selected_vals) == 1) {
-                        expr <- paste0(selected_col, ' != "', selected_vals, '"')
-                      } else {
-                        expr <- paste0("!", selected_col, " %in% c(", quoted_vals, ")")
-                      }
-                    }
-                    result <- append(result, expr)
-                  }
-                }
-              }
-            }
+          # Build expression from simple UI inputs using utility function
+          expr <- build_simple_expression(i)
+          if (!is.null(expr) && expr != "TRUE") {
+            result <- append(result, expr)
           }
         } else {
           # Advanced mode - use ACE editor
@@ -292,178 +224,9 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       })
     })
 
-    # Function to parse expression and extract column/values for simple mode
+    # Wrapper function for parse_simple utility
     parse_expression_for_simple <- function(expr_str, i) {
-      if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
-        return(NULL)
-      }
-
-      # Try to extract column name and values from common patterns
-      cols <- r_cols()
-
-      # Find which column is referenced
-      col_found <- NULL
-      for (col in cols) {
-        if (grepl(paste0("\\b", col, "\\b"), expr_str)) {
-          col_found <- col
-          break
-        }
-      }
-
-      if (!is.null(col_found) && !is.null(get_data)) {
-        data <- get_data()
-        if (is.data.frame(data) && col_found %in% colnames(data)) {
-          col_data <- data[[col_found]]
-
-          if (is.numeric(col_data)) {
-            # Get the data range for this column
-            col_range <- range(col_data, na.rm = TRUE)
-
-            # Try to parse numeric patterns
-            # Pattern: col >= X & col <= Y
-            range_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
-                                  col_found, "\\s*<=\\s*([0-9.-]+)")
-            if (grepl(range_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(range_pattern, expr_str))[[1]]
-              if (length(matches) == 3) {
-                return(list(
-                  column = col_found,
-                  range = as.numeric(c(matches[2], matches[3]))
-                ))
-              }
-            }
-
-            # Pattern: col == X
-            eq_pattern <- paste0("\\b", col_found, "\\s*==\\s*([0-9.-]+)")
-            if (grepl(eq_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(eq_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(val, val)
-                ))
-              }
-            }
-
-            # Pattern: col > X (set range from X to max)
-            gt_pattern <- paste0("\\b", col_found, "\\s*>\\s*([0-9.-]+)")
-            if (grepl(gt_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(gt_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                # Set range slightly above the value to max
-                return(list(
-                  column = col_found,
-                  range = c(val + 0.01, col_range[2])
-                ))
-              }
-            }
-
-            # Pattern: col >= X (set range from X to max)
-            gte_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)")
-            if (grepl(gte_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(gte_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(val, col_range[2])
-                ))
-              }
-            }
-
-            # Pattern: col < X (set range from min to X)
-            lt_pattern <- paste0("\\b", col_found, "\\s*<\\s*([0-9.-]+)")
-            if (grepl(lt_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(lt_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                # Set range from min to slightly below the value
-                return(list(
-                  column = col_found,
-                  range = c(col_range[1], val - 0.01)
-                ))
-              }
-            }
-
-            # Pattern: col <= X (set range from min to X)
-            lte_pattern <- paste0("\\b", col_found, "\\s*<=\\s*([0-9.-]+)")
-            if (grepl(lte_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(lte_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(col_range[1], val)
-                ))
-              }
-            }
-          } else {
-            # Try to parse character patterns
-            # Pattern: col %in% c("val1", "val2")
-            in_pattern <- paste0("\\b", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
-            if (grepl(in_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(in_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                # Extract quoted values
-                val_str <- matches[2]
-                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
-                values <- gsub('"', '', values)
-                return(list(
-                  column = col_found,
-                  values = values,
-                  include = TRUE
-                ))
-              }
-            }
-
-            # Pattern: !col %in% c("val1", "val2")
-            not_in_pattern <- paste0("!\\s*", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
-            if (grepl(not_in_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(not_in_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val_str <- matches[2]
-                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
-                values <- gsub('"', '', values)
-                return(list(
-                  column = col_found,
-                  values = values,
-                  include = FALSE
-                ))
-              }
-            }
-
-            # Pattern: col == "val"
-            eq_str_pattern <- paste0("\\b", col_found, '\\s*==\\s*"([^"]*)"')
-            if (grepl(eq_str_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(eq_str_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                return(list(
-                  column = col_found,
-                  values = matches[2],
-                  include = TRUE
-                ))
-              }
-            }
-
-            # Pattern: col != "val"
-            neq_str_pattern <- paste0("\\b", col_found, '\\s*!=\\s*"([^"]*)"')
-            if (grepl(neq_str_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(neq_str_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                return(list(
-                  column = col_found,
-                  values = matches[2],
-                  include = FALSE
-                ))
-              }
-            }
-          }
-        }
-      }
-
-      return(NULL)
+      parse_simple(expr_str, r_cols(), get_data())
     }
 
     # Track mode changes and update conditionalPanel
@@ -493,7 +256,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
               # When switching to simple mode, try to parse the expression
               if (old_mode != "simple") {
                 expr_str <- input[[paste0("condition_", i)]]
-                parsed <- parse_expression_for_simple(expr_str, i)
+                parsed <- parse_simple(expr_str, r_cols(), get_data())
 
                 if (!is.null(parsed)) {
                   # Update column selection
@@ -655,72 +418,21 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         return("TRUE")
       }
 
-      if (!is.null(get_data)) {
-        data <- get_data()
-        if (is.data.frame(data) && selected_col %in% colnames(data)) {
-          col_data <- data[[selected_col]]
+      data <- get_data()
+      range_id <- paste0("condition_", i, "_range")
+      range_val <- input[[range_id]]
+      values_id <- paste0("condition_", i, "_values")
+      selected_vals <- input[[values_id]]
+      include_id <- paste0("condition_", i, "_include")
+      include_mode <- input[[include_id]] %||% "include"
 
-          if (is.numeric(col_data)) {
-            # Numeric column - use range slider values
-            range_id <- paste0("condition_", i, "_range")
-            range_val <- input[[range_id]]
-            col_range <- range(col_data, na.rm = TRUE)
-
-            if (!is.null(range_val) && length(range_val) == 2) {
-              # Check if values are at the extremes
-              at_min <- abs(range_val[1] - col_range[1]) < 0.001
-              at_max <- abs(range_val[2] - col_range[2]) < 0.001
-
-              if (range_val[1] == range_val[2]) {
-                # Single value
-                return(paste0(selected_col, " == ", range_val[1]))
-              } else if (at_min && at_max) {
-                # Full range - no filter needed
-                return("TRUE")
-              } else if (at_min) {
-                # Only upper bound
-                return(paste0(selected_col, " <= ", range_val[2]))
-              } else if (at_max) {
-                # Only lower bound
-                return(paste0(selected_col, " >= ", range_val[1]))
-              } else {
-                # Both bounds
-                return(paste0(selected_col, " >= ", range_val[1], " & ",
-                            selected_col, " <= ", range_val[2]))
-              }
-            }
-          } else {
-            # Character/factor column - use multi-select values
-            values_id <- paste0("condition_", i, "_values")
-            include_id <- paste0("condition_", i, "_include")
-
-            selected_vals <- input[[values_id]]
-            include_mode <- input[[include_id]] %||% "include"
-
-            if (!is.null(selected_vals) && length(selected_vals) > 0) {
-              # Quote character values
-              quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
-
-              if (include_mode == "include") {
-                if (length(selected_vals) == 1) {
-                  return(paste0(selected_col, ' == "', selected_vals, '"'))
-                } else {
-                  return(paste0(selected_col, " %in% c(", quoted_vals, ")"))
-                }
-              } else {
-                # Exclude mode
-                if (length(selected_vals) == 1) {
-                  return(paste0(selected_col, ' != "', selected_vals, '"'))
-                } else {
-                  return(paste0("!", selected_col, " %in% c(", quoted_vals, ")"))
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return("TRUE")
+      build_simple(
+        column = selected_col,
+        data = data,
+        range_val = range_val,
+        selected_vals = selected_vals,
+        include_mode = include_mode
+      )
     }
 
     # Track which observers have been created to avoid duplicates
