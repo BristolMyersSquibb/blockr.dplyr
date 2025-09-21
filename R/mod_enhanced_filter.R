@@ -433,43 +433,49 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
         if (!is.null(current_mode)) {
           old_mode <- modes[[as.character(i)]]
-          modes[[as.character(i)]] <- current_mode
 
-          # Use shinyjs to toggle visibility based on mode
-          if (current_mode == "simple") {
-            shinyjs::show(paste0("condition_", i, "_simple_panel"))
-            shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+          # Only process if mode actually changed
+          if (old_mode != current_mode) {
+            modes[[as.character(i)]] <- current_mode
 
-            # When switching to simple mode, try to parse the expression
-            if (old_mode != "simple") {
-              expr_str <- input[[paste0("condition_", i)]]
-              parsed <- parse_expression_for_simple(expr_str, i)
+            # Update reactive value IMMEDIATELY before any UI changes
+            r_condition_modes(modes)
 
-              if (!is.null(parsed)) {
-                # Update column selection
-                updateSelectInput(session,
+            # Use shinyjs to toggle visibility based on mode
+            if (current_mode == "simple") {
+              shinyjs::show(paste0("condition_", i, "_simple_panel"))
+              shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+
+              # When switching to simple mode, try to parse the expression
+              if (old_mode != "simple") {
+                expr_str <- input[[paste0("condition_", i)]]
+                parsed <- parse_expression_for_simple(expr_str, i)
+
+                if (!is.null(parsed)) {
+                  # Update column selection
+                  updateSelectInput(session,
                                 paste0("condition_", i, "_column"),
                                 selected = parsed$column)
 
-                # Delay updating the dependent inputs to allow column change to process
-                shinyjs::delay(100, {
-                  if (!is.null(parsed$range)) {
-                    # Update range slider
-                    updateSliderInput(session,
-                                    paste0("condition_", i, "_range"),
-                                    value = parsed$range)
-                  } else if (!is.null(parsed$values)) {
-                    # Update multi-select and include/exclude
-                    updateSelectInput(session,
-                                    paste0("condition_", i, "_values"),
-                                    selected = parsed$values)
-                    updateRadioButtons(session,
-                                     paste0("condition_", i, "_include"),
-                                     selected = if (parsed$include) "include" else "exclude")
-                  }
-                })
+                  # Small delay to allow column change to process
+                  shinyjs::delay(50, {
+                    if (!is.null(parsed$range)) {
+                      # Update range slider
+                      updateSliderInput(session,
+                                      paste0("condition_", i, "_range"),
+                                      value = parsed$range)
+                    } else if (!is.null(parsed$values)) {
+                      # Update multi-select and include/exclude
+                      updateSelectInput(session,
+                                      paste0("condition_", i, "_values"),
+                                      selected = parsed$values)
+                      updateRadioButtons(session,
+                                       paste0("condition_", i, "_include"),
+                                       selected = if (parsed$include) "include" else "exclude")
+                    }
+                  })
+                }
               }
-            }
           } else {
             # Switching to advanced mode
             shinyjs::hide(paste0("condition_", i, "_simple_panel"))
@@ -477,17 +483,29 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
             # When switching from simple to advanced, ensure the ACE editor shows the built expression
             if (old_mode == "simple") {
+              # Get the current expression in the ACE editor
+              current_expr <- input[[paste0("condition_", i)]]
+
+              # Build expression from simple mode inputs
               expr <- build_simple_expression(i)
-              # Use a small delay to ensure the ACE editor is visible before updating
-              shinyjs::delay(50, {
-                updateAceEditor(session, paste0("condition_", i), value = expr)
-              })
+
+              # Only update if the expressions are actually different
+              if (!is.null(expr) && !is.null(current_expr) && expr != current_expr) {
+                # Use a delay to ensure ACE editor is visible and initialized
+                # But capture the expression value to avoid race conditions
+                local({
+                  local_expr <- expr
+                  local_i <- i
+                  shinyjs::delay(150, {
+                    updateAceEditor(session, paste0("condition_", local_i), value = local_expr)
+                  })
+                })
+              }
             }
+          }
           }
         }
       }
-
-      r_condition_modes(modes)
     })
 
     # Update column dropdowns when data changes or UI is created
@@ -670,7 +688,9 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
             # Watch column selection
             observeEvent(input[[paste0("condition_", idx, "_column")]], {
-              if (modes[[as.character(idx)]] == "simple") {
+              # Get the current mode from reactive value
+              current_modes <- r_condition_modes()
+              if (current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
@@ -678,7 +698,9 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
             # Watch range slider for numeric columns
             observeEvent(input[[paste0("condition_", idx, "_range")]], {
-              if (modes[[as.character(idx)]] == "simple") {
+              # Get the current mode from reactive value
+              current_modes <- r_condition_modes()
+              if (current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
@@ -686,7 +708,9 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
             # Watch values selection for character columns
             observeEvent(input[[paste0("condition_", idx, "_values")]], {
-              if (modes[[as.character(idx)]] == "simple") {
+              # Get the current mode from reactive value
+              current_modes <- r_condition_modes()
+              if (current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
@@ -694,7 +718,9 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
             # Watch include/exclude radio buttons
             observeEvent(input[[paste0("condition_", idx, "_include")]], {
-              if (modes[[as.character(idx)]] == "simple") {
+              # Get the current mode from reactive value
+              current_modes <- r_condition_modes()
+              if (current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
