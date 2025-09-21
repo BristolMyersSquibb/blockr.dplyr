@@ -744,31 +744,12 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       }
     })
 
-    # Store current ACE editor values to preserve them during UI updates
-    r_current_ace_values <- reactiveVal(list())
-
-    # Before any mode change, capture current ACE values
-    observe({
-      # This runs before the mode change observe
-      indices <- r_condition_indices()
-      current_values <- list()
-      for (i in indices) {
-        ace_id <- paste0("condition_", i)
-        if (ace_id %in% names(input)) {
-          current_values[[as.character(i)]] <- input[[ace_id]]
-        }
-      }
-      if (length(current_values) > 0) {
-        r_current_ace_values(current_values)
-      }
-    })
-
     # Render UI dynamically
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
       conditions <- r_conditions()
       logic_ops <- r_logic_operators()
-      # IMPORTANT: Isolate modes to prevent re-render when modes change
+      # Don't react to modes changes - we handle that with shinyjs
       modes <- isolate(r_condition_modes())
       cols <- r_cols()
 
@@ -776,17 +757,16 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         return(NULL)
       }
 
-      # Get current ACE values to use instead of stored conditions
-      current_ace <- isolate(r_current_ace_values())
+      # Don't try to use ACE values here - let the UI initialize with stored conditions
+      # The ACE editors will update themselves via observers
 
       # Create UI for each condition
       ui_elements <- list()
 
       for (j in seq_along(indices)) {
         i <- indices[j]
-        # Use current ACE value if available, otherwise fall back to stored condition
-        condition <- current_ace[[as.character(i)]] %||%
-                    (if (j <= length(conditions)) conditions[[j]] else "TRUE")
+        # Use stored condition
+        condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
         mode <- modes[[as.character(i)]] %||% "advanced"
 
         # Add the condition row with mode toggle
