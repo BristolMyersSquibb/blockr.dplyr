@@ -54,14 +54,6 @@ mod_enhanced_filter_server <- function(
       max(0, length(initial_conditions) - 1)
     ))
 
-    # Track mode for each condition (advanced by default for now)
-    r_condition_modes <- reactiveVal(
-      setNames(
-        rep("advanced", length(initial_conditions)),
-        seq_along(initial_conditions)
-      )
-    )
-
     # Removed duplicate ACE initialization observer - see lines 775-786 for the proper one
 
     # Collect current values from all inputs
@@ -72,10 +64,16 @@ mod_enhanced_filter_server <- function(
       }
 
       result <- list()
-      modes <- r_condition_modes()
+      current_conditions <- r_conditions()
 
-      for (i in indices) {
-        mode <- modes[[as.character(i)]] %||% "advanced"
+      for (idx in seq_along(indices)) {
+        i <- indices[idx]
+        # Get mode from condition object
+        mode <- if (idx <= length(current_conditions) && is.list(current_conditions[[idx]])) {
+          current_conditions[[idx]]$mode %||% "advanced"
+        } else {
+          "advanced"
+        }
 
         if (mode == "simple") {
           # Build expression from simple UI inputs using utility function
@@ -156,11 +154,6 @@ mod_enhanced_filter_server <- function(
       if (length(current_indices) >= 1) {
         r_logic_operators(c(current_logic, "&")) # Default to AND
       }
-
-      # Add mode for new condition
-      current_modes <- r_condition_modes()
-      current_modes[[as.character(new_index)]] <- "advanced"
-      r_condition_modes(current_modes)
     })
 
     # Remove condition handlers - create them dynamically
@@ -197,11 +190,6 @@ mod_enhanced_filter_server <- function(
               }
               r_logic_operators(current_logic)
             }
-
-            # Remove mode for this condition
-            current_modes <- r_condition_modes()
-            current_modes[[as.character(i)]] <- NULL
-            r_condition_modes(current_modes)
           }
         })
       })
@@ -215,21 +203,34 @@ mod_enhanced_filter_server <- function(
     # Track mode changes and update conditionalPanel
     observe({
       indices <- r_condition_indices()
-      modes <- isolate(r_condition_modes())
+      current_conditions <- r_conditions()
 
       for (i in indices) {
         mode_id <- paste0("condition_", i, "_mode")
         current_mode <- input[[mode_id]]
 
         if (!is.null(current_mode)) {
-          old_mode <- modes[[as.character(i)]]
+          # Get the old mode from the condition object
+          cond_index <- which(indices == i)
+          old_mode <- if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+            if (is.list(current_conditions[[cond_index]])) {
+              current_conditions[[cond_index]]$mode
+            } else {
+              "advanced"
+            }
+          } else {
+            "advanced"
+          }
 
           # Only process if mode actually changed
           if (old_mode != current_mode) {
-            modes[[as.character(i)]] <- current_mode
-
-            # Update reactive value IMMEDIATELY before any UI changes
-            r_condition_modes(modes)
+            # Update the mode in the actual condition object
+            if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+              if (is.list(current_conditions[[cond_index]])) {
+                current_conditions[[cond_index]]$mode <- current_mode
+                r_conditions(current_conditions)
+              }
+            }
 
             # Use shinyjs to toggle visibility based on mode
             if (current_mode == "simple") {
@@ -543,10 +544,18 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_column")]],
               {
                 # Check if in simple mode
-                current_modes <- isolate(r_condition_modes())
-                if (
-                  !is.null(current_modes[[as.character(idx)]]) &&
-                    current_modes[[as.character(idx)]] == "simple"
+                current_conditions <- isolate(r_conditions())
+                current_indices <- isolate(r_condition_indices())
+                cond_index <- which(current_indices == idx)
+
+                in_simple_mode <- FALSE
+                if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+                  if (is.list(current_conditions[[cond_index]])) {
+                    in_simple_mode <- current_conditions[[cond_index]]$mode == "simple"
+                  }
+                }
+
+                if (in_simple_mode
                 ) {
                   expr <- build_simple_expression(idx)
 
@@ -573,10 +582,18 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_range")]],
               {
                 # Check if in simple mode
-                current_modes <- isolate(r_condition_modes())
-                if (
-                  !is.null(current_modes[[as.character(idx)]]) &&
-                    current_modes[[as.character(idx)]] == "simple"
+                current_conditions <- isolate(r_conditions())
+                current_indices <- isolate(r_condition_indices())
+                cond_index <- which(current_indices == idx)
+
+                in_simple_mode <- FALSE
+                if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+                  if (is.list(current_conditions[[cond_index]])) {
+                    in_simple_mode <- current_conditions[[cond_index]]$mode == "simple"
+                  }
+                }
+
+                if (in_simple_mode
                 ) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
@@ -594,10 +611,18 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_values")]],
               {
                 # Check if in simple mode
-                current_modes <- isolate(r_condition_modes())
-                if (
-                  !is.null(current_modes[[as.character(idx)]]) &&
-                    current_modes[[as.character(idx)]] == "simple"
+                current_conditions <- isolate(r_conditions())
+                current_indices <- isolate(r_condition_indices())
+                cond_index <- which(current_indices == idx)
+
+                in_simple_mode <- FALSE
+                if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+                  if (is.list(current_conditions[[cond_index]])) {
+                    in_simple_mode <- current_conditions[[cond_index]]$mode == "simple"
+                  }
+                }
+
+                if (in_simple_mode
                 ) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
@@ -615,10 +640,18 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_include")]],
               {
                 # Check if in simple mode
-                current_modes <- isolate(r_condition_modes())
-                if (
-                  !is.null(current_modes[[as.character(idx)]]) &&
-                    current_modes[[as.character(idx)]] == "simple"
+                current_conditions <- isolate(r_conditions())
+                current_indices <- isolate(r_condition_indices())
+                cond_index <- which(current_indices == idx)
+
+                in_simple_mode <- FALSE
+                if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+                  if (is.list(current_conditions[[cond_index]])) {
+                    in_simple_mode <- current_conditions[[cond_index]]$mode == "simple"
+                  }
+                }
+
+                if (in_simple_mode
                 ) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
@@ -759,8 +792,6 @@ mod_enhanced_filter_server <- function(
       # Isolate these so we don't re-render on content changes
       conditions <- isolate(r_conditions())
       logic_ops <- isolate(r_logic_operators())
-      # Don't react to modes changes - we handle that with shinyjs
-      modes <- isolate(r_condition_modes())
       cols <- r_cols()
 
       if (length(indices) == 0) {
@@ -782,14 +813,12 @@ mod_enhanced_filter_server <- function(
           # Extract expression from condition object
           if (is.list(cond_obj)) {
             condition <- cond_obj$expression %||% ""
-            # Use mode from condition object if available
-            mode <- cond_obj$mode %||%
-              modes[[as.character(condition_id)]] %||%
-              "advanced"
+            # Use mode from condition object
+            mode <- cond_obj$mode %||% "advanced"
           } else {
             # Legacy string format
             condition <- cond_obj
-            mode <- modes[[as.character(condition_id)]] %||% "advanced"
+            mode <- "advanced"
           }
         } else {
           condition <- "TRUE" # Empty expression for new conditions
