@@ -35,7 +35,7 @@ mod_enhanced_filter_server <- function(
       # Already list of conditions (for state restoration)
       initial_conditions <- initial_value
     } else {
-      initial_conditions <- list(new_filter_condition("TRUE"))
+      initial_conditions <- list(new_filter_condition("TRUE", mode = "simple"))
     }
 
     # Store conditions as reactive value (now stores full objects)
@@ -70,9 +70,9 @@ mod_enhanced_filter_server <- function(
         i <- indices[idx]
         # Get mode from condition object
         mode <- if (idx <= length(current_conditions) && is.list(current_conditions[[idx]])) {
-          current_conditions[[idx]]$mode %||% "advanced"
+          current_conditions[[idx]]$mode %||% "simple"
         } else {
-          "advanced"
+          "simple"
         }
 
         if (mode == "simple") {
@@ -129,7 +129,8 @@ mod_enhanced_filter_server <- function(
       # Add the new empty condition
       new_cond <- new_filter_condition(
         "TRUE", # Start with TRUE for new conditions
-        if (length(current_conditions) > 0) "&" else NULL
+        if (length(current_conditions) > 0) "&" else NULL,
+        mode = "simple"  # Default to simple mode for new conditions
       )
 
       # Append to existing conditions (use list() to preserve structure)
@@ -216,10 +217,10 @@ mod_enhanced_filter_server <- function(
             if (is.list(current_conditions[[cond_index]])) {
               current_conditions[[cond_index]]$mode
             } else {
-              "advanced"
+              "simple"
             }
           } else {
-            "advanced"
+            "simple"
           }
 
           # Only process if mode actually changed
@@ -672,12 +673,49 @@ mod_enhanced_filter_server <- function(
       }
     })
 
-    # Update logic operators when they change
+    # Create observers for each logic dropdown
+    logic_observers <- list()
     observe({
       indices <- r_condition_indices()
+
+      # Create observers for each logic dropdown between conditions
       if (length(indices) > 1) {
-        new_logic <- get_current_logic()
-        r_logic_operators(new_logic)
+        for (j in seq_len(length(indices) - 1)) {
+          logic_id <- paste0("logic_", j)
+          observer_id <- paste0("logic_observer_", j)
+
+          # Create observer if it doesn't exist
+          if (is.null(logic_observers[[observer_id]])) {
+            logic_observers[[observer_id]] <<- observeEvent(
+              input[[logic_id]],
+              {
+                logic_val <- input[[logic_id]]
+                if (!is.null(logic_val)) {
+                  # Update the logical_op in the corresponding condition
+                  current_conditions <- r_conditions()
+
+                  # The logic operator between condition j and j+1 belongs to condition j+1
+                  if ((j + 1) <= length(current_conditions)) {
+                    if (is.list(current_conditions[[j + 1]])) {
+                      current_conditions[[j + 1]]$logical_op <- logic_val
+                      r_conditions(current_conditions)
+
+                      message("Updated logical_op for condition ", j + 1, " to: ", logic_val)
+                    }
+                  }
+
+                  # Also update r_logic_operators for consistency
+                  current_logic <- r_logic_operators()
+                  if (j <= length(current_logic)) {
+                    current_logic[j] <- logic_val
+                    r_logic_operators(current_logic)
+                  }
+                }
+              },
+              ignoreInit = FALSE
+            )
+          }
+        }
       }
     })
 
@@ -814,15 +852,15 @@ mod_enhanced_filter_server <- function(
           if (is.list(cond_obj)) {
             condition <- cond_obj$expression %||% ""
             # Use mode from condition object
-            mode <- cond_obj$mode %||% "advanced"
+            mode <- cond_obj$mode %||% "simple"
           } else {
             # Legacy string format
             condition <- cond_obj
-            mode <- "advanced"
+            mode <- "simple"
           }
         } else {
           condition <- "TRUE" # Empty expression for new conditions
-          mode <- "advanced"
+          mode <- "simple"
         }
 
         message("r_condition_indices(): ", r_condition_indices())
@@ -899,21 +937,8 @@ mod_enhanced_filter_server <- function(
 
     # Return the reactive conditions as a combined string
     reactive({
-      # Check if any inputs exist yet - if not, use stored conditions
-      indices <- r_condition_indices()
-      has_inputs <- any(sapply(indices, function(i) {
-        paste0("condition_", i) %in% names(input)
-      }))
-
-      if (has_inputs) {
-        # Use current input values
-        conditions <- get_current_conditions()
-        logic_ops <- r_logic_operators()
-      } else {
-        # Use stored conditions (for initialization)
-        conditions <- r_conditions()
-        logic_ops <- r_logic_operators()
-      }
+      # Always get the latest conditions from r_conditions()
+      conditions <- r_conditions()
 
       if (length(conditions) == 0) {
         return("TRUE")
@@ -926,20 +951,27 @@ mod_enhanced_filter_server <- function(
           return(cond)
         }
       } else {
-        # Extract expressions and combine with logic operators
-        expressions <- lapply(conditions, function(cond) {
+        # Build filter expression using logical operators from condition objects
+        expressions <- character(0)
+        for (i in seq_along(conditions)) {
+          cond <- conditions[[i]]
           if (is.list(cond)) {
-            cond$expression %||% "TRUE"
+            expr <- cond$expression %||% "TRUE"
+            expressions <- c(expressions, expr)
           } else {
-            cond
+            expressions <- c(expressions, cond)
           }
-        })
+        }
 
-        # Combine conditions with logic operators
+        # Combine conditions using the logical_op from each condition
         result <- expressions[[1]]
-        for (i in seq_len(length(expressions) - 1)) {
-          op <- if (i <= length(logic_ops)) logic_ops[i] else "&"
-          result <- paste(result, op, expressions[[i + 1]])
+        for (i in 2:length(expressions)) {
+          # Get the logical operator from the condition object (not from r_logic_operators)
+          op <- "&"  # Default to AND
+          if (i <= length(conditions) && is.list(conditions[[i]])) {
+            op <- conditions[[i]]$logical_op %||% "&"
+          }
+          result <- paste(result, op, expressions[[i]])
         }
         return(result)
       }
@@ -1032,7 +1064,7 @@ mod_enhanced_filter_ui <- function(id) {
 enhanced_filter_condition_ui <- function(
   id,
   value = "TRUE",
-  mode = "advanced",
+  mode = "simple",
   show_remove = TRUE,
   available_columns = character(),
   data = NULL
@@ -1091,7 +1123,7 @@ enhanced_filter_condition_ui <- function(
       radioButtons(
         paste0(id, "_mode"),
         label = "Mode:",
-        choices = c("Advanced" = "advanced", "Simple" = "simple"),
+        choices = c("Simple" = "simple", "Advanced" = "advanced"),
         selected = mode,
         inline = TRUE
       ),

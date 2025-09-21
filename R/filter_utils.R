@@ -13,7 +13,7 @@
 #' @keywords internal
 new_filter_condition <- function(expression = "TRUE",
                                  logical_op = NULL,
-                                 mode = "advanced") {
+                                 mode = "simple") {
   # Validate inputs
   validate_filter_condition(
     expression = expression,
@@ -204,7 +204,7 @@ conditions_to_expression <- function(conditions) {
 #' @keywords internal
 parse_filter_string <- function(filter_string) {
   if (is.null(filter_string) || filter_string == "") {
-    return(list(new_filter_condition("TRUE")))
+    return(list(new_filter_condition("TRUE", mode = "simple")))
   }
 
   # Split into individual expressions
