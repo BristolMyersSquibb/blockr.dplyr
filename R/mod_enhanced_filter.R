@@ -385,12 +385,32 @@ mod_enhanced_filter_server <- function(
 
               # Update slider range and values
               col_range <- range(col_data, na.rm = TRUE)
+
+              # Get the actual range from the stored condition
+              current_conditions <- r_conditions()
+              current_indices <- r_condition_indices()
+              cond_index <- which(current_indices == idx)
+              slider_value <- col_range  # Default to full range
+
+              if (cond_index <= length(current_conditions)) {
+                cond_obj <- current_conditions[[cond_index]]
+                expr <- if (is.list(cond_obj)) cond_obj$expression else cond_obj
+
+                # Parse the expression to get the range
+                if (!is.null(expr) && expr != "" && expr != "TRUE") {
+                  parsed <- parse_simple(expr, colnames(data), data)
+                  if (!is.null(parsed) && !is.null(parsed$range)) {
+                    slider_value <- parsed$range
+                  }
+                }
+              }
+
               updateSliderInput(
                 session,
                 paste0("condition_", idx, "_range"),
                 min = col_range[1],
                 max = col_range[2],
-                value = col_range,
+                value = slider_value,  # Use parsed value, not col_range
                 step = if (all(col_data == floor(col_data), na.rm = TRUE)) {
                   1
                 } else {
@@ -406,11 +426,36 @@ mod_enhanced_filter_server <- function(
               unique_vals <- unique(as.character(col_data))
               unique_vals <- unique_vals[!is.na(unique_vals)]
 
+              # Get the actual selected values from the stored condition
+              current_conditions <- r_conditions()
+              current_indices <- r_condition_indices()
+              cond_index <- which(current_indices == idx)
+              selected_vals <- if (length(unique_vals) > 0) unique_vals[1] else NULL  # Default
+
+              if (cond_index <= length(current_conditions)) {
+                cond_obj <- current_conditions[[cond_index]]
+                expr <- if (is.list(cond_obj)) cond_obj$expression else cond_obj
+
+                # Parse the expression to get the selected values
+                if (!is.null(expr) && expr != "" && expr != "TRUE") {
+                  parsed <- parse_simple(expr, colnames(data), data)
+                  if (!is.null(parsed) && !is.null(parsed$values)) {
+                    selected_vals <- parsed$values
+                    # Also update the include/exclude radio button
+                    updateRadioButtons(
+                      session,
+                      paste0("condition_", idx, "_include"),
+                      selected = if (parsed$include) "include" else "exclude"
+                    )
+                  }
+                }
+              }
+
               updateSelectInput(
                 session,
                 paste0("condition_", idx, "_values"),
                 choices = unique_vals,
-                selected = if (length(unique_vals) > 0) unique_vals[1] else NULL
+                selected = selected_vals  # Use parsed values
               )
             }
           })
@@ -470,6 +515,15 @@ mod_enhanced_filter_server <- function(
                     current_modes[[as.character(idx)]] == "simple"
                 ) {
                   expr <- build_simple_expression(idx)
+
+                  message(
+                    "Updating ACE editor for condition ",
+                    idx,
+                    " with expression: ",
+                    expr,
+                    "idx:",
+                    idx
+                  )
                   updateAceEditor(
                     session,
                     paste0("condition_", idx),
@@ -732,7 +786,8 @@ mod_enhanced_filter_server <- function(
               value = condition,
               mode = mode,
               show_remove = (length(indices) > 1),
-              available_columns = cols
+              available_columns = cols,
+              data = if (!is.null(get_data)) get_data() else NULL
             )
           )
         )
@@ -908,14 +963,62 @@ mod_enhanced_filter_ui <- function(id) {
 #' @param value Condition value
 #' @param mode Current mode (simple/advanced)
 #' @param show_remove Whether to show remove button
+#' @param available_columns Available column names
+#' @param data Optional data frame for parsing expressions
 #' @return A div containing the row UI
 enhanced_filter_condition_ui <- function(
   id,
   value = "TRUE",
   mode = "advanced",
   show_remove = TRUE,
-  available_columns = character()
+  available_columns = character(),
+  data = NULL
 ) {
+  # Parse the expression to get initial values for simple mode
+  parsed <- NULL
+  selected_column <- NULL
+  range_values <- c(0, 100)
+  selected_values <- NULL
+  include_mode <- "include"
+
+  if (mode == "simple" && value != "TRUE" && value != "" && !is.null(data)) {
+    # Try to parse the expression
+    parsed <- parse_simple(value, available_columns, data)
+    if (!is.null(parsed)) {
+      selected_column <- parsed$column
+      if (!is.null(parsed$range)) {
+        # For numeric columns, use the parsed range
+        range_values <- parsed$range
+      } else if (!is.null(parsed$values)) {
+        # For character columns, use the parsed values
+        selected_values <- parsed$values
+        include_mode <- if (parsed$include) "include" else "exclude"
+      }
+    }
+  }
+
+  # If we have a selected column, determine its type and set appropriate ranges
+  col_min <- 0
+  col_max <- 100
+  col_choices <- character(0)
+
+  if (!is.null(selected_column) && !is.null(data) && selected_column %in% colnames(data)) {
+    col_data <- data[[selected_column]]
+    if (is.numeric(col_data)) {
+      col_range <- range(col_data, na.rm = TRUE)
+      col_min <- col_range[1]
+      col_max <- col_range[2]
+      # If no parsed range, use full column range
+      if (is.null(parsed) || is.null(parsed$range)) {
+        range_values <- col_range
+      }
+    } else {
+      # Character/factor column
+      col_choices <- unique(as.character(col_data))
+      col_choices <- col_choices[!is.na(col_choices)]
+    }
+  }
+
   div(
     class = "enhanced-filter-condition",
 
@@ -954,7 +1057,7 @@ enhanced_filter_condition_ui <- function(
               paste0(id, "_column"),
               label = "Column",
               choices = c("Select column..." = "", available_columns),
-              selected = NULL,
+              selected = selected_column,
               width = "100%"
             )
           ),
@@ -964,31 +1067,35 @@ enhanced_filter_condition_ui <- function(
             # Numeric column: range slider (hidden by default)
             div(
               id = paste0(id, "_numeric_ui"),
-              style = "display: none;",
+              style = if (!is.null(selected_column) && !is.null(data) &&
+                         selected_column %in% colnames(data) &&
+                         is.numeric(data[[selected_column]])) "" else "display: none;",
               sliderInput(
                 paste0(id, "_range"),
                 label = "Range",
-                min = 0,
-                max = 100,
-                value = c(0, 100)
+                min = col_min,
+                max = col_max,
+                value = range_values
               )
             ),
             # Character/factor column: multi-select (hidden by default)
             div(
               id = paste0(id, "_character_ui"),
-              style = "display: none;",
+              style = if (!is.null(selected_column) && !is.null(data) &&
+                         selected_column %in% colnames(data) &&
+                         !is.numeric(data[[selected_column]])) "" else "display: none;",
               selectInput(
                 paste0(id, "_values"),
                 label = "Values",
-                choices = character(0),
-                selected = NULL,
+                choices = col_choices,
+                selected = selected_values,
                 multiple = TRUE
               ),
               radioButtons(
                 paste0(id, "_include"),
                 label = NULL,
                 choices = c("Include" = "include", "Exclude" = "exclude"),
-                selected = "include",
+                selected = include_mode,
                 inline = TRUE
               )
             )
