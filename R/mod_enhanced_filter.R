@@ -209,10 +209,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       current_modes[[as.character(new_index)]] <- "advanced"
       r_condition_modes(current_modes)
 
-      # Update conditions
-      current <- get_current_conditions()
-      current <- append(current, "TRUE")
-      r_conditions(current)
+      # Don't update conditions here - the new ACE editor will initialize with "TRUE"
     })
 
     # Remove condition handlers - create them dynamically
@@ -240,9 +237,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
             current_modes[[as.character(i)]] <- NULL
             r_condition_modes(current_modes)
 
-            # Update conditions
-            current <- get_current_conditions()
-            r_conditions(current)
+            # Don't update conditions here - let the reactive system handle it
           }
         })
       })
@@ -425,7 +420,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
     # Track mode changes and update conditionalPanel
     observe({
       indices <- r_condition_indices()
-      modes <- r_condition_modes()
+      modes <- isolate(r_condition_modes())
 
       for (i in indices) {
         mode_id <- paste0("condition_", i, "_mode")
@@ -476,33 +471,33 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
                   })
                 }
               }
-          } else {
-            # Switching to advanced mode
-            shinyjs::hide(paste0("condition_", i, "_simple_panel"))
-            shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+            } else {
+              # Switching to advanced mode
+              shinyjs::hide(paste0("condition_", i, "_simple_panel"))
+              shinyjs::show(paste0("condition_", i, "_advanced_panel"))
 
-            # When switching from simple to advanced, ensure the ACE editor shows the built expression
-            if (old_mode == "simple") {
-              # Get the current expression in the ACE editor
-              current_expr <- input[[paste0("condition_", i)]]
+              # When switching from simple to advanced, ensure the ACE editor shows the built expression
+              if (old_mode == "simple") {
+                # Get the current expression in the ACE editor
+                current_expr <- input[[paste0("condition_", i)]]
 
-              # Build expression from simple mode inputs
-              expr <- build_simple_expression(i)
+                # Build expression from simple mode inputs
+                expr <- build_simple_expression(i)
 
-              # Only update if the expressions are actually different
-              if (!is.null(expr) && !is.null(current_expr) && expr != current_expr) {
-                # Use a delay to ensure ACE editor is visible and initialized
-                # But capture the expression value to avoid race conditions
-                local({
-                  local_expr <- expr
-                  local_i <- i
-                  shinyjs::delay(150, {
-                    updateAceEditor(session, paste0("condition_", local_i), value = local_expr)
+                # Only update if the expressions are actually different
+                if (!is.null(expr) && !is.null(current_expr) && expr != current_expr) {
+                  # Use a delay to ensure ACE editor is visible and initialized
+                  # But capture the expression value to avoid race conditions
+                  local({
+                    local_expr <- expr
+                    local_i <- i
+                    shinyjs::delay(150, {
+                      updateAceEditor(session, paste0("condition_", local_i), value = local_expr)
+                    })
                   })
-                })
+                }
               }
             }
-          }
           }
         }
       }
@@ -673,59 +668,69 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       return("TRUE")
     }
 
+    # Track which observers have been created to avoid duplicates
+    observers_created <- reactiveVal(list())
+
     # Update ACE editor when simple UI inputs change
+    # Create separate observers for each condition's simple UI inputs
     observe({
       indices <- r_condition_indices()
-      modes <- r_condition_modes()
+      created <- isolate(observers_created())
 
       for (i in indices) {
-        mode <- modes[[as.character(i)]] %||% "advanced"
-
-        if (mode == "simple") {
-          # Watch all simple UI inputs for this condition
+        # Only create observers if they haven't been created yet
+        if (!as.character(i) %in% names(created)) {
           local({
             idx <- i
 
             # Watch column selection
             observeEvent(input[[paste0("condition_", idx, "_column")]], {
-              # Get the current mode from reactive value
-              current_modes <- r_condition_modes()
-              if (current_modes[[as.character(idx)]] == "simple") {
+              # Check if in simple mode
+              current_modes <- isolate(r_condition_modes())
+              if (!is.null(current_modes[[as.character(idx)]]) &&
+                  current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
             }, ignoreInit = TRUE)
 
-            # Watch range slider for numeric columns
+            # Watch range slider
             observeEvent(input[[paste0("condition_", idx, "_range")]], {
-              # Get the current mode from reactive value
-              current_modes <- r_condition_modes()
-              if (current_modes[[as.character(idx)]] == "simple") {
+              # Check if in simple mode
+              current_modes <- isolate(r_condition_modes())
+              if (!is.null(current_modes[[as.character(idx)]]) &&
+                  current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
             }, ignoreInit = TRUE)
 
-            # Watch values selection for character columns
+            # Watch values selection
             observeEvent(input[[paste0("condition_", idx, "_values")]], {
-              # Get the current mode from reactive value
-              current_modes <- r_condition_modes()
-              if (current_modes[[as.character(idx)]] == "simple") {
+              # Check if in simple mode
+              current_modes <- isolate(r_condition_modes())
+              if (!is.null(current_modes[[as.character(idx)]]) &&
+                  current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
             }, ignoreInit = TRUE)
 
-            # Watch include/exclude radio buttons
+            # Watch include/exclude radio
             observeEvent(input[[paste0("condition_", idx, "_include")]], {
-              # Get the current mode from reactive value
-              current_modes <- r_condition_modes()
-              if (current_modes[[as.character(idx)]] == "simple") {
+              # Check if in simple mode
+              current_modes <- isolate(r_condition_modes())
+              if (!is.null(current_modes[[as.character(idx)]]) &&
+                  current_modes[[as.character(idx)]] == "simple") {
                 expr <- build_simple_expression(idx)
                 updateAceEditor(session, paste0("condition_", idx), value = expr)
               }
             }, ignoreInit = TRUE)
           })
+
+          # Mark this observer as created
+          created[[as.character(i)]] <- TRUE
+          observers_created(created)
         }
       }
     })
@@ -739,24 +744,49 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       }
     })
 
+    # Store current ACE editor values to preserve them during UI updates
+    r_current_ace_values <- reactiveVal(list())
+
+    # Before any mode change, capture current ACE values
+    observe({
+      # This runs before the mode change observe
+      indices <- r_condition_indices()
+      current_values <- list()
+      for (i in indices) {
+        ace_id <- paste0("condition_", i)
+        if (ace_id %in% names(input)) {
+          current_values[[as.character(i)]] <- input[[ace_id]]
+        }
+      }
+      if (length(current_values) > 0) {
+        r_current_ace_values(current_values)
+      }
+    })
+
     # Render UI dynamically
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
       conditions <- r_conditions()
       logic_ops <- r_logic_operators()
-      modes <- r_condition_modes()
+      # IMPORTANT: Isolate modes to prevent re-render when modes change
+      modes <- isolate(r_condition_modes())
       cols <- r_cols()
 
       if (length(indices) == 0) {
         return(NULL)
       }
 
+      # Get current ACE values to use instead of stored conditions
+      current_ace <- isolate(r_current_ace_values())
+
       # Create UI for each condition
       ui_elements <- list()
 
       for (j in seq_along(indices)) {
         i <- indices[j]
-        condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
+        # Use current ACE value if available, otherwise fall back to stored condition
+        condition <- current_ace[[as.character(i)]] %||%
+                    (if (j <= length(conditions)) conditions[[j]] else "TRUE")
         mode <- modes[[as.character(i)]] %||% "advanced"
 
         # Add the condition row with mode toggle
