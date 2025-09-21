@@ -10,7 +10,7 @@
 #' @param get_data Function that returns the current data frame (optional)
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput updateRadioButtons
 #' @importFrom shinyAce aceEditor updateAceEditor
 #' @importFrom shinyjs useShinyjs runjs show hide delay
 #' @importFrom htmltools tags
@@ -94,13 +94,27 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
                   # Numeric column - use range slider values
                   range_id <- paste0("condition_", i, "_range")
                   range_val <- input[[range_id]]
+                  col_range <- range(col_data, na.rm = TRUE)
 
                   if (!is.null(range_val) && length(range_val) == 2) {
+                    # Check if values are at the extremes
+                    at_min <- abs(range_val[1] - col_range[1]) < 0.001
+                    at_max <- abs(range_val[2] - col_range[2]) < 0.001
+
                     if (range_val[1] == range_val[2]) {
                       # Single value
                       expr <- paste0(selected_col, " == ", range_val[1])
+                    } else if (at_min && at_max) {
+                      # Full range - no filter needed
+                      expr <- "TRUE"
+                    } else if (at_min) {
+                      # Only upper bound
+                      expr <- paste0(selected_col, " <= ", range_val[2])
+                    } else if (at_max) {
+                      # Only lower bound
+                      expr <- paste0(selected_col, " >= ", range_val[1])
                     } else {
-                      # Range
+                      # Both bounds
                       expr <- paste0(selected_col, " >= ", range_val[1], " & ",
                                    selected_col, " <= ", range_val[2])
                     }
@@ -234,6 +248,180 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       })
     })
 
+    # Function to parse expression and extract column/values for simple mode
+    parse_expression_for_simple <- function(expr_str, i) {
+      if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
+        return(NULL)
+      }
+
+      # Try to extract column name and values from common patterns
+      cols <- r_cols()
+
+      # Find which column is referenced
+      col_found <- NULL
+      for (col in cols) {
+        if (grepl(paste0("\\b", col, "\\b"), expr_str)) {
+          col_found <- col
+          break
+        }
+      }
+
+      if (!is.null(col_found) && !is.null(get_data)) {
+        data <- get_data()
+        if (is.data.frame(data) && col_found %in% colnames(data)) {
+          col_data <- data[[col_found]]
+
+          if (is.numeric(col_data)) {
+            # Get the data range for this column
+            col_range <- range(col_data, na.rm = TRUE)
+
+            # Try to parse numeric patterns
+            # Pattern: col >= X & col <= Y
+            range_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
+                                  col_found, "\\s*<=\\s*([0-9.-]+)")
+            if (grepl(range_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(range_pattern, expr_str))[[1]]
+              if (length(matches) == 3) {
+                return(list(
+                  column = col_found,
+                  range = as.numeric(c(matches[2], matches[3]))
+                ))
+              }
+            }
+
+            # Pattern: col == X
+            eq_pattern <- paste0("\\b", col_found, "\\s*==\\s*([0-9.-]+)")
+            if (grepl(eq_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(eq_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val <- as.numeric(matches[2])
+                return(list(
+                  column = col_found,
+                  range = c(val, val)
+                ))
+              }
+            }
+
+            # Pattern: col > X (set range from X to max)
+            gt_pattern <- paste0("\\b", col_found, "\\s*>\\s*([0-9.-]+)")
+            if (grepl(gt_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(gt_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val <- as.numeric(matches[2])
+                # Set range slightly above the value to max
+                return(list(
+                  column = col_found,
+                  range = c(val + 0.01, col_range[2])
+                ))
+              }
+            }
+
+            # Pattern: col >= X (set range from X to max)
+            gte_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)")
+            if (grepl(gte_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(gte_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val <- as.numeric(matches[2])
+                return(list(
+                  column = col_found,
+                  range = c(val, col_range[2])
+                ))
+              }
+            }
+
+            # Pattern: col < X (set range from min to X)
+            lt_pattern <- paste0("\\b", col_found, "\\s*<\\s*([0-9.-]+)")
+            if (grepl(lt_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(lt_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val <- as.numeric(matches[2])
+                # Set range from min to slightly below the value
+                return(list(
+                  column = col_found,
+                  range = c(col_range[1], val - 0.01)
+                ))
+              }
+            }
+
+            # Pattern: col <= X (set range from min to X)
+            lte_pattern <- paste0("\\b", col_found, "\\s*<=\\s*([0-9.-]+)")
+            if (grepl(lte_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(lte_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val <- as.numeric(matches[2])
+                return(list(
+                  column = col_found,
+                  range = c(col_range[1], val)
+                ))
+              }
+            }
+          } else {
+            # Try to parse character patterns
+            # Pattern: col %in% c("val1", "val2")
+            in_pattern <- paste0("\\b", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
+            if (grepl(in_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(in_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                # Extract quoted values
+                val_str <- matches[2]
+                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
+                values <- gsub('"', '', values)
+                return(list(
+                  column = col_found,
+                  values = values,
+                  include = TRUE
+                ))
+              }
+            }
+
+            # Pattern: !col %in% c("val1", "val2")
+            not_in_pattern <- paste0("!\\s*", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
+            if (grepl(not_in_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(not_in_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                val_str <- matches[2]
+                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
+                values <- gsub('"', '', values)
+                return(list(
+                  column = col_found,
+                  values = values,
+                  include = FALSE
+                ))
+              }
+            }
+
+            # Pattern: col == "val"
+            eq_str_pattern <- paste0("\\b", col_found, '\\s*==\\s*"([^"]*)"')
+            if (grepl(eq_str_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(eq_str_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                return(list(
+                  column = col_found,
+                  values = matches[2],
+                  include = TRUE
+                ))
+              }
+            }
+
+            # Pattern: col != "val"
+            neq_str_pattern <- paste0("\\b", col_found, '\\s*!=\\s*"([^"]*)"')
+            if (grepl(neq_str_pattern, expr_str)) {
+              matches <- regmatches(expr_str, regexec(neq_str_pattern, expr_str))[[1]]
+              if (length(matches) == 2) {
+                return(list(
+                  column = col_found,
+                  values = matches[2],
+                  include = FALSE
+                ))
+              }
+            }
+          }
+        }
+      }
+
+      return(NULL)
+    }
+
     # Track mode changes and update conditionalPanel
     observe({
       indices <- r_condition_indices()
@@ -244,15 +432,57 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         current_mode <- input[[mode_id]]
 
         if (!is.null(current_mode)) {
+          old_mode <- modes[[as.character(i)]]
           modes[[as.character(i)]] <- current_mode
 
           # Use shinyjs to toggle visibility based on mode
           if (current_mode == "simple") {
             shinyjs::show(paste0("condition_", i, "_simple_panel"))
             shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+
+            # When switching to simple mode, try to parse the expression
+            if (old_mode != "simple") {
+              expr_str <- input[[paste0("condition_", i)]]
+              parsed <- parse_expression_for_simple(expr_str, i)
+
+              if (!is.null(parsed)) {
+                # Update column selection
+                updateSelectInput(session,
+                                paste0("condition_", i, "_column"),
+                                selected = parsed$column)
+
+                # Delay updating the dependent inputs to allow column change to process
+                shinyjs::delay(100, {
+                  if (!is.null(parsed$range)) {
+                    # Update range slider
+                    updateSliderInput(session,
+                                    paste0("condition_", i, "_range"),
+                                    value = parsed$range)
+                  } else if (!is.null(parsed$values)) {
+                    # Update multi-select and include/exclude
+                    updateSelectInput(session,
+                                    paste0("condition_", i, "_values"),
+                                    selected = parsed$values)
+                    updateRadioButtons(session,
+                                     paste0("condition_", i, "_include"),
+                                     selected = if (parsed$include) "include" else "exclude")
+                  }
+                })
+              }
+            }
           } else {
+            # Switching to advanced mode
             shinyjs::hide(paste0("condition_", i, "_simple_panel"))
             shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+
+            # When switching from simple to advanced, ensure the ACE editor shows the built expression
+            if (old_mode == "simple") {
+              expr <- build_simple_expression(i)
+              # Use a small delay to ensure the ACE editor is visible before updating
+              shinyjs::delay(50, {
+                updateAceEditor(session, paste0("condition_", i), value = expr)
+              })
+            }
           }
         }
       }
@@ -345,6 +575,132 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
             }
           })
         })
+      }
+    })
+
+    # Function to build expression from simple UI for a specific condition
+    build_simple_expression <- function(i) {
+      column_id <- paste0("condition_", i, "_column")
+      selected_col <- input[[column_id]]
+
+      if (is.null(selected_col) || selected_col == "") {
+        return("TRUE")
+      }
+
+      if (!is.null(get_data)) {
+        data <- get_data()
+        if (is.data.frame(data) && selected_col %in% colnames(data)) {
+          col_data <- data[[selected_col]]
+
+          if (is.numeric(col_data)) {
+            # Numeric column - use range slider values
+            range_id <- paste0("condition_", i, "_range")
+            range_val <- input[[range_id]]
+            col_range <- range(col_data, na.rm = TRUE)
+
+            if (!is.null(range_val) && length(range_val) == 2) {
+              # Check if values are at the extremes
+              at_min <- abs(range_val[1] - col_range[1]) < 0.001
+              at_max <- abs(range_val[2] - col_range[2]) < 0.001
+
+              if (range_val[1] == range_val[2]) {
+                # Single value
+                return(paste0(selected_col, " == ", range_val[1]))
+              } else if (at_min && at_max) {
+                # Full range - no filter needed
+                return("TRUE")
+              } else if (at_min) {
+                # Only upper bound
+                return(paste0(selected_col, " <= ", range_val[2]))
+              } else if (at_max) {
+                # Only lower bound
+                return(paste0(selected_col, " >= ", range_val[1]))
+              } else {
+                # Both bounds
+                return(paste0(selected_col, " >= ", range_val[1], " & ",
+                            selected_col, " <= ", range_val[2]))
+              }
+            }
+          } else {
+            # Character/factor column - use multi-select values
+            values_id <- paste0("condition_", i, "_values")
+            include_id <- paste0("condition_", i, "_include")
+
+            selected_vals <- input[[values_id]]
+            include_mode <- input[[include_id]] %||% "include"
+
+            if (!is.null(selected_vals) && length(selected_vals) > 0) {
+              # Quote character values
+              quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
+
+              if (include_mode == "include") {
+                if (length(selected_vals) == 1) {
+                  return(paste0(selected_col, ' == "', selected_vals, '"'))
+                } else {
+                  return(paste0(selected_col, " %in% c(", quoted_vals, ")"))
+                }
+              } else {
+                # Exclude mode
+                if (length(selected_vals) == 1) {
+                  return(paste0(selected_col, ' != "', selected_vals, '"'))
+                } else {
+                  return(paste0("!", selected_col, " %in% c(", quoted_vals, ")"))
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return("TRUE")
+    }
+
+    # Update ACE editor when simple UI inputs change
+    observe({
+      indices <- r_condition_indices()
+      modes <- r_condition_modes()
+
+      for (i in indices) {
+        mode <- modes[[as.character(i)]] %||% "advanced"
+
+        if (mode == "simple") {
+          # Watch all simple UI inputs for this condition
+          local({
+            idx <- i
+
+            # Watch column selection
+            observeEvent(input[[paste0("condition_", idx, "_column")]], {
+              if (modes[[as.character(idx)]] == "simple") {
+                expr <- build_simple_expression(idx)
+                updateAceEditor(session, paste0("condition_", idx), value = expr)
+              }
+            }, ignoreInit = TRUE)
+
+            # Watch range slider for numeric columns
+            observeEvent(input[[paste0("condition_", idx, "_range")]], {
+              if (modes[[as.character(idx)]] == "simple") {
+                expr <- build_simple_expression(idx)
+                updateAceEditor(session, paste0("condition_", idx), value = expr)
+              }
+            }, ignoreInit = TRUE)
+
+            # Watch values selection for character columns
+            observeEvent(input[[paste0("condition_", idx, "_values")]], {
+              if (modes[[as.character(idx)]] == "simple") {
+                expr <- build_simple_expression(idx)
+                updateAceEditor(session, paste0("condition_", idx), value = expr)
+              }
+            }, ignoreInit = TRUE)
+
+            # Watch include/exclude radio buttons
+            observeEvent(input[[paste0("condition_", idx, "_include")]], {
+              if (modes[[as.character(idx)]] == "simple") {
+                expr <- build_simple_expression(idx)
+                updateAceEditor(session, paste0("condition_", idx), value = expr)
+              }
+            }, ignoreInit = TRUE)
+          })
+        }
       }
     })
 
