@@ -2,7 +2,6 @@
 #'
 #' Helper functions for managing filter conditions in the enhanced filter block
 #' @keywords internal
-#' @name filter_utils
 
 #' Create a new filter condition object
 #'
@@ -11,9 +10,11 @@
 #' @param mode Filter mode ("advanced" or "simple")
 #' @return A validated filter condition object
 #' @keywords internal
-new_filter_condition <- function(expression = "TRUE",
-                                 logical_op = NULL,
-                                 mode = "simple") {
+new_filter_condition <- function(
+  expression = "TRUE",
+  logical_op = NULL,
+  mode = "simple"
+) {
   # Validate inputs
   validate_filter_condition(
     expression = expression,
@@ -66,7 +67,9 @@ validate_filter_condition <- function(expression, logical_op, mode) {
 #' @return Character vector of individual filter expressions
 #' @keywords internal
 split_filter_conditions <- function(filter_string) {
-  if (is.null(filter_string) || filter_string == "" || filter_string == "TRUE") {
+  if (
+    is.null(filter_string) || filter_string == "" || filter_string == "TRUE"
+  ) {
     return("TRUE")
   }
 
@@ -119,11 +122,21 @@ split_filter_conditions <- function(filter_string) {
   for (i in seq_along(parts)) {
     # Restore quotes
     for (placeholder in names(quote_content)) {
-      parts[i] <- gsub(placeholder, quote_content[[placeholder]], parts[i], fixed = TRUE)
+      parts[i] <- gsub(
+        placeholder,
+        quote_content[[placeholder]],
+        parts[i],
+        fixed = TRUE
+      )
     }
     # Restore parentheses
     for (placeholder in names(paren_content)) {
-      parts[i] <- gsub(placeholder, paren_content[[placeholder]], parts[i], fixed = TRUE)
+      parts[i] <- gsub(
+        placeholder,
+        paren_content[[placeholder]],
+        parts[i],
+        fixed = TRUE
+      )
     }
   }
 
@@ -140,7 +153,9 @@ split_filter_conditions <- function(filter_string) {
 #' @return Character vector of logical operators ("&" or "|")
 #' @keywords internal
 extract_logical_operators <- function(filter_string) {
-  if (is.null(filter_string) || filter_string == "" || filter_string == "TRUE") {
+  if (
+    is.null(filter_string) || filter_string == "" || filter_string == "TRUE"
+  ) {
     return(character(0))
   }
 
@@ -271,10 +286,13 @@ parse_simple_expression <- function(expression) {
   # Handle between() function
   if (grepl("^\\s*between\\s*\\(", expression)) {
     # Extract: between(column, min, max)
-    match <- regmatches(expression, regexec(
-      "between\\s*\\(\\s*([^,]+)\\s*,\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)",
-      expression
-    ))[[1]]
+    match <- regmatches(
+      expression,
+      regexec(
+        "between\\s*\\(\\s*([^,]+)\\s*,\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)",
+        expression
+      )
+    )[[1]]
 
     if (length(match) == 4) {
       return(list(
@@ -398,7 +416,11 @@ parse_simple <- function(expr_str, cols, data = NULL) {
 
     if (is.numeric(col_data)) {
       # Parse numeric patterns
-      parsed <- parse_numeric_filter(expr_str, col_found, range(col_data, na.rm = TRUE))
+      parsed <- parse_numeric_filter(
+        expr_str,
+        col_found,
+        range(col_data, na.rm = TRUE)
+      )
       if (!is.null(parsed)) return(parsed)
     } else {
       # Parse character patterns
@@ -420,8 +442,13 @@ parse_simple <- function(expr_str, cols, data = NULL) {
 #' @keywords internal
 parse_numeric_filter <- function(expr_str, col_name, col_range) {
   # Pattern: col >= X & col <= Y
-  range_pattern <- paste0("\\b", col_name, "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
-                        col_name, "\\s*<=\\s*([0-9.-]+)")
+  range_pattern <- paste0(
+    "\\b",
+    col_name,
+    "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
+    col_name,
+    "\\s*<=\\s*([0-9.-]+)"
+  )
   if (grepl(range_pattern, expr_str)) {
     matches <- regmatches(expr_str, regexec(range_pattern, expr_str))[[1]]
     if (length(matches) == 3) {
@@ -574,8 +601,13 @@ parse_character_filter <- function(expr_str, col_name) {
 #' @param include_mode "include" or "exclude" for character columns
 #' @return Character string with filter expression
 #' @keywords internal
-build_simple <- function(column, data = NULL, range_val = NULL,
-                        selected_vals = NULL, include_mode = "include") {
+build_simple <- function(
+  column,
+  data = NULL,
+  range_val = NULL,
+  selected_vals = NULL,
+  include_mode = "include"
+) {
   if (is.null(column) || column == "") {
     return("TRUE")
   }
@@ -625,8 +657,15 @@ format_range <- function(column, range_val, col_range) {
     return(paste0(column, " >= ", range_val[1]))
   } else {
     # Both bounds
-    return(paste0(column, " >= ", range_val[1], " & ",
-                 column, " <= ", range_val[2]))
+    return(paste0(
+      column,
+      " >= ",
+      range_val[1],
+      " & ",
+      column,
+      " <= ",
+      range_val[2]
+    ))
   }
 }
 
