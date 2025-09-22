@@ -1241,7 +1241,7 @@ enhanced_filter_condition_ui <- function(
       tags$button(
         id = paste0(id, "_remove"),
         type = "button",
-        class = "btn-close ms-3",
+        class = "btn-close position-absolute top-0 end-0 m-2",
         `aria-label` = "Remove condition",
         onclick = paste0(
           "Shiny.setInputValue('",
