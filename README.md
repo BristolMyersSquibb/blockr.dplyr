@@ -29,7 +29,7 @@ blockr.core::serve(
 )
 
 blockr.core::serve(
-  new_enhanced_mutate_block("Petal.Length.5 = Petal.Length * 5"),
+  new_mutate_block("Petal.Length.5 = Petal.Length * 5"),
   data = list(data = iris)
 )
 
