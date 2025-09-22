@@ -1065,8 +1065,10 @@ mod_enhanced_filter_ui <- function(id) {
       .enhanced-filter-condition {
         align-items: center;
         border: 1px solid var(--bs-border-color);
-        padding: 5px;
+        padding: 10px;
+        padding-right: 35px; /* Make room for the X button */
         margin-bottom: 3px;
+        position: relative;
       }
 
       .enhanced-filter-condition .mode-toggle {
@@ -1105,11 +1107,11 @@ mod_enhanced_filter_ui <- function(id) {
 
       /* Apply button styling - Variant 2: Outlined Arrow */
       .apply-btn {
-        height: 32px;
+        height: 36px;
         padding: 4px 12px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 0px;
         font-size: 14px;
         border-color: #0284c7;
         color: #0284c7;
@@ -1233,7 +1235,21 @@ enhanced_filter_condition_ui <- function(
 
   div(
     id = paste0(id, "_panel"),
-    class = "enhanced-filter-condition",
+    class = "enhanced-filter-condition position-relative",
+    # X button positioned absolutely on the right
+    if (show_remove) {
+      tags$button(
+        id = paste0(id, "_remove"),
+        type = "button",
+        class = "btn-close ms-3",
+        `aria-label` = "Remove condition",
+        onclick = paste0(
+          "Shiny.setInputValue('",
+          id,
+          "_remove', Math.random())"
+        )
+      )
+    },
     # Mode toggle at the top
     div(
       class = "mode-toggle",
@@ -1261,20 +1277,7 @@ enhanced_filter_condition_ui <- function(
             id = paste0(id, "_mode_label"),
             if (mode == "advanced") "Advanced" else "Simple"
           )
-        ),
-        if (show_remove) {
-          tags$button(
-            id = paste0(id, "_remove"),
-            type = "button",
-            class = "btn-close ms-3",
-            `aria-label` = "Remove condition",
-            onclick = paste0(
-              "Shiny.setInputValue('",
-              id,
-              "_remove', Math.random())"
-            )
-          )
-        }
+        )
       )
     ),
     # Simple vs advanced mode panels
@@ -1363,16 +1366,16 @@ enhanced_filter_condition_ui <- function(
         ),
         class = "condition-code",
         div(
-          class = "d-flex align-items-start gap-2",
+          class = "input-group d-flex align-items-start gap-2",
           div(
             style = "flex: 1;",
             setup_ace_editor(id, value = value)
           ),
           actionButton(
             paste0(id, "_apply"),
-            label = HTML('<span class="apply-arrow">→</span> Apply'),
-            icon = NULL,
-            class = "btn btn-outline-primary btn-sm apply-btn mt-2",
+            label = "Apply",
+            icon = icon("arrow-right"),
+            class = "btn btn-outline-success btn-sm apply-btn",
             title = "Apply expression"
           )
         )
