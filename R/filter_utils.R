@@ -337,10 +337,7 @@ parse_simple_expression <- function(expression) {
 #' @return List with column, values/range, and include mode, or NULL
 #' @keywords internal
 parse_simple <- function(expr_str, cols, data = NULL) {
-  cat("[DEBUG parse_simple] Called with expr_str:", expr_str, "| data NULL:", is.null(data), "\n")
-
   if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
-    cat("[DEBUG parse_simple] Returning NULL due to empty/TRUE expression\n")
     return(NULL)
   }
 
@@ -348,7 +345,6 @@ parse_simple <- function(expr_str, cols, data = NULL) {
   # Sort columns by length (longest first) to match more specific names first
   # This ensures "Petal.Length" matches before "Length"
   sorted_cols <- cols[order(nchar(cols), decreasing = TRUE)]
-  cat("[DEBUG parse_simple] Sorted columns:", paste(sorted_cols, collapse=", "), "\n")
 
   col_found <- NULL
   for (col in sorted_cols) {
@@ -387,16 +383,12 @@ parse_simple <- function(expr_str, cols, data = NULL) {
   }
 
   if (is.null(col_found)) {
-    cat("[DEBUG parse_simple] No column found, returning NULL\n")
     return(NULL)
   }
-
-  cat("[DEBUG parse_simple] Found column:", col_found, "\n")
 
   # If no data provided, return just the column name
   # This allows UI to initialize with correct column selection
   if (is.null(data) || !is.data.frame(data)) {
-    cat("[DEBUG parse_simple] No data, returning just column name\n")
     return(list(column = col_found))
   }
 

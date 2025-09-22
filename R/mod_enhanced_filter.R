@@ -10,9 +10,9 @@
 #' @param get_data Function that returns the current data frame (optional)
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput updateRadioButtons
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput updateRadioButtons showNotification icon
 #' @importFrom shinyAce aceEditor updateAceEditor
-#' @importFrom shinyjs useShinyjs runjs show hide delay
+#' @importFrom shinyjs useShinyjs runjs show hide delay addClass removeClass enable disable
 #' @importFrom htmltools tags
 #' @keywords internal
 mod_enhanced_filter_server <- function(
@@ -45,6 +45,9 @@ mod_enhanced_filter_server <- function(
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
+
+    # Track advanced expressions that are pending (not yet applied)
+    r_pending_advanced <- reactiveVal(list())
 
     # (removed r_current_values - we now update r_conditions directly)
 
@@ -281,6 +284,15 @@ mod_enhanced_filter_server <- function(
               # Switching to advanced mode
               shinyjs::hide(paste0("condition_", i, "_simple_panel"))
               shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+
+              # Disable apply button initially when switching to advanced
+              shinyjs::delay(50, {
+                shinyjs::disable(paste0("condition_", i, "_apply"))
+                shinyjs::removeClass(
+                  selector = paste0("#", session$ns(paste0("condition_", i, "_apply"))),
+                  class = "has-changes"
+                )
+              })
 
               # When switching from simple to advanced, ensure the ACE editor shows the built expression
               if (old_mode == "simple") {
@@ -697,7 +709,7 @@ mod_enhanced_filter_server <- function(
       }
     })
 
-    # Create observers for each ACE editor to update r_conditions immediately
+    # Create observers for each ACE editor to track pending changes
     ace_observers <- list()
     observe({
       indices <- r_condition_indices()
@@ -715,26 +727,41 @@ mod_enhanced_filter_server <- function(
             {
               ace_val <- input[[ace_id]]
               if (!is.null(ace_val)) {
-                # Get current conditions
+                # Check if this is in advanced mode
                 conditions <- r_conditions()
-
-                # Find index of this condition
                 current_indices <- r_condition_indices()
                 cond_index <- which(current_indices == i)
 
                 if (length(cond_index) > 0 && cond_index <= length(conditions)) {
-                  # Update or create condition object
-                  if (is.list(conditions[[cond_index]])) {
-                    conditions[[cond_index]]$expression <- ace_val
-                  } else {
-                    # Legacy string - convert to object
-                    conditions[[cond_index]] <- new_filter_condition(
-                      ace_val,
-                      if (cond_index == 1) NULL else "&"
+                  cond_obj <- conditions[[cond_index]]
+                  is_advanced <- is.list(cond_obj) && (cond_obj$mode %||% "simple") == "advanced"
+
+                  if (is_advanced) {
+                    # Mark this condition as pending (not applied yet)
+                    pending <- r_pending_advanced()
+                    pending[[as.character(i)]] <- ace_val
+                    r_pending_advanced(pending)
+
+                    # Enable the apply button when there are changes
+                    shinyjs::enable(paste0("condition_", i, "_apply"))
+                    shinyjs::addClass(
+                      selector = paste0("#", session$ns(paste0("condition_", i, "_apply"))),
+                      class = "has-changes"
                     )
+                  } else {
+                    # Simple mode - update immediately
+                    if (is.list(conditions[[cond_index]])) {
+                      conditions[[cond_index]]$expression <- ace_val
+                    } else {
+                      # Legacy string - convert to object
+                      conditions[[cond_index]] <- new_filter_condition(
+                        ace_val,
+                        if (cond_index == 1) NULL else "&"
+                      )
+                    }
+                    # Update immediately for simple mode
+                    r_conditions(conditions)
                   }
-                  # Update immediately
-                  r_conditions(conditions)
                 }
               }
             },
@@ -744,16 +771,73 @@ mod_enhanced_filter_server <- function(
       }
     })
 
+    # Create observers for apply buttons in advanced mode
+    apply_observers <- list()
+    observe({
+      indices <- r_condition_indices()
+
+      for (i in indices) {
+        apply_id <- paste0("condition_", i, "_apply")
+        observer_id <- paste0("apply_observer_", i)
+
+        if (is.null(apply_observers[[observer_id]])) {
+          apply_observers[[observer_id]] <<- observeEvent(
+            input[[apply_id]],
+            {
+              # Get the current ACE editor value
+              ace_val <- input[[paste0("condition_", i)]]
+
+              if (!is.null(ace_val)) {
+                # Apply this advanced expression
+                conditions <- r_conditions()
+                current_indices <- r_condition_indices()
+                cond_index <- which(current_indices == i)
+
+                if (length(cond_index) > 0 && cond_index <= length(conditions)) {
+                  # Update the condition
+                  if (is.list(conditions[[cond_index]])) {
+                    conditions[[cond_index]]$expression <- ace_val
+                  } else {
+                    conditions[[cond_index]] <- new_filter_condition(
+                      ace_val,
+                      if (cond_index == 1) NULL else "&"
+                    )
+                  }
+                  r_conditions(conditions)
+
+                  # Remove from pending
+                  pending <- r_pending_advanced()
+                  pending[[as.character(i)]] <- NULL
+                  r_pending_advanced(pending)
+
+                  # Disable the apply button after applying
+                  shinyjs::disable(paste0("condition_", i, "_apply"))
+                  shinyjs::removeClass(
+                    selector = paste0("#", session$ns(paste0("condition_", i, "_apply"))),
+                    class = "has-changes"
+                  )
+
+                  # Show success feedback
+                  showNotification(
+                    "Filter expression applied",
+                    type = "message",
+                    duration = 2
+                  )
+                }
+              }
+            }
+          )
+        }
+      }
+    })
+
     # Render UI dynamically
     output$conditions_ui <- renderUI({
-      cat("[DEBUG renderUI] Called at:", format(Sys.time()), "\n")
       indices <- r_condition_indices()
       # Isolate these so we don't re-render on content changes
       conditions <- isolate(r_conditions())
       logic_ops <- isolate(r_logic_operators())
       cols <- r_cols()
-      cat("[DEBUG renderUI] Number of conditions:", length(conditions), "\n")
-      cat("[DEBUG renderUI] Columns available:", paste(cols, collapse=", "), "\n")
 
       if (length(indices) == 0) {
         return(NULL)
@@ -787,9 +871,7 @@ mod_enhanced_filter_server <- function(
         }
 
         # Add the condition row with mode toggle
-        cat("[DEBUG renderUI] Creating UI for condition", position, "- value:", condition, "\n")
         data_for_ui <- if (!is.null(get_data)) get_data() else NULL
-        cat("[DEBUG renderUI] Data available for UI:", !is.null(data_for_ui), "\n")
 
         ui_elements <- append(
           ui_elements,
@@ -837,6 +919,7 @@ mod_enhanced_filter_server <- function(
     observeEvent(r_condition_indices(), {
       indices <- r_condition_indices()
       cols <- r_cols()
+      conditions <- r_conditions()
 
       for (i in indices) {
         condition_id <- paste0("condition_", i)
@@ -844,11 +927,26 @@ mod_enhanced_filter_server <- function(
           # New editor, initialize it
           initialize_ace_editor(session, ns(condition_id), cols)
         }
+
+        # Initialize apply button state - disabled by default
+        # Find the condition index
+        cond_index <- which(indices == i)
+        if (length(cond_index) > 0 && cond_index <= length(conditions)) {
+          cond_obj <- conditions[[cond_index]]
+          is_advanced <- is.list(cond_obj) && (cond_obj$mode %||% "simple") == "advanced"
+          if (is_advanced) {
+            # Start disabled for advanced mode
+            shinyjs::delay(100, {
+              shinyjs::disable(paste0("condition_", i, "_apply"))
+            })
+          }
+        }
       }
     })
 
-    # Return the reactive conditions as a combined string
-    reactive({
+
+    # Return the combined filter string and pending status
+    filter_string <- reactive({
       # Always get the latest conditions from r_conditions()
       conditions <- r_conditions()
 
@@ -888,6 +986,17 @@ mod_enhanced_filter_server <- function(
         return(result)
       }
     })
+
+    # Check if any advanced expressions are pending
+    has_pending_advanced <- reactive({
+      length(r_pending_advanced()) > 0
+    })
+
+    # Return both the filter string and pending status
+    list(
+      string = filter_string,
+      pending_advanced = has_pending_advanced
+    )
   })
 }
 
@@ -939,6 +1048,51 @@ mod_enhanced_filter_ui <- function(id) {
         border-color: var(--bs-danger);
         background: var(--bs-danger);
       }
+
+      /* Apply button styling - Variant 2: Outlined Arrow */
+      .apply-btn {
+        height: 32px;
+        padding: 4px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        border-color: #0284c7;
+        color: #0284c7;
+        background: transparent;
+        transition: all 0.15s ease-in-out;
+      }
+
+      .apply-btn:hover:not(:disabled) {
+        background-color: #f0f9ff;
+        border-color: #0284c7;
+        color: #0284c7;
+      }
+
+      .apply-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: #94a3b8;
+        color: #94a3b8;
+      }
+
+      .apply-btn .apply-arrow {
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      /* When there are pending changes */
+      .apply-btn.has-changes {
+        border-color: #0284c7;
+        color: #0284c7;
+        font-weight: 500;
+      }
+
+      .apply-btn.has-changes:hover {
+        background-color: #e0f2fe;
+        border-color: #0369a1;
+        color: #0369a1;
+      }
     "
     ),
     div(
@@ -983,14 +1137,9 @@ enhanced_filter_condition_ui <- function(
 
   if (value != "TRUE" && value != "") {
     # Always parse the expression to get column, even without data
-    cat("[DEBUG enhanced_filter_condition_ui] Parsing value:", value, "\n")
-    cat("[DEBUG enhanced_filter_condition_ui] Data is NULL:", is.null(data), "\n")
     parsed <- parse_simple(value, available_columns, data)
-    cat("[DEBUG enhanced_filter_condition_ui] Parsed result:",
-        if(!is.null(parsed)) paste("column =", parsed$column) else "NULL", "\n")
     if (!is.null(parsed)) {
       selected_column <- parsed$column
-      cat("[DEBUG enhanced_filter_condition_ui] Setting selected_column to:", selected_column, "\n")
       if (!is.null(parsed$range)) {
         # For numeric columns, use the parsed range
         range_values <- parsed$range
@@ -1001,9 +1150,6 @@ enhanced_filter_condition_ui <- function(
       }
     }
   }
-
-  cat("[DEBUG enhanced_filter_condition_ui] Final selected_column for selectInput:",
-      if(!is.null(selected_column)) selected_column else "NULL", "\n")
 
   # If we have a selected column, determine its type and set appropriate ranges
   col_min <- 0
@@ -1028,6 +1174,7 @@ enhanced_filter_condition_ui <- function(
   }
 
   div(
+    id = paste0(id, "_panel"),
     class = "enhanced-filter-condition",
 
     # Mode toggle at the top
@@ -1061,19 +1208,13 @@ enhanced_filter_condition_ui <- function(
           class = "row mb-2",
           div(
             class = "col-md-4",
-            {
-              choices_for_select <- c("Select column..." = "", available_columns)
-              cat("[DEBUG selectInput] Choices:", paste(names(choices_for_select), "=", choices_for_select, collapse=", "), "\n")
-              cat("[DEBUG selectInput] Selected:", selected_column, "\n")
-              cat("[DEBUG selectInput] Is selected in choices?", selected_column %in% choices_for_select, "\n")
-              selectInput(
-                paste0(id, "_column"),
-                label = "Column",
-                choices = choices_for_select,
-                selected = selected_column,
-                width = "100%"
-              )
-            }
+            selectInput(
+              paste0(id, "_column"),
+              label = "Column",
+              choices = available_columns,
+              selected = selected_column,
+              width = "100%"
+            )
           ),
           div(
             class = "col-md-8",
@@ -1117,12 +1258,25 @@ enhanced_filter_condition_ui <- function(
         )
       ),
 
-      # Advanced mode UI (ACE editor)
+      # Advanced mode UI (ACE editor with apply button)
       div(
         id = paste0(id, "_advanced_panel"),
         style = if (mode == "simple") "display: none;" else "",
         class = "condition-code",
-        setup_ace_editor(id, value = value)
+        div(
+          class = "d-flex align-items-start gap-2",
+          div(
+            style = "flex: 1;",
+            setup_ace_editor(id, value = value)
+          ),
+          actionButton(
+            paste0(id, "_apply"),
+            label = HTML('<span class="apply-arrow">→</span> Apply'),
+            icon = NULL,
+            class = "btn btn-outline-primary btn-sm apply-btn mt-2",
+            title = "Apply expression"
+          )
+        )
       )
     )
   )

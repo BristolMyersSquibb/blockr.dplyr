@@ -46,8 +46,8 @@ new_enhanced_filter_block <- function(string = "TRUE", ...) {
       moduleServer(
         id,
         function(input, output, session) {
-          # Use enhanced filter interface
-          r_string <- mod_enhanced_filter_server(
+          # Use enhanced filter interface - now with auto-update
+          filter_result <- mod_enhanced_filter_server(
             id = "ef",
             get_value = \() string,
             get_cols = \() colnames(data()),
@@ -58,13 +58,14 @@ new_enhanced_filter_block <- function(string = "TRUE", ...) {
           r_expr_validated <- reactiveVal(parse_enhanced_filter(string))
           r_string_validated <- reactiveVal(string)
 
-          # Validate and update on submit
-          observeEvent(input$submit, {
+          # Auto-update when filter changes (no submit needed)
+          observe({
             apply_enhanced_filter(
               data(),
-              r_string(),
+              filter_result$string(),
               r_expr_validated,
-              r_string_validated
+              r_string_validated,
+              filter_result$pending_advanced()
             )
           })
 
@@ -80,17 +81,8 @@ new_enhanced_filter_block <- function(string = "TRUE", ...) {
     function(id) {
       div(
         class = "m-3",
-        # Use enhanced filter UI
-        mod_enhanced_filter_ui(NS(id, "ef")),
-        div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
-          )
-        )
+        # Use enhanced filter UI (no submit button)
+        mod_enhanced_filter_ui(NS(id, "ef"))
       )
     },
     class = "enhanced_filter_block",
@@ -107,11 +99,17 @@ parse_enhanced_filter <- function(filter_string = "") {
   parse(text = text)[1]
 }
 
-apply_enhanced_filter <- function(data, string, r_expr_validated, r_string_validated) {
+apply_enhanced_filter <- function(data, string, r_expr_validated, r_string_validated, pending_advanced = FALSE) {
+  # Don't apply if there are pending advanced expressions
+  if (pending_advanced) {
+    return()
+  }
+
   # If empty or only whitespace, return simple filter
   if (trimws(string) == "") {
     expr <- parse_enhanced_filter("")
     r_expr_validated(expr)
+    r_string_validated("")
     return()
   }
 
