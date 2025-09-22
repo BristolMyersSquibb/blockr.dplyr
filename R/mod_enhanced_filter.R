@@ -207,9 +207,16 @@ mod_enhanced_filter_server <- function(
 
       for (i in indices) {
         mode_id <- paste0("condition_", i, "_mode")
-        current_mode <- input[[mode_id]]
+        mode_value <- input[[mode_id]]
 
-        if (!is.null(current_mode)) {
+        if (!is.null(mode_value)) {
+          # Convert checkbox value to mode string
+          current_mode <- if (mode_value) "advanced" else "simple"
+
+          # Update mode label
+          shinyjs::html(paste0("condition_", i, "_mode_label"),
+                        if (mode_value) "Advanced" else "Simple")
+
           # Get the old mode from the condition object
           cond_index <- which(indices == i)
           old_mode <- if (
@@ -1067,6 +1074,15 @@ mod_enhanced_filter_ui <- function(id) {
         margin-bottom: 10px;
       }
 
+      .enhanced-filter-condition .mode-controls {
+        display: flex;
+        align-items: center;
+      }
+
+      .enhanced-filter-condition .mode-label {
+        font-weight: 500;
+      }
+
       .enhanced-filter-condition .shiny-ace {
         border: none;
         margin: 7px;
@@ -1222,21 +1238,40 @@ enhanced_filter_condition_ui <- function(
     # Mode toggle at the top
     div(
       class = "mode-toggle",
-      radioButtons(
-        paste0(id, "_mode"),
-        label = "Mode:",
-        choices = c("Simple" = "simple", "Advanced" = "advanced"),
-        selected = mode,
-        inline = TRUE
-      ),
-      if (show_remove) {
-        actionButton(
-          paste0(id, "_remove"),
-          label = NULL,
-          icon = icon("trash-can"),
-          class = "btn btn-outline-danger btn-sm condition-delete"
-        )
-      }
+      # Left side: Label
+      span("Mode:", class = "mode-label"),
+      # Right side: Toggle switch and remove button
+      div(
+        class = "mode-controls",
+        # Toggle switch (checked = advanced, unchecked = simple)
+        div(
+          class = "form-check form-switch d-inline-block",
+          tags$input(
+            class = "form-check-input",
+            type = "checkbox",
+            id = paste0(id, "_mode"),
+            role = "switch",
+            checked = if (mode == "advanced") "checked" else NULL,
+            `data-bs-toggle` = "tooltip",
+            `data-bs-placement` = "left",
+            title = "Toggle between simple mode (off) and advanced mode (on)"
+          ),
+          tags$label(
+            class = "form-check-label ms-2",
+            `for` = paste0(id, "_mode"),
+            id = paste0(id, "_mode_label"),
+            if (mode == "advanced") "Advanced" else "Simple"
+          )
+        ),
+        if (show_remove) {
+          actionButton(
+            paste0(id, "_remove"),
+            label = NULL,
+            icon = icon("trash-can"),
+            class = "btn btn-outline-danger btn-sm condition-delete ms-3"
+          )
+        }
+      )
     ),
 
     # Simple vs advanced mode panels
