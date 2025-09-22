@@ -214,8 +214,10 @@ mod_enhanced_filter_server <- function(
           current_mode <- if (mode_value) "advanced" else "simple"
 
           # Update mode label
-          shinyjs::html(paste0("condition_", i, "_mode_label"),
-                        if (mode_value) "Advanced" else "Simple")
+          shinyjs::html(
+            paste0("condition_", i, "_mode_label"),
+            if (mode_value) "Advanced" else "Simple"
+          )
 
           # Get the old mode from the condition object
           cond_index <- which(indices == i)
@@ -1061,17 +1063,17 @@ mod_enhanced_filter_ui <- function(id) {
     tags$style(
       "
       .enhanced-filter-condition {
+        align-items: center;
         border: 1px solid var(--bs-border-color);
-        border-radius: var(--bs-border-radius);
-        padding: 10px;
-        margin-bottom: 10px;
+        padding: 5px;
+        margin-bottom: 3px;
       }
 
       .enhanced-filter-condition .mode-toggle {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 00px;
       }
 
       .enhanced-filter-condition .mode-controls {
@@ -1093,14 +1095,12 @@ mod_enhanced_filter_ui <- function(id) {
         flex: 1;
       }
 
-      .enhanced-filter-condition .condition-delete {
-        margin-top: 5px;
+      .enhanced-filter-condition .btn-close {
+        opacity: 0.5;
       }
 
-      .enhanced-filter-condition .condition-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+      .enhanced-filter-condition .btn-close:hover {
+        opacity: 0.8;
       }
 
       /* Apply button styling - Variant 2: Outlined Arrow */
@@ -1158,7 +1158,7 @@ mod_enhanced_filter_ui <- function(id) {
           ns("add_condition"),
           label = "Add Condition",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
+          class = "btn btn-outline-primary btn-sm"
         )
       )
     )
@@ -1234,12 +1234,11 @@ enhanced_filter_condition_ui <- function(
   div(
     id = paste0(id, "_panel"),
     class = "enhanced-filter-condition",
-
     # Mode toggle at the top
     div(
       class = "mode-toggle",
       # Left side: Label
-      span("Mode:", class = "mode-label"),
+      # span("Mode:", class = "mode-label"),
       # Right side: Toggle switch and remove button
       div(
         class = "mode-controls",
@@ -1264,18 +1263,22 @@ enhanced_filter_condition_ui <- function(
           )
         ),
         if (show_remove) {
-          actionButton(
-            paste0(id, "_remove"),
-            label = NULL,
-            icon = icon("trash-can"),
-            class = "btn btn-outline-danger btn-sm condition-delete ms-3"
+          tags$button(
+            id = paste0(id, "_remove"),
+            type = "button",
+            class = "btn-close ms-3",
+            `aria-label` = "Remove condition",
+            onclick = paste0(
+              "Shiny.setInputValue('",
+              id,
+              "_remove', Math.random())"
+            )
           )
         }
       )
     ),
-
     # Simple vs advanced mode panels
-    tagList(
+    div(
       # Simple mode UI (initially hidden if mode is advanced)
       div(
         id = paste0(id, "_simple_panel"),
@@ -1354,6 +1357,10 @@ enhanced_filter_condition_ui <- function(
       div(
         id = paste0(id, "_advanced_panel"),
         style = if (mode == "simple") "display: none;" else "",
+        tags$label(
+          class = "form-check-label pb-2",
+          tags$small("R Expression", class = "text-muted")
+        ),
         class = "condition-code",
         div(
           class = "d-flex align-items-start gap-2",
