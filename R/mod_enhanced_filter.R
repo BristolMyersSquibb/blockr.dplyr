@@ -746,11 +746,14 @@ mod_enhanced_filter_server <- function(
 
     # Render UI dynamically
     output$conditions_ui <- renderUI({
+      cat("[DEBUG renderUI] Called at:", format(Sys.time()), "\n")
       indices <- r_condition_indices()
       # Isolate these so we don't re-render on content changes
       conditions <- isolate(r_conditions())
       logic_ops <- isolate(r_logic_operators())
       cols <- r_cols()
+      cat("[DEBUG renderUI] Number of conditions:", length(conditions), "\n")
+      cat("[DEBUG renderUI] Columns available:", paste(cols, collapse=", "), "\n")
 
       if (length(indices) == 0) {
         return(NULL)
@@ -784,6 +787,10 @@ mod_enhanced_filter_server <- function(
         }
 
         # Add the condition row with mode toggle
+        cat("[DEBUG renderUI] Creating UI for condition", position, "- value:", condition, "\n")
+        data_for_ui <- if (!is.null(get_data)) get_data() else NULL
+        cat("[DEBUG renderUI] Data available for UI:", !is.null(data_for_ui), "\n")
+
         ui_elements <- append(
           ui_elements,
           list(
@@ -793,7 +800,7 @@ mod_enhanced_filter_server <- function(
               mode = mode,
               show_remove = (length(indices) > 1),
               available_columns = cols,
-              data = if (!is.null(get_data)) get_data() else NULL
+              data = data_for_ui
             )
           )
         )
@@ -974,11 +981,16 @@ enhanced_filter_condition_ui <- function(
   selected_values <- NULL
   include_mode <- "include"
 
-  if (value != "TRUE" && value != "" && !is.null(data)) {
-    # Always parse the expression to get values, regardless of mode
+  if (value != "TRUE" && value != "") {
+    # Always parse the expression to get column, even without data
+    cat("[DEBUG enhanced_filter_condition_ui] Parsing value:", value, "\n")
+    cat("[DEBUG enhanced_filter_condition_ui] Data is NULL:", is.null(data), "\n")
     parsed <- parse_simple(value, available_columns, data)
+    cat("[DEBUG enhanced_filter_condition_ui] Parsed result:",
+        if(!is.null(parsed)) paste("column =", parsed$column) else "NULL", "\n")
     if (!is.null(parsed)) {
       selected_column <- parsed$column
+      cat("[DEBUG enhanced_filter_condition_ui] Setting selected_column to:", selected_column, "\n")
       if (!is.null(parsed$range)) {
         # For numeric columns, use the parsed range
         range_values <- parsed$range
@@ -989,6 +1001,9 @@ enhanced_filter_condition_ui <- function(
       }
     }
   }
+
+  cat("[DEBUG enhanced_filter_condition_ui] Final selected_column for selectInput:",
+      if(!is.null(selected_column)) selected_column else "NULL", "\n")
 
   # If we have a selected column, determine its type and set appropriate ranges
   col_min <- 0
@@ -1046,13 +1061,19 @@ enhanced_filter_condition_ui <- function(
           class = "row mb-2",
           div(
             class = "col-md-4",
-            selectInput(
-              paste0(id, "_column"),
-              label = "Column",
-              choices = c("Select column..." = "", available_columns),
-              selected = selected_column,
-              width = "100%"
-            )
+            {
+              choices_for_select <- c("Select column..." = "", available_columns)
+              cat("[DEBUG selectInput] Choices:", paste(names(choices_for_select), "=", choices_for_select, collapse=", "), "\n")
+              cat("[DEBUG selectInput] Selected:", selected_column, "\n")
+              cat("[DEBUG selectInput] Is selected in choices?", selected_column %in% choices_for_select, "\n")
+              selectInput(
+                paste0(id, "_column"),
+                label = "Column",
+                choices = choices_for_select,
+                selected = selected_column,
+                width = "100%"
+              )
+            }
           ),
           div(
             class = "col-md-8",

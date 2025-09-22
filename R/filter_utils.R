@@ -337,25 +337,71 @@ parse_simple_expression <- function(expression) {
 #' @return List with column, values/range, and include mode, or NULL
 #' @keywords internal
 parse_simple <- function(expr_str, cols, data = NULL) {
+  cat("[DEBUG parse_simple] Called with expr_str:", expr_str, "| data NULL:", is.null(data), "\n")
+
   if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
+    cat("[DEBUG parse_simple] Returning NULL due to empty/TRUE expression\n")
     return(NULL)
   }
 
   # Find which column is referenced
+  # Sort columns by length (longest first) to match more specific names first
+  # This ensures "Petal.Length" matches before "Length"
+  sorted_cols <- cols[order(nchar(cols), decreasing = TRUE)]
+  cat("[DEBUG parse_simple] Sorted columns:", paste(sorted_cols, collapse=", "), "\n")
+
   col_found <- NULL
-  for (col in cols) {
-    if (grepl(paste0("\\b", col, "\\b"), expr_str)) {
+  for (col in sorted_cols) {
+    # Check if column appears with or without backticks
+    # First try with backticks (for names with special characters)
+    backtick_pattern <- paste0("`", col, "`")
+    if (grepl(backtick_pattern, expr_str, fixed = TRUE)) {
+      col_found <- col
+      break
+    }
+
+    # Then try without backticks
+    # Escape special regex characters in column name
+    # Need to escape each special character individually to avoid regex issues
+    escaped_col <- col
+    escaped_col <- gsub("\\.", "\\\\.", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\$", "\\\\$", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\^", "\\\\^", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\|", "\\\\|", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\*", "\\\\*", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\+", "\\\\+", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\?", "\\\\?", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\(", "\\\\(", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\)", "\\\\)", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\[", "\\\\[", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\]", "\\\\]", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\{", "\\\\{", escaped_col, fixed = TRUE)
+    escaped_col <- gsub("\\}", "\\\\}", escaped_col, fixed = TRUE)
+    # Use word boundaries that work with the escaped column name
+    # Check for column followed by space, operator, or end of string
+    pattern <- paste0("\\b", escaped_col, "(?=[\\s><=!%]|$)")
+    if (grepl(pattern, expr_str, perl = TRUE)) {
       col_found <- col
       break
     }
   }
 
   if (is.null(col_found)) {
+    cat("[DEBUG parse_simple] No column found, returning NULL\n")
     return(NULL)
   }
 
-  # If we have data, determine column type
-  if (!is.null(data) && is.data.frame(data) && col_found %in% colnames(data)) {
+  cat("[DEBUG parse_simple] Found column:", col_found, "\n")
+
+  # If no data provided, return just the column name
+  # This allows UI to initialize with correct column selection
+  if (is.null(data) || !is.data.frame(data)) {
+    cat("[DEBUG parse_simple] No data, returning just column name\n")
+    return(list(column = col_found))
+  }
+
+  # If we have data, determine column type and parse full details
+  if (col_found %in% colnames(data)) {
     col_data <- data[[col_found]]
 
     if (is.numeric(col_data)) {
@@ -369,7 +415,8 @@ parse_simple <- function(expr_str, cols, data = NULL) {
     }
   }
 
-  return(NULL)
+  # If parsing failed but we found a column, return just the column
+  return(list(column = col_found))
 }
 
 #' Parse numeric filter expression
@@ -423,7 +470,7 @@ parse_numeric_filter <- function(expr_str, col_name, col_range) {
       val <- as.numeric(matches[2])
       return(list(
         column = col_name,
-        range = c(val + 0.01, col_range[2])
+        range = c(val, col_range[2])
       ))
     }
   }
@@ -448,7 +495,7 @@ parse_numeric_filter <- function(expr_str, col_name, col_range) {
       val <- as.numeric(matches[2])
       return(list(
         column = col_name,
-        range = c(col_range[1], val - 0.01)
+        range = c(col_range[1], val)
       ))
     }
   }
