@@ -119,6 +119,10 @@ needs_backticks <- function(name) {
 #' @return Name with backticks if needed, unchanged otherwise
 #' @noRd
 backtick_if_needed <- function(name) {
+  # Handle NA and empty strings
+  if (is.na(name) || name == "") {
+    return(name)
+  }
   if (needs_backticks(name)) {
     sprintf("`%s`", name)
   } else {
@@ -138,8 +142,13 @@ parse_rename <- function(rename_pairs = list()) {
       all(names(rename_pairs) == "" | is.na(names(rename_pairs)))
   ) {
     # No renames specified
-    text <- "dplyr::rename(data)"
+    return(parse(text = "dplyr::rename(data)")[1])
   } else {
+    # Convert list to character vector if needed
+    if (is.list(rename_pairs)) {
+      rename_pairs <- unlist(rename_pairs)
+    }
+
     # Convert to rename syntax: new_name = old_name
     # Apply backticks to non-syntactic names
     new_names <- vapply(names(rename_pairs), backtick_if_needed, character(1))
