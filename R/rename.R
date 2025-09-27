@@ -16,12 +16,12 @@
 #' \dontrun{
 #' # Basic usage with mtcars dataset
 #' library(blockr.core)
-#' serve(new_rename_block(), list(data = mtcars))
+#' serve(new_rename_block(), data = list(data = mtcars))
 #'
 #' # With predefined renames
 #' serve(
 #'   new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
-#'   list(data = mtcars)
+#'   data = list(data = mtcars)
 #' )
 #'
 #' # Connected blocks example
@@ -40,7 +40,7 @@
 #' }
 #' @export
 new_rename_block <- function(
-  renames = list(new_col = "old_col"),
+  renames = list(new_col = character()),
   ...
 ) {
   # The state must be a list with named elements
