@@ -99,37 +99,6 @@ new_rename_block <- function(
   )
 }
 
-#' Check if a name needs backticks for dplyr operations
-#'
-#' @param name Character string to check
-#' @return Logical indicating if backticks are needed
-#' @noRd
-needs_backticks <- function(name) {
-  # Empty or NA names always need special handling
-  if (is.na(name) || name == "") {
-    return(FALSE) # These are handled separately
-  }
-  # If make.names changes it, it's non-syntactic
-  make.names(name) != name
-}
-
-#' Wrap name in backticks if needed
-#'
-#' @param name Character string to potentially wrap
-#' @return Name with backticks if needed, unchanged otherwise
-#' @noRd
-backtick_if_needed <- function(name) {
-  # Handle NA and empty strings
-  if (is.na(name) || name == "") {
-    return(name)
-  }
-  if (needs_backticks(name)) {
-    sprintf("`%s`", name)
-  } else {
-    name
-  }
-}
-
 #' Parse rename pairs into dplyr expression
 #'
 #' @param rename_pairs Named list or vector where names are new column names

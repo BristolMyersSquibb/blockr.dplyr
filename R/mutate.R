@@ -16,11 +16,11 @@
 #' \dontrun{
 #' # Basic usage with mtcars datase
 #' library(blockr.core)
-#' serve(new_mutate_block(), list(data = mtcars))
+#' serve(new_mutate_block(), data = list(data = mtcars))
 #'
 #' # With a custom datase
-#' df <- data.frame(x = 1:5, y = letters[1:5])
-#' serve(new_mutate_block(), list(data = df))
+#' df <- tibble::tibble(x = 1:5, `2025 Sales` = letters[1:5], .name_repair = "minimal")
+#' serve(new_mutate_block(), data = list(data = df))
 #' }
 #' @export
 new_mutate_block <- function(
@@ -108,8 +108,11 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
   if (identical(unname(mutate_string), "")) {
     text <- "dplyr::mutate(data)"
   } else {
+    # Apply backticks to non-syntactic column names on the left side
+    new_names <- vapply(names(mutate_string), backtick_if_needed, character(1))
+
     mutate_string <- glue::glue(
-      "{names(mutate_string)} = {unname(mutate_string)}"
+      "{new_names} = {unname(mutate_string)}"
     )
     mutate_string <- glue::glue_collapse(mutate_string, sep = ", ")
 
