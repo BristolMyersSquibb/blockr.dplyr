@@ -114,8 +114,9 @@ new_distinct_block <- function(
                 parse(text = "dplyr::distinct(data)")[[1]]
               } else {
                 # Remove duplicates based on selected columns
+                # Use backtick_if_needed to avoid double backticking
                 cols_expr <- paste(
-                  sprintf("`%s`", selected_columns()),
+                  backtick_if_needed(selected_columns()),
                   collapse = ", "
                 )
                 if (keep_all()) {
