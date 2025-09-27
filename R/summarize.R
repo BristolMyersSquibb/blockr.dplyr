@@ -103,8 +103,10 @@ parse_summarize <- function(summarize_string = "", by_selection = character()) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
+    # Apply backticks to non-syntactic column names on the left side
+    new_names <- backtick_if_needed(names(summarize_string))
     summarize_string <- glue::glue(
-      "{names(summarize_string)} = {unname(summarize_string)}"
+      "{new_names} = {unname(summarize_string)}"
     )
     summarize_string <- glue::glue_collapse(summarize_string, sep = ", ")
     if (length(by_selection) > 0 && !all(by_selection == "")) {

@@ -120,8 +120,8 @@ parse_rename <- function(rename_pairs = list()) {
 
     # Convert to rename syntax: new_name = old_name
     # Apply backticks to non-syntactic names
-    new_names <- vapply(names(rename_pairs), backtick_if_needed, character(1))
-    old_names <- vapply(rename_pairs, backtick_if_needed, character(1))
+    new_names <- backtick_if_needed(names(rename_pairs))
+    old_names <- backtick_if_needed(rename_pairs)
 
     rename_exprs <- paste(
       sprintf("%s = %s", new_names, old_names),

@@ -109,7 +109,7 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
     text <- "dplyr::mutate(data)"
   } else {
     # Apply backticks to non-syntactic column names on the left side
-    new_names <- vapply(names(mutate_string), backtick_if_needed, character(1))
+    new_names <- backtick_if_needed(names(mutate_string))
 
     mutate_string <- glue::glue(
       "{new_names} = {unname(mutate_string)}"
