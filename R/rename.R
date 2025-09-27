@@ -99,6 +99,33 @@ new_rename_block <- function(
   )
 }
 
+#' Check if a name needs backticks for dplyr operations
+#'
+#' @param name Character string to check
+#' @return Logical indicating if backticks are needed
+#' @noRd
+needs_backticks <- function(name) {
+  # Empty or NA names always need special handling
+  if (is.na(name) || name == "") {
+    return(FALSE) # These are handled separately
+  }
+  # If make.names changes it, it's non-syntactic
+  make.names(name) != name
+}
+
+#' Wrap name in backticks if needed
+#'
+#' @param name Character string to potentially wrap
+#' @return Name with backticks if needed, unchanged otherwise
+#' @noRd
+backtick_if_needed <- function(name) {
+  if (needs_backticks(name)) {
+    sprintf("`%s`", name)
+  } else {
+    name
+  }
+}
+
 #' Parse rename pairs into dplyr expression
 #'
 #' @param rename_pairs Named list or vector where names are new column names
@@ -114,8 +141,12 @@ parse_rename <- function(rename_pairs = list()) {
     text <- "dplyr::rename(data)"
   } else {
     # Convert to rename syntax: new_name = old_name
+    # Apply backticks to non-syntactic names
+    new_names <- vapply(names(rename_pairs), backtick_if_needed, character(1))
+    old_names <- vapply(rename_pairs, backtick_if_needed, character(1))
+
     rename_exprs <- paste(
-      sprintf("%s = %s", names(rename_pairs), rename_pairs),
+      sprintf("%s = %s", new_names, old_names),
       collapse = ", "
     )
     text <- glue::glue("dplyr::rename(data, {rename_exprs})")
