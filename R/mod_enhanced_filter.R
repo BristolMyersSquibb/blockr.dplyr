@@ -892,6 +892,7 @@ mod_enhanced_filter_ui <- function(id) {
 #' @param value Condition value
 #' @param mode Current mode (simple/advanced)
 #' @param show_remove Whether to show remove button
+#' @param available_columns Character vector of column names available for filtering
 #' @return A div containing the row UI
 enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced",
                                         show_remove = TRUE, available_columns = character()) {

@@ -37,6 +37,9 @@ Imports:
     datasets
 Suggests:
     testthat (>= 3.0.0),
-    shinytest2
+    shinytest2,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 Remotes: cynkra/blockr.core
 Config/testthat/edition: 3

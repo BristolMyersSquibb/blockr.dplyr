@@ -20,6 +20,8 @@ enhanced_filter_condition_ui(
 \item{mode}{Current mode (simple/advanced)}
 
 \item{show_remove}{Whether to show remove button}
+
+\item{available_columns}{Character vector of column names available for filtering}
 }
 \value{
 A div containing the row UI
