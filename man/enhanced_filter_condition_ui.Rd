@@ -8,7 +8,8 @@ enhanced_filter_condition_ui(
   id,
   value = "TRUE",
   mode = "advanced",
-  show_remove = TRUE
+  show_remove = TRUE,
+  available_columns = character()
 )
 }
 \arguments{
