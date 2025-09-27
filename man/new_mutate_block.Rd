@@ -25,11 +25,11 @@ This block allows to add new variables and preserve existing ones
 \dontrun{
 # Basic usage with mtcars datase
 library(blockr.core)
-serve(new_mutate_block(), list(data = mtcars))
+serve(new_mutate_block(), data = list(data = mtcars))
 
 # With a custom datase
-df <- data.frame(x = 1:5, y = letters[1:5])
-serve(new_mutate_block(), list(data = df))
+df <- tibble::tibble(x = 1:5, `2025 Sales` = letters[1:5], .name_repair = "minimal")
+serve(new_mutate_block(), data = list(data = df))
 }
 }
 \seealso{

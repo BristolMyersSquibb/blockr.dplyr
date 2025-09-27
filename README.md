@@ -24,7 +24,7 @@ library(blockr.dplyr)
 
 # Create and serve a simple filter block
 blockr.core::serve(
-  new_filter_block("mpg > 20"),
+  new_enhanced_filter_block("mpg > 20"),
   data = list(data = mtcars)
 )
 ```
@@ -119,7 +119,7 @@ blockr.core::serve(
 **Key Features:**
 - 🎯 **Visual column selection** - Choose from dropdown
 - 🔍 **Dynamic value selection** - See all unique values, select multiple
-- ✅ **Include/Exclude modes** - Toggle between positive and negative filtering  
+- ✅ **Include/Exclude modes** - Toggle between positive and negative filtering
 - ➕ **Multiple conditions** - Add conditions with AND/OR logic
 - 🚫 **No coding required** - Pure point-and-click interface
 
@@ -503,7 +503,7 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Join on shared Time column
     joined_data = new_join_block(type = "inner_join", by = c("Time" = "Time")),
-    
+
     # Remove any duplicate time entries
     distinct_data = new_distinct_block(columns = c("Time")),
 
@@ -542,11 +542,11 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Analysis with iris dataset
     iris_data = new_dataset_block("iris", package = "datasets"),
-    
+
     # Rename columns for clarity
     iris_renamed = new_rename_block(renames = list(
       sepal_length = "Sepal.Length",
-      sepal_width = "Sepal.Width", 
+      sepal_width = "Sepal.Width",
       petal_length = "Petal.Length",
       petal_width = "Petal.Width"
     )),
@@ -560,13 +560,13 @@ analysis_board <- blockr.ui::new_dag_board(
       ),
       by = c("Species")
     ),
-    
+
     # Combine car and iris summaries
     combined_summaries = new_bind_rows_block(id_column = "dataset"),
-    
+
     # Get matching subset of original cars for column binding
     cars_original_subset = new_slice_block(type = "head", n = 13),
-    
+
     # Add metadata to cars data
     cars_with_ids = new_bind_cols_block(
       suffix = c("_enhanced", "_original")
@@ -584,7 +584,7 @@ analysis_board <- blockr.ui::new_dag_board(
     # Join BOD and ChickWeight on Time
     join_bod = new_link("bod_filter", "joined_data", "x"),
     join_chick = new_link("chick_filter", "joined_data", "y"),
-    
+
     # Remove duplicates from joined data
     distinct_link = new_link("joined_data", "distinct_data", "data"),
 
@@ -595,17 +595,17 @@ analysis_board <- blockr.ui::new_dag_board(
     summarize_cars = new_link("cars_sorted", "summary_stats", "data"),
     slice_top = new_link("summary_stats", "top_cars", "data"),
 
-    # Iris pipeline  
+    # Iris pipeline
     iris_rename_link = new_link("iris_data", "iris_renamed", "data"),
     iris_summary_link = new_link("iris_renamed", "iris_summary", "data"),
-    
+
     # Combine summaries
     bind_cars_summary = new_link("summary_stats", "combined_summaries", "x"),
     bind_iris_summary = new_link("iris_summary", "combined_summaries", "y"),
-    
+
     # Prepare matching subset for bind_cols
     cars_subset_link = new_link("cars_data", "cars_original_subset", "data"),
-    
+
     # Add metadata to cars
     cars_bind_main = new_link("cars_enhanced", "cars_with_ids", "x"),
     cars_bind_meta = new_link("cars_original_subset", "cars_with_ids", "y")
@@ -621,7 +621,7 @@ analysis_board <- blockr.ui::new_dag_board(
       "BOD Analysis"
     ),
     chick_analysis = blockr.core::new_stack(
-      c("chick_select", "chick_filter"), 
+      c("chick_select", "chick_filter"),
       "ChickWeight Analysis"
     ),
     cars_analysis = blockr.core::new_stack(

@@ -45,8 +45,9 @@ new_select_block <- function(
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
                   # Build select expression with column names
+                  # Use backtick_if_needed to avoid double backticking
                   cols_str <- paste(
-                    sprintf("`%s`", selected_cols),
+                    backtick_if_needed(selected_cols),
                     collapse = ", "
                   )
                   parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[
@@ -98,8 +99,9 @@ new_select_block <- function(
                   parse(text = "dplyr::select(data, -dplyr::everything())")[[1]]
                 } else {
                   # Build select expression with column names
+                  # Use backtick_if_needed to avoid double backticking
                   cols_str <- paste(
-                    sprintf("`%s`", selected_cols),
+                    backtick_if_needed(selected_cols),
                     collapse = ", "
                   )
                   parse(text = glue::glue("dplyr::select(data, {cols_str})"))[[

@@ -112,9 +112,11 @@ new_slice_block <- function(
               ) {
                 by_cols <- by_val[by_val != "" & !is.na(by_val)]
                 if (length(by_cols) > 0) {
+                  # Apply backticks to non-syntactic column names
+                  backticked_cols <- backtick_if_needed(by_cols)
                   return(paste0(
                     ".by = c(",
-                    paste0('"', by_cols, '"', collapse = ", "),
+                    paste0(backticked_cols, collapse = ", "),
                     ")"
                   ))
                 }
@@ -151,7 +153,8 @@ new_slice_block <- function(
               }
 
               func <- if (type_val == "min") "slice_min" else "slice_max"
-              args <- paste0('"', order_by_val, '"')
+              # Apply backticks to non-syntactic column names
+              args <- backtick_if_needed(order_by_val)
               if (use_prop_val) {
                 args <- paste0(args, ", prop = ", prop_val)
               } else {
@@ -173,7 +176,8 @@ new_slice_block <- function(
                 paste0("n = ", n_val)
               }
               if (!is.null(weight_by_val) && weight_by_val != "") {
-                args <- paste0(args, ', weight_by = "', weight_by_val, '"')
+                # Apply backticks to non-syntactic column names
+                args <- paste0(args, ', weight_by = ', backtick_if_needed(weight_by_val))
               }
               args <- paste0(
                 args,

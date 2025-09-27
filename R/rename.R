@@ -111,11 +111,20 @@ parse_rename <- function(rename_pairs = list()) {
       all(names(rename_pairs) == "" | is.na(names(rename_pairs)))
   ) {
     # No renames specified
-    text <- "dplyr::rename(data)"
+    return(parse(text = "dplyr::rename(data)")[1])
   } else {
+    # Convert list to character vector if needed
+    if (is.list(rename_pairs)) {
+      rename_pairs <- unlist(rename_pairs)
+    }
+
     # Convert to rename syntax: new_name = old_name
+    # Apply backticks to non-syntactic names
+    new_names <- backtick_if_needed(names(rename_pairs))
+    old_names <- backtick_if_needed(rename_pairs)
+
     rename_exprs <- paste(
-      sprintf("%s = %s", names(rename_pairs), rename_pairs),
+      sprintf("%s = %s", new_names, old_names),
       collapse = ", "
     )
     text <- glue::glue("dplyr::rename(data, {rename_exprs})")

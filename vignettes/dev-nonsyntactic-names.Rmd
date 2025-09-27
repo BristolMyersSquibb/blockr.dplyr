@@ -1,0 +1,238 @@
+---
+title: "Developer Guide: Handling Non-Syntactic Column Names"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Developer Guide: Handling Non-Syntactic Column Names}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+This guide explains how blockr packages handle non-syntactic column names - names that contain spaces, special characters, start with numbers, or otherwise don't follow R's standard naming rules.
+
+## What Are Non-Syntactic Names?
+
+Non-syntactic names require backticks when used in R code:
+
+```{r, eval=FALSE}
+# Non-syntactic names that need backticks:
+`2025 Sales`       # starts with number
+`Product-Name`     # contains hyphen
+`Unit Price ($)`   # contains spaces and special characters
+`Is Active?`       # contains question mark
+
+# Syntactic names that DON'T need backticks:
+normal_col         # underscores are fine
+my.column          # dots are allowed
+myColumn123        # alphanumeric is fine
+```
+
+## Three Contexts for Column Names
+
+### 1. User Expressions in ACE Editors
+
+When users type expressions in ACE editors (filter, mutate, etc.), the autocompletion system automatically suggests column names with backticks where needed.
+
+**Implementation:** The `ace_utils.R` file handles this through `initialize_ace_editor()`:
+
+```{r, eval=FALSE}
+initialize_ace_editor <- function(session, editor_id, column_names) {
+  categories <- get_default_categories()
+  # Automatically add backticks to non-syntactic names
+  categories$column <- backtick_if_needed(column_names)
+  # ... rest of initialization
+}
+```
+
+**User Experience:** User types "2025" and sees `` `2025 Sales` `` in autocomplete suggestions.
+
+### 2. Generated Column Names (Left-side)
+
+When users create new column names in mutate or summarize blocks, we automatically add backticks if the name is non-syntactic.
+
+**Implementation:** In `parse_mutate()` and `parse_summarize()`:
+
+```{r, eval=FALSE}
+# Apply backticks to non-syntactic column names on the left side
+new_names <- backtick_if_needed(names(mutate_string))
+mutate_string <- glue::glue("{new_names} = {unname(mutate_string)}")
+```
+
+**Example:** User enters `Average Sales` as a new column name, it becomes `` `Average Sales` `` in the generated code.
+
+### 3. Column References in Generated Code
+
+When blocks generate dplyr expressions that reference columns (select, arrange, distinct, etc.), we apply backticks conditionally.
+
+**Implementation Pattern:**
+
+```{r, eval=FALSE}
+# DON'T: Unconditional backticks (causes double-backticking)
+sprintf("`%s`", column_names)
+
+# DO: Conditional backticks
+backtick_if_needed(column_names)
+```
+
+## Utility Functions
+
+The package provides two vectorized utility functions in `utils.R`:
+
+### needs_backticks()
+
+Checks if names need backticks (returns logical vector):
+
+```{r, eval=FALSE}
+needs_backticks <- function(names) {
+  # Check which names are non-syntactic
+  needs_bt <- make.names(names) != names
+  # Empty or NA names don't need backticks
+  needs_bt[is.na(names) | names == ""] <- FALSE
+  needs_bt
+}
+```
+
+### backtick_if_needed()
+
+Applies backticks where needed (returns character vector):
+
+```{r, eval=FALSE}
+backtick_if_needed <- function(names) {
+  needs_bt <- needs_backticks(names)
+  names[needs_bt] <- sprintf("`%s`", names[needs_bt])
+  names
+}
+```
+
+Both functions are vectorized for efficiency and clean code.
+
+## Block-Specific Implementations
+
+### Select Block
+```{r, eval=FALSE}
+# Build select expression with proper backticks
+cols_str <- paste(backtick_if_needed(selected_cols), collapse = ", ")
+parse(text = glue::glue("dplyr::select(data, {cols_str})"))
+```
+
+### Arrange Block
+```{r, eval=FALSE}
+# Apply backticks to column names in arrange
+col_name <- backtick_if_needed(arr$column)
+if (arr$direction == "desc") {
+  sprintf("dplyr::desc(%s)", col_name)
+} else {
+  col_name
+}
+```
+
+### Mutate/Summarize Blocks
+```{r, eval=FALSE}
+# Apply backticks to new column names
+new_names <- backtick_if_needed(names(expression_list))
+```
+
+### Filter Block
+Filter relies on user input via ACE editor, so backticks come from autocompletion - no special handling needed in the parse function.
+
+## Testing Non-Syntactic Names
+
+Always test blocks with a mix of syntactic and non-syntactic column names:
+
+```{r, eval=FALSE}
+# Create test data
+test_data <- data.frame(
+  a = 1:5, b = letters[1:5], c = 10:14, d = 20:24
+)
+
+# Rename to challenging names
+names(test_data) <- c(
+  "2025 Sales",      # starts with number
+  "Product-Name",    # contains hyphen
+  "Unit Price ($)",  # spaces and special chars
+  "normal_col"       # should NOT get backticks
+)
+
+# Test with blockr
+library(blockr.core)
+library(blockr.dplyr)
+serve(new_select_block(), list(data = test_data))
+```
+
+### What to Verify
+
+1. **Correct expressions generated** - Check the generated dplyr code
+2. **No double-backticking** - Names shouldn't get `` ``2025 Sales`` ``
+3. **Syntactic names unchanged** - `normal_col` stays as is
+4. **Expressions execute** - The generated code actually works
+
+## Cross-Package Usage
+
+Other blockr packages (like blockr.ggplot) should follow the same guidelines.
+
+### For ggplot2 Aesthetics
+
+Instead of directly inserting column names:
+
+```{r, eval=FALSE}
+# DON'T: Direct insertion (breaks with non-syntactic names)
+glue::glue("x = {column_name}")
+
+# DO: Apply backticks where needed
+glue::glue("x = {backtick_if_needed(column_name)}")
+```
+
+### Sharing Utility Functions
+
+Options for other packages:
+
+1. **Copy the functions** - Simple, no dependency
+2. **Import from blockr.dplyr** - Add as dependency
+3. **Create shared utilities package** - For the future
+
+## Common Pitfalls
+
+### Double Backticking
+
+**Problem:** Applying backticks to already-backticked names
+
+```{r, eval=FALSE}
+# User selects: `2025 Sales`
+# Code adds backticks: ``2025 Sales``  # WRONG!
+```
+
+**Solution:** Always use `backtick_if_needed()` which checks first
+
+### Missing Backticks
+
+**Problem:** Forgetting to handle non-syntactic names
+
+```{r, eval=FALSE}
+# Generates: arrange(data, 2025 Sales)  # INVALID!
+```
+
+**Solution:** Apply `backtick_if_needed()` to all column references
+
+### Inconsistent Handling
+
+**Problem:** Different blocks handling names differently
+
+**Solution:** Follow the three-context rule and use shared utilities
+
+## Summary
+
+The key to handling non-syntactic names is understanding the three contexts:
+
+1. **User input** → Autocompletion handles it
+2. **Generated names** → Apply backticks if needed
+3. **Column references** → Always use `backtick_if_needed()`
+
+By following these guidelines and using the provided utility functions, all blockr packages can consistently and correctly handle any column names users might encounter in their data.

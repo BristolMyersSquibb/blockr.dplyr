@@ -47,10 +47,12 @@ new_arrange_block <- function(columns = character(), ...) {
               } else {
                 # Build arrange expressions
                 arrange_exprs <- sapply(arranges, function(arr) {
+                  # Apply backticks to non-syntactic column names
+                  col_name <- backtick_if_needed(arr$column)
                   if (arr$direction == "desc") {
-                    sprintf("dplyr::desc(%s)", arr$column)
+                    sprintf("dplyr::desc(%s)", col_name)
                   } else {
-                    arr$column
+                    col_name
                   }
                 })
 
