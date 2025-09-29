@@ -269,13 +269,99 @@ can_parse_simple <- function(expression) {
     return(TRUE)
   }
 
-  # Pattern for simple comparisons: column [operator] value
-  simple_pattern <- "^\\s*[a-zA-Z_][a-zA-Z0-9._]*\\s*(==|!=|>|<|>=|<=|%in%)\\s*"
+  # Check for compound expressions (with & or |)
+  if (grepl("\\s+[&|]\\s+", expression)) {
+    return(FALSE)
+  }
 
-  # Pattern for between function
-  between_pattern <- "^\\s*between\\s*\\("
+  # Check for between function first (it's a special case we handle)
+  if (grepl("^\\s*between\\s*\\(", expression)) {
+    # Check if between contains function calls in its arguments
+    # Extract the arguments inside between()
+    between_match <- regmatches(expression,
+      regexec("between\\s*\\(\\s*([^,]+)\\s*,\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)", expression))
 
-  grepl(simple_pattern, expression) || grepl(between_pattern, expression)
+    if (length(between_match[[1]]) > 0) {
+      # Check if any argument contains a function call
+      args <- between_match[[1]][2:4]
+      # Look for function patterns in the arguments
+      if (any(grepl("[a-zA-Z_][a-zA-Z0-9._]*\\s*\\(", args))) {
+        return(FALSE)  # between with function calls is complex
+      }
+    }
+    return(TRUE)
+  }
+
+  # Check for function calls (except c() in %in%)
+  # But don't check inside quotes
+  expr_no_quotes <- gsub("'[^']*'", "", expression)
+  expr_no_quotes <- gsub('"[^"]*"', "", expr_no_quotes)
+
+  # Check for functions (but allow c() in %in% expressions)
+  if (grepl("[a-zA-Z_][a-zA-Z0-9._]*\\s*\\(", expr_no_quotes)) {
+    # Allow c() in %in% expressions
+    if (!grepl("%in%\\s*c\\s*\\(", expr_no_quotes)) {
+      return(FALSE)
+    }
+  }
+
+  # Check for arithmetic operators (not inside quotes)
+  # Split by comparison operator and check the right side
+  if (grepl("(==|!=|>|<|>=|<=)", expression)) {
+    parts <- strsplit(expression, "(==|!=|>|<|>=|<=)")[[1]]
+    if (length(parts) >= 2) {
+      right_side <- parts[2]
+      # Remove quoted strings from right side
+      right_no_quotes <- gsub("'[^']*'", "", right_side)
+      right_no_quotes <- gsub('"[^"]*"', "", right_no_quotes)
+
+      # Check for arithmetic operators (but allow negative numbers)
+      # Look for operators with spaces or between identifiers
+      if (grepl("\\s[+*/-]\\s|[a-zA-Z_][a-zA-Z0-9._]*\\s*[+*/-]", right_no_quotes)) {
+        return(FALSE)
+      }
+    }
+  }
+
+  # Check for column-to-column comparisons
+  # Extract the column name pattern
+  col_pattern <- "(`[^`]+`|[a-zA-Z_][a-zA-Z0-9._]*)"
+
+  # Match pattern: column operator column (where second column is not a known constant)
+  if (grepl(paste0("^\\s*", col_pattern, "\\s*(==|!=|>|<|>=|<=)\\s*", col_pattern, "\\s*$"), expression)) {
+    # Check if the right side is actually a column (not a constant)
+    parts <- strsplit(expression, "(==|!=|>|<|>=|<=)")[[1]]
+    if (length(parts) >= 2) {
+      right_val <- trimws(parts[2])
+      # If it's not a known R constant, it's probably a column
+      if (!right_val %in% c("TRUE", "FALSE", "NA", "NULL", "Inf", "-Inf")) {
+        return(FALSE)
+      }
+    }
+  }
+
+  # Check for R constants that are actually functions
+  # Build a single regex pattern for all constants
+  r_constants_pattern <- "\\b(pi|letters|LETTERS|month\\.abb|month\\.name|NA_character_|NA_complex_|NA_integer_|NA_real_)\\b"
+  if (grepl(r_constants_pattern, expression)) {
+    return(FALSE)
+  }
+
+  # Now check if it matches our simple patterns
+  # Pattern 1: column [operator] value
+  simple_comparison <- "^\\s*(`[^`]+`|[a-zA-Z_][a-zA-Z0-9._]*)\\s*(==|!=|>|<|>=|<=)\\s*.+$"
+
+  # Pattern 2: column %in% c(...)
+  simple_in <- "^\\s*(`[^`]+`|[a-zA-Z_][a-zA-Z0-9._]*)\\s*%in%\\s*c\\s*\\([^)]+\\)\\s*$"
+
+  # Pattern 3: between(column, val1, val2)
+  # Already handled above
+
+  if (grepl(simple_comparison, expression) || grepl(simple_in, expression)) {
+    return(TRUE)
+  }
+
+  return(FALSE)
 }
 
 #' Parse a simple expression to extract column and values
