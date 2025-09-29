@@ -450,6 +450,11 @@ parse_simple <- function(expr_str, cols, data = NULL) {
     return(NULL)
   }
 
+  # Check if expression is simple - if not, return NULL
+  if (!can_parse_simple(expr_str)) {
+    return(NULL)
+  }
+
   # Find which column is referenced
   # Sort columns by length (longest first) to match more specific names first
   # This ensures "Petal.Length" matches before "Length"

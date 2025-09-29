@@ -229,6 +229,12 @@ mod_enhanced_filter_server <- function(
       cond_obj$mode == "simple"
     }
 
+    # Helper to check if condition at index is in simple mode
+    is_condition_at_index_simple <- function(idx) {
+      cond_obj <- get_condition_for_index(idx)
+      is_condition_simple(cond_obj)
+    }
+
     # Helper to parse condition by index (combines getting and parsing)
     get_parsed_condition_by_index <- function(idx) {
       cond_obj <- get_condition_for_index(idx)
@@ -619,7 +625,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_column")]],
               {
                 # Check if in simple mode
-                if (is_condition_simple(idx)) {
+                if (is_condition_at_index_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -636,7 +642,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_range")]],
               {
                 # Check if in simple mode
-                if (is_condition_simple(idx)) {
+                if (is_condition_at_index_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -653,7 +659,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_values")]],
               {
                 # Check if in simple mode
-                if (is_condition_simple(idx)) {
+                if (is_condition_at_index_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -670,7 +676,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_include")]],
               {
                 # Check if in simple mode
-                if (is_condition_simple(idx)) {
+                if (is_condition_at_index_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
