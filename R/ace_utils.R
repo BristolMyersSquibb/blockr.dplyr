@@ -152,7 +152,8 @@ setup_ace_editor <- function(id, value = "") {
 #' @noRd
 initialize_ace_editor <- function(session, editor_id, column_names) {
   categories <- get_default_categories()
-  categories$column <- column_names
+  # Wrap non-syntactic column names in backticks for autocompletion
+  categories$column <- backtick_if_needed(column_names)
 
   # Make categories available immediately, regardless of script load order
   # If updateAceCategories() exists, use it; otherwise fall back to setting window.aceCategories

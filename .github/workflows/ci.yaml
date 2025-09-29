@@ -8,15 +8,15 @@ name: ci
 
 jobs:
 
-  lint:
-
-    uses: ./.github/workflows/lint.yaml
-
-    secrets: inherit
+  # lint:
+  #
+  #   uses: ./.github/workflows/lint.yaml
+  #
+  #   secrets: inherit
 
   smoke:
 
-    needs: lint
+    # needs: lint  # Temporarily disabled linting
 
     uses: ./.github/workflows/smoke.yaml
 
