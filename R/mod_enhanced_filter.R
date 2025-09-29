@@ -10,32 +10,35 @@
 #' @param get_data Function that returns the current data frame (optional)
 #'
 #' @return A reactive expression containing the current filter conditions
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput updateRadioButtons
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div radioButtons selectInput updateSelectInput sliderInput updateRadioButtons showNotification icon
 #' @importFrom shinyAce aceEditor updateAceEditor
-#' @importFrom shinyjs useShinyjs runjs show hide delay
+#' @importFrom shinyjs useShinyjs runjs show hide delay addClass removeClass enable disable
 #' @importFrom htmltools tags
 #' @keywords internal
-mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL) {
+mod_enhanced_filter_server <- function(
+  id,
+  get_value,
+  get_cols,
+  get_data = NULL
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    # Use condition constructor from filter_utils.R
 
     # Initialize with values from get_value
     initial_value <- get_value()
     if (is.character(initial_value) && length(initial_value) == 1) {
-      # Parse single string into conditions (basic implementation)
-      if (initial_value == "" || is.null(initial_value)) {
-        initial_conditions <- list("TRUE")
-      } else {
-        # Preserve the actual condition
-        initial_conditions <- list(initial_value)
-      }
+      # Parse single string into conditions
+      initial_conditions <- parse_filter_string(initial_value)
     } else if (is.list(initial_value)) {
+      # Already list of conditions (for state restoration)
       initial_conditions <- initial_value
     } else {
-      initial_conditions <- list("TRUE")
+      initial_conditions <- list(new_filter_condition("TRUE", mode = "simple"))
     }
 
-    # Store conditions as reactive value
+    # Store conditions as reactive value (now stores full objects)
     r_conditions <- reactiveVal(initial_conditions)
     r_cols <- reactive(get_cols())
 
@@ -43,27 +46,18 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
 
+    # Track advanced expressions that are pending (not yet applied)
+    r_pending_advanced <- reactiveVal(list())
+
+    # (removed r_current_values - we now update r_conditions directly)
+
     # Track AND/OR logic between conditions
     r_logic_operators <- reactiveVal(rep(
       "&",
       max(0, length(initial_conditions) - 1)
     ))
 
-    # Track mode for each condition (advanced by default for now)
-    r_condition_modes <- reactiveVal(
-      setNames(
-        rep("advanced", length(initial_conditions)),
-        seq_along(initial_conditions)
-      )
-    )
-
-    # Initialize ACE editors for existing conditions
-    observe({
-      indices <- r_condition_indices()
-      for (i in indices) {
-        initialize_ace_editor(session, ns(paste0("condition_", i)), r_cols())
-      }
-    })
+    # Removed duplicate ACE initialization observer - see lines 775-786 for the proper one
 
     # Collect current values from all inputs
     get_current_conditions <- function() {
@@ -73,84 +67,25 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       }
 
       result <- list()
-      modes <- r_condition_modes()
+      current_conditions <- r_conditions()
 
-      for (i in indices) {
-        mode <- modes[[as.character(i)]] %||% "advanced"
+      for (idx in seq_along(indices)) {
+        i <- indices[idx]
+        # Get mode from condition object
+        mode <- if (
+          idx <= length(current_conditions) &&
+            is.list(current_conditions[[idx]])
+        ) {
+          current_conditions[[idx]]$mode %||% "simple"
+        } else {
+          "simple"
+        }
 
         if (mode == "simple") {
-          # Build expression from simple UI inputs
-          column_id <- paste0("condition_", i, "_column")
-          selected_col <- input[[column_id]]
-
-          if (!is.null(selected_col) && selected_col != "") {
-            # Check if data is available to determine column type
-            if (!is.null(get_data)) {
-              data <- get_data()
-              if (is.data.frame(data) && selected_col %in% colnames(data)) {
-                col_data <- data[[selected_col]]
-
-                if (is.numeric(col_data)) {
-                  # Numeric column - use range slider values
-                  range_id <- paste0("condition_", i, "_range")
-                  range_val <- input[[range_id]]
-                  col_range <- range(col_data, na.rm = TRUE)
-
-                  if (!is.null(range_val) && length(range_val) == 2) {
-                    # Check if values are at the extremes
-                    at_min <- abs(range_val[1] - col_range[1]) < 0.001
-                    at_max <- abs(range_val[2] - col_range[2]) < 0.001
-
-                    if (range_val[1] == range_val[2]) {
-                      # Single value
-                      expr <- paste0(selected_col, " == ", range_val[1])
-                    } else if (at_min && at_max) {
-                      # Full range - no filter needed
-                      expr <- "TRUE"
-                    } else if (at_min) {
-                      # Only upper bound
-                      expr <- paste0(selected_col, " <= ", range_val[2])
-                    } else if (at_max) {
-                      # Only lower bound
-                      expr <- paste0(selected_col, " >= ", range_val[1])
-                    } else {
-                      # Both bounds
-                      expr <- paste0(selected_col, " >= ", range_val[1], " & ",
-                                   selected_col, " <= ", range_val[2])
-                    }
-                    result <- append(result, expr)
-                  }
-                } else {
-                  # Character/factor column - use multi-select values
-                  values_id <- paste0("condition_", i, "_values")
-                  include_id <- paste0("condition_", i, "_include")
-
-                  selected_vals <- input[[values_id]]
-                  include_mode <- input[[include_id]] %||% "include"
-
-                  if (!is.null(selected_vals) && length(selected_vals) > 0) {
-                    # Quote character values
-                    quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
-
-                    if (include_mode == "include") {
-                      if (length(selected_vals) == 1) {
-                        expr <- paste0(selected_col, ' == "', selected_vals, '"')
-                      } else {
-                        expr <- paste0(selected_col, " %in% c(", quoted_vals, ")")
-                      }
-                    } else {
-                      # Exclude mode
-                      if (length(selected_vals) == 1) {
-                        expr <- paste0(selected_col, ' != "', selected_vals, '"')
-                      } else {
-                        expr <- paste0("!", selected_col, " %in% c(", quoted_vals, ")")
-                      }
-                    }
-                    result <- append(result, expr)
-                  }
-                }
-              }
-            }
+          # Build expression from simple UI inputs using utility function
+          expr <- build_simple_expression(i)
+          if (!is.null(expr) && expr != "TRUE") {
+            result <- append(result, expr)
           }
         } else {
           # Advanced mode - use ACE editor
@@ -194,6 +129,19 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       current_indices <- r_condition_indices()
       new_index <- r_next_index()
 
+      # Get current conditions - already up-to-date from ACE observers
+      current_conditions <- r_conditions()
+
+      # Add the new empty condition
+      new_cond <- new_filter_condition(
+        "TRUE", # Start with TRUE for new conditions
+        if (length(current_conditions) > 0) "&" else NULL,
+        mode = "simple" # Default to simple mode for new conditions
+      )
+
+      # Append to existing conditions (use list() to preserve structure)
+      r_conditions(append(current_conditions, list(new_cond)))
+
       # Add new index
       r_condition_indices(c(current_indices, new_index))
       r_next_index(new_index + 1)
@@ -203,16 +151,6 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       if (length(current_indices) >= 1) {
         r_logic_operators(c(current_logic, "&")) # Default to AND
       }
-
-      # Add mode for new condition
-      current_modes <- r_condition_modes()
-      current_modes[[as.character(new_index)]] <- "advanced"
-      r_condition_modes(current_modes)
-
-      # Update conditions
-      current <- get_current_conditions()
-      current <- append(current, "TRUE")
-      r_conditions(current)
     })
 
     # Remove condition handlers - create them dynamically
@@ -224,270 +162,265 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
           current_indices <- r_condition_indices()
 
           if (length(current_indices) > 1) {
-            # Remove this index
-            new_indices <- setdiff(current_indices, i)
-            r_condition_indices(new_indices)
+            # Find position of i in current_indices
+            position_to_remove <- which(current_indices == i)
 
-            # Update logic operators (remove one if needed)
-            current_logic <- r_logic_operators()
-            if (length(current_logic) >= length(new_indices)) {
-              # Remove the last operator
-              r_logic_operators(current_logic[-length(current_logic)])
+            # Only proceed if we found the position
+            if (length(position_to_remove) > 0) {
+              # Remove the condition from r_conditions at the correct position
+              current_conditions <- r_conditions()
+              if (position_to_remove <= length(current_conditions)) {
+                current_conditions <- current_conditions[-position_to_remove]
+                r_conditions(current_conditions)
+              }
+
+              # Remove this index from indices
+              new_indices <- setdiff(current_indices, i)
+              r_condition_indices(new_indices)
+
+              # Update logic operators (remove one if needed)
+              current_logic <- r_logic_operators()
+              if (length(current_logic) >= length(new_indices)) {
+                # Remove the corresponding operator
+                if (position_to_remove <= length(current_logic)) {
+                  current_logic <- current_logic[-position_to_remove]
+                } else if (length(current_logic) > 0) {
+                  current_logic <- current_logic[-length(current_logic)]
+                }
+                r_logic_operators(current_logic)
+              }
             }
-
-            # Remove mode for this condition
-            current_modes <- r_condition_modes()
-            current_modes[[as.character(i)]] <- NULL
-            r_condition_modes(current_modes)
-
-            # Update conditions
-            current <- get_current_conditions()
-            r_conditions(current)
           }
         })
       })
     })
 
-    # Function to parse expression and extract column/values for simple mode
-    parse_expression_for_simple <- function(expr_str, i) {
+    # Helper to parse expression with standard parameters and NULL handling
+    parse_condition_expression <- function(expr_str) {
       if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
         return(NULL)
       }
+      parse_simple(expr_str, r_cols(), get_data())
+    }
 
-      # Try to extract column name and values from common patterns
-      cols <- r_cols()
+    # Helper to get condition by index
+    get_condition_for_index <- function(idx) {
+      current_conditions <- isolate(r_conditions())
+      current_indices <- isolate(r_condition_indices())
+      cond_index <- which(current_indices == idx)
 
-      # Find which column is referenced
-      col_found <- NULL
-      for (col in cols) {
-        if (grepl(paste0("\\b", col, "\\b"), expr_str)) {
-          col_found <- col
-          break
-        }
+      if (length(cond_index) != 1 || cond_index > length(current_conditions)) {
+        return(NULL)
       }
 
-      if (!is.null(col_found) && !is.null(get_data)) {
-        data <- get_data()
-        if (is.data.frame(data) && col_found %in% colnames(data)) {
-          col_data <- data[[col_found]]
+      current_conditions[[cond_index]]
+    }
 
-          if (is.numeric(col_data)) {
-            # Get the data range for this column
-            col_range <- range(col_data, na.rm = TRUE)
+    # Helper to extract expression from condition object
+    get_condition_expression <- function(cond_obj) {
+      if (is.null(cond_obj)) {
+        return(NULL)
+      }
+      if (is.list(cond_obj)) cond_obj$expression else cond_obj
+    }
 
-            # Try to parse numeric patterns
-            # Pattern: col >= X & col <= Y
-            range_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)\\s*&\\s*",
-                                  col_found, "\\s*<=\\s*([0-9.-]+)")
-            if (grepl(range_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(range_pattern, expr_str))[[1]]
-              if (length(matches) == 3) {
-                return(list(
-                  column = col_found,
-                  range = as.numeric(c(matches[2], matches[3]))
-                ))
-              }
-            }
+    # Helper to check if condition is in simple mode
+    is_condition_simple <- function(cond_obj) {
+      if (is.null(cond_obj)) {
+        return(FALSE)
+      }
+      if (!is.list(cond_obj)) {
+        return(TRUE)
+      } # Legacy format defaults to simple
+      cond_obj$mode == "simple"
+    }
 
-            # Pattern: col == X
-            eq_pattern <- paste0("\\b", col_found, "\\s*==\\s*([0-9.-]+)")
-            if (grepl(eq_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(eq_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(val, val)
-                ))
-              }
-            }
+    # Helper to check if condition at index is in simple mode
+    is_condition_at_index_simple <- function(idx) {
+      cond_obj <- get_condition_for_index(idx)
+      is_condition_simple(cond_obj)
+    }
 
-            # Pattern: col > X (set range from X to max)
-            gt_pattern <- paste0("\\b", col_found, "\\s*>\\s*([0-9.-]+)")
-            if (grepl(gt_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(gt_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                # Set range slightly above the value to max
-                return(list(
-                  column = col_found,
-                  range = c(val + 0.01, col_range[2])
-                ))
-              }
-            }
+    # Helper to parse condition by index (combines getting and parsing)
+    get_parsed_condition_by_index <- function(idx) {
+      cond_obj <- get_condition_for_index(idx)
+      if (is.null(cond_obj)) {
+        return(NULL)
+      }
 
-            # Pattern: col >= X (set range from X to max)
-            gte_pattern <- paste0("\\b", col_found, "\\s*>=\\s*([0-9.-]+)")
-            if (grepl(gte_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(gte_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(val, col_range[2])
-                ))
-              }
-            }
+      expr <- get_condition_expression(cond_obj)
+      parse_condition_expression(expr)
+    }
 
-            # Pattern: col < X (set range from min to X)
-            lt_pattern <- paste0("\\b", col_found, "\\s*<\\s*([0-9.-]+)")
-            if (grepl(lt_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(lt_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                # Set range from min to slightly below the value
-                return(list(
-                  column = col_found,
-                  range = c(col_range[1], val - 0.01)
-                ))
-              }
-            }
+    # Helper to update condition at index
+    update_condition_at_index <- function(idx, field, value) {
+      current_conditions <- isolate(r_conditions())
+      current_indices <- isolate(r_condition_indices())
+      cond_index <- which(current_indices == idx)
 
-            # Pattern: col <= X (set range from min to X)
-            lte_pattern <- paste0("\\b", col_found, "\\s*<=\\s*([0-9.-]+)")
-            if (grepl(lte_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(lte_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val <- as.numeric(matches[2])
-                return(list(
-                  column = col_found,
-                  range = c(col_range[1], val)
-                ))
-              }
-            }
-          } else {
-            # Try to parse character patterns
-            # Pattern: col %in% c("val1", "val2")
-            in_pattern <- paste0("\\b", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
-            if (grepl(in_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(in_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                # Extract quoted values
-                val_str <- matches[2]
-                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
-                values <- gsub('"', '', values)
-                return(list(
-                  column = col_found,
-                  values = values,
-                  include = TRUE
-                ))
-              }
-            }
-
-            # Pattern: !col %in% c("val1", "val2")
-            not_in_pattern <- paste0("!\\s*", col_found, "\\s*%in%\\s*c\\(([^)]+)\\)")
-            if (grepl(not_in_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(not_in_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                val_str <- matches[2]
-                values <- regmatches(val_str, gregexpr('"[^"]*"', val_str))[[1]]
-                values <- gsub('"', '', values)
-                return(list(
-                  column = col_found,
-                  values = values,
-                  include = FALSE
-                ))
-              }
-            }
-
-            # Pattern: col == "val"
-            eq_str_pattern <- paste0("\\b", col_found, '\\s*==\\s*"([^"]*)"')
-            if (grepl(eq_str_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(eq_str_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                return(list(
-                  column = col_found,
-                  values = matches[2],
-                  include = TRUE
-                ))
-              }
-            }
-
-            # Pattern: col != "val"
-            neq_str_pattern <- paste0("\\b", col_found, '\\s*!=\\s*"([^"]*)"')
-            if (grepl(neq_str_pattern, expr_str)) {
-              matches <- regmatches(expr_str, regexec(neq_str_pattern, expr_str))[[1]]
-              if (length(matches) == 2) {
-                return(list(
-                  column = col_found,
-                  values = matches[2],
-                  include = FALSE
-                ))
-              }
-            }
+      if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+        if (is.list(current_conditions[[cond_index]])) {
+          current_conditions[[cond_index]][[field]] <- value
+        } else {
+          # For simple string conditions being updated
+          if (field == "expression") {
+            current_conditions[[cond_index]] <- value
           }
         }
+        r_conditions(current_conditions)
+        TRUE
+      } else {
+        FALSE
       }
-
-      return(NULL)
     }
 
     # Track mode changes and update conditionalPanel
     observe({
       indices <- r_condition_indices()
-      modes <- r_condition_modes()
+      current_conditions <- r_conditions()
 
       for (i in indices) {
         mode_id <- paste0("condition_", i, "_mode")
-        current_mode <- input[[mode_id]]
+        mode_value <- input[[mode_id]]
 
-        if (!is.null(current_mode)) {
-          old_mode <- modes[[as.character(i)]]
-          modes[[as.character(i)]] <- current_mode
+        if (!is.null(mode_value)) {
+          # Convert checkbox value to mode string
+          current_mode <- if (mode_value) "advanced" else "simple"
 
-          # Use shinyjs to toggle visibility based on mode
-          if (current_mode == "simple") {
-            shinyjs::show(paste0("condition_", i, "_simple_panel"))
-            shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+          # Update mode label
+          shinyjs::html(
+            paste0("condition_", i, "_mode_label"),
+            if (mode_value) "Advanced" else "Simple"
+          )
 
-            # When switching to simple mode, try to parse the expression
-            if (old_mode != "simple") {
-              expr_str <- input[[paste0("condition_", i)]]
-              parsed <- parse_expression_for_simple(expr_str, i)
-
-              if (!is.null(parsed)) {
-                # Update column selection
-                updateSelectInput(session,
-                                paste0("condition_", i, "_column"),
-                                selected = parsed$column)
-
-                # Delay updating the dependent inputs to allow column change to process
-                shinyjs::delay(100, {
-                  if (!is.null(parsed$range)) {
-                    # Update range slider
-                    updateSliderInput(session,
-                                    paste0("condition_", i, "_range"),
-                                    value = parsed$range)
-                  } else if (!is.null(parsed$values)) {
-                    # Update multi-select and include/exclude
-                    updateSelectInput(session,
-                                    paste0("condition_", i, "_values"),
-                                    selected = parsed$values)
-                    updateRadioButtons(session,
-                                     paste0("condition_", i, "_include"),
-                                     selected = if (parsed$include) "include" else "exclude")
-                  }
-                })
-              }
+          # Get the old mode from the condition object
+          cond_index <- which(indices == i)
+          old_mode <- if (
+            length(cond_index) == 1 && cond_index <= length(current_conditions)
+          ) {
+            if (is.list(current_conditions[[cond_index]])) {
+              current_conditions[[cond_index]]$mode
+            } else {
+              "simple"
             }
           } else {
-            # Switching to advanced mode
-            shinyjs::hide(paste0("condition_", i, "_simple_panel"))
-            shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+            "simple"
+          }
 
-            # When switching from simple to advanced, ensure the ACE editor shows the built expression
-            if (old_mode == "simple") {
-              expr <- build_simple_expression(i)
-              # Use a small delay to ensure the ACE editor is visible before updating
+          # Only process if mode actually changed
+          if (old_mode != current_mode) {
+            # Update the mode in the actual condition object
+            if (
+              length(cond_index) == 1 &&
+                cond_index <= length(current_conditions)
+            ) {
+              if (is.list(current_conditions[[cond_index]])) {
+                current_conditions[[cond_index]]$mode <- current_mode
+                r_conditions(current_conditions)
+              }
+            }
+
+            # Use shinyjs to toggle visibility based on mode
+            if (current_mode == "simple") {
+              shinyjs::show(paste0("condition_", i, "_simple_panel"))
+              shinyjs::hide(paste0("condition_", i, "_advanced_panel"))
+
+              # When switching to simple mode, try to parse the expression
+              if (old_mode != "simple") {
+                expr_str <- input[[paste0("condition_", i)]]
+                parsed <- parse_condition_expression(expr_str)
+
+                if (!is.null(parsed)) {
+                  # Update column selection
+                  updateSelectInput(
+                    session,
+                    paste0("condition_", i, "_column"),
+                    selected = parsed$column
+                  )
+
+                  # Capture values in local scope before delay
+                  local({
+                    local_i <- i
+                    local_range <- parsed$range
+                    local_values <- parsed$values
+                    local_include <- parsed$include
+
+                    # Small delay to allow column change to process
+                    shinyjs::delay(50, {
+                      if (!is.null(local_range)) {
+                        # Update range slider
+                        updateSliderInput(
+                          session,
+                          paste0("condition_", local_i, "_range"),
+                          value = local_range
+                        )
+                      } else if (!is.null(local_values)) {
+                        # Update multi-select and include/exclude
+                        updateSelectInput(
+                          session,
+                          paste0("condition_", local_i, "_values"),
+                          selected = local_values
+                        )
+                        updateRadioButtons(
+                          session,
+                          paste0("condition_", local_i, "_include"),
+                          selected = if (local_include) "include" else "exclude"
+                        )
+                      }
+                    })
+                  })
+                }
+              }
+            } else {
+              # Switching to advanced mode
+              shinyjs::hide(paste0("condition_", i, "_simple_panel"))
+              shinyjs::show(paste0("condition_", i, "_advanced_panel"))
+
+              # Disable apply button initially when switching to advanced
               shinyjs::delay(50, {
-                updateAceEditor(session, paste0("condition_", i), value = expr)
+                shinyjs::disable(paste0("condition_", i, "_apply"))
+                shinyjs::removeClass(
+                  selector = paste0(
+                    "#",
+                    session$ns(paste0("condition_", i, "_apply"))
+                  ),
+                  class = "has-changes"
+                )
               })
+
+              # When switching from simple to advanced, ensure the ACE editor shows the built expression
+              if (old_mode == "simple") {
+                # Get the current expression in the ACE editor
+                current_expr <- input[[paste0("condition_", i)]]
+
+                # Build expression from simple mode inputs
+                expr <- build_simple_expression(i)
+
+                # Only update if the expressions are actually different
+                if (
+                  !is.null(expr) &&
+                    !is.null(current_expr) &&
+                    expr != current_expr
+                ) {
+                  # Use a delay to ensure ACE editor is visible and initialized
+                  # But capture the expression value to avoid race conditions
+                  local({
+                    local_expr <- expr
+                    local_i <- i
+                    shinyjs::delay(150, {
+                      updateAceEditor(
+                        session,
+                        paste0("condition_", local_i),
+                        value = local_expr
+                      )
+                    })
+                  })
+                }
+              }
             }
           }
         }
       }
-
-      r_condition_modes(modes)
     })
 
     # Update column dropdowns when data changes or UI is created
@@ -495,22 +428,33 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
       indices <- r_condition_indices()
       cols <- r_cols()
 
-      if (length(cols) == 0) return()
+      if (length(cols) == 0) {
+        return()
+      }
 
       for (i in indices) {
         column_id <- paste0("condition_", i, "_column")
 
-        # Update column choices
+        # Get the default column from the stored condition
+        default_column <- cols[1] # Fallback to first column
+
+        # Check if we have a stored condition with a column selection
+        parsed <- get_parsed_condition_by_index(i)
+        if (!is.null(parsed) && !is.null(parsed$column)) {
+          default_column <- parsed$column
+        }
+
+        # Update column choices, preserving initial selection from parsed condition
         updateSelectInput(
           session,
           inputId = column_id,
           choices = cols,
-          selected = input[[column_id]] %||% cols[1]
+          selected = input[[column_id]] %||% default_column
         )
       }
     })
 
-    # Render simple UI for each condition based on column type
+    # Update simple UI based on column selection
     observe({
       indices <- r_condition_indices()
 
@@ -519,7 +463,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         return()
       }
 
-      data <- get_data()  # Get current data to check column types
+      data <- get_data() # Get current data to check column types
 
       # If data is not a data frame, we can't determine column types yet
       if (!is.data.frame(data)) {
@@ -528,49 +472,114 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
 
       for (i in indices) {
         local({
-          idx <- i  # Capture i in local scope
+          idx <- i # Capture i in local scope
+          column_id <- paste0("condition_", idx, "_column")
 
-          output[[paste0("condition_", idx, "_simple_ui")]] <- renderUI({
-            column_id <- paste0("condition_", idx, "_column")
+          # Watch for column changes
+          observeEvent(input[[column_id]], {
             selected_col <- input[[column_id]]
 
-            if (is.null(selected_col) || !selected_col %in% colnames(data)) {
-              return(div("Select a column"))
+            # Store previous value to detect actual changes
+            prev_col_key <- paste0("prev_col_", idx)
+            prev_col <- isolate(session$userData[[prev_col_key]])
+
+            # Only proceed if column actually changed
+            if (!is.null(prev_col) && identical(prev_col, selected_col)) {
+              return() # No change, don't update
+            }
+
+            # Check if this is initialization (prev_col is NULL) or an actual change
+            is_initialization <- is.null(prev_col)
+
+            # Update stored previous value
+            session$userData[[prev_col_key]] <- selected_col
+
+            # Only reset expression when user actively changes column, not on initialization
+            if (!is_initialization) {
+              # When column changes in simple mode, update the stored expression to "TRUE"
+              # This ensures the range slider resets to the full range of the new column
+              if (is_condition_simple(idx)) {
+                update_condition_at_index(idx, "expression", "TRUE")
+              }
+            }
+
+            # Get the namespace-qualified IDs for UI elements
+            numeric_ui_id <- paste0("condition_", idx, "_numeric_ui")
+            character_ui_id <- paste0("condition_", idx, "_character_ui")
+
+            if (
+              is.null(selected_col) ||
+                selected_col == "" ||
+                !selected_col %in% colnames(data)
+            ) {
+              # Hide both UIs if no valid column selected
+              shinyjs::hide(numeric_ui_id)
+              shinyjs::hide(character_ui_id)
+              return()
             }
 
             col_data <- data[[selected_col]]
 
             if (is.numeric(col_data)) {
-              # Numeric column: range slider
+              # Show numeric UI, hide character UI
+              shinyjs::show(numeric_ui_id)
+              shinyjs::hide(character_ui_id)
+
+              # Update slider range and values
               col_range <- range(col_data, na.rm = TRUE)
-              sliderInput(
-                ns(paste0("condition_", idx, "_range")),
-                label = "Range",
+              slider_value <- col_range # Default to full range
+
+              # On initialization, try to parse the stored expression to get the range
+              if (is_initialization) {
+                parsed <- get_parsed_condition_by_index(idx)
+                if (!is.null(parsed) && !is.null(parsed$range)) {
+                  slider_value <- parsed$range
+                }
+              }
+
+              updateSliderInput(
+                session,
+                paste0("condition_", idx, "_range"),
                 min = col_range[1],
                 max = col_range[2],
-                value = col_range,
-                step = if (all(col_data == floor(col_data), na.rm = TRUE)) 1 else 0.01
+                value = slider_value, # Use parsed value on init, full range on change
+                step = if (all(col_data == floor(col_data), na.rm = TRUE)) {
+                  1
+                } else {
+                  0.01
+                }
               )
             } else {
-              # Character/factor column: multi-select
+              # Show character UI, hide numeric UI
+              shinyjs::hide(numeric_ui_id)
+              shinyjs::show(character_ui_id)
+
+              # Update multi-select choices
               unique_vals <- unique(as.character(col_data))
               unique_vals <- unique_vals[!is.na(unique_vals)]
 
-              tagList(
-                selectInput(
-                  ns(paste0("condition_", idx, "_values")),
-                  label = "Values",
-                  choices = unique_vals,
-                  selected = unique_vals[1],
-                  multiple = TRUE
-                ),
-                radioButtons(
-                  ns(paste0("condition_", idx, "_include")),
-                  label = NULL,
-                  choices = c("Include" = "include", "Exclude" = "exclude"),
-                  selected = "include",
-                  inline = TRUE
-                )
+              # Default to no selection (NULL) to represent no filter
+              selected_vals <- NULL # No selection = no filter = TRUE
+
+              # On initialization, try to parse the stored expression to get the selected values
+              if (is_initialization) {
+                parsed <- get_parsed_condition_by_index(idx)
+                if (!is.null(parsed) && !is.null(parsed$values)) {
+                  selected_vals <- parsed$values
+                  # Also update the include/exclude radio button
+                  updateRadioButtons(
+                    session,
+                    paste0("condition_", idx, "_include"),
+                    selected = if (parsed$include) "include" else "exclude"
+                  )
+                }
+              }
+
+              updateSelectInput(
+                session,
+                paste0("condition_", idx, "_values"),
+                choices = unique_vals,
+                selected = selected_vals # Use parsed values on init, NULL on change
               )
             }
           })
@@ -587,176 +596,334 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
         return("TRUE")
       }
 
-      if (!is.null(get_data)) {
-        data <- get_data()
-        if (is.data.frame(data) && selected_col %in% colnames(data)) {
-          col_data <- data[[selected_col]]
+      data <- get_data()
+      range_id <- paste0("condition_", i, "_range")
+      range_val <- input[[range_id]]
+      values_id <- paste0("condition_", i, "_values")
+      selected_vals <- input[[values_id]]
+      include_id <- paste0("condition_", i, "_include")
+      include_mode <- input[[include_id]] %||% "include"
 
-          if (is.numeric(col_data)) {
-            # Numeric column - use range slider values
-            range_id <- paste0("condition_", i, "_range")
-            range_val <- input[[range_id]]
-            col_range <- range(col_data, na.rm = TRUE)
-
-            if (!is.null(range_val) && length(range_val) == 2) {
-              # Check if values are at the extremes
-              at_min <- abs(range_val[1] - col_range[1]) < 0.001
-              at_max <- abs(range_val[2] - col_range[2]) < 0.001
-
-              if (range_val[1] == range_val[2]) {
-                # Single value
-                return(paste0(selected_col, " == ", range_val[1]))
-              } else if (at_min && at_max) {
-                # Full range - no filter needed
-                return("TRUE")
-              } else if (at_min) {
-                # Only upper bound
-                return(paste0(selected_col, " <= ", range_val[2]))
-              } else if (at_max) {
-                # Only lower bound
-                return(paste0(selected_col, " >= ", range_val[1]))
-              } else {
-                # Both bounds
-                return(paste0(selected_col, " >= ", range_val[1], " & ",
-                            selected_col, " <= ", range_val[2]))
-              }
-            }
-          } else {
-            # Character/factor column - use multi-select values
-            values_id <- paste0("condition_", i, "_values")
-            include_id <- paste0("condition_", i, "_include")
-
-            selected_vals <- input[[values_id]]
-            include_mode <- input[[include_id]] %||% "include"
-
-            if (!is.null(selected_vals) && length(selected_vals) > 0) {
-              # Quote character values
-              quoted_vals <- paste0('"', selected_vals, '"', collapse = ", ")
-
-              if (include_mode == "include") {
-                if (length(selected_vals) == 1) {
-                  return(paste0(selected_col, ' == "', selected_vals, '"'))
-                } else {
-                  return(paste0(selected_col, " %in% c(", quoted_vals, ")"))
-                }
-              } else {
-                # Exclude mode
-                if (length(selected_vals) == 1) {
-                  return(paste0(selected_col, ' != "', selected_vals, '"'))
-                } else {
-                  return(paste0("!", selected_col, " %in% c(", quoted_vals, ")"))
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return("TRUE")
+      build_simple(
+        column = selected_col,
+        data = data,
+        range_val = range_val,
+        selected_vals = selected_vals,
+        include_mode = include_mode
+      )
     }
 
+    # Track which observers have been created to avoid duplicates
+    observers_created <- reactiveVal(list())
+
     # Update ACE editor when simple UI inputs change
+    # Create separate observers for each condition's simple UI inputs
     observe({
       indices <- r_condition_indices()
-      modes <- r_condition_modes()
+      created <- isolate(observers_created())
 
       for (i in indices) {
-        mode <- modes[[as.character(i)]] %||% "advanced"
-
-        if (mode == "simple") {
-          # Watch all simple UI inputs for this condition
+        # Only create observers if they haven't been created yet
+        if (!as.character(i) %in% names(created)) {
           local({
             idx <- i
 
             # Watch column selection
-            observeEvent(input[[paste0("condition_", idx, "_column")]], {
-              if (modes[[as.character(idx)]] == "simple") {
-                expr <- build_simple_expression(idx)
-                updateAceEditor(session, paste0("condition_", idx), value = expr)
-              }
-            }, ignoreInit = TRUE)
+            observeEvent(
+              input[[paste0("condition_", idx, "_column")]],
+              {
+                # Check if in simple mode
+                if (is_condition_at_index_simple(idx)) {
+                  expr <- build_simple_expression(idx)
+                  updateAceEditor(
+                    session,
+                    paste0("condition_", idx),
+                    value = expr
+                  )
+                }
+              },
+              ignoreInit = TRUE
+            )
 
-            # Watch range slider for numeric columns
-            observeEvent(input[[paste0("condition_", idx, "_range")]], {
-              if (modes[[as.character(idx)]] == "simple") {
-                expr <- build_simple_expression(idx)
-                updateAceEditor(session, paste0("condition_", idx), value = expr)
-              }
-            }, ignoreInit = TRUE)
+            # Watch range slider
+            observeEvent(
+              input[[paste0("condition_", idx, "_range")]],
+              {
+                # Check if in simple mode
+                if (is_condition_at_index_simple(idx)) {
+                  expr <- build_simple_expression(idx)
+                  updateAceEditor(
+                    session,
+                    paste0("condition_", idx),
+                    value = expr
+                  )
+                }
+              },
+              ignoreInit = TRUE
+            )
 
-            # Watch values selection for character columns
-            observeEvent(input[[paste0("condition_", idx, "_values")]], {
-              if (modes[[as.character(idx)]] == "simple") {
-                expr <- build_simple_expression(idx)
-                updateAceEditor(session, paste0("condition_", idx), value = expr)
-              }
-            }, ignoreInit = TRUE)
+            # Watch values selection
+            observeEvent(
+              input[[paste0("condition_", idx, "_values")]],
+              {
+                # Check if in simple mode
+                if (is_condition_at_index_simple(idx)) {
+                  expr <- build_simple_expression(idx)
+                  updateAceEditor(
+                    session,
+                    paste0("condition_", idx),
+                    value = expr
+                  )
+                }
+              },
+              ignoreInit = TRUE
+            )
 
-            # Watch include/exclude radio buttons
-            observeEvent(input[[paste0("condition_", idx, "_include")]], {
-              if (modes[[as.character(idx)]] == "simple") {
-                expr <- build_simple_expression(idx)
-                updateAceEditor(session, paste0("condition_", idx), value = expr)
-              }
-            }, ignoreInit = TRUE)
+            # Watch include/exclude radio
+            observeEvent(
+              input[[paste0("condition_", idx, "_include")]],
+              {
+                # Check if in simple mode
+                if (is_condition_at_index_simple(idx)) {
+                  expr <- build_simple_expression(idx)
+                  updateAceEditor(
+                    session,
+                    paste0("condition_", idx),
+                    value = expr
+                  )
+                }
+              },
+              ignoreInit = TRUE
+            )
           })
+
+          # Mark this observer as created
+          created[[as.character(i)]] <- TRUE
+          observers_created(created)
         }
       }
     })
 
-    # Update logic operators when they change
+    # Create observers for each logic dropdown
+    logic_observers <- list()
     observe({
       indices <- r_condition_indices()
+
+      # Create observers for each logic dropdown between conditions
       if (length(indices) > 1) {
-        new_logic <- get_current_logic()
-        r_logic_operators(new_logic)
+        for (j in seq_len(length(indices) - 1)) {
+          logic_id <- paste0("logic_", j)
+          observer_id <- paste0("logic_observer_", j)
+
+          # Create observer if it doesn't exist
+          if (is.null(logic_observers[[observer_id]])) {
+            logic_observers[[observer_id]] <<- observeEvent(
+              input[[logic_id]],
+              {
+                logic_val <- input[[logic_id]]
+                if (!is.null(logic_val)) {
+                  # Update the logical_op in the corresponding condition
+                  current_conditions <- r_conditions()
+
+                  # The logic operator between condition j and j+1 belongs to condition j+1
+                  if ((j + 1) <= length(current_conditions)) {
+                    if (is.list(current_conditions[[j + 1]])) {
+                      current_conditions[[j + 1]]$logical_op <- logic_val
+                      r_conditions(current_conditions)
+                    }
+                  }
+
+                  # Also update r_logic_operators for consistency
+                  current_logic <- r_logic_operators()
+                  if (j <= length(current_logic)) {
+                    current_logic[j] <- logic_val
+                    r_logic_operators(current_logic)
+                  }
+                }
+              },
+              ignoreInit = FALSE
+            )
+          }
+        }
+      }
+    })
+
+    # Create observers for each ACE editor to track pending changes
+    ace_observers <- list()
+    observe({
+      indices <- r_condition_indices()
+      current_conditions <- isolate(r_conditions())
+
+      for (j in seq_along(indices)) {
+        i <- indices[j]
+        ace_id <- paste0("condition_", i)
+        observer_id <- paste0("ace_observer_", i)
+
+        # Create observer if it doesn't exist
+        if (is.null(ace_observers[[observer_id]])) {
+          ace_observers[[observer_id]] <<- observeEvent(
+            input[[ace_id]],
+            {
+              ace_val <- input[[ace_id]]
+              if (!is.null(ace_val)) {
+                # Check if this is in advanced mode
+                cond_obj <- get_condition_for_index(i)
+
+                if (!is.null(cond_obj)) {
+                  is_advanced <- is.list(cond_obj) &&
+                    (cond_obj$mode %||% "simple") == "advanced"
+
+                  if (is_advanced) {
+                    # Mark this condition as pending (not applied yet)
+                    pending <- r_pending_advanced()
+                    pending[[as.character(i)]] <- ace_val
+                    r_pending_advanced(pending)
+
+                    # Enable the apply button when there are changes
+                    shinyjs::enable(paste0("condition_", i, "_apply"))
+                    shinyjs::addClass(
+                      selector = paste0(
+                        "#",
+                        session$ns(paste0("condition_", i, "_apply"))
+                      ),
+                      class = "has-changes"
+                    )
+                  } else {
+                    # Simple mode - update immediately
+                    update_condition_at_index(i, "expression", ace_val)
+                  }
+                }
+              }
+            },
+            ignoreInit = TRUE
+          )
+        }
+      }
+    })
+
+    # Create observers for apply buttons in advanced mode
+    apply_observers <- list()
+    observe({
+      indices <- r_condition_indices()
+
+      for (i in indices) {
+        apply_id <- paste0("condition_", i, "_apply")
+        observer_id <- paste0("apply_observer_", i)
+
+        if (is.null(apply_observers[[observer_id]])) {
+          apply_observers[[observer_id]] <<- observeEvent(
+            input[[apply_id]],
+            {
+              # Get the current ACE editor value
+              ace_val <- input[[paste0("condition_", i)]]
+
+              if (!is.null(ace_val)) {
+                # Apply this advanced expression
+                cond_obj <- get_condition_for_index(i)
+
+                if (!is.null(cond_obj)) {
+                  # Update the condition
+                  update_condition_at_index(i, "expression", ace_val)
+
+                  # Remove from pending
+                  pending <- r_pending_advanced()
+                  pending[[as.character(i)]] <- NULL
+                  r_pending_advanced(pending)
+
+                  # Disable the apply button after applying
+                  shinyjs::disable(paste0("condition_", i, "_apply"))
+                  shinyjs::removeClass(
+                    selector = paste0(
+                      "#",
+                      session$ns(paste0("condition_", i, "_apply"))
+                    ),
+                    class = "has-changes"
+                  )
+
+                  # Show success feedback
+                  showNotification(
+                    "Filter expression applied",
+                    type = "message",
+                    duration = 2
+                  )
+                }
+              }
+            }
+          )
+        }
       }
     })
 
     # Render UI dynamically
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
-      conditions <- r_conditions()
-      logic_ops <- r_logic_operators()
-      modes <- r_condition_modes()
+      # Isolate these so we don't re-render on content changes
+      conditions <- isolate(r_conditions())
+      logic_ops <- isolate(r_logic_operators())
       cols <- r_cols()
 
       if (length(indices) == 0) {
         return(NULL)
       }
 
+      # Don't try to use ACE values here - let the UI initialize with stored conditions
+      # The ACE editors will update themselves via observers
+
       # Create UI for each condition
       ui_elements <- list()
 
-      for (j in seq_along(indices)) {
-        i <- indices[j]
-        condition <- if (j <= length(conditions)) conditions[[j]] else "TRUE"
-        mode <- modes[[as.character(i)]] %||% "advanced"
+      for (position in seq_along(indices)) {
+        condition_id <- indices[position]
+        # Use stored condition from r_conditions (our single source of truth)
+        # Access by position in the list, not by the condition ID!
+        if (position <= length(conditions)) {
+          cond_obj <- conditions[[position]]
+          # Extract expression from condition object
+          if (is.list(cond_obj)) {
+            condition <- cond_obj$expression %||% ""
+            # Use mode from condition object
+            mode <- cond_obj$mode %||% "simple"
+          } else {
+            # Legacy string format
+            condition <- cond_obj
+            mode <- "simple"
+          }
+        } else {
+          condition <- "TRUE" # Empty expression for new conditions
+          mode <- "simple"
+        }
 
         # Add the condition row with mode toggle
+        data_for_ui <- if (!is.null(get_data)) get_data() else NULL
+
         ui_elements <- append(
           ui_elements,
           list(
             enhanced_filter_condition_ui(
-              ns(paste0("condition_", i)),
+              ns(paste0("condition_", condition_id)),
               value = condition,
               mode = mode,
               show_remove = (length(indices) > 1),
-              available_columns = cols
+              available_columns = cols,
+              data = data_for_ui
             )
           )
         )
 
         # Add logic operator dropdown between conditions (except after last)
-        if (j < length(indices)) {
-          logic_value <- if (j <= length(logic_ops)) logic_ops[j] else "&"
+        if (position < length(indices)) {
+          logic_value <- if (position <= length(logic_ops)) {
+            logic_ops[position]
+          } else {
+            "&"
+          }
           ui_elements <- append(
             ui_elements,
             list(
               div(
                 class = "d-flex justify-content-start my-2",
                 selectInput(
-                  ns(paste0("logic_", j)),
+                  ns(paste0("logic_", position)),
                   label = NULL,
                   choices = list("AND" = "&", "OR" = "|"),
                   selected = logic_value,
@@ -775,6 +942,7 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
     observeEvent(r_condition_indices(), {
       indices <- r_condition_indices()
       cols <- r_cols()
+      conditions <- r_conditions()
 
       for (i in indices) {
         condition_id <- paste0("condition_", i)
@@ -782,41 +950,76 @@ mod_enhanced_filter_server <- function(id, get_value, get_cols, get_data = NULL)
           # New editor, initialize it
           initialize_ace_editor(session, ns(condition_id), cols)
         }
+
+        # Initialize apply button state - disabled by default
+        # Find the condition index
+        cond_index <- which(indices == i)
+        if (length(cond_index) > 0 && cond_index <= length(conditions)) {
+          cond_obj <- conditions[[cond_index]]
+          is_advanced <- is.list(cond_obj) &&
+            (cond_obj$mode %||% "simple") == "advanced"
+          if (is_advanced) {
+            # Start disabled for advanced mode
+            shinyjs::delay(100, {
+              shinyjs::disable(paste0("condition_", i, "_apply"))
+            })
+          }
+        }
       }
     })
 
-    # Return the reactive conditions as a combined string
-    reactive({
-      # Check if any inputs exist yet - if not, use stored conditions
-      indices <- r_condition_indices()
-      has_inputs <- any(sapply(indices, function(i) {
-        paste0("condition_", i) %in% names(input)
-      }))
-
-      if (has_inputs) {
-        # Use current input values
-        conditions <- get_current_conditions()
-        logic_ops <- r_logic_operators()
-      } else {
-        # Use stored conditions (for initialization)
-        conditions <- r_conditions()
-        logic_ops <- r_logic_operators()
-      }
+    # Return the combined filter string and pending status
+    filter_string <- reactive({
+      # Always get the latest conditions from r_conditions()
+      conditions <- r_conditions()
 
       if (length(conditions) == 0) {
         return("TRUE")
       } else if (length(conditions) == 1) {
-        return(conditions[[1]])
+        # Extract expression from condition object if needed
+        cond <- conditions[[1]]
+        if (is.list(cond)) {
+          return(cond$expression %||% "TRUE")
+        } else {
+          return(cond)
+        }
       } else {
-        # Combine conditions with logic operators
-        result <- conditions[[1]]
-        for (i in seq_len(length(conditions) - 1)) {
-          op <- if (i <= length(logic_ops)) logic_ops[i] else "&"
-          result <- paste(result, op, conditions[[i + 1]])
+        # Build filter expression using logical operators from condition objects
+        expressions <- character(0)
+        for (i in seq_along(conditions)) {
+          cond <- conditions[[i]]
+          if (is.list(cond)) {
+            expr <- cond$expression %||% "TRUE"
+            expressions <- c(expressions, expr)
+          } else {
+            expressions <- c(expressions, cond)
+          }
+        }
+
+        # Combine conditions using the logical_op from each condition
+        result <- expressions[[1]]
+        for (i in 2:length(expressions)) {
+          # Get the logical operator from the condition object (not from r_logic_operators)
+          op <- "&" # Default to AND
+          if (i <= length(conditions) && is.list(conditions[[i]])) {
+            op <- conditions[[i]]$logical_op %||% "&"
+          }
+          result <- paste(result, op, expressions[[i]])
         }
         return(result)
       }
     })
+
+    # Check if any advanced expressions are pending
+    has_pending_advanced <- reactive({
+      length(r_pending_advanced()) > 0
+    })
+
+    # Return both the filter string and pending status
+    list(
+      string = filter_string,
+      pending_advanced = has_pending_advanced
+    )
   })
 }
 
@@ -836,17 +1039,28 @@ mod_enhanced_filter_ui <- function(id) {
     tags$style(
       "
       .enhanced-filter-condition {
+        align-items: center;
         border: 1px solid var(--bs-border-color);
-        border-radius: var(--bs-border-radius);
         padding: 10px;
-        margin-bottom: 10px;
+        padding-right: 35px; /* Make room for the X button */
+        margin-bottom: 3px;
+        position: relative;
       }
 
       .enhanced-filter-condition .mode-toggle {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 00px;
+      }
+
+      .enhanced-filter-condition .mode-controls {
+        display: flex;
+        align-items: center;
+      }
+
+      .enhanced-filter-condition .mode-label {
+        font-weight: 500;
       }
 
       .enhanced-filter-condition .shiny-ace {
@@ -859,14 +1073,57 @@ mod_enhanced_filter_ui <- function(id) {
         flex: 1;
       }
 
-      .enhanced-filter-condition .condition-delete {
-        margin-top: 5px;
+      .enhanced-filter-condition .btn-close {
+        opacity: 0.5;
       }
 
-      .enhanced-filter-condition .condition-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+      .enhanced-filter-condition .btn-close:hover {
+        opacity: 0.8;
+      }
+
+      /* Apply button styling - Variant 2: Outlined Arrow */
+      .apply-btn {
+        height: 36px;
+        padding: 4px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0px;
+        font-size: 14px;
+        border-color: #0284c7;
+        color: #0284c7;
+        background: transparent;
+        transition: all 0.15s ease-in-out;
+      }
+
+      .apply-btn:hover:not(:disabled) {
+        background-color: #f0f9ff;
+        border-color: #0284c7;
+        color: #0284c7;
+      }
+
+      .apply-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: #94a3b8;
+        color: #94a3b8;
+      }
+
+      .apply-btn .apply-arrow {
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      /* When there are pending changes */
+      .apply-btn.has-changes {
+        border-color: #0284c7;
+        color: #0284c7;
+        font-weight: 500;
+      }
+
+      .apply-btn.has-changes:hover {
+        background-color: #e0f2fe;
+        border-color: #0369a1;
+        color: #0369a1;
       }
     "
     ),
@@ -879,7 +1136,7 @@ mod_enhanced_filter_ui <- function(id) {
           ns("add_condition"),
           label = "Add Condition",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
+          class = "btn btn-outline-primary btn-sm"
         )
       )
     )
@@ -892,35 +1149,115 @@ mod_enhanced_filter_ui <- function(id) {
 #' @param value Condition value
 #' @param mode Current mode (simple/advanced)
 #' @param show_remove Whether to show remove button
-#' @param available_columns Character vector of column names available for filtering
+#' @param available_columns Available column names
+#' @param data Optional data frame for parsing expressions
 #' @return A div containing the row UI
-enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced",
-                                        show_remove = TRUE, available_columns = character()) {
-  div(
-    class = "enhanced-filter-condition",
+enhanced_filter_condition_ui <- function(
+  id,
+  value = "TRUE",
+  mode = "simple",
+  show_remove = TRUE,
+  available_columns = character(),
+  data = NULL
+) {
+  # Parse the expression to get initial values for simple mode
+  parsed <- NULL
+  selected_column <- NULL
+  range_values <- c(0, 100)
+  selected_values <- NULL
+  include_mode <- "include"
 
+  if (value != "TRUE" && value != "") {
+    # Always parse the expression to get column, even without data
+    parsed <- parse_simple(value, available_columns, data)
+    if (!is.null(parsed)) {
+      selected_column <- parsed$column
+      if (!is.null(parsed$range)) {
+        # For numeric columns, use the parsed range
+        range_values <- parsed$range
+      } else if (!is.null(parsed$values)) {
+        # For character columns, use the parsed values
+        selected_values <- parsed$values
+        include_mode <- if (parsed$include) "include" else "exclude"
+      }
+    }
+  }
+
+  # If we have a selected column, determine its type and set appropriate ranges
+  col_min <- 0
+  col_max <- 100
+  col_choices <- character(0)
+
+  if (
+    !is.null(selected_column) &&
+      !is.null(data) &&
+      selected_column %in% colnames(data)
+  ) {
+    col_data <- data[[selected_column]]
+    if (is.numeric(col_data)) {
+      col_range <- range(col_data, na.rm = TRUE)
+      col_min <- col_range[1]
+      col_max <- col_range[2]
+      # If no parsed range, use full column range
+      if (is.null(parsed) || is.null(parsed$range)) {
+        range_values <- col_range
+      }
+    } else {
+      # Character/factor column
+      col_choices <- unique(as.character(col_data))
+      col_choices <- col_choices[!is.na(col_choices)]
+    }
+  }
+
+  div(
+    id = paste0(id, "_panel"),
+    class = "enhanced-filter-condition position-relative",
+    # X button positioned absolutely on the right
+    if (show_remove) {
+      tags$button(
+        id = paste0(id, "_remove"),
+        type = "button",
+        class = "btn-close position-absolute top-0 end-0 m-2",
+        `aria-label` = "Remove condition",
+        onclick = paste0(
+          "Shiny.setInputValue('",
+          id,
+          "_remove', Math.random())"
+        )
+      )
+    },
     # Mode toggle at the top
     div(
       class = "mode-toggle",
-      radioButtons(
-        paste0(id, "_mode"),
-        label = "Mode:",
-        choices = c("Advanced" = "advanced", "Simple" = "simple"),
-        selected = mode,
-        inline = TRUE
-      ),
-      if (show_remove) {
-        actionButton(
-          paste0(id, "_remove"),
-          label = NULL,
-          icon = icon("trash-can"),
-          class = "btn btn-outline-danger btn-sm condition-delete"
+      # Left side: Label
+      # span("Mode:", class = "mode-label"),
+      # Right side: Toggle switch and remove button
+      div(
+        class = "mode-controls",
+        # Toggle switch (checked = advanced, unchecked = simple)
+        div(
+          class = "form-check form-switch d-inline-block",
+          tags$input(
+            class = "form-check-input",
+            type = "checkbox",
+            id = paste0(id, "_mode"),
+            role = "switch",
+            checked = if (mode == "advanced") "checked" else NULL,
+            `data-bs-toggle` = "tooltip",
+            `data-bs-placement` = "left",
+            title = "Toggle between simple mode (off) and advanced mode (on)"
+          ),
+          tags$label(
+            class = "form-check-label ms-2",
+            `for` = paste0(id, "_mode"),
+            id = paste0(id, "_mode_label"),
+            if (mode == "advanced") "Advanced" else "Simple"
+          )
         )
-      }
+      )
     ),
-
     # Simple vs advanced mode panels
-    tagList(
+    div(
       # Simple mode UI (initially hidden if mode is advanced)
       div(
         id = paste0(id, "_simple_panel"),
@@ -929,29 +1266,95 @@ enhanced_filter_condition_ui <- function(id, value = "TRUE", mode = "advanced",
         div(
           class = "row mb-2",
           div(
-            class = "col-md-4",
+            class = "col-md-6",
             selectInput(
               paste0(id, "_column"),
-              label = "Column",
-              choices = c("Select column..." = "", available_columns),
-              selected = NULL,
+              label = tags$small("Column", class = "text-muted"),
+              choices = available_columns,
+              selected = selected_column,
               width = "100%"
             )
           ),
           div(
-            class = "col-md-8",
-            # Placeholder for operation-specific UI (Phase 3)
-            uiOutput(paste0(id, "_simple_ui"))
+            class = "col-md-6",
+            # Static UI elements that are shown/hidden based on column type
+            # Numeric column: range slider (hidden by default)
+            div(
+              id = paste0(id, "_numeric_ui"),
+              style = if (
+                !is.null(selected_column) &&
+                  !is.null(data) &&
+                  selected_column %in% colnames(data) &&
+                  is.numeric(data[[selected_column]])
+              ) {
+                ""
+              } else {
+                "display: none;"
+              },
+              sliderInput(
+                paste0(id, "_range"),
+                label = tags$small("Value Range", class = "text-muted"),
+                min = col_min,
+                max = col_max,
+                value = range_values,
+                width = "100%"
+              )
+            ),
+            # Character/factor column: multi-select (hidden by default)
+            div(
+              id = paste0(id, "_character_ui"),
+              style = if (
+                !is.null(selected_column) &&
+                  !is.null(data) &&
+                  selected_column %in% colnames(data) &&
+                  !is.numeric(data[[selected_column]])
+              ) {
+                ""
+              } else {
+                "display: none;"
+              },
+              selectInput(
+                paste0(id, "_values"),
+                label = tags$small("Values", class = "text-muted"),
+                choices = col_choices,
+                selected = selected_values,
+                multiple = TRUE
+              ),
+              radioButtons(
+                paste0(id, "_include"),
+                label = NULL,
+                choices = c("Include" = "include", "Exclude" = "exclude"),
+                selected = include_mode,
+                inline = TRUE
+              )
+            )
           )
         )
       ),
 
-      # Advanced mode UI (ACE editor)
+      # Advanced mode UI (ACE editor with apply button)
       div(
         id = paste0(id, "_advanced_panel"),
         style = if (mode == "simple") "display: none;" else "",
+        tags$label(
+          class = "form-check-label pb-2",
+          tags$small("R Expression", class = "text-muted")
+        ),
         class = "condition-code",
-        setup_ace_editor(id, value = value)
+        div(
+          class = "input-group d-flex align-items-start gap-2",
+          div(
+            style = "flex: 1;",
+            setup_ace_editor(id, value = value)
+          ),
+          actionButton(
+            paste0(id, "_apply"),
+            label = "Apply",
+            icon = icon("arrow-right"),
+            class = "btn btn-outline-success btn-sm apply-btn",
+            title = "Apply expression"
+          )
+        )
       )
     )
   )

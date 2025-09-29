@@ -125,9 +125,13 @@ parse_value_filter <- function(conditions = list()) {
         max_val <- values[2]
 
         if (mode == "include") {
-          filter_part <- glue::glue("`{column}` >= {min_val} & `{column}` <= {max_val}")
+          filter_part <- glue::glue(
+            "`{column}` >= {min_val} & `{column}` <= {max_val}"
+          )
         } else {
-          filter_part <- glue::glue("!(`{column}` >= {min_val} & `{column}` <= {max_val})")
+          filter_part <- glue::glue(
+            "!(`{column}` >= {min_val} & `{column}` <= {max_val})"
+          )
         }
       } else {
         # Handle empty values - skip conditions with no values

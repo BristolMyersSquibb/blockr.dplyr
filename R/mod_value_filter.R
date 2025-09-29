@@ -42,7 +42,10 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     # Initialize based on condition types
     initial_use_slider <- list()
     for (i in seq_along(initial_conditions)) {
-      if (!is.null(initial_conditions[[i]]$type) && initial_conditions[[i]]$type == "range") {
+      if (
+        !is.null(initial_conditions[[i]]$type) &&
+          initial_conditions[[i]]$type == "range"
+      ) {
         initial_use_slider[[as.character(i)]] <- TRUE
       }
     }
@@ -51,7 +54,6 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
-
 
     # Get available columns
     available_columns <- reactive({
@@ -124,7 +126,10 @@ mod_value_filter_server <- function(id, get_value, get_data) {
         }
 
         # Check if using slider for this condition
-        if (!is.null(use_slider[[as.character(i)]]) && use_slider[[as.character(i)]]) {
+        if (
+          !is.null(use_slider[[as.character(i)]]) &&
+            use_slider[[as.character(i)]]
+        ) {
           # Get slider values
           slider_id <- paste0("condition_", i, "_slider")
           slider_val <- input[[slider_id]]
@@ -134,9 +139,9 @@ mod_value_filter_server <- function(id, get_value, get_data) {
           if (!is.null(column) && column != "" && !is.null(slider_val)) {
             condition_data <- list(
               column = column,
-              values = slider_val,  # Store range as values
+              values = slider_val, # Store range as values
               mode = mode,
-              type = "range"  # Mark this as a range condition
+              type = "range" # Mark this as a range condition
             )
             if (!is.null(operator)) {
               condition_data$operator <- operator
@@ -164,7 +169,7 @@ mod_value_filter_server <- function(id, get_value, get_data) {
               column = column,
               values = values,
               mode = mode,
-              type = "values"  # Mark this as a values condition
+              type = "values" # Mark this as a values condition
             )
             if (!is.null(operator)) {
               condition_data$operator <- operator
@@ -176,7 +181,6 @@ mod_value_filter_server <- function(id, get_value, get_data) {
 
       result
     }
-
 
     # Add new condition
     observeEvent(input$add_condition, {
@@ -208,7 +212,11 @@ mod_value_filter_server <- function(id, get_value, get_data) {
       lapply(indices, function(i) {
         observeEvent(input[[paste0("condition_", i, "_use_slider")]], {
           use_slider <- r_use_slider()
-          use_slider[[as.character(i)]] <- input[[paste0("condition_", i, "_use_slider")]]
+          use_slider[[as.character(i)]] <- input[[paste0(
+            "condition_",
+            i,
+            "_use_slider"
+          )]]
           r_use_slider(use_slider)
         })
       })
@@ -239,7 +247,6 @@ mod_value_filter_server <- function(id, get_value, get_data) {
         })
       })
     })
-
 
     # Render UI dynamically
     output$conditions_ui <- renderUI({
@@ -295,11 +302,11 @@ mod_value_filter_server <- function(id, get_value, get_data) {
               column = condition$column,
               values = condition$values,
               mode = condition$mode %||% "include",
-              type = condition$type %||% "values",  # Pass the type
+              type = condition$type %||% "values", # Pass the type
               available_columns = cols,
               get_unique_values = get_unique_values,
               show_remove = (length(indices) > 1),
-              ns = ns  # Pass namespace function
+              ns = ns # Pass namespace function
             )
           )
         )
@@ -353,9 +360,11 @@ mod_value_filter_server <- function(id, get_value, get_data) {
               for (j in seq_along(current_conds)) {
                 if (j <= length(isolate(r_condition_indices()))) {
                   if (isolate(r_condition_indices())[j] == index) {
-                    if (current_conds[[j]]$column == column &&
+                    if (
+                      current_conds[[j]]$column == column &&
                         !is.null(current_conds[[j]]$type) &&
-                        current_conds[[j]]$type == "values") {
+                        current_conds[[j]]$type == "values"
+                    ) {
                       saved_values <- current_conds[[j]]$values
                     }
                     break
@@ -377,9 +386,11 @@ mod_value_filter_server <- function(id, get_value, get_data) {
                 for (j in seq_along(current_conds)) {
                   if (j <= length(isolate(r_condition_indices()))) {
                     if (isolate(r_condition_indices())[j] == index) {
-                      if (current_conds[[j]]$column == column &&
+                      if (
+                        current_conds[[j]]$column == column &&
                           !is.null(current_conds[[j]]$type) &&
-                          current_conds[[j]]$type == "range") {
+                          current_conds[[j]]$type == "range"
+                      ) {
                         saved_range <- current_conds[[j]]$values
                       }
                       break
@@ -396,13 +407,17 @@ mod_value_filter_server <- function(id, get_value, get_data) {
               }
             } else {
               # Clear selections when no column selected
-              updateSelectInput(session, values_id, choices = list(), selected = character(0))
+              updateSelectInput(
+                session,
+                values_id,
+                choices = list(),
+                selected = character(0)
+              )
             }
           })
         })
       }
     })
-
 
     # Return the reactive conditions
     list(
@@ -545,11 +560,11 @@ value_filter_condition_ui <- function(
   column = NULL,
   values = character(0),
   mode = "include",
-  type = "values",  # Add type parameter
+  type = "values", # Add type parameter
   available_columns = character(0),
   get_unique_values = function(col) character(0),
   show_remove = TRUE,
-  ns = function(x) x  # Allow namespace to be passed in
+  ns = function(x) x # Allow namespace to be passed in
 ) {
   # Initialize choices - populate with actual values if we have a column
   unique_values <- if (!is.null(column) && column != "") {
@@ -575,14 +590,17 @@ value_filter_condition_ui <- function(
     values
   } else if (!is.null(column) && column != "") {
     # Get range for the column if numeric
-    tryCatch({
-      vals <- get_unique_values(column)
-      if (is.numeric(vals) && length(vals) > 0) {
-        range(vals, na.rm = TRUE)
-      } else {
-        c(0, 1)
-      }
-    }, error = function(e) c(0, 1))
+    tryCatch(
+      {
+        vals <- get_unique_values(column)
+        if (is.numeric(vals) && length(vals) > 0) {
+          range(vals, na.rm = TRUE)
+        } else {
+          c(0, 1)
+        }
+      },
+      error = function(e) c(0, 1)
+    )
   } else {
     c(0, 1)
   }

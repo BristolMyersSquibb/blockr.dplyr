@@ -7,9 +7,10 @@
 enhanced_filter_condition_ui(
   id,
   value = "TRUE",
-  mode = "advanced",
+  mode = "simple",
   show_remove = TRUE,
-  available_columns = character()
+  available_columns = character(),
+  data = NULL
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ enhanced_filter_condition_ui(
 
 \item{show_remove}{Whether to show remove button}
 
-\item{available_columns}{Character vector of column names available for filtering}
+\item{available_columns}{Available column names}
+
+\item{data}{Optional data frame for parsing expressions}
 }
 \value{
 A div containing the row UI
