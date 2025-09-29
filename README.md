@@ -25,6 +25,13 @@ library(blockr.dplyr)
 # Create and serve a simple filter block
 pkgload::load_all(); blockr.core::serve(new_enhanced_filter_block("Petal.Length > 5"),data = list(data = iris))
 
+
+
+pkgload::load_all(); blockr.core::serve(new_enhanced_filter_block(),data = list(data = iris))
+
+
+
+
 blockr.core::serve(
   new_mutate_block("Petal.Length.5 = Petal.Length * 5"),
   data = list(data = iris)

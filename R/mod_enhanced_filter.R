@@ -408,6 +408,23 @@ mod_enhanced_filter_server <- function(
             # Update stored previous value
             session$userData[[prev_col_key]] <- selected_col
 
+            # When column changes in simple mode, update the stored expression to "TRUE"
+            # This ensures the range slider resets to the full range of the new column
+            current_conditions <- isolate(r_conditions())
+            current_indices <- isolate(r_condition_indices())
+            cond_index <- which(current_indices == idx)
+
+            if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+              cond_obj <- current_conditions[[cond_index]]
+
+              # Check if in simple mode
+              if (is.list(cond_obj) && !is.null(cond_obj$mode) && cond_obj$mode == "simple") {
+                # Update the expression to "TRUE" to represent full range
+                current_conditions[[cond_index]]$expression <- "TRUE"
+                r_conditions(current_conditions)
+              }
+            }
+
             # Get the namespace-qualified IDs for UI elements
             numeric_ui_id <- paste0("condition_", idx, "_numeric_ui")
             character_ui_id <- paste0("condition_", idx, "_character_ui")
@@ -433,36 +450,16 @@ mod_enhanced_filter_server <- function(
               # Update slider range and values
               col_range <- range(col_data, na.rm = TRUE)
 
-              # Get the actual range from the stored condition
-              current_conditions <- r_conditions()
-              current_indices <- r_condition_indices()
-              cond_index <- which(current_indices == idx)
+              # Since we reset the expression to "TRUE" when column changes,
+              # the slider should default to the full range
               slider_value <- col_range # Default to full range
-
-              # Validate that we have exactly one matching index
-              if (length(cond_index) != 1) {
-                return()
-              }
-
-              if (cond_index <= length(current_conditions)) {
-                cond_obj <- current_conditions[[cond_index]]
-                expr <- if (is.list(cond_obj)) cond_obj$expression else cond_obj
-
-                # Parse the expression to get the range
-                if (!is.null(expr) && expr != "" && expr != "TRUE") {
-                  parsed <- parse_simple(expr, colnames(data), data)
-                  if (!is.null(parsed) && !is.null(parsed$range)) {
-                    slider_value <- parsed$range
-                  }
-                }
-              }
 
               updateSliderInput(
                 session,
                 paste0("condition_", idx, "_range"),
                 min = col_range[1],
                 max = col_range[2],
-                value = slider_value, # Use parsed value, not col_range
+                value = slider_value, # Use full range
                 step = if (all(col_data == floor(col_data), na.rm = TRUE)) {
                   1
                 } else {
@@ -478,39 +475,13 @@ mod_enhanced_filter_server <- function(
               unique_vals <- unique(as.character(col_data))
               unique_vals <- unique_vals[!is.na(unique_vals)]
 
-              # Get the actual selected values from the stored condition
-              current_conditions <- r_conditions()
-              current_indices <- r_condition_indices()
-              cond_index <- which(current_indices == idx)
+              # Since we reset the expression to "TRUE" when column changes,
+              # default to selecting the first value
               selected_vals <- if (length(unique_vals) > 0) {
                 unique_vals[1]
               } else {
                 NULL
               } # Default
-
-              # Validate that we have exactly one matching index
-              if (length(cond_index) != 1) {
-                return()
-              }
-
-              if (cond_index <= length(current_conditions)) {
-                cond_obj <- current_conditions[[cond_index]]
-                expr <- if (is.list(cond_obj)) cond_obj$expression else cond_obj
-
-                # Parse the expression to get the selected values
-                if (!is.null(expr) && expr != "" && expr != "TRUE") {
-                  parsed <- parse_simple(expr, colnames(data), data)
-                  if (!is.null(parsed) && !is.null(parsed$values)) {
-                    selected_vals <- parsed$values
-                    # Also update the include/exclude radio button
-                    updateRadioButtons(
-                      session,
-                      paste0("condition_", idx, "_include"),
-                      selected = if (parsed$include) "include" else "exclude"
-                    )
-                  }
-                }
-              }
 
               updateSelectInput(
                 session,
