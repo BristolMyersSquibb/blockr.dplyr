@@ -195,9 +195,69 @@ mod_enhanced_filter_server <- function(
       })
     })
 
-    # Wrapper function for parse_simple utility
-    parse_expression_for_simple <- function(expr_str, i) {
+    # Helper to parse expression with standard parameters and NULL handling
+    parse_condition_expression <- function(expr_str) {
+      if (is.null(expr_str) || expr_str == "" || expr_str == "TRUE") {
+        return(NULL)
+      }
       parse_simple(expr_str, r_cols(), get_data())
+    }
+
+    # Helper to get condition by index
+    get_condition_for_index <- function(idx) {
+      current_conditions <- isolate(r_conditions())
+      current_indices <- isolate(r_condition_indices())
+      cond_index <- which(current_indices == idx)
+
+      if (length(cond_index) != 1 || cond_index > length(current_conditions)) {
+        return(NULL)
+      }
+
+      current_conditions[[cond_index]]
+    }
+
+    # Helper to extract expression from condition object
+    get_condition_expression <- function(cond_obj) {
+      if (is.null(cond_obj)) return(NULL)
+      if (is.list(cond_obj)) cond_obj$expression else cond_obj
+    }
+
+    # Helper to check if condition is in simple mode
+    is_condition_simple <- function(cond_obj) {
+      if (is.null(cond_obj)) return(FALSE)
+      if (!is.list(cond_obj)) return(TRUE)  # Legacy format defaults to simple
+      cond_obj$mode == "simple"
+    }
+
+    # Helper to parse condition by index (combines getting and parsing)
+    get_parsed_condition_by_index <- function(idx) {
+      cond_obj <- get_condition_for_index(idx)
+      if (is.null(cond_obj)) return(NULL)
+
+      expr <- get_condition_expression(cond_obj)
+      parse_condition_expression(expr)
+    }
+
+    # Helper to update condition at index
+    update_condition_at_index <- function(idx, field, value) {
+      current_conditions <- isolate(r_conditions())
+      current_indices <- isolate(r_condition_indices())
+      cond_index <- which(current_indices == idx)
+
+      if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
+        if (is.list(current_conditions[[cond_index]])) {
+          current_conditions[[cond_index]][[field]] <- value
+        } else {
+          # For simple string conditions being updated
+          if (field == "expression") {
+            current_conditions[[cond_index]] <- value
+          }
+        }
+        r_conditions(current_conditions)
+        TRUE
+      } else {
+        FALSE
+      }
     }
 
     # Track mode changes and update conditionalPanel
@@ -254,7 +314,7 @@ mod_enhanced_filter_server <- function(
               # When switching to simple mode, try to parse the expression
               if (old_mode != "simple") {
                 expr_str <- input[[paste0("condition_", i)]]
-                parsed <- parse_simple(expr_str, r_cols(), get_data())
+                parsed <- parse_condition_expression(expr_str)
 
                 if (!is.null(parsed)) {
                   # Update column selection
@@ -361,12 +421,21 @@ mod_enhanced_filter_server <- function(
       for (i in indices) {
         column_id <- paste0("condition_", i, "_column")
 
-        # Update column choices
+        # Get the default column from the stored condition
+        default_column <- cols[1]  # Fallback to first column
+
+        # Check if we have a stored condition with a column selection
+        parsed <- get_parsed_condition_by_index(i)
+        if (!is.null(parsed) && !is.null(parsed$column)) {
+          default_column <- parsed$column
+        }
+
+        # Update column choices, preserving initial selection from parsed condition
         updateSelectInput(
           session,
           inputId = column_id,
           choices = cols,
-          selected = input[[column_id]] %||% cols[1]
+          selected = input[[column_id]] %||% default_column
         )
       }
     })
@@ -405,23 +474,18 @@ mod_enhanced_filter_server <- function(
               return() # No change, don't update
             }
 
+            # Check if this is initialization (prev_col is NULL) or an actual change
+            is_initialization <- is.null(prev_col)
+
             # Update stored previous value
             session$userData[[prev_col_key]] <- selected_col
 
-            # When column changes in simple mode, update the stored expression to "TRUE"
-            # This ensures the range slider resets to the full range of the new column
-            current_conditions <- isolate(r_conditions())
-            current_indices <- isolate(r_condition_indices())
-            cond_index <- which(current_indices == idx)
-
-            if (length(cond_index) == 1 && cond_index <= length(current_conditions)) {
-              cond_obj <- current_conditions[[cond_index]]
-
-              # Check if in simple mode
-              if (is.list(cond_obj) && !is.null(cond_obj$mode) && cond_obj$mode == "simple") {
-                # Update the expression to "TRUE" to represent full range
-                current_conditions[[cond_index]]$expression <- "TRUE"
-                r_conditions(current_conditions)
+            # Only reset expression when user actively changes column, not on initialization
+            if (!is_initialization) {
+              # When column changes in simple mode, update the stored expression to "TRUE"
+              # This ensures the range slider resets to the full range of the new column
+              if (is_condition_simple(idx)) {
+                update_condition_at_index(idx, "expression", "TRUE")
               }
             }
 
@@ -449,17 +513,22 @@ mod_enhanced_filter_server <- function(
 
               # Update slider range and values
               col_range <- range(col_data, na.rm = TRUE)
-
-              # Since we reset the expression to "TRUE" when column changes,
-              # the slider should default to the full range
               slider_value <- col_range # Default to full range
+
+              # On initialization, try to parse the stored expression to get the range
+              if (is_initialization) {
+                parsed <- get_parsed_condition_by_index(idx)
+                if (!is.null(parsed) && !is.null(parsed$range)) {
+                  slider_value <- parsed$range
+                }
+              }
 
               updateSliderInput(
                 session,
                 paste0("condition_", idx, "_range"),
                 min = col_range[1],
                 max = col_range[2],
-                value = slider_value, # Use full range
+                value = slider_value, # Use parsed value on init, full range on change
                 step = if (all(col_data == floor(col_data), na.rm = TRUE)) {
                   1
                 } else {
@@ -475,19 +544,28 @@ mod_enhanced_filter_server <- function(
               unique_vals <- unique(as.character(col_data))
               unique_vals <- unique_vals[!is.na(unique_vals)]
 
-              # Since we reset the expression to "TRUE" when column changes,
-              # default to selecting the first value
-              selected_vals <- if (length(unique_vals) > 0) {
-                unique_vals[1]
-              } else {
-                NULL
-              } # Default
+              # Default to no selection (NULL) to represent no filter
+              selected_vals <- NULL # No selection = no filter = TRUE
+
+              # On initialization, try to parse the stored expression to get the selected values
+              if (is_initialization) {
+                parsed <- get_parsed_condition_by_index(idx)
+                if (!is.null(parsed) && !is.null(parsed$values)) {
+                  selected_vals <- parsed$values
+                  # Also update the include/exclude radio button
+                  updateRadioButtons(
+                    session,
+                    paste0("condition_", idx, "_include"),
+                    selected = if (parsed$include) "include" else "exclude"
+                  )
+                }
+              }
 
               updateSelectInput(
                 session,
                 paste0("condition_", idx, "_values"),
                 choices = unique_vals,
-                selected = selected_vals # Use parsed values
+                selected = selected_vals # Use parsed values on init, NULL on change
               )
             }
           })
@@ -541,22 +619,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_column")]],
               {
                 # Check if in simple mode
-                current_conditions <- isolate(r_conditions())
-                current_indices <- isolate(r_condition_indices())
-                cond_index <- which(current_indices == idx)
-
-                in_simple_mode <- FALSE
-                if (
-                  length(cond_index) == 1 &&
-                    cond_index <= length(current_conditions)
-                ) {
-                  if (is.list(current_conditions[[cond_index]])) {
-                    in_simple_mode <- current_conditions[[cond_index]]$mode ==
-                      "simple"
-                  }
-                }
-
-                if (in_simple_mode) {
+                if (is_condition_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -573,22 +636,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_range")]],
               {
                 # Check if in simple mode
-                current_conditions <- isolate(r_conditions())
-                current_indices <- isolate(r_condition_indices())
-                cond_index <- which(current_indices == idx)
-
-                in_simple_mode <- FALSE
-                if (
-                  length(cond_index) == 1 &&
-                    cond_index <= length(current_conditions)
-                ) {
-                  if (is.list(current_conditions[[cond_index]])) {
-                    in_simple_mode <- current_conditions[[cond_index]]$mode ==
-                      "simple"
-                  }
-                }
-
-                if (in_simple_mode) {
+                if (is_condition_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -605,22 +653,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_values")]],
               {
                 # Check if in simple mode
-                current_conditions <- isolate(r_conditions())
-                current_indices <- isolate(r_condition_indices())
-                cond_index <- which(current_indices == idx)
-
-                in_simple_mode <- FALSE
-                if (
-                  length(cond_index) == 1 &&
-                    cond_index <= length(current_conditions)
-                ) {
-                  if (is.list(current_conditions[[cond_index]])) {
-                    in_simple_mode <- current_conditions[[cond_index]]$mode ==
-                      "simple"
-                  }
-                }
-
-                if (in_simple_mode) {
+                if (is_condition_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -637,22 +670,7 @@ mod_enhanced_filter_server <- function(
               input[[paste0("condition_", idx, "_include")]],
               {
                 # Check if in simple mode
-                current_conditions <- isolate(r_conditions())
-                current_indices <- isolate(r_condition_indices())
-                cond_index <- which(current_indices == idx)
-
-                in_simple_mode <- FALSE
-                if (
-                  length(cond_index) == 1 &&
-                    cond_index <= length(current_conditions)
-                ) {
-                  if (is.list(current_conditions[[cond_index]])) {
-                    in_simple_mode <- current_conditions[[cond_index]]$mode ==
-                      "simple"
-                  }
-                }
-
-                if (in_simple_mode) {
+                if (is_condition_simple(idx)) {
                   expr <- build_simple_expression(idx)
                   updateAceEditor(
                     session,
@@ -735,14 +753,9 @@ mod_enhanced_filter_server <- function(
               ace_val <- input[[ace_id]]
               if (!is.null(ace_val)) {
                 # Check if this is in advanced mode
-                conditions <- r_conditions()
-                current_indices <- r_condition_indices()
-                cond_index <- which(current_indices == i)
+                cond_obj <- get_condition_for_index(i)
 
-                if (
-                  length(cond_index) > 0 && cond_index <= length(conditions)
-                ) {
-                  cond_obj <- conditions[[cond_index]]
+                if (!is.null(cond_obj)) {
                   is_advanced <- is.list(cond_obj) &&
                     (cond_obj$mode %||% "simple") == "advanced"
 
@@ -763,17 +776,7 @@ mod_enhanced_filter_server <- function(
                     )
                   } else {
                     # Simple mode - update immediately
-                    if (is.list(conditions[[cond_index]])) {
-                      conditions[[cond_index]]$expression <- ace_val
-                    } else {
-                      # Legacy string - convert to object
-                      conditions[[cond_index]] <- new_filter_condition(
-                        ace_val,
-                        if (cond_index == 1) NULL else "&"
-                      )
-                    }
-                    # Update immediately for simple mode
-                    r_conditions(conditions)
+                    update_condition_at_index(i, "expression", ace_val)
                   }
                 }
               }
@@ -802,23 +805,11 @@ mod_enhanced_filter_server <- function(
 
               if (!is.null(ace_val)) {
                 # Apply this advanced expression
-                conditions <- r_conditions()
-                current_indices <- r_condition_indices()
-                cond_index <- which(current_indices == i)
+                cond_obj <- get_condition_for_index(i)
 
-                if (
-                  length(cond_index) > 0 && cond_index <= length(conditions)
-                ) {
+                if (!is.null(cond_obj)) {
                   # Update the condition
-                  if (is.list(conditions[[cond_index]])) {
-                    conditions[[cond_index]]$expression <- ace_val
-                  } else {
-                    conditions[[cond_index]] <- new_filter_condition(
-                      ace_val,
-                      if (cond_index == 1) NULL else "&"
-                    )
-                  }
-                  r_conditions(conditions)
+                  update_condition_at_index(i, "expression", ace_val)
 
                   # Remove from pending
                   pending <- r_pending_advanced()

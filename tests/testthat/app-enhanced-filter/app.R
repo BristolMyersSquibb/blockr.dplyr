@@ -1,8 +1,10 @@
 # Minimal Shiny app for testing enhanced filter block
 # This app is used by shinytest2 to test column switching behavior
 
+# Load development version
+pkgload::load_all()
+
 library(blockr.core)
-library(blockr.dplyr)
 
 # Since blockr.core::serve() returns a shiny app object,
 # we can use it directly for shinytest2
