@@ -260,8 +260,13 @@ parse_filter_string <- function(filter_string) {
 #' @return Logical indicating if expression is simple
 #' @keywords internal
 can_parse_simple <- function(expression) {
-  if (is.null(expression) || expression == "" || expression == "TRUE") {
+  if (is.null(expression) || expression == "") {
     return(FALSE)
+  }
+
+  # "TRUE" is a valid simple expression (represents no filter)
+  if (expression == "TRUE") {
+    return(TRUE)
   }
 
   # Pattern for simple comparisons: column [operator] value
