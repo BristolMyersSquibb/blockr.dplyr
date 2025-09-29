@@ -99,7 +99,13 @@ parse_enhanced_filter <- function(filter_string = "") {
   parse(text = text)[1]
 }
 
-apply_enhanced_filter <- function(data, string, r_expr_validated, r_string_validated, pending_advanced = FALSE) {
+apply_enhanced_filter <- function(
+  data,
+  string,
+  r_expr_validated,
+  r_string_validated,
+  pending_advanced = FALSE
+) {
   # Don't apply if there are pending advanced expressions
   if (pending_advanced) {
     return()

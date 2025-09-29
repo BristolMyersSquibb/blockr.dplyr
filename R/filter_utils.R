@@ -278,15 +278,20 @@ can_parse_simple <- function(expression) {
   if (grepl("^\\s*between\\s*\\(", expression)) {
     # Check if between contains function calls in its arguments
     # Extract the arguments inside between()
-    between_match <- regmatches(expression,
-      regexec("between\\s*\\(\\s*([^,]+)\\s*,\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)", expression))
+    between_match <- regmatches(
+      expression,
+      regexec(
+        "between\\s*\\(\\s*([^,]+)\\s*,\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)",
+        expression
+      )
+    )
 
     if (length(between_match[[1]]) > 0) {
       # Check if any argument contains a function call
       args <- between_match[[1]][2:4]
       # Look for function patterns in the arguments
       if (any(grepl("[a-zA-Z_][a-zA-Z0-9._]*\\s*\\(", args))) {
-        return(FALSE)  # between with function calls is complex
+        return(FALSE) # between with function calls is complex
       }
     }
     return(TRUE)
@@ -317,7 +322,9 @@ can_parse_simple <- function(expression) {
 
       # Check for arithmetic operators (but allow negative numbers)
       # Look for operators with spaces or between identifiers
-      if (grepl("\\s[+*/-]\\s|[a-zA-Z_][a-zA-Z0-9._]*\\s*[+*/-]", right_no_quotes)) {
+      if (
+        grepl("\\s[+*/-]\\s|[a-zA-Z_][a-zA-Z0-9._]*\\s*[+*/-]", right_no_quotes)
+      ) {
         return(FALSE)
       }
     }
@@ -328,7 +335,18 @@ can_parse_simple <- function(expression) {
   col_pattern <- "(`[^`]+`|[a-zA-Z_][a-zA-Z0-9._]*)"
 
   # Match pattern: column operator column (where second column is not a known constant)
-  if (grepl(paste0("^\\s*", col_pattern, "\\s*(==|!=|>|<|>=|<=)\\s*", col_pattern, "\\s*$"), expression)) {
+  if (
+    grepl(
+      paste0(
+        "^\\s*",
+        col_pattern,
+        "\\s*(==|!=|>|<|>=|<=)\\s*",
+        col_pattern,
+        "\\s*$"
+      ),
+      expression
+    )
+  ) {
     # Check if the right side is actually a column (not a constant)
     parts <- strsplit(expression, "(==|!=|>|<|>=|<=)")[[1]]
     if (length(parts) >= 2) {

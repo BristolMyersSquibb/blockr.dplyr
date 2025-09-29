@@ -218,14 +218,20 @@ mod_enhanced_filter_server <- function(
 
     # Helper to extract expression from condition object
     get_condition_expression <- function(cond_obj) {
-      if (is.null(cond_obj)) return(NULL)
+      if (is.null(cond_obj)) {
+        return(NULL)
+      }
       if (is.list(cond_obj)) cond_obj$expression else cond_obj
     }
 
     # Helper to check if condition is in simple mode
     is_condition_simple <- function(cond_obj) {
-      if (is.null(cond_obj)) return(FALSE)
-      if (!is.list(cond_obj)) return(TRUE)  # Legacy format defaults to simple
+      if (is.null(cond_obj)) {
+        return(FALSE)
+      }
+      if (!is.list(cond_obj)) {
+        return(TRUE)
+      } # Legacy format defaults to simple
       cond_obj$mode == "simple"
     }
 
@@ -238,7 +244,9 @@ mod_enhanced_filter_server <- function(
     # Helper to parse condition by index (combines getting and parsing)
     get_parsed_condition_by_index <- function(idx) {
       cond_obj <- get_condition_for_index(idx)
-      if (is.null(cond_obj)) return(NULL)
+      if (is.null(cond_obj)) {
+        return(NULL)
+      }
 
       expr <- get_condition_expression(cond_obj)
       parse_condition_expression(expr)
@@ -428,7 +436,7 @@ mod_enhanced_filter_server <- function(
         column_id <- paste0("condition_", i, "_column")
 
         # Get the default column from the stored condition
-        default_column <- cols[1]  # Fallback to first column
+        default_column <- cols[1] # Fallback to first column
 
         # Check if we have a stored condition with a column selection
         parsed <- get_parsed_condition_by_index(i)
