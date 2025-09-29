@@ -22,24 +22,10 @@ devtools::install_github("BristolMyersSquibb/blockr.dplyr")
 ```r
 library(blockr.dplyr)
 
-# Create and serve a simple filter block
-pkgload::load_all(); blockr.core::serve(new_enhanced_filter_block("Petal.Length > 5"),data = list(data = iris))
-
-pkgload::load_all(); blockr.core::serve(new_enhanced_filter_block("Petal.Length > mean(Petal.Length)"),data = list(data = iris))
-
-
-
-
-pkgload::load_all(); blockr.core::serve(new_enhanced_filter_block(),data = list(data = iris))
-
-
-
-
 blockr.core::serve(
-  new_mutate_block("Petal.Length.5 = Petal.Length * 5"),
+  new_mutate_block(string = list(`Petal Length 5` = "Petal.Length * 5")),
   data = list(data = iris)
 )
-
 ```
 
 This launches an interactive web interface where you can:
@@ -129,13 +115,6 @@ blockr.core::serve(
 )
 ```
 
-**Key Features:**
-- 🎯 **Visual column selection** - Choose from dropdown
-- 🔍 **Dynamic value selection** - See all unique values, select multiple
-- ✅ **Include/Exclude modes** - Toggle between positive and negative filtering
-- ➕ **Multiple conditions** - Add conditions with AND/OR logic
-- 🚫 **No coding required** - Pure point-and-click interface
-
 **DAG board integration:**
 ```r
 library(blockr.core)
@@ -153,6 +132,39 @@ board <- blockr.ui::new_dag_board(
   ),
   links = c(
     filter_link = new_link("data_block", "value_filter_block", "data")
+  )
+)
+
+blockr.core::serve(board)
+```
+
+### Enhanced Filter Block - Advanced Row Filtering
+
+The most powerful filtering option, combining visual interface with R expression capabilities.
+
+**Simple usage:**
+```r
+library(blockr.dplyr)
+blockr.core::serve(
+  new_enhanced_filter_block("Sepal.Length > 5 & Species == 'setosa'"),
+  data = list(data = iris)
+)
+```
+
+**DAG board integration:**
+```r
+library(blockr.core)
+library(blockr.ui)
+
+board <- blockr.ui::new_dag_board(
+  blocks = c(
+    data_block = new_dataset_block("iris"),
+    enhanced_filter = new_enhanced_filter_block(
+      "Petal.Length > mean(Petal.Length) & Species != 'virginica'"
+    )
+  ),
+  links = c(
+    filter_link = new_link("data_block", "enhanced_filter", "data")
   )
 )
 
