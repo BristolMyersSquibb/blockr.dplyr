@@ -4,7 +4,8 @@
 #' (see [dplyr::summarize()]). Changes are applied after clicking the submit button.
 #'
 #' @param string Reactive expression returning character vector of
-#'   expressions
+#'   expressions. Names can be empty strings (`""`) to create unnamed expressions,
+#'   which allows helper functions to unpack multiple columns directly into the result.
 #' @param by Columns to define grouping
 #' @param ... Additional arguments forwarded to [new_block()]
 #
@@ -12,6 +13,21 @@
 #' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
+#'
+#' @section Named vs Unnamed Expressions:
+#' **Named expressions** (`name = expression`) create a single column that may contain
+#' nested data frames if the expression returns multiple columns:
+#' ```r
+#' string = list(result = "helper_func(...)")  # Creates 1 column named "result"
+#' ```
+#'
+#' **Unnamed expressions** (`"" = expression`) allow the result to unpack multiple
+#' columns directly into the output:
+#' ```r
+#' string_unnamed <- "helper_func(...)"
+#' names(string_unnamed) <- ""  # Creates multiple columns from helper_func
+#' ```
+#'
 #' @examples
 #' \dontrun{
 #' # Basic usage with mtcars dataset
@@ -21,6 +37,40 @@
 #' # With a custom dataset
 #' df <- data.frame(x = 1:5, y = letters[1:5])
 #' serve(new_summarize_block(), list(data = df))
+#'
+#' # Using a helper function that returns multiple columns
+#' # Define the helper in your environment first
+#' calc_stats <- function(df) {
+#'   data.frame(
+#'     mean_x = mean(df$x),
+#'     mean_y = mean(df$y),
+#'     sum_x = sum(df$x),
+#'     sum_y = sum(df$y)
+#'   )
+#' }
+#'
+#' # Create unnamed expression to unpack all columns
+#' my_string <- "calc_stats(pick(everything()))"
+#' names(my_string) <- ""  # Empty name = unpack columns
+#'
+#' serve(
+#'   new_summarize_block(string = my_string, by = "group"),
+#'   list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
+#' )
+#' # Result: group, mean_x, mean_y, sum_x, sum_y (5 columns, unpacked)
+#'
+#' # Alternative: Pass columns directly (simpler, no pick() needed)
+#' calc_stats_cols <- function(x, y) {
+#'   data.frame(mean_x = mean(x), mean_y = mean(y))
+#' }
+#'
+#' my_string2 <- "calc_stats_cols(x, y)"
+#' names(my_string2) <- ""
+#'
+#' serve(
+#'   new_summarize_block(string = my_string2, by = "group"),
+#'   list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
+#' )
 #' }
 #' @export
 new_summarize_block <- function(
@@ -103,12 +153,27 @@ parse_summarize <- function(summarize_string = "", by_selection = character()) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
-    # Apply backticks to non-syntactic column names on the left side
-    new_names <- backtick_if_needed(names(summarize_string))
-    summarize_string <- glue::glue(
-      "{new_names} = {unname(summarize_string)}"
-    )
-    summarize_string <- glue::glue_collapse(summarize_string, sep = ", ")
+    # Detect which expressions are unnamed (empty string or NA)
+    expr_names <- names(summarize_string)
+    is_unnamed <- is.na(expr_names) | expr_names == ""
+
+    # Build each expression part
+    expr_parts <- character(length(summarize_string))
+    for (i in seq_along(summarize_string)) {
+      if (is_unnamed[i]) {
+        # Unnamed: just the expression (allows unpacking multi-column results)
+        expr_parts[i] <- unname(summarize_string)[i]
+      } else {
+        # Named: use name = expression format
+        expr_parts[i] <- glue::glue(
+          "{backtick_if_needed(expr_names[i])} = {unname(summarize_string)[i]}"
+        )
+      }
+    }
+
+    # Combine all parts
+    summarize_string <- glue::glue_collapse(expr_parts, sep = ", ")
+
     if (length(by_selection) > 0 && !all(by_selection == "")) {
       by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
       glue::glue(

@@ -134,3 +134,140 @@ test_that("summarize block handles multiple grouping columns", {
   expect_equal(nrow(result), 6) # All combinations are unique in this case
   expect_true(all(c("group1", "group2", "mean_x", "sum_y") %in% names(result)))
 })
+
+test_that("parse_summarize handles unnamed expressions", {
+  library(dplyr)
+
+  # Define helper function that returns multiple columns
+  calc_stats <- function(df) {
+    data.frame(
+      mean_x = mean(df$x),
+      mean_y = mean(df$y)
+    )
+  }
+
+  # Test unnamed expression with empty string name
+  string_unnamed <- "calc_stats(pick(everything()))"
+  names(string_unnamed) <- ""
+
+  result <- parse_summarize(string_unnamed, by_selection = "group1")
+  expect_type(result, "expression")
+
+  code <- paste(deparse(result[[1]]), collapse = " ")
+  # Should NOT have "name =" prefix
+  expect_false(grepl("\\w+ = calc_stats", code))
+  # Should have the expression directly
+  expect_true(grepl("calc_stats\\(pick\\(everything\\(\\)\\)\\)", code))
+  expect_true(grepl('\\.by = c\\("group1"\\)', code))
+})
+
+test_that("unnamed expressions unpack multi-column results", {
+  library(dplyr)
+
+  # Define helper function
+  calc_stats <- function(df) {
+    data.frame(
+      mean_x = mean(df$x),
+      mean_y = mean(df$y)
+    )
+  }
+
+  # Create test data
+  data <- data.frame(
+    x = c(1, 2, 3, 4, 5, 6),
+    y = c(10, 20, 30, 40, 50, 60),
+    group1 = c("A", "A", "B", "B", "C", "C")
+  )
+
+  # Test unnamed expression (unpacks columns)
+  string_unnamed <- "calc_stats(pick(everything()))"
+  names(string_unnamed) <- ""
+  expr_unnamed <- parse_summarize(string_unnamed, by_selection = "group1")
+  result_unnamed <- eval(expr_unnamed)
+
+  # Should have 3 columns: group1, mean_x, mean_y (unpacked)
+  expect_equal(ncol(result_unnamed), 3)
+  expect_true(all(c("group1", "mean_x", "mean_y") %in% names(result_unnamed)))
+
+  # Test named expression (creates nested df)
+  string_named <- c(result = "calc_stats(pick(everything()))")
+  expr_named <- parse_summarize(string_named, by_selection = "group1")
+  result_named <- eval(expr_named)
+
+  # Should have 2 columns: group1, result (where result is nested df)
+  expect_equal(ncol(result_named), 2)
+  expect_true(all(c("group1", "result") %in% names(result_named)))
+})
+
+test_that("parse_summarize handles mixed named and unnamed expressions", {
+  library(dplyr)
+
+  # Define helper function
+  calc_means <- function(x, y) {
+    data.frame(mean_x = mean(x), mean_y = mean(y))
+  }
+
+  # Create mixed expressions: one named, one unnamed
+  string_mixed <- c("calc_means(x, y)")
+  names(string_mixed) <- c("")
+  string_mixed <- c(string_mixed, count = "n()")
+
+  result <- parse_summarize(string_mixed, by_selection = "group1")
+  expect_type(result, "expression")
+
+  code <- paste(deparse(result[[1]]), collapse = " ")
+  # Should have unnamed expression without "name ="
+  expect_true(grepl("calc_means\\(x, y\\)", code))
+  # Should have named expression with "name ="
+  expect_true(grepl("count = n\\(\\)", code))
+
+  # Test execution
+  data <- data.frame(
+    x = c(1, 2, 3, 4),
+    y = c(10, 20, 30, 40),
+    group1 = c("A", "A", "B", "B")
+  )
+
+  result_data <- eval(result)
+
+  # Should have 4 columns: group1, mean_x, mean_y (unpacked), count
+  expect_equal(ncol(result_data), 4)
+  expect_true(all(c("group1", "mean_x", "mean_y", "count") %in% names(result_data)))
+})
+
+test_that("unnamed expressions work with column-based helpers", {
+  library(dplyr)
+
+  # Helper that takes individual columns (simpler, no pick() needed)
+  calc_stats_cols <- function(x, y) {
+    data.frame(
+      mean_x = mean(x),
+      mean_y = mean(y),
+      sum_x = sum(x),
+      sum_y = sum(y)
+    )
+  }
+
+  # Create unnamed expression
+  string_unnamed <- "calc_stats_cols(x, y)"
+  names(string_unnamed) <- ""
+
+  expr <- parse_summarize(string_unnamed, by_selection = "group1")
+
+  # Test execution
+  data <- data.frame(
+    x = c(1, 2, 3, 4, 5, 6),
+    y = c(10, 20, 30, 40, 50, 60),
+    group1 = c("A", "A", "B", "B", "C", "C")
+  )
+
+  result <- eval(expr)
+
+  # Should have 5 columns: group1 + 4 unpacked columns
+  expect_equal(ncol(result), 5)
+  expect_true(all(c("group1", "mean_x", "mean_y", "sum_x", "sum_y") %in% names(result)))
+
+  # Verify calculations
+  expect_equal(result$mean_x[result$group1 == "A"], mean(c(1, 2)))
+  expect_equal(result$mean_y[result$group1 == "A"], mean(c(10, 20)))
+})

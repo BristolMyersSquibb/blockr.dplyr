@@ -59,7 +59,13 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
         name <- input[[name_id]]
         val <- input[[val_id]]
 
-        if (!is.null(name) && !is.null(val) && name != "" && val != "") {
+        # Allow empty names (for unnamed expressions that unpack multiple columns)
+        # Only require that val is not empty
+        if (!is.null(val) && val != "") {
+          # Use empty string for name if it's NULL or empty
+          if (is.null(name) || name == "") {
+            name <- ""
+          }
           result[[name]] <- val
         }
       }
