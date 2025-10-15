@@ -45,8 +45,7 @@ mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
       input$by_columns,
       {
         r_by_selection(input$by_columns %||% character())
-      },
-      ignoreNULL = FALSE
+      }
     )
 
     # Update choices when data changes, preserving selection
