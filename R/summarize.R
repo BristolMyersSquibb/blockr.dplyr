@@ -4,9 +4,12 @@
 #' (see [dplyr::summarize()]). Changes are applied after clicking the submit button.
 #'
 #' @param string Reactive expression returning character vector of
-#'   expressions. Names can be empty strings (`""`) to create unnamed expressions,
-#'   which allows helper functions to unpack multiple columns directly into the result.
+#'   expressions
 #' @param by Columns to define grouping
+#' @param unpack Logical flag to unpack data frame columns from helper functions.
+#'   When `TRUE`, expressions that return data frames will have their columns
+#'   unpacked into separate columns. When `FALSE`, data frames are kept as nested
+#'   list-columns. Default is `FALSE`.
 #' @param ... Additional arguments forwarded to [new_block()]
 #
 #' @return A block object for summarize operations
@@ -14,18 +17,25 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #'
-#' @section Named vs Unnamed Expressions:
-#' **Named expressions** (`name = expression`) create a single column that may contain
-#' nested data frames if the expression returns multiple columns:
-#' ```r
-#' string = list(result = "helper_func(...)")  # Creates 1 column named "result"
-#' ```
+#' @section Unpacking Helper Function Results:
+#' When `unpack = TRUE`, helper functions that return data frames will have their
+#' columns unpacked into separate columns in the result. This is useful for helper
+#' functions like `stat_label()` that return multiple statistics as columns.
 #'
-#' **Unnamed expressions** (`"" = expression`) allow the result to unpack multiple
-#' columns directly into the output:
 #' ```r
-#' string_unnamed <- "helper_func(...)"
-#' names(string_unnamed) <- ""  # Creates multiple columns from helper_func
+#' # Without unpacking (default)
+#' new_summarize_block(
+#'   string = list(stats = "helper_func(...)"),
+#'   unpack = FALSE
+#' )
+#' # Result: Creates nested list-column "stats" containing the data frame
+#'
+#' # With unpacking
+#' new_summarize_block(
+#'   string = list(stats = "helper_func(...)"),
+#'   unpack = TRUE
+#' )
+#' # Result: Columns from helper_func() are unpacked into separate columns
 #' ```
 #'
 #' @examples
@@ -38,7 +48,7 @@
 #' df <- data.frame(x = 1:5, y = letters[1:5])
 #' serve(new_summarize_block(), list(data = df))
 #'
-#' # Using a helper function that returns multiple columns
+#' # Using unpack to expand helper function results
 #' # Define the helper in your environment first
 #' calc_stats <- function(df) {
 #'   data.frame(
@@ -49,33 +59,22 @@
 #'   )
 #' }
 #'
-#' # Create unnamed expression to unpack all columns
-#' my_string <- "calc_stats(pick(everything()))"
-#' names(my_string) <- ""  # Empty name = unpack columns
-#'
+#' # With unpacking enabled
 #' serve(
-#'   new_summarize_block(string = my_string, by = "group"),
+#'   new_summarize_block(
+#'     string = list(stats = "calc_stats(pick(everything()))"),
+#'     by = "group",
+#'     unpack = TRUE
+#'   ),
 #'   list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
 #' )
-#' # Result: group, mean_x, mean_y, sum_x, sum_y (5 columns, unpacked)
-#'
-#' # Alternative: Pass columns directly (simpler, no pick() needed)
-#' calc_stats_cols <- function(x, y) {
-#'   data.frame(mean_x = mean(x), mean_y = mean(y))
-#' }
-#'
-#' my_string2 <- "calc_stats_cols(x, y)"
-#' names(my_string2) <- ""
-#'
-#' serve(
-#'   new_summarize_block(string = my_string2, by = "group"),
-#'   list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
-#' )
+#' # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
 #' }
 #' @export
 new_summarize_block <- function(
   string = list(count = "dplyr::n()"),
   by = character(),
+  unpack = FALSE,
   ...
 ) {
   # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
@@ -99,8 +98,20 @@ new_summarize_block <- function(
             get_cols = \() colnames(data())
           )
 
+          # Unpack reactive value
+          r_unpack <- reactiveVal(unpack)
+
+          # Observe unpack checkbox changes
+          observeEvent(
+            input$unpack,
+            {
+              r_unpack(input$unpack %||% FALSE)
+            },
+            ignoreNULL = FALSE
+          )
+
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_summarize(string, by))
+          r_expr_validated <- reactiveVal(parse_summarize(string, by, unpack))
           r_string_validated <- reactiveVal(string)
 
           # Validate and update on submit
@@ -110,7 +121,8 @@ new_summarize_block <- function(
               r_string(),
               r_expr_validated,
               r_string_validated,
-              r_by_selection()
+              r_by_selection(),
+              r_unpack()
             )
           })
 
@@ -118,28 +130,101 @@ new_summarize_block <- function(
             expr = r_expr_validated,
             state = list(
               string = reactive(as.list(r_string_validated())),
-              by = r_by_selection
+              by = r_by_selection,
+              unpack = r_unpack
             )
           )
         }
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        mod_multi_kvexpr_ui(NS(id, "mkv")),
-        mod_by_selector_ui(
-          NS(id, "by_selector"),
-          initial_choices = by,
-          initial_selected = by
-        ),
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # CSS for collapsible section
+        tags$style(HTML(sprintf(
+          "
+          #%s-advanced-options {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+          }
+          #%s-advanced-options.expanded {
+            max-height: 200px;
+            overflow: visible;
+            transition: max-height 0.5s ease-in;
+          }
+          .advanced-toggle {
+            cursor: pointer;
+            user-select: none;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #6c757d;
+          }
+          .advanced-toggle .chevron {
+            transition: transform 0.2s;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+          }
+          .advanced-toggle .chevron.rotated {
+            transform: rotate(90deg);
+          }
+          ",
+          id,
+          id
+        ))),
+
         div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
+          class = "m-3",
+          mod_multi_kvexpr_ui(NS(id, "mkv")),
+          mod_by_selector_ui(
+            NS(id, "by_selector"),
+            initial_choices = by,
+            initial_selected = by
+          ),
+
+          # Advanced Options Toggle
+          div(
+            class = "advanced-toggle text-muted",
+            id = NS(id, "advanced-toggle"),
+            onclick = sprintf(
+              "
+              const section = document.getElementById('%s');
+              const chevron = document.querySelector('#%s .chevron');
+              section.classList.toggle('expanded');
+              chevron.classList.toggle('rotated');
+              ",
+              NS(id, "advanced-options"),
+              NS(id, "advanced-toggle")
+            ),
+            tags$span(class = "chevron", "\u203A"),
+            "Show advanced options"
+          ),
+
+          # Advanced Options Section (Collapsible)
+          div(
+            id = NS(id, "advanced-options"),
+            div(
+              style = "padding: 10px 0;",
+              checkboxInput(
+                NS(id, "unpack"),
+                "Unpack columns from data frame results",
+                value = unpack
+              )
+            )
+          ),
+
+          div(
+            style = "text-align: right; margin-top: 10px;",
+            actionButton(
+              NS(id, "submit"),
+              "Submit",
+              icon = icon("paper-plane"),
+              class = "btn-primary"
+            )
           )
         )
       )
@@ -149,25 +234,28 @@ new_summarize_block <- function(
   )
 }
 
-parse_summarize <- function(summarize_string = "", by_selection = character()) {
+parse_summarize <- function(summarize_string = "", by_selection = character(), unpack = FALSE) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
-    # Detect which expressions are unnamed (empty string or NA)
-    expr_names <- names(summarize_string)
-    is_unnamed <- is.na(expr_names) | expr_names == ""
-
     # Build each expression part
     expr_parts <- character(length(summarize_string))
+    expr_names <- names(summarize_string)
+
     for (i in seq_along(summarize_string)) {
-      if (is_unnamed[i]) {
-        # Unnamed: just the expression (allows unpacking multi-column results)
+      if (unpack) {
+        # When unpacking: bare expression without name (unpacks data frame columns)
         expr_parts[i] <- unname(summarize_string)[i]
       } else {
-        # Named: use name = expression format
-        expr_parts[i] <- glue::glue(
-          "{backtick_if_needed(expr_names[i])} = {unname(summarize_string)[i]}"
-        )
+        # Normal mode: use name = expression format
+        # Only add name if it's not empty/NA
+        if (!is.na(expr_names[i]) && expr_names[i] != "") {
+          expr_parts[i] <- glue::glue(
+            "{backtick_if_needed(expr_names[i])} = {unname(summarize_string)[i]}"
+          )
+        } else {
+          expr_parts[i] <- unname(summarize_string)[i]
+        }
       }
     }
 
@@ -191,7 +279,8 @@ apply_summarize <- function(
   string,
   r_expr_validated,
   r_string_validated,
-  by_selection
+  by_selection,
+  unpack = FALSE
 ) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
   if (is.list(string)) {
@@ -200,14 +289,14 @@ apply_summarize <- function(
 
   # If empty or only whitespace, return simple summarize
   if (all(trimws(unname(string)) == "")) {
-    expr <- parse_summarize(string)
+    expr <- parse_summarize(string, character(), unpack)
     r_expr_validated(expr)
     return()
   }
 
   req(string)
   stopifnot(is.character(string), !is.null(names(string)))
-  expr <- try(parse_summarize(string, by_selection))
+  expr <- try(parse_summarize(string, by_selection, unpack))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(
