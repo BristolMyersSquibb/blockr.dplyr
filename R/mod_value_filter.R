@@ -7,14 +7,15 @@
 #' @param id The module ID
 #' @param get_value Function that returns initial conditions as a list
 #' @param get_data Function that returns the data frame for extracting unique values
+#' @param preserve_order Logical. If TRUE, preserves the order of selected values
 #'
-#' @return A reactive expression containing the current filter conditions
+#' @return A list with reactive expressions for conditions and preserve_order
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp sliderInput conditionalPanel updateSliderInput outputOptions
 #' @importFrom utils str
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags tagList
 #' @keywords internal
-mod_value_filter_server <- function(id, get_value, get_data) {
+mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FALSE) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -37,6 +38,9 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     # Store conditions as reactive value
     r_conditions <- reactiveVal(initial_conditions)
     r_data <- get_data
+
+    # Store preserve_order as reactive value
+    r_preserve_order <- reactiveVal(preserve_order)
 
     # Track which conditions use sliders (for numeric columns)
     # Initialize based on condition types
@@ -404,7 +408,12 @@ mod_value_filter_server <- function(id, get_value, get_data) {
     })
 
 
-    # Return the reactive conditions
+    # Handle preserve_order checkbox changes
+    observeEvent(input$preserve_order, {
+      r_preserve_order(input$preserve_order)
+    })
+
+    # Return the reactive conditions and preserve_order
     list(
       conditions = reactive({
         # Force reactivity on all condition inputs
@@ -430,6 +439,14 @@ mod_value_filter_server <- function(id, get_value, get_data) {
           get_current_conditions()
         } else {
           r_conditions()
+        }
+      }),
+      preserve_order = reactive({
+        # Return input value if it exists, otherwise use the initial value
+        if ("preserve_order" %in% names(input)) {
+          input$preserve_order
+        } else {
+          r_preserve_order()
         }
       })
     )
@@ -460,18 +477,20 @@ mod_value_filter_ui <- function(id) {
       }
       
       .value-filter-condition .column-selector {
-        flex: 1;
+        flex: 0 0 auto;
         min-width: 120px;
+        width: 150px;
       }
-      
+
       .value-filter-condition .values-selector {
-        flex: 2;
+        flex: 1 1 auto;
         min-width: 180px;
       }
-      
+
       .value-filter-condition .mode-selector {
         flex: 0 0 auto;
         min-width: 80px;
+        width: 90px;
       }
       
       .value-filter-condition .delete-selector {
@@ -515,12 +534,21 @@ mod_value_filter_ui <- function(id) {
       class = "value-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "d-flex justify-content-start mt-3",
-        actionButton(
-          ns("add_condition"),
-          label = "Add Condition",
-          icon = icon("plus"),
-          class = "btn btn-success btn-sm"
+        class = "d-flex justify-content-between align-items-center mt-3",
+        div(
+          actionButton(
+            ns("add_condition"),
+            label = "Add Condition",
+            icon = icon("plus"),
+            class = "btn btn-success btn-sm"
+          )
+        ),
+        div(
+          checkboxInput(
+            ns("preserve_order"),
+            label = "Preserve selection order",
+            value = FALSE
+          )
         )
       )
     )
