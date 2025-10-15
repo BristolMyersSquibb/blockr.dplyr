@@ -10,7 +10,7 @@
 #' @param preserve_order Logical. If TRUE, preserves the order of selected values
 #'
 #' @return A list with reactive expressions for conditions and preserve_order
-#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp sliderInput conditionalPanel updateSliderInput outputOptions
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp sliderInput conditionalPanel updateSliderInput outputOptions selectizeInput updateSelectizeInput updateCheckboxInput observe isolate
 #' @importFrom utils str
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags tagList
@@ -366,7 +366,7 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
                   }
                 }
               }
-              updateSelectInput(
+              updateSelectizeInput(
                 session,
                 values_id,
                 choices = unique_vals,
@@ -400,13 +400,24 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
               }
             } else {
               # Clear selections when no column selected
-              updateSelectInput(session, values_id, choices = list(), selected = character(0))
+              updateSelectizeInput(session, values_id, choices = list(), selected = character(0))
             }
           })
         })
       }
     })
 
+
+    # Initialize preserve_order checkbox with saved value
+    observe({
+      # Only update once when the input becomes available
+      if ("preserve_order" %in% names(input)) {
+        initial_value <- isolate(r_preserve_order())
+        if (!is.null(initial_value) && initial_value != input$preserve_order) {
+          updateCheckboxInput(session, "preserve_order", value = initial_value)
+        }
+      }
+    })
 
     # Handle preserve_order checkbox changes
     observeEvent(input$preserve_order, {
@@ -665,13 +676,17 @@ value_filter_condition_ui <- function(
           tagList(
             conditionalPanel(
               condition = sprintf("!input['%s']", paste0(id, "_use_slider")),
-              selectInput(
+              selectizeInput(
                 paste0(id, "_values"),
                 label = "Values",
                 choices = unique_values,
                 selected = if (!is_range) values else NULL,
                 multiple = TRUE,
-                width = "100%"
+                width = "100%",
+                options = list(
+                  plugins = list("drag_drop", "remove_button"),
+                  persist = FALSE
+                )
               )
             ),
             conditionalPanel(
@@ -688,13 +703,17 @@ value_filter_condition_ui <- function(
           )
         } else {
           # For non-numeric columns, just show the multi-select
-          selectInput(
+          selectizeInput(
             paste0(id, "_values"),
             label = "Values",
             choices = unique_values,
             selected = values,
             multiple = TRUE,
-            width = "100%"
+            width = "100%",
+            options = list(
+              plugins = list("drag_drop", "remove_button"),
+              persist = FALSE
+            )
           )
         }
       ),
