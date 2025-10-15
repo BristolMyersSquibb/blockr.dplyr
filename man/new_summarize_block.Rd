@@ -4,7 +4,12 @@
 \alias{new_summarize_block}
 \title{Summarize block constructor}
 \usage{
-new_summarize_block(string = list(count = "dplyr::n()"), by = character(), ...)
+new_summarize_block(
+  string = list(count = "dplyr::n()"),
+  by = character(),
+  unpack = FALSE,
+  ...
+)
 }
 \arguments{
 \item{string}{Reactive expression returning character vector of
@@ -12,7 +17,12 @@ expressions}
 
 \item{by}{Columns to define grouping}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{unpack}{Logical flag to unpack data frame columns from helper functions.
+When \code{TRUE}, expressions that return data frames will have their columns
+unpacked into separate columns. When \code{FALSE}, data frames are kept as nested
+list-columns. Default is \code{FALSE}.}
+
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for summarize operations
@@ -21,6 +31,28 @@ A block object for summarize operations
 This block allows to add new variables by summarizing over groups
 (see \code{\link[dplyr:summarise]{dplyr::summarize()}}). Changes are applied after clicking the submit button.
 }
+\section{Unpacking Helper Function Results}{
+
+When \code{unpack = TRUE}, helper functions that return data frames will have their
+columns unpacked into separate columns in the result. This is useful for helper
+functions like \code{stat_label()} that return multiple statistics as columns.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# Without unpacking (default)
+new_summarize_block(
+  string = list(stats = "helper_func(...)"),
+  unpack = FALSE
+)
+# Result: Creates nested list-column "stats" containing the data frame
+
+# With unpacking
+new_summarize_block(
+  string = list(stats = "helper_func(...)"),
+  unpack = TRUE
+)
+# Result: Columns from helper_func() are unpacked into separate columns
+}\if{html}{\out{</div>}}
+}
+
 \examples{
 \dontrun{
 # Basic usage with mtcars dataset
@@ -30,8 +62,30 @@ serve(new_summarize_block(), list(data = mtcars))
 # With a custom dataset
 df <- data.frame(x = 1:5, y = letters[1:5])
 serve(new_summarize_block(), list(data = df))
+
+# Using unpack to expand helper function results
+# Define the helper in your environment first
+calc_stats <- function(df) {
+  data.frame(
+    mean_x = mean(df$x),
+    mean_y = mean(df$y),
+    sum_x = sum(df$x),
+    sum_y = sum(df$y)
+  )
+}
+
+# With unpacking enabled
+serve(
+  new_summarize_block(
+    string = list(stats = "calc_stats(pick(everything()))"),
+    by = "group",
+    unpack = TRUE
+  ),
+  list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
+)
+# Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

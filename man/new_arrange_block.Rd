@@ -10,7 +10,7 @@ new_arrange_block(columns = character(), ...)
 \item{columns}{Columns to arrange by. Can be a character vector (ascending order)
 or a list of specifications with column and direction.}
 
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \description{
 This block allows allows you to order the rows of a data frame by the values

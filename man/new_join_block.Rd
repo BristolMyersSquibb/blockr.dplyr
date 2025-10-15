@@ -12,7 +12,7 @@ new_join_block(type = character(), by = character(), ...)
 \item{by}{Column(s) to join on - can be character vector for same-name joins
 or named list for different-name joins}
 
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \description{
 This block allows for joining of two \code{data.frame} objects with advanced

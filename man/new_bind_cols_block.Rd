@@ -7,7 +7,7 @@
 new_bind_cols_block(...)
 }
 \arguments{
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for bind_cols operations

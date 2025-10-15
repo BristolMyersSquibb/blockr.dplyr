@@ -4,7 +4,7 @@
 \alias{mod_value_filter_server}
 \title{Value filter condition module for selecting values from columns}
 \usage{
-mod_value_filter_server(id, get_value, get_data)
+mod_value_filter_server(id, get_value, get_data, preserve_order = FALSE)
 }
 \arguments{
 \item{id}{The module ID}
@@ -12,9 +12,11 @@ mod_value_filter_server(id, get_value, get_data)
 \item{get_value}{Function that returns initial conditions as a list}
 
 \item{get_data}{Function that returns the data frame for extracting unique values}
+
+\item{preserve_order}{Logical. If TRUE, preserves the order of selected values}
 }
 \value{
-A reactive expression containing the current filter conditions
+A list with reactive expressions for conditions and preserve_order
 }
 \description{
 A Shiny module that manages value-based filter conditions. Users can select

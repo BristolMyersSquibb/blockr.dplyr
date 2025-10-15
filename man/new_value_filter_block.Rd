@@ -4,7 +4,7 @@
 \alias{new_value_filter_block}
 \title{Value Filter block constructor}
 \usage{
-new_value_filter_block(conditions = list(), ...)
+new_value_filter_block(conditions = list(), preserve_order = FALSE, ...)
 }
 \arguments{
 \item{conditions}{List of filter conditions. Each condition should be a list
@@ -12,7 +12,10 @@ with elements: column (character), values (vector), mode ("include" or "exclude"
 optionally type ("values" or "range") for numeric filters, and optionally
 operator ("&" or "|") specifying how this condition connects to the previous one}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{preserve_order}{Logical. If TRUE, preserves the order of selected values
+in the filtered output (default: FALSE)}
+
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for value-based filter operations
@@ -52,5 +55,5 @@ serve(
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

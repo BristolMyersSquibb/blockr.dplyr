@@ -26,6 +26,6 @@ serve(new_filter_block(), list(data = mtcars))
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }
 \keyword{internal}

@@ -36,7 +36,7 @@ new_slice_block(
 
 \item{by}{Character vector of column names for grouping}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for slice operations
@@ -64,5 +64,5 @@ serve(new_slice_block(type = "sample", n = 10, replace = FALSE), list(data = mtc
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

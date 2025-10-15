@@ -10,7 +10,7 @@ new_enhanced_filter_block(string = "TRUE", ...)
 \item{string}{Reactive expression returning character vector of
 filter conditions (default: "TRUE" for no filtering)}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for enhanced filter operations
@@ -49,5 +49,5 @@ serve(
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

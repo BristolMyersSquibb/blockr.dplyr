@@ -18,7 +18,7 @@ new_select_block(
 
 \item{show_selected_on_top}{Whether to show selected columns on top (default TRUE for table interface)}
 
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \description{
 This block allows to perform column subsetting on \code{data.frame} objects (see

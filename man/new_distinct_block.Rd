@@ -12,7 +12,7 @@ new_distinct_block(columns = character(), .keep_all = TRUE, ...)
 \item{.keep_all}{Logical. If TRUE, keep all columns in the output. If FALSE,
 only keep the columns used for determining uniqueness.}
 
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \description{
 This block allows for removing duplicate rows from a data.frame

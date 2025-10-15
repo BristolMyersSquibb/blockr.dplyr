@@ -4,10 +4,12 @@
 \alias{parse_value_filter}
 \title{Parse value filter conditions into dplyr expression}
 \usage{
-parse_value_filter(conditions = list())
+parse_value_filter(conditions = list(), preserve_order = FALSE)
 }
 \arguments{
 \item{conditions}{List of filter conditions}
+
+\item{preserve_order}{Logical. If TRUE, preserves order of selected values}
 }
 \value{
 A parsed expression object

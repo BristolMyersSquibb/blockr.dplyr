@@ -4,12 +4,12 @@
 \alias{new_rename_block}
 \title{Rename block constructor}
 \usage{
-new_rename_block(renames = list(new_col = "old_col"), ...)
+new_rename_block(renames = list(new_col = character()), ...)
 }
 \arguments{
 \item{renames}{Named list or vector of renames in new_name = old_name format}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for rename operations
@@ -24,12 +24,12 @@ and old_name is the current column name.
 \dontrun{
 # Basic usage with mtcars dataset
 library(blockr.core)
-serve(new_rename_block(), list(data = mtcars))
+serve(new_rename_block(), data = list(data = mtcars))
 
 # With predefined renames
 serve(
   new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
-  list(data = mtcars)
+  data = list(data = mtcars)
 )
 
 # Connected blocks example
@@ -48,5 +48,5 @@ serve(
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

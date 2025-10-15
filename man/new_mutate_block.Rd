@@ -12,7 +12,7 @@ expressions}
 
 \item{by}{Character vector of column names for grouping. Default is empty.}
 
-\item{...}{Additional arguments forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for mutate operations
@@ -33,5 +33,5 @@ serve(new_mutate_block(), data = list(data = df))
 }
 }
 \seealso{
-\code{\link[=new_transform_block]{new_transform_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

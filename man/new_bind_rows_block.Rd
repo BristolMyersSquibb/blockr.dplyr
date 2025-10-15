@@ -11,7 +11,7 @@ new_bind_rows_block(add_id = FALSE, id_name = ".id", ...)
 
 \item{id_name}{Character string, name for the ID column (if add_id = TRUE)}
 
-\item{...}{Forwarded to \code{\link[=new_block]{new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \value{
 A block object for bind_rows operations
