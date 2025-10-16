@@ -35,6 +35,23 @@ Focused guide for building consistent block UIs for data manipulation. Covers:
 - Creating filter or selection interfaces
 - Ensuring consistent styling
 
+### [dplyr-technical-guide.md](dplyr-technical-guide.md)
+**Technical patterns and best practices for blockr.dplyr**
+
+Covers blockr.dplyr-specific technical details:
+- Block initialization pattern (critical for state management)
+- Dynamic UI timing issues and solutions
+- Error handling with `req()` and blockr.core framework
+- ACE editor integration and autocompletion
+- Package development workflow (roxygen2, Air formatter)
+- Screenshot validation with validation agent
+
+**Use this when:**
+- Debugging timing or state issues
+- Setting up ACE editors
+- Understanding framework error handling
+- Validating block implementations
+
 ## Quick Start for Developers
 
 1. **Read** [blocks-core-guide.md](blocks-core-guide.md) to understand universal block concepts
