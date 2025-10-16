@@ -4,12 +4,11 @@
 \alias{new_bind_rows_block}
 \title{Bind Rows Block Constructor}
 \usage{
-new_bind_rows_block(add_id = FALSE, id_name = ".id", ...)
+new_bind_rows_block(id_name = "", ...)
 }
 \arguments{
-\item{add_id}{Logical, whether to add a column identifying source data frames}
-
-\item{id_name}{Character string, name for the ID column (if add_id = TRUE)}
+\item{id_name}{Character string, name for the ID column. If non-empty, adds
+a column identifying source data frames. Default "" (disabled).}
 
 \item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }

@@ -197,20 +197,26 @@ mod_multi_rename_server <- function(id, get_value, get_cols) {
 #' Create multi rename UI module
 #'
 #' @param id The module ID
+#' @param extra_button Optional UI element (e.g., submit button) to display on the right side
 #' @return A div containing the UI elements
 #' @keywords internal
-mod_multi_rename_ui <- function(id) {
+mod_multi_rename_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
 
   tagList(
     shinyjs::useShinyjs(),
     tags$style(
       "
+      .multi-rename-container {
+        margin-top: -8px;
+      }
+
       .multi-rename-pair {
         display: flex;
         width: 100%;
         align-items: stretch;
         gap: 8px;
+        margin-bottom: 8px;
       }
 
       .multi-rename-pair .rename-new {
@@ -238,12 +244,15 @@ mod_multi_rename_ui <- function(id) {
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #6c757d;
+        border: none;
+        background: transparent;
+        padding: 0;
       }
 
       .multi-rename-pair .rename-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
       }
 
       /* Remove default margins from Shiny inputs */
@@ -268,19 +277,38 @@ mod_multi_rename_ui <- function(id) {
         display: flex;
         align-items: center;
       }
+
+      .multi-rename-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+
+      .multi-rename-actions .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .multi-rename-actions .btn-outline-secondary:hover {
+        border-color: #adb5bd;
+        background-color: #f8f9fa;
+        color: #495057;
+      }
     "
     ),
     div(
       class = "multi-rename-container",
       uiOutput(ns("renames_ui")),
       div(
-        class = "d-flex justify-content-start mt-2",
+        class = "multi-rename-actions",
         actionButton(
           ns("add_rename"),
           label = "Add Rename",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
-        )
+          class = "btn btn-outline-secondary btn-sm"
+        ),
+        extra_button
       )
     )
   )
@@ -302,7 +330,7 @@ multi_rename_row_ui <- function(
   show_remove = TRUE
 ) {
   div(
-    class = "multi-rename-pair mb-2 border border-dark-subtle rounded p-2",
+    class = "multi-rename-pair",
     div(
       class = "rename-new",
       textInput(
@@ -330,8 +358,9 @@ multi_rename_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("trash-can"),
-        class = "btn btn-outline-danger btn-sm rename-delete"
+        icon = icon("xmark"),
+        class = "btn btn-sm rename-delete",
+        title = "Remove rename"
       )
     }
   )

@@ -13,7 +13,7 @@ new_bind_cols_block(...)
 A block object for bind_cols operations
 }
 \description{
-This block allows for column-wise combination of two data frames
+This block allows for column-wise combination of two or more data frames
 using \code{\link[dplyr:bind_cols]{dplyr::bind_cols()}}. It combines data frames side-by-side,
 requiring them to have the same number of rows. Duplicate column names
 are automatically handled by dplyr.

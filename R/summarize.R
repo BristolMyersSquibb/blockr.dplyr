@@ -101,11 +101,20 @@ new_summarize_block <- function(
           # Unpack reactive value
           r_unpack <- reactiveVal(unpack)
 
-          # Observe unpack checkbox changes
+          # Observe unpack checkbox changes and update reactively
           observeEvent(
             input$unpack,
             {
               r_unpack(input$unpack %||% FALSE)
+              # Auto-update when unpack changes
+              apply_summarize(
+                data(),
+                r_string_validated(),
+                r_expr_validated,
+                r_string_validated,
+                r_by_selection(),
+                r_unpack()
+              )
             },
             ignoreNULL = FALSE
           )
@@ -114,7 +123,22 @@ new_summarize_block <- function(
           r_expr_validated <- reactiveVal(parse_summarize(string, by, unpack))
           r_string_validated <- reactiveVal(string)
 
-          # Validate and update on submit
+          # Auto-update when grouping changes
+          observeEvent(r_by_selection(), {
+            # Only update if we have validated expressions
+            if (length(r_string_validated()) > 0) {
+              apply_summarize(
+                data(),
+                r_string_validated(),
+                r_expr_validated,
+                r_string_validated,
+                r_by_selection(),
+                r_unpack()
+              )
+            }
+          }, ignoreNULL = FALSE)
+
+          # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
             apply_summarize(
               data(),
@@ -141,15 +165,28 @@ new_summarize_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # CSS for collapsible section
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for summarize block
         tags$style(HTML(sprintf(
           "
-          #%s-advanced-options {
+          .summarize-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .summarize-block-container .checkbox {
+            font-size: 0.875rem;
+          }
+          #%1$s-advanced-options {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: subgrid;
+            gap: 15px;
           }
-          #%s-advanced-options.expanded {
+          #%1$s-advanced-options.expanded {
             max-height: 200px;
             overflow: visible;
             transition: max-height 0.5s ease-in;
@@ -160,8 +197,10 @@ new_summarize_block <- function(
             padding: 8px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            grid-column: 1 / -1;
             color: #6c757d;
+            font-size: 0.875rem;
           }
           .advanced-toggle .chevron {
             transition: transform 0.2s;
@@ -173,74 +212,129 @@ new_summarize_block <- function(
             transform: rotate(90deg);
           }
           ",
-          id,
-          id
+          id  # This is used for the %1$s placeholder in advanced-options ID
         ))),
 
         div(
-          class = "m-3",
-          mod_multi_kvexpr_ui(NS(id, "mkv")),
-          mod_by_selector_ui(
-            NS(id, "by_selector"),
-            initial_choices = by,
-            initial_selected = by
-          ),
-
-          # Advanced Options Toggle
+          class = "block-container summarize-block-container",
           div(
-            class = "advanced-toggle text-muted",
-            id = NS(id, "advanced-toggle"),
-            onclick = sprintf(
-              "
-              const section = document.getElementById('%s');
-              const chevron = document.querySelector('#%s .chevron');
-              section.classList.toggle('expanded');
-              chevron.classList.toggle('rotated');
-              ",
-              NS(id, "advanced-options"),
-              NS(id, "advanced-toggle")
-            ),
-            tags$span(class = "chevron", "\u203A"),
-            "Show advanced options"
-          ),
+            class = "block-form-grid",
 
-          # Advanced Options Section (Collapsible)
-          div(
-            id = NS(id, "advanced-options"),
+            # Summary Expressions Section
             div(
-              style = "padding: 10px 0;",
-              checkboxInput(
-                NS(id, "unpack"),
-                "Unpack columns from data frame results",
-                value = unpack
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete."
+                  )
+                ),
+                mod_multi_kvexpr_ui(
+                  NS(id, "mkv"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
               )
-            )
-          ),
+            ),
 
-          div(
-            style = "text-align: right; margin-top: 10px;",
-            actionButton(
-              NS(id, "submit"),
-              "Submit",
-              icon = icon("paper-plane"),
-              class = "btn-primary"
+            # Grouping Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  style = "grid-column: 1 / -1;",
+                  mod_by_selector_ui(
+                    NS(id, "by_selector"),
+                    label = tags$span(
+                      "Columns to group by (optional)",
+                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
+                    ),
+                    initial_choices = by,
+                    initial_selected = by
+                  )
+                )
+              )
+            ),
+
+            # Advanced Options Toggle
+            div(
+              class = "block-section",
+              div(
+                class = "advanced-toggle text-muted",
+                id = NS(id, "advanced-toggle"),
+                onclick = sprintf(
+                  "
+                  const section = document.getElementById('%s');
+                  const chevron = document.querySelector('#%s .chevron');
+                  section.classList.toggle('expanded');
+                  chevron.classList.toggle('rotated');
+                  ",
+                  NS(id, "advanced-options"),
+                  NS(id, "advanced-toggle")
+                ),
+                tags$span(class = "chevron", "\u203A"),
+                "Show advanced options"
+              )
+            ),
+
+            # Advanced Options Section (Collapsible)
+            div(
+              id = NS(id, "advanced-options"),
+              div(
+                class = "block-section",
+                div(
+                  class = "block-section-grid",
+                  div(
+                    class = "block-input-wrapper",
+                    checkboxInput(
+                      NS(id, "unpack"),
+                      "Unpack columns from data frame results",
+                      value = unpack
+                    ),
+                    div(
+                      class = "block-help-text",
+                      style = "margin-top: 5px; font-size: 0.8rem;",
+                      p(
+                        "Useful with ", tags$code("across()"), " to apply functions across columns, e.g., ",
+                        tags$code("across(where(is.numeric), mean)"), " computes means for all numeric columns."
+                      )
+                    )
+                  )
+                )
+              )
             )
           )
         )
       )
     },
     class = "summarize_block",
+    allow_empty_state = c("by"),
     ...
   )
 }
 
-parse_summarize <- function(summarize_string = "", by_selection = character(), unpack = FALSE) {
+parse_summarize <- function(
+  summarize_string = "",
+  by_selection = character(),
+  unpack = FALSE
+) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {
     # Build each expression part
     expr_parts <- character(length(summarize_string))
     expr_names <- names(summarize_string)
+
+    # Handle NULL names (can happen with unnamed lists/vectors)
+    if (is.null(expr_names)) {
+      expr_names <- rep("", length(summarize_string))
+    }
 
     for (i in seq_along(summarize_string)) {
       if (unpack) {
