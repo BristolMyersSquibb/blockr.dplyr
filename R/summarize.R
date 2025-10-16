@@ -296,6 +296,14 @@ new_summarize_block <- function(
                       NS(id, "unpack"),
                       "Unpack columns from data frame results",
                       value = unpack
+                    ),
+                    div(
+                      class = "block-help-text",
+                      style = "margin-top: 5px; font-size: 0.8rem;",
+                      p(
+                        "Useful with ", tags$code("across()"), " to apply functions across columns, e.g., ",
+                        tags$code("across(where(is.numeric), mean)"), " computes means for all numeric columns."
+                      )
                     )
                   )
                 )

@@ -87,14 +87,13 @@ new_rename_block <- function(
         block_responsive_css(),
 
         # Override grid to force single column for rename block
-        tags$style(HTML(sprintf(
+        tags$style(HTML(
           "
           .rename-block-container .block-form-grid {
             grid-template-columns: 1fr !important;
           }
-          ",
-          id
-        ))),
+          "
+        )),
 
         div(
           class = "block-container rename-block-container",

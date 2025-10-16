@@ -99,7 +99,7 @@ new_mutate_block <- function(
         block_responsive_css(),
 
         # Override grid to force single column for mutate block
-        tags$style(HTML(sprintf(
+        tags$style(HTML(
           "
           .mutate-block-container .block-form-grid {
             grid-template-columns: 1fr !important;
@@ -127,9 +127,8 @@ new_mutate_block <- function(
           .advanced-toggle .chevron.rotated {
             transform: rotate(90deg);
           }
-          ",
-          id
-        ))),
+          "
+        )),
 
         div(
           class = "block-container mutate-block-container",
