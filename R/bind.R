@@ -1,16 +1,74 @@
+# Helper function to extract argument names for variadic blocks
+# Copied from blockr.core:::dot_args_names (not exported)
+dot_args_names <- function(x) {
+  res <- names(x)
+  unnamed <- grepl("^[1-9][0-9]*$", res)
+
+  if (all(unnamed)) {
+    return(NULL)
+  }
+
+  if (any(unnamed)) {
+    return(replace(res, unnamed, ""))
+  }
+
+  res
+}
+
 #' Bind Rows Block Constructor
 #'
 #' This block allows for row-wise combination of two or more data frames
 #' using [dplyr::bind_rows()]. It stacks data frames vertically, matching
 #' columns by name and filling missing columns with NA values.
 #'
-#' @param add_id Logical, whether to add a column identifying source data frames
-#' @param id_name Character string, name for the ID column (if add_id = TRUE)
 #' @param ... Forwarded to [new_block()]
 #'
 #' @return A block object for bind_rows operations
 #' @export
-new_bind_rows_block <- function(
+new_bind_rows_block <- function(...) {
+  new_transform_block(
+    function(id, ...args) {
+      moduleServer(
+        id,
+        function(input, output, session) {
+
+          arg_names <- reactive(
+            set_names(names(...args), dot_args_names(...args))
+          )
+
+          list(
+            expr = reactive(
+              bquote(
+                dplyr::bind_rows(..(dat)),
+                list(dat = lapply(arg_names(), as.name)),
+                splice = TRUE
+              )
+            ),
+            state = list()
+          )
+        }
+      )
+    },
+    dat_valid = function(...args) {
+      stopifnot(length(...args) >= 1L)
+    },
+    allow_empty_state = TRUE,
+    class = c("bind_rows_block", "rbind_block"),
+    ...
+  )
+}
+
+#' Bind Rows Block Constructor (OLD IMPLEMENTATION - ARCHIVED)
+#'
+#' This is the old implementation kept for reference.
+#' Use new_bind_rows_block() instead.
+#'
+#' @param add_id Logical, whether to add a column identifying source data frames
+#' @param id_name Character string, name for the ID column (if add_id = TRUE)
+#' @param ... Forwarded to [new_block()]
+#'
+#' @keywords internal
+new_bind_rows_block_old <- function(
   add_id = FALSE,
   id_name = ".id",
   ...

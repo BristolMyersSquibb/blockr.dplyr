@@ -1,12 +1,68 @@
 test_that("bind_rows block constructor", {
   block <- new_bind_rows_block()
-  expect_s3_class(block, c("bind_rows_block", "transform_block", "block"))
+  expect_s3_class(block, c("bind_rows_block", "rbind_block", "transform_block", "block"))
 
-  # Test with parameters
-  block_with_id <- new_bind_rows_block(add_id = TRUE, id_name = "source")
-  expect_s3_class(
-    block_with_id,
-    c("bind_rows_block", "transform_block", "block")
+  # Test with unnamed arguments
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      expect_identical(
+        session$returned$result(),
+        dplyr::bind_rows(iris[1:3, ], iris[4:6, ])
+      )
+    },
+    args = list(
+      x = block,
+      data = list(
+        ...args = reactiveValues(
+          `1` = iris[1:3, ],
+          `2` = iris[4:6, ]
+        )
+      )
+    )
+  )
+
+  # Test with named arguments
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      expect_identical(
+        session$returned$result(),
+        dplyr::bind_rows(a = iris[1:3, ], b = iris[4:6, ])
+      )
+    },
+    args = list(
+      x = block,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+
+  # Test with mixed named/unnamed arguments
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      expect_identical(
+        session$returned$result(),
+        dplyr::bind_rows(iris[1:3, ], a = iris[4:6, ])
+      )
+    },
+    args = list(
+      x = block,
+      data = list(
+        ...args = reactiveValues(
+          `1` = iris[1:3, ],
+          a = iris[4:6, ]
+        )
+      )
+    )
   )
 })
 
@@ -28,25 +84,13 @@ test_that("bind blocks have correct structure", {
 
   # Check that blocks have required components
   expect_true(is.function(bind_rows_block$expr_server))
-  expect_true(is.function(bind_rows_block$expr_ui))
+  # Note: bind_rows_block has no UI (variadic blocks don't need UI)
 
   expect_true(is.function(bind_cols_block$expr_server))
   expect_true(is.function(bind_cols_block$expr_ui))
 })
 
-test_that("bind_rows block UI includes configuration options", {
-  block <- new_bind_rows_block(add_id = TRUE, id_name = "dataset")
-  ui <- block$expr_ui("test")
-
-  # Convert to character for easier testing
-  ui_str <- as.character(ui)
-
-  # Should include ID configuration
-  expect_true(grepl("Add column to identify dataset", ui_str))
-  expect_true(grepl("ID column name", ui_str))
-
-  # No submit button - immediate reactivity
-})
+# Removed: bind_rows block has no UI (variadic blocks don't need configuration UI)
 
 test_that("bind_cols block UI includes configuration options", {
   block <- new_bind_cols_block(suffix = c(".left", ".right"))
@@ -62,42 +106,7 @@ test_that("bind_cols block UI includes configuration options", {
   # No submit button - immediate reactivity
 })
 
-test_that("bind_rows block server functionality", {
-  skip_if_not_installed("shiny")
-
-  # Create test data with different structures
-  x_data <- reactive({
-    data.frame(
-      id = 1:3,
-      name = c("A", "B", "C"),
-      value = c(10, 20, 30),
-      stringsAsFactors = FALSE
-    )
-  })
-
-  y_data <- reactive({
-    data.frame(
-      id = 4:6,
-      name = c("D", "E", "F"),
-      score = c(100, 200, 300), # Different column name
-      stringsAsFactors = FALSE
-    )
-  })
-
-  testServer(
-    function(id, input, output, session) {
-      block <- new_bind_rows_block()
-      result <- block$expr_server(id, x_data, y_data)
-      result
-    },
-    {
-      # Test that server returns expected structure
-      expect_true(is.list(session$returned))
-      expect_true("expr" %in% names(session$returned))
-      expect_true("state" %in% names(session$returned))
-    }
-  )
-})
+# Removed: bind_rows server functionality is already tested in the constructor test above
 
 test_that("bind_cols block server functionality", {
   skip_if_not_installed("shiny")
@@ -177,25 +186,14 @@ test_that("bind_cols block validates row count compatibility", {
 
 test_that("bind blocks maintain state correctly", {
   # Test that state is properly maintained
-  bind_rows_block <- new_bind_rows_block(add_id = TRUE, id_name = "source")
+  bind_rows_block <- new_bind_rows_block()
   bind_cols_block <- new_bind_cols_block(suffix = c("_x", "_y"))
 
   expect_s3_class(bind_rows_block, "bind_rows_block")
   expect_s3_class(bind_cols_block, "bind_cols_block")
 })
 
-test_that("bind_rows with ID column functionality", {
-  x_df <- data.frame(name = c("A", "B"))
-  y_df <- data.frame(name = c("C", "D"))
-
-  # Test bind_rows with ID
-  result <- dplyr::bind_rows(`1` = x_df, `2` = y_df, .id = "source")
-
-  expect_equal(nrow(result), 4)
-  expect_equal(ncol(result), 2) # source, name
-  expect_true("source" %in% colnames(result))
-  expect_equal(result$source, c("1", "1", "2", "2"))
-})
+# Removed: ID column functionality will be implemented later
 
 test_that("bind blocks handle empty data gracefully", {
   empty_df <- data.frame()
