@@ -175,9 +175,10 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
 #' Create multi key-value UI module
 #'
 #' @param id The module ID
+#' @param extra_button Optional UI element (e.g., submit button) to display on the right side
 #' @return A div containing the UI elements
 #' @keywords internal
-mod_multi_kvexpr_ui <- function(id) {
+mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
 
   tagList(
@@ -213,12 +214,15 @@ mod_multi_kvexpr_ui <- function(id) {
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #6c757d;
+        border: none;
+        background: transparent;
+        padding: 0;
       }
 
       .multi-kvexpr-expression .expr-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
       }
 
       .multi-kvexpr-expression .input-group {
@@ -234,19 +238,42 @@ mod_multi_kvexpr_ui <- function(id) {
         padding-bottom: 0;
         height: 36px;
       }
+
+      .multi-kvexpr-container {
+        margin-top: -20px;
+      }
+
+      .multi-kvexpr-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+
+      .multi-kvexpr-actions .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .multi-kvexpr-actions .btn-outline-secondary:hover {
+        border-color: #adb5bd;
+        background-color: #f8f9fa;
+        color: #495057;
+      }
     "
     ),
     div(
       class = "multi-kvexpr-container",
       uiOutput(ns("expressions_ui")),
       div(
-        class = "d-flex justify-content-start mt-2",
+        class = "multi-kvexpr-actions",
         actionButton(
           ns("add_expr"),
           label = "Add Expression",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
-        )
+          class = "btn btn-outline-secondary btn-sm"
+        ),
+        extra_button
       )
     )
   )
@@ -300,8 +327,9 @@ multi_kvexpr_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("trash-can"),
-        class = "btn btn-outline-danger btn-sm expr-delete"
+        icon = icon("xmark"),
+        class = "btn btn-sm expr-delete",
+        title = "Remove expression"
       )
     }
   )

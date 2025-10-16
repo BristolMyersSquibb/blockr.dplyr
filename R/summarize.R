@@ -101,11 +101,20 @@ new_summarize_block <- function(
           # Unpack reactive value
           r_unpack <- reactiveVal(unpack)
 
-          # Observe unpack checkbox changes
+          # Observe unpack checkbox changes and update reactively
           observeEvent(
             input$unpack,
             {
               r_unpack(input$unpack %||% FALSE)
+              # Auto-update when unpack changes
+              apply_summarize(
+                data(),
+                r_string_validated(),
+                r_expr_validated,
+                r_string_validated,
+                r_by_selection(),
+                r_unpack()
+              )
             },
             ignoreNULL = FALSE
           )
@@ -114,7 +123,22 @@ new_summarize_block <- function(
           r_expr_validated <- reactiveVal(parse_summarize(string, by, unpack))
           r_string_validated <- reactiveVal(string)
 
-          # Validate and update on submit
+          # Auto-update when grouping changes
+          observeEvent(r_by_selection(), {
+            # Only update if we have validated expressions
+            if (length(r_string_validated()) > 0) {
+              apply_summarize(
+                data(),
+                r_string_validated(),
+                r_expr_validated,
+                r_string_validated,
+                r_by_selection(),
+                r_unpack()
+              )
+            }
+          })
+
+          # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
             apply_summarize(
               data(),
@@ -199,31 +223,38 @@ new_summarize_block <- function(
             # Summary Expressions Section
             div(
               class = "block-section",
-              tags$h4("Summary Expressions"),
               div(
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Create summary columns with R expressions. Use Ctrl+Space for autocomplete.")
+                  p(
+                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete."
+                  )
                 ),
-                mod_multi_kvexpr_ui(NS(id, "mkv"))
+                mod_multi_kvexpr_ui(
+                  NS(id, "mkv"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
               )
             ),
 
             # Grouping Section
             div(
               class = "block-section",
-              tags$h4("Grouping"),
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p("Optional: Select columns to group by. Summaries are calculated per group.")
-                ),
                 div(
                   style = "grid-column: 1 / -1;",
                   mod_by_selector_ui(
                     NS(id, "by_selector"),
+                    label = tags$span(
+                      "Columns to group by (optional)",
+                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
+                    ),
                     initial_choices = by,
                     initial_selected = by
                   )
@@ -269,20 +300,6 @@ new_summarize_block <- function(
                   )
                 )
               )
-            ),
-
-            # Submit button
-            div(
-              class = "block-section",
-              div(
-                style = "text-align: right; margin-top: 10px; grid-column: 1 / -1;",
-                actionButton(
-                  NS(id, "submit"),
-                  "Submit",
-                  icon = icon("paper-plane"),
-                  class = "btn-primary"
-                )
-              )
             )
           )
         )
@@ -293,7 +310,11 @@ new_summarize_block <- function(
   )
 }
 
-parse_summarize <- function(summarize_string = "", by_selection = character(), unpack = FALSE) {
+parse_summarize <- function(
+  summarize_string = "",
+  by_selection = character(),
+  unpack = FALSE
+) {
   text <- if (identical(unname(summarize_string), "")) {
     "dplyr::summarize(data)"
   } else {

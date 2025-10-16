@@ -4,10 +4,12 @@
 \alias{mod_multi_kvexpr_ui}
 \title{Create multi key-value UI module}
 \usage{
-mod_multi_kvexpr_ui(id)
+mod_multi_kvexpr_ui(id, extra_button = NULL)
 }
 \arguments{
 \item{id}{The module ID}
+
+\item{extra_button}{Optional UI element (e.g., submit button) to display on the right side}
 }
 \value{
 A div containing the UI elements
