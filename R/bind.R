@@ -78,16 +78,76 @@ new_bind_rows_block <- function(id_name = "", ...) {
     },
     ui = function(id) {
       tagList(
+        # CSS for collapsible section
+        tags$style(HTML(sprintf(
+          "
+          #%s {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+          }
+          #%s.expanded {
+            max-height: 500px;
+            overflow: visible;
+            transition: max-height 0.5s ease-in;
+          }
+          .advanced-toggle {
+            cursor: pointer;
+            user-select: none;
+            padding: 8px 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6c757d;
+            font-size: 0.875rem;
+          }
+          .advanced-toggle .chevron {
+            transition: transform 0.2s;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+          }
+          .advanced-toggle .chevron.rotated {
+            transform: rotate(90deg);
+          }
+        ",
+          NS(id, "advanced-options"),
+          NS(id, "advanced-options")
+        ))),
+
+        # Toggle button
         div(
-          class = "mb-3",
-          textInput(
-            NS(id, "id_name"),
-            label = tags$small(
-              class = "text-muted",
-              "ID column name (leave empty to disable):"
-            ),
-            value = id_name,
-            placeholder = "e.g., .id or source"
+          class = "advanced-toggle text-muted",
+          id = NS(id, "advanced-toggle"),
+          onclick = sprintf(
+            "
+            const section = document.getElementById('%s');
+            const chevron = document.querySelector('#%s .chevron');
+            section.classList.toggle('expanded');
+            chevron.classList.toggle('rotated');
+          ",
+            NS(id, "advanced-options"),
+            NS(id, "advanced-toggle")
+          ),
+          tags$span(class = "chevron", "\u203A"),
+          "Show advanced options"
+        ),
+
+        # Advanced Options Section (Collapsible)
+        div(
+          id = NS(id, "advanced-options"),
+          div(
+            class = "mb-3",
+            textInput(
+              NS(id, "id_name"),
+              label = tags$small(
+                class = "text-muted",
+                "ID column name (leave empty to disable):"
+              ),
+              value = id_name,
+              placeholder = "e.g., .id or source"
+            )
           )
         )
       )
