@@ -21,11 +21,13 @@ dot_args_names <- function(x) {
 #' using [dplyr::bind_rows()]. It stacks data frames vertically, matching
 #' columns by name and filling missing columns with NA values.
 #'
+#' @param id_name Character string, name for the ID column. If non-empty, adds
+#'   a column identifying source data frames. Default "" (disabled).
 #' @param ... Forwarded to [new_block()]
 #'
 #' @return A block object for bind_rows operations
 #' @export
-new_bind_rows_block <- function(...) {
+new_bind_rows_block <- function(id_name = "", ...) {
   new_transform_block(
     function(id, ...args) {
       moduleServer(
@@ -36,17 +38,58 @@ new_bind_rows_block <- function(...) {
             set_names(names(...args), dot_args_names(...args))
           )
 
+          # Reactive value for id_name
+          r_id_name <- reactiveVal(id_name)
+
+          # Debounced version of input (800ms delay)
+          id_name_debounced <- debounce(reactive(input$id_name), 800)
+
+          # Update reactive value from debounced input
+          observeEvent(id_name_debounced(), {
+            r_id_name(id_name_debounced() %||% "")
+          })
+
           list(
-            expr = reactive(
-              bquote(
+            expr = reactive({
+              current_id_name <- r_id_name()
+
+              # Build base expression with bquote
+              base_expr <- bquote(
                 dplyr::bind_rows(..(dat)),
                 list(dat = lapply(arg_names(), as.name)),
                 splice = TRUE
               )
-            ),
-            state = list()
+
+              # If id_name is provided and non-empty, add .id parameter using call()
+              if (length(current_id_name) > 0 && nzchar(current_id_name)) {
+                # Modify the call to add .id parameter
+                base_expr[[".id"]] <- current_id_name
+                base_expr
+              } else {
+                base_expr
+              }
+            }),
+            state = list(
+              id_name = r_id_name
+            )
           )
         }
+      )
+    },
+    ui = function(id) {
+      tagList(
+        div(
+          class = "mb-3",
+          textInput(
+            NS(id, "id_name"),
+            label = tags$small(
+              class = "text-muted",
+              "ID column name (leave empty to disable):"
+            ),
+            value = id_name,
+            placeholder = "e.g., .id or source"
+          )
+        )
       )
     },
     dat_valid = function(...args) {

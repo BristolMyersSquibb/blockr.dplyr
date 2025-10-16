@@ -2,6 +2,7 @@
 library(blockr.core)
 library(blockr.md)
 library(blockr.dplyr)
+pkgload::load_all()
 
 # Generated board code demonstrating new_bind_rows_block
 blockr.core::serve(

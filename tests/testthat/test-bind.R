@@ -66,6 +66,64 @@ test_that("bind_rows block constructor", {
   )
 })
 
+test_that("bind_rows block with id_name parameter", {
+  block_with_id <- new_bind_rows_block(id_name = "source")
+  expect_s3_class(block_with_id, c("bind_rows_block", "rbind_block", "transform_block", "block"))
+
+  # Test with named arguments and .id column
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_with_id),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expected <- dplyr::bind_rows(a = iris[1:3, ], b = iris[4:6, ], .id = "source")
+
+      expect_identical(result, expected)
+      expect_true("source" %in% colnames(result))
+      expect_equal(result$source, c(rep("a", 3), rep("b", 3)))
+    },
+    args = list(
+      x = block_with_id,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+
+  # Test state includes id_name
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_with_id),
+    {
+      session$flushReact()
+      expect_true("id_name" %in% names(session$returned$state))
+      expect_equal(session$returned$state$id_name(), "source")
+    },
+    args = list(
+      x = block_with_id,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+})
+
+test_that("bind_rows block UI includes id_name input", {
+  block <- new_bind_rows_block(id_name = ".id")
+  ui <- block$expr_ui("test")
+
+  # Convert to character for easier testing
+  ui_str <- as.character(ui)
+
+  # Should include ID column name input
+  expect_true(grepl("ID column name", ui_str))
+})
+
 test_that("bind_cols block constructor", {
   block <- new_bind_cols_block()
   expect_s3_class(block, c("bind_cols_block", "transform_block", "block"))
