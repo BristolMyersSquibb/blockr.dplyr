@@ -259,15 +259,20 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
 #' Create multi filter UI module
 #'
 #' @param id The module ID
+#' @param extra_button Optional extra button (e.g., submit button) to place next to Add button
 #' @return A div containing the UI elements
 #' @keywords internal
-mod_multi_filter_ui <- function(id) {
+mod_multi_filter_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
 
   tagList(
     shinyjs::useShinyjs(),
     tags$style(
       "
+      .multi-filter-container {
+        margin-top: -8px;
+      }
+
       .multi-filter-condition .shiny-ace {
         border: none;
         margin: 7px;
@@ -286,12 +291,15 @@ mod_multi_filter_ui <- function(id) {
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #6c757d;
+        border: none;
+        background: transparent;
+        padding: 0;
       }
 
       .multi-filter-condition .condition-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
       }
 
       .multi-filter-condition .input-group {
@@ -301,19 +309,38 @@ mod_multi_filter_ui <- function(id) {
       .input-group.multi-filter-condition {
         height: 38px !important;
       }
+
+      .multi-filter-actions {
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .multi-filter-actions .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .multi-filter-actions .btn-outline-secondary:hover {
+        background-color: #f8f9fa;
+        border-color: #adb5bd;
+        color: #495057;
+      }
     "
     ),
     div(
       class = "multi-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "d-flex justify-content-start mt-2",
+        class = "multi-filter-actions",
         actionButton(
           ns("add_condition"),
           label = "Add Condition",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
-        )
+          class = "btn btn-outline-secondary btn-sm"
+        ),
+        if (!is.null(extra_button)) extra_button else NULL
       )
     )
   )
@@ -339,8 +366,8 @@ multi_filter_condition_ui <- function(id, value = "TRUE", show_remove = TRUE) {
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("trash-can"),
-        class = "btn btn-outline-danger btn-sm condition-delete"
+        icon = icon("xmark"),
+        class = "btn condition-delete"
       )
     }
   )

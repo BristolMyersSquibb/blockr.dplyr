@@ -73,17 +73,47 @@ new_filter_block <- function(string = "TRUE", ...) {
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        # Use multi-condition filter UI
-        mod_multi_filter_ui(NS(id, "mf")),
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for filter block
+        tags$style(HTML(
+          "
+          .filter-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          "
+        )),
+
         div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
+          class = "block-container filter-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Filter Conditions Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Filter rows with R expressions. Use Ctrl+Space for autocomplete."
+                  )
+                ),
+                mod_multi_filter_ui(
+                  NS(id, "mf"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
+              )
+            )
           )
         )
       )
