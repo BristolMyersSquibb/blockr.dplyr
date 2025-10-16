@@ -4,10 +4,12 @@
 \alias{mod_multi_rename_ui}
 \title{Create multi rename UI module}
 \usage{
-mod_multi_rename_ui(id)
+mod_multi_rename_ui(id, extra_button = NULL)
 }
 \arguments{
 \item{id}{The module ID}
+
+\item{extra_button}{Optional UI element (e.g., submit button) to display on the right side}
 }
 \value{
 A div containing the UI elements

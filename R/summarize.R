@@ -136,7 +136,7 @@ new_summarize_block <- function(
                 r_unpack()
               )
             }
-          })
+          }, ignoreNULL = FALSE)
 
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
@@ -212,7 +212,7 @@ new_summarize_block <- function(
             transform: rotate(90deg);
           }
           ",
-          id
+          id  # This is used for the %1$s placeholder in advanced-options ID
         ))),
 
         div(
@@ -314,6 +314,7 @@ new_summarize_block <- function(
       )
     },
     class = "summarize_block",
+    allow_empty_state = c("by"),
     ...
   )
 }
@@ -329,6 +330,11 @@ parse_summarize <- function(
     # Build each expression part
     expr_parts <- character(length(summarize_string))
     expr_names <- names(summarize_string)
+
+    # Handle NULL names (can happen with unnamed lists/vectors)
+    if (is.null(expr_names)) {
+      expr_names <- rep("", length(summarize_string))
+    }
 
     for (i in seq_along(summarize_string)) {
       if (unpack) {

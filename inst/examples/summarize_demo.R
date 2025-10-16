@@ -29,36 +29,23 @@ blockr.core::serve(
         ),
         by = "cyl_group",
         unpack = FALSE
-      ),
-
-      # Visualize the summary with ggplot
-      viz = new_ggplot_block(
-        type = "bar",
-        x = "cyl_group",
-        y = "avg_mpg",
-        fill = "cyl_group"
       )
     ),
     links = c(
       # Connect data flow
       new_link("data", "prep", "data"),
-      new_link("prep", "summary", "data"),
-      new_link("summary", "viz", "data")
+      new_link("prep", "summary", "data")
     ),
     document = c(
       "## Summarize Block Demo\n\n",
-      "This workflow demonstrates the `new_summarize_block()` with visualization.\n\n",
+      "This workflow demonstrates the `new_summarize_block()`.\n\n",
       "The workflow:\n\n",
       "1. Loads the mtcars dataset\n",
       "2. Creates a categorical grouping variable (cylinder count)\n",
-      "3. Summarizes data by groups (average MPG, HP, weight, and count)\n",
-      "4. Visualizes the summary using a ggplot bar chart\n\n",
+      "3. Summarizes data by groups (average MPG, HP, weight, and count)\n\n",
 
       "## Summary Statistics\n\n",
-      "![](blockr://summary)\n\n",
-
-      "## Visualization\n\n",
-      "![](blockr://viz)\n\n"
+      "![](blockr://summary)\n\n"
     )
   )
 )
