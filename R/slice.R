@@ -53,6 +53,16 @@ new_slice_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
+          # Initialize state reactives for all parameters
+          r_type <- reactiveVal(type)
+          r_n <- reactiveVal(n)
+          r_prop <- reactiveVal(prop)
+          r_order_by <- reactiveVal(order_by)
+          r_with_ties <- reactiveVal(with_ties)
+          r_weight_by <- reactiveVal(weight_by)
+          r_replace <- reactiveVal(replace)
+          r_rows <- reactiveVal(rows)
+
           # Group by selector using unified componen
           r_by_selection <- mod_by_selector_server(
             id = "by_selector",
@@ -83,6 +93,48 @@ new_slice_block <- function(
             },
             ignoreNULL = FALSE
           )
+
+          # Update reactiveVals when inputs change
+          observeEvent(input$type, {
+            r_type(input$type)
+          })
+
+          observeEvent(input$n, {
+            r_n(input$n)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$prop, {
+            r_prop(input$prop)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$order_by, {
+            r_order_by(input$order_by)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$with_ties, {
+            r_with_ties(input$with_ties)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$weight_by, {
+            r_weight_by(input$weight_by)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$replace, {
+            r_replace(input$replace)
+          }, ignoreNULL = FALSE)
+
+          observeEvent(input$rows, {
+            r_rows(input$rows)
+          }, ignoreNULL = FALSE)
+
+          # Restore type selector on initialization
+          observe({
+            updateSelectInput(
+              session,
+              inputId = "type",
+              selected = r_type()
+            )
+          })
 
           # Helper function to build slice expression
           build_slice_expr <- function(
@@ -262,14 +314,14 @@ new_slice_block <- function(
           list(
             expr = slice_expr,
             state = list(
-              type = type,
-              n = n,
-              prop = prop,
-              order_by = order_by,
-              with_ties = with_ties,
-              weight_by = weight_by,
-              replace = replace,
-              rows = rows,
+              type = r_type,
+              n = r_n,
+              prop = r_prop,
+              order_by = r_order_by,
+              with_ties = r_with_ties,
+              weight_by = r_weight_by,
+              replace = r_replace,
+              rows = r_rows,
               by = r_by_selection
             )
           )
