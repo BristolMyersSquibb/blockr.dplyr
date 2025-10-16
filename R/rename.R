@@ -80,16 +80,46 @@ new_rename_block <- function(
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        mod_multi_rename_ui(NS(id, "mr")),
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for rename block
+        tags$style(HTML(sprintf(
+          "
+          .rename-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          ",
+          id
+        ))),
+
         div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
+          class = "block-container rename-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Rename Pairs Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p("Rename columns with new names. Use Ctrl+Space for autocomplete.")
+                ),
+                mod_multi_rename_ui(
+                  NS(id, "mr"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
+              )
+            )
           )
         )
       )
