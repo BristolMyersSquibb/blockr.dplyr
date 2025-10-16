@@ -54,7 +54,22 @@ new_mutate_block <- function(
           r_string_validated <- reactiveVal(string)
           r_by_validated <- reactiveVal(by)
 
-          # Validate and update on submi
+          # Auto-update when grouping changes
+          observeEvent(r_by_selection(), {
+            # Only update if we have validated expressions
+            if (length(r_string_validated()) > 0) {
+              apply_mutate(
+                data(),
+                r_string_validated(),
+                r_by_selection(),
+                r_expr_validated,
+                r_string_validated,
+                r_by_validated
+              )
+            }
+          })
+
+          # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
             apply_mutate(
               data(),
@@ -77,21 +92,91 @@ new_mutate_block <- function(
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        mod_multi_kvexpr_ui(NS(id, "mkv")),
-        mod_by_selector_ui(
-          NS(id, "by_selector"),
-          initial_choices = by,
-          initial_selected = by
-        ),
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for mutate block
+        tags$style(HTML(sprintf(
+          "
+          .mutate-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .mutate-block-container .checkbox {
+            font-size: 0.875rem;
+          }
+          .advanced-toggle {
+            cursor: pointer;
+            user-select: none;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            grid-column: 1 / -1;
+            color: #6c757d;
+            font-size: 0.875rem;
+          }
+          .advanced-toggle .chevron {
+            transition: transform 0.2s;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+          }
+          .advanced-toggle .chevron.rotated {
+            transform: rotate(90deg);
+          }
+          ",
+          id
+        ))),
+
         div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
+          class = "block-container mutate-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Mutate Expressions Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete."
+                  )
+                ),
+                mod_multi_kvexpr_ui(
+                  NS(id, "mkv"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
+              )
+            ),
+
+            # Grouping Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  style = "grid-column: 1 / -1;",
+                  mod_by_selector_ui(
+                    NS(id, "by_selector"),
+                    label = tags$span(
+                      "Columns to group by (optional)",
+                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
+                    ),
+                    initial_choices = by,
+                    initial_selected = by
+                  )
+                )
+              )
+            )
           )
         )
       )
