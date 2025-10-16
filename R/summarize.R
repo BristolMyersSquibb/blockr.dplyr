@@ -141,15 +141,28 @@ new_summarize_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # CSS for collapsible section
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for summarize block
         tags$style(HTML(sprintf(
           "
-          #%s-advanced-options {
+          .summarize-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .summarize-block-container .checkbox {
+            font-size: 0.875rem;
+          }
+          #%1$s-advanced-options {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: subgrid;
+            gap: 15px;
           }
-          #%s-advanced-options.expanded {
+          #%1$s-advanced-options.expanded {
             max-height: 200px;
             overflow: visible;
             transition: max-height 0.5s ease-in;
@@ -160,8 +173,10 @@ new_summarize_block <- function(
             padding: 8px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            grid-column: 1 / -1;
             color: #6c757d;
+            font-size: 0.875rem;
           }
           .advanced-toggle .chevron {
             transition: transform 0.2s;
@@ -173,57 +188,101 @@ new_summarize_block <- function(
             transform: rotate(90deg);
           }
           ",
-          id,
           id
         ))),
 
         div(
-          class = "m-3",
-          mod_multi_kvexpr_ui(NS(id, "mkv")),
-          mod_by_selector_ui(
-            NS(id, "by_selector"),
-            initial_choices = by,
-            initial_selected = by
-          ),
-
-          # Advanced Options Toggle
+          class = "block-container summarize-block-container",
           div(
-            class = "advanced-toggle text-muted",
-            id = NS(id, "advanced-toggle"),
-            onclick = sprintf(
-              "
-              const section = document.getElementById('%s');
-              const chevron = document.querySelector('#%s .chevron');
-              section.classList.toggle('expanded');
-              chevron.classList.toggle('rotated');
-              ",
-              NS(id, "advanced-options"),
-              NS(id, "advanced-toggle")
-            ),
-            tags$span(class = "chevron", "\u203A"),
-            "Show advanced options"
-          ),
+            class = "block-form-grid",
 
-          # Advanced Options Section (Collapsible)
-          div(
-            id = NS(id, "advanced-options"),
+            # Summary Expressions Section
             div(
-              style = "padding: 10px 0;",
-              checkboxInput(
-                NS(id, "unpack"),
-                "Unpack columns from data frame results",
-                value = unpack
+              class = "block-section",
+              tags$h4("Summary Expressions"),
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p("Create summary columns with R expressions. Use Ctrl+Space for autocomplete.")
+                ),
+                mod_multi_kvexpr_ui(NS(id, "mkv"))
               )
-            )
-          ),
+            ),
 
-          div(
-            style = "text-align: right; margin-top: 10px;",
-            actionButton(
-              NS(id, "submit"),
-              "Submit",
-              icon = icon("paper-plane"),
-              class = "btn-primary"
+            # Grouping Section
+            div(
+              class = "block-section",
+              tags$h4("Grouping"),
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p("Optional: Select columns to group by. Summaries are calculated per group.")
+                ),
+                div(
+                  style = "grid-column: 1 / -1;",
+                  mod_by_selector_ui(
+                    NS(id, "by_selector"),
+                    initial_choices = by,
+                    initial_selected = by
+                  )
+                )
+              )
+            ),
+
+            # Advanced Options Toggle
+            div(
+              class = "block-section",
+              div(
+                class = "advanced-toggle text-muted",
+                id = NS(id, "advanced-toggle"),
+                onclick = sprintf(
+                  "
+                  const section = document.getElementById('%s');
+                  const chevron = document.querySelector('#%s .chevron');
+                  section.classList.toggle('expanded');
+                  chevron.classList.toggle('rotated');
+                  ",
+                  NS(id, "advanced-options"),
+                  NS(id, "advanced-toggle")
+                ),
+                tags$span(class = "chevron", "\u203A"),
+                "Show advanced options"
+              )
+            ),
+
+            # Advanced Options Section (Collapsible)
+            div(
+              id = NS(id, "advanced-options"),
+              div(
+                class = "block-section",
+                div(
+                  class = "block-section-grid",
+                  div(
+                    class = "block-input-wrapper",
+                    checkboxInput(
+                      NS(id, "unpack"),
+                      "Unpack columns from data frame results",
+                      value = unpack
+                    )
+                  )
+                )
+              )
+            ),
+
+            # Submit button
+            div(
+              class = "block-section",
+              div(
+                style = "text-align: right; margin-top: 10px; grid-column: 1 / -1;",
+                actionButton(
+                  NS(id, "submit"),
+                  "Submit",
+                  icon = icon("paper-plane"),
+                  class = "btn-primary"
+                )
+              )
             )
           )
         )
