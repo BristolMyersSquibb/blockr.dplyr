@@ -3,3 +3,4 @@
 ^README\.(Rmd|html)$
 ^\.lintr$
 ^\.claude$
+^dev$
