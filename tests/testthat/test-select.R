@@ -3,23 +3,27 @@ test_that("select block constructor", {
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 })
 
-test_that("enhanced select block constructor", {
-  # Test enhanced mode (default)
-  blk <- new_select_block(enhanced = TRUE)
+test_that("select block with columns parameter", {
+  # Test with initial columns
+  blk <- new_select_block(columns = c("mpg", "cyl"))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 
-  # Test with initial columns
-  blk <- new_select_block(c("mpg", "cyl"), enhanced = TRUE)
+  # Test with single column
+  blk <- new_select_block(columns = "mpg")
+  expect_s3_class(blk, c("select_block", "transform_block", "block"))
+
+  # Test with empty columns
+  blk <- new_select_block(columns = character(0))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 })
 
-test_that("classic select block constructor", {
-  # Test classic mode for backward compatibility
-  blk <- new_select_block(enhanced = FALSE)
+test_that("select block with exclude parameter", {
+  # Test include mode (default)
+  blk <- new_select_block(columns = c("mpg", "cyl"), exclude = FALSE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 
-  # Test with initial columns
-  blk <- new_select_block(c("mpg", "cyl"), enhanced = FALSE)
+  # Test exclude mode
+  blk <- new_select_block(columns = c("gear", "carb"), exclude = TRUE)
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 })
 
@@ -37,33 +41,11 @@ test_that("select block with various column inputs", {
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 })
 
-test_that("multi select module functionality", {
-  # Test module server function exists
-  expect_true(exists("mod_multi_select_server"))
-  expect_true(is.function(mod_multi_select_server))
-
-  # Test module UI function exists
-  expect_true(exists("mod_multi_select_ui"))
-  expect_true(is.function(mod_multi_select_ui))
-
-  # Test example function exists
-  expect_true(exists("run_multi_select_example"))
-  expect_true(is.function(run_multi_select_example))
-})
-
-test_that("select block expression generation", {
+test_that("select block structure", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("blockr.core")
 
-  # Create test data
-  test_data <- data.frame(
-    a = c(1, 2, 3),
-    b = c("x", "y", "z"),
-    c = c(10, 20, 30)
-  )
-
-  # Test basic select block functionality
-  blk <- new_select_block(c("a", "c"))
+  blk <- new_select_block(c("mpg", "cyl"))
   expect_s3_class(blk, c("select_block", "transform_block", "block"))
 
   # The block should be properly structured
@@ -73,143 +55,172 @@ test_that("select block expression generation", {
   expect_true(is.function(blk[["expr_ui"]]))
 })
 
-test_that("mod_multi_select_server basic functionality", {
-  skip_if_not_installed("shiny")
-
-  # Test server module with mock functions
-  shiny::testServer(
-    mod_multi_select_server,
-    args = list(
-      get_value = function() c("mpg", "cyl"),
-      get_cols = function() c("mpg", "cyl", "hp", "wt"),
-      get_data_preview = function() mtcars[1:5, ]
-    ),
-    {
-      # Force initialization by accessing r_cols() to trigger observe()
-      cols <- r_cols()
-
-      # Wait for initialization to complete
-      session$flushReact()
-
-      # Test initial selection after initialization
-      result <- session$getReturned()()
-      expect_equal(sort(result), sort(c("mpg", "cyl")))
-
-      # Test that reactive values are set up correctly
-      expect_equal(sort(r_selected()), sort(c("mpg", "cyl")))
-      expect_equal(sort(r_cols()), sort(c("mpg", "cyl", "hp", "wt")))
-      expect_equal(r_search(), "")
-    }
-  )
-})
-
-test_that("mod_multi_select_server search functionality", {
-  skip_if_not_installed("shiny")
-
-  shiny::testServer(
-    mod_multi_select_server,
-    args = list(
-      get_value = function() character(0),
-      get_cols = function() c("mpg", "cyl", "hp", "wt", "am", "gear"),
-      get_data_preview = function() mtcars[1:5, ]
-    ),
-    {
-      # Force initialization
-      cols <- r_cols()
-      session$flushReact()
-
-      # Test search functionality
-      session$setInputs(search = "m")
-
-      # Should filter to columns containing "m"
-      filtered <- r_filtered_cols()
-      expect_true(all(grepl("m", filtered, ignore.case = TRUE)))
-      expect_true("mpg" %in% filtered)
-      expect_true("am" %in% filtered)
-    }
-  )
-})
-
-test_that("mod_multi_select_server selection controls", {
-  skip_if_not_installed("shiny")
-
-  shiny::testServer(
-    mod_multi_select_server,
-    args = list(
-      get_value = function() c("mpg"),
-      get_cols = function() c("mpg", "cyl", "hp"),
-      get_data_preview = function() mtcars[1:5, ]
-    ),
-    {
-      # Force initialization
-      cols <- r_cols()
-      session$flushReact()
-
-      # Test select all
-      session$setInputs(select_all = 1)
-      expect_equal(sort(session$getReturned()()), sort(c("mpg", "cyl", "hp")))
-
-      # Test select none
-      session$setInputs(select_none = 1)
-      expect_equal(length(session$getReturned()()), 0)
-
-      # Test invert selection (from empty)
-      session$setInputs(invert_selection = 1)
-      expect_equal(sort(session$getReturned()()), sort(c("mpg", "cyl", "hp")))
-    }
-  )
-})
-
-test_that("multi_select_column_card UI generation", {
-  # Test column card UI function
-  column_info <- list(
-    type = "numeric",
-    sample = "21.0, 21.0, 22.8",
-    na_count = 0,
-    unique_count = 25,
-    total_count = 32
-  )
-
-  card_ui <- multi_select_column_card(
-    "test_id",
-    "mpg",
-    column_info,
-    is_selected = TRUE
-  )
-
-  expect_s3_class(card_ui, "shiny.tag")
-  expect_true(grepl("column-card", as.character(card_ui)))
-  expect_true(grepl("mpg", as.character(card_ui)))
-})
-
-test_that("column info extraction", {
-  # This tests the get_column_info function indirectly
-  test_data <- data.frame(
-    numeric_col = c(1.5, 2.5, 3.5, NA),
-    char_col = c("a", "b", "a", "c"),
-    logical_col = c(TRUE, FALSE, TRUE, TRUE)
-  )
-
-  # The function should handle different data types
-  expect_true(is.data.frame(test_data))
-  expect_equal(ncol(test_data), 3)
-  expect_equal(nrow(test_data), 4)
-})
-
-test_that("enhanced vs classic mode state differences", {
+test_that("select block expression generation - include mode", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("blockr.core")
 
-  # Both modes should create valid blocks
-  enhanced_blk <- new_select_block(enhanced = TRUE)
-  classic_blk <- new_select_block(enhanced = FALSE)
+  # Test with selected columns (include mode)
+  test_data <- reactive(data.frame(
+    a = c(1, 2, 3),
+    b = c("x", "y", "z"),
+    c = c(10, 20, 30)
+  ))
 
-  expect_s3_class(enhanced_blk, c("select_block", "transform_block", "block"))
-  expect_s3_class(classic_blk, c("select_block", "transform_block", "block"))
+  blk <- new_select_block(columns = c("a", "c"), exclude = FALSE)
 
-  # Both should have the same basic structure
-  expect_true("expr_server" %in% names(enhanced_blk))
-  expect_true("expr_ui" %in% names(enhanced_blk))
-  expect_true("expr_server" %in% names(classic_blk))
-  expect_true("expr_ui" %in% names(classic_blk))
+  # Test that server function works
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = test_data),
+    {
+      session$flushReact()
+
+      # Check that server returned a list with expr and state
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+      expect_true(is.list(result$state))
+
+      # Check expression
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+      expr_text <- deparse(expr_result)
+      expect_true(any(grepl("dplyr::select", expr_text)))
+      expect_true(any(grepl("a", expr_text)))
+      expect_true(any(grepl("c", expr_text)))
+    }
+  )
+})
+
+test_that("select block expression generation - exclude mode", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("blockr.core")
+
+  # Test with selected columns (exclude mode)
+  test_data <- reactive(data.frame(
+    a = c(1, 2, 3),
+    b = c("x", "y", "z"),
+    c = c(10, 20, 30)
+  ))
+
+  blk <- new_select_block(columns = c("b"), exclude = TRUE)
+
+  # Test that server function works
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = test_data),
+    {
+      session$flushReact()
+
+      # Check that server returned a list with expr and state
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+      expect_true(is.list(result$state))
+
+      # Check expression - should use minus syntax
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+      expr_text <- deparse(expr_result)
+      expect_true(any(grepl("dplyr::select", expr_text)))
+      expect_true(any(grepl("-c", expr_text)))  # Minus syntax
+      expect_true(any(grepl("b", expr_text)))
+    }
+  )
+})
+
+test_that("select block expression generation - empty selection", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("blockr.core")
+
+  test_data <- reactive(data.frame(
+    a = c(1, 2, 3),
+    b = c("x", "y", "z")
+  ))
+
+  # Empty selection in include mode = select nothing
+  blk_include <- new_select_block(columns = character(0), exclude = FALSE)
+
+  shiny::testServer(
+    blk_include$expr_server,
+    args = list(data = test_data),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expr_text <- deparse(expr_result)
+      # Should select nothing using -everything()
+      expect_true(any(grepl("everything", expr_text)))
+      expect_true(any(grepl("-", expr_text)))
+    }
+  )
+
+  # Empty selection in exclude mode = select all
+  blk_exclude <- new_select_block(columns = character(0), exclude = TRUE)
+
+  shiny::testServer(
+    blk_exclude$expr_server,
+    args = list(data = test_data),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expr_text <- deparse(expr_result)
+      # Should select all (no column args)
+      expect_true(any(grepl("dplyr::select\\(data\\)", expr_text)))
+    }
+  )
+})
+
+test_that("select block UI generation", {
+  blk <- new_select_block(columns = c("mpg", "cyl"))
+
+  ui_output <- blk$expr_ui("test_id")
+
+  expect_s3_class(ui_output, "shiny.tag.list")
+  ui_text <- as.character(ui_output)
+
+  # Should contain selectizeInput
+  expect_true(grepl("selectize", ui_text, ignore.case = TRUE))
+
+  # Should contain checkbox for exclude mode
+  expect_true(grepl("checkbox", ui_text, ignore.case = TRUE))
+  expect_true(grepl("Exclude", ui_text, ignore.case = TRUE))
+})
+
+test_that("select block reactive updates", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("blockr.core")
+
+  test_data <- reactive(data.frame(
+    mpg = c(21, 21, 22.8),
+    cyl = c(6, 6, 4),
+    hp = c(110, 110, 93)
+  ))
+
+  blk <- new_select_block(columns = c("mpg"))
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = test_data),
+    {
+      session$flushReact()
+
+      result <- session$returned
+
+      # Initial state - check that columns() reactive returns "mpg"
+      expect_equal(result$state$columns(), "mpg")
+      expect_false(isTRUE(result$state$exclude()))
+
+      # Update columns
+      session$setInputs(columns = c("mpg", "cyl"))
+      session$flushReact()
+      expect_equal(result$state$columns(), c("mpg", "cyl"))
+
+      # Update exclude mode
+      session$setInputs(exclude = TRUE)
+      session$flushReact()
+      expect_true(isTRUE(result$state$exclude()))
+    }
+  )
 })

@@ -4,23 +4,66 @@
 \alias{new_select_block}
 \title{Select block constructor}
 \usage{
-new_select_block(
-  columns = character(),
-  interface = "table",
-  show_selected_on_top = TRUE,
-  ...
-)
+new_select_block(columns = character(), exclude = FALSE, ...)
 }
 \arguments{
-\item{columns}{Selected columns}
+\item{columns}{Selected columns (character vector)}
 
-\item{interface}{Interface type: "table" or "cards" (default "table")}
+\item{exclude}{Logical. If TRUE, uses exclude mode (dplyr minus syntax: \code{-c(col1, col2)}).
+If FALSE (default), uses include mode (selects specified columns).}
 
-\item{show_selected_on_top}{Whether to show selected columns on top (default TRUE for table interface)}
-
-\item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
+\item{...}{Forwarded to \code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}}
 }
 \description{
-This block allows to perform column subsetting on \code{data.frame} objects (see
-\code{\link[dplyr:select]{dplyr::select()}}).
+This block allows performing column subsetting on \code{data.frame} objects (see
+\code{\link[dplyr:select]{dplyr::select()}}). Columns can be selected and reordered by dragging, and
+an exclude mode allows for negative selection using dplyr's minus syntax.
+}
+\details{
+The select block provides a sortable multi-select interface where columns can be:
+\itemize{
+\item Selected/deselected by clicking
+\item Reordered by dragging (order is preserved in output)
+\item Removed individually using the × button
+}
+
+\strong{Include mode (exclude = FALSE, default):}
+\itemize{
+\item Selected columns are included in output
+\item Empty selection = select nothing (\code{select(data, -everything())})
+}
+
+\strong{Exclude mode (exclude = TRUE):}
+\itemize{
+\item Selected columns are excluded from output using minus syntax
+\item Empty selection = select all (\code{select(data)})
+\item Efficient for large datasets when you want to remove just a few columns
+}
+}
+\examples{
+\dontrun{
+# Basic usage with mtcars dataset
+library(blockr.core)
+serve(new_select_block(), list(data = mtcars))
+
+# With initial column selection
+serve(new_select_block(columns = c("mpg", "cyl", "hp")), list(data = mtcars))
+
+# Exclude mode (select all except specified columns)
+serve(new_select_block(columns = c("gear", "carb"), exclude = TRUE), list(data = mtcars))
+
+# Connected blocks example
+serve(
+  new_board(
+    blocks = list(
+      a = new_dataset_block(),
+      b = new_select_block()
+    ),
+    links = links(
+      from = c("a"),
+      to = c("b")
+    )
+  )
+)
+}
 }
