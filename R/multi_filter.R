@@ -327,6 +327,14 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         border-color: #adb5bd;
         color: #495057;
       }
+
+      .multi-filter-container .selectize-control.single .selectize-input {
+        border-color: #dee2e6;
+        color: #6c757d;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+        min-height: calc(1.5em + 0.5rem + 2px);
+      }
     "
     ),
     div(
