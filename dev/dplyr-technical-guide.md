@@ -299,6 +299,7 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
    - Would require special handling in expression generation (NA needs `is.na()` not `%in%`)
    - Makes value_filter more complete and flexible
    - Users could then exclude NAs by selecting NA and clicking "Exclude" checkbox
+- [ ] **join block** Visually enhance, complex join types can go to next version.
 
 **New blocks to implement:**
 - [ ] **pivot_wider block** - Transform long data to wide format (tidyr)
@@ -318,6 +319,18 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
 - ❌ `relocate` - Can be done with select block (marginal benefit)
 - ❌ `fill` - Less commonly used, wait for user demand
 - ❌ `group_by` / `ungroup` - The `.by` argument in individual blocks is more modern (dplyr 1.1.0+) and cleaner
+
+
+### V2: Advanced Modes
+
+For a later iteration, we can add advanced modes for the following blocks:
+
+- Filter (combined simple/advanced mode)
+- Joins (https://github.com/BristolMyersSquibb/blockr.dplyr/issues/21)
+- Arrange by expression
+
+These would all follow a similar pattern: there should be a switch to go from the simple mode to and advanced, expression based mode.
+
 
 ## Best Practices Summary
 
