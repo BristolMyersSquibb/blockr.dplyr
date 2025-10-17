@@ -288,6 +288,37 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
 
 ---
 
+## To-Do List
+
+**Existing blocks to enhance:**
+- [ ] **slice block** - Review UI layout, ensure consistent styling with other blocks
+- [ ] **select block** - Rework UI, using multi-select dropdown for column selection
+- [ ] **arrange block** - Improve multi-column arrangement UI clarity
+- [ ] **distinct block** - Enhance reactive UI responsiveness and visual feedback
+- [ ] **Enhance `value_filter` to handle NA values** - Users need to be able to filter based on NA values.
+   - Would require special handling in expression generation (NA needs `is.na()` not `%in%`)
+   - Makes value_filter more complete and flexible
+   - Users could then exclude NAs by selecting NA and clicking "Exclude" checkbox
+
+**New blocks to implement:**
+- [ ] **pivot_wider block** - Transform long data to wide format (tidyr)
+- [ ] **pivot_longer block** - Transform wide data to long format (tidyr)
+
+### Guiding Principle: When to Add a New Block
+
+**Add a new block when it does something fundamentally different:**
+- ✅ Pivot blocks - reshape entire data structure (cannot be replicated with other blocks)
+- ✅ Join blocks - merge datasets based on keys (fundamentally different operation)
+- ✅ Summarize blocks - aggregate data (fundamentally different from row-wise operations)
+
+**Don't add a block when it's just a specialized version of an existing operation:**
+- ❌ `count` / `tally` - Just `summarize(n = n()) + arrange(desc(n))`, not fundamentally different
+- ❌ `separate` / `unite` - Just specialized mutate operations with string functions
+- ❌ `drop_na` - Can use filter block with `!is.na(column)` or enhance value_filter to handle NAs
+- ❌ `relocate` - Can be done with select block (marginal benefit)
+- ❌ `fill` - Less commonly used, wait for user demand
+- ❌ `group_by` / `ungroup` - The `.by` argument in individual blocks is more modern (dplyr 1.1.0+) and cleaner
+
 ## Best Practices Summary
 
 ### Shiny Reactivity
