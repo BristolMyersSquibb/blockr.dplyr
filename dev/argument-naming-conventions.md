@@ -217,6 +217,30 @@ new_bind_cols_block(...)
 
 ---
 
+## Naming Patterns in blockr.core
+
+blockr.core blocks follow a simple principle: **match the underlying R function's argument names**.
+
+| Block | Function | blockr.core Args | Pattern |
+|-------|----------|------------------|---------|
+| subset_block | `subset()` | `subset`, `select` | Matches function params |
+| merge_block | `merge()` | `by`, `all_x`, `all_y` | Matches function params |
+| head_block | `head()` | `n`, `direction` | Matches + semantic extension |
+| scatter_block | `plot()` | `x`, `y` | Matches function params |
+| glue_block | `glue()` | `text` | Semantic name for template |
+| dataset_block | N/A | `dataset`, `package` | Domain-specific |
+
+**Key insight**: When wrapping an R function, use its argument names whenever possible.
+
+### Why This Matters for blockr.dplyr
+
+dplyr functions use `...` for expressions, which can't be directly replicated as an argument name. We need an alternative that:
+1. Is consistent across blocks
+2. Indicates R expressions/code
+3. Follows R conventions
+
+---
+
 ## Problems
 
 ### `string` is overloaded
@@ -297,21 +321,34 @@ Blocks: Value Filter
 conditions = list(list(column = "cyl", values = c(4, 6)))
 ```
 
-### Consistency over specificity
+### Plural vs Singular
 
-Use `exprs` consistently instead of `filter_exprs`, `mutate_exprs`, `summary_exprs`:
-- One pattern to learn
-- Clear that it expects R code
-- Block name provides context
-- Less verbose
+All these arguments accept **lists or vectors of multiple items**, so they should be **plural**:
+
+| Argument | Data Structure | Singular? | Plural? |
+|----------|----------------|-----------|---------|
+| filter exprs | `list("mpg > 20", "cyl == 6")` | `expr` ❌ | `exprs` ✓ |
+| mutate exprs | `list(hp_per_cyl = "hp / cyl", ...)` | `expr` ❌ | `exprs` ✓ |
+| summarize exprs | `list(avg_mpg = "mean(mpg)", ...)` | `expr` ❌ | `exprs` ✓ |
+| **renames** | `list(new_name = "old_name", ...)` | `rename` ❌ | **`renames`** ✓ |
+
+**Consistency principle**: Use plural names for arguments that accept multiple items. This matches `renames` which is already plural.
+
+### Why `exprs` specifically?
+
+1. **Follows rlang convention**: rlang has `exprs()` (plural) for multiple expressions
+2. **Shorter than alternatives**: `expressions`, `conditions`, `assignments`
+3. **Generic**: Works for unnamed (filter) and named (mutate/summarize) expressions
+4. **Clear intent**: Signals R code/expressions
+5. **Consistent with `renames`**: Both are plural
 
 ### Preserve what works
 
 Keep:
-- `columns` (select, distinct, arrange)
-- `renames` (rename)
-- `by` (mutate, summarize, slice, join)
-- `conditions` (value_filter)
+- `columns` (select, distinct, arrange) - plural ✓
+- `renames` (rename) - plural ✓
+- `by` (mutate, summarize, slice, join) - dplyr convention ✓
+- `conditions` (value_filter) - plural, structured data ✓
 
 ---
 
@@ -327,17 +364,50 @@ Keep everything else as-is.
 
 ---
 
+## blockr.core Constraint: State Must Match Constructor Args
+
+From [blockr.core/R/block-class.R:73-75](../blockr.core/R/block-class.R#L73-L75):
+
+> **State component names are required to match block constructor arguments**
+
+When a block is saved and restored, blockr.core:
+1. Extracts the `state` list
+2. Calls the constructor with state values as arguments
+3. **Expects argument names to match exactly**
+
+This means when renaming `string` → `exprs`, we must update BOTH:
+
+```r
+# Constructor signature
+new_filter_block(exprs = "TRUE", ...)  # was: string = "TRUE"
+
+# State component (inside server function)
+state = list(
+  exprs = r_exprs_validated  # was: string = r_string_validated
+)
+```
+
+They must match because blockr.core does:
+```r
+# Pseudocode for restoring a block
+state <- list(exprs = "mpg > 20")
+do.call(new_filter_block, state)  # Calls: new_filter_block(exprs = "mpg > 20")
+```
+
+---
+
 ## Implementation
 
 1. Update function signatures: `R/filter.R`, `R/mutate.R`, `R/summarize.R`
-2. Update internal code
-3. Update roxygen examples
-4. Update tests
-5. Update `inst/examples`
-6. Check vignettes/READMEs
-7. Update NEWS.md
-8. Run R CMD check
-9. Manual testing
+2. Update state components in server functions (must match constructor args!)
+3. Update internal code using these arguments
+4. Update roxygen examples
+5. Update tests
+6. Update `inst/examples`
+7. Check vignettes/READMEs
+8. Update NEWS.md
+9. Run R CMD check
+10. Manual testing
 
 ---
 
@@ -377,18 +447,63 @@ new_summarize_block(exprs = list(avg_mpg = "mean(mpg)"), by = "cyl")
 
 ## Alternatives Considered
 
+### Use `expr` (singular) instead of `exprs`
+
+Following rlang's `expr()` function for single expressions.
+
+**Rejected**:
+- Inconsistent with `renames` (plural)
+- All these arguments accept multiple items
+- rlang actually has `exprs()` (plural) for multiple expressions
+
 ### Use `conditions` for filter
 
 Align with `value_filter_block`.
 
-Rejected: `conditions` suggests structured data (like value_filter's list-of-lists), not plain R expressions. Doesn't solve mutate/summarize inconsistency.
+**Rejected**:
+- `conditions` in value_filter is structured data (list-of-lists with column/values/mode)
+- filter uses plain R expressions, not structured conditions
+- Doesn't solve mutate/summarize inconsistency
+- Less clear that it expects R code
+
+### Use semantic names per block
+
+- Filter: `predicates` or `where`
+- Mutate: `assignments` or `transformations`
+- Summarize: `aggregations` or `summaries`
+
+**Rejected**:
+- Too verbose
+- Adds cognitive load (3 different names to remember)
+- Generic `exprs` works fine for all
+
+### Match dplyr exactly with `...`
+
+Not possible - `...` is reserved and already used by `new_block()`.
 
 ---
 
 ## Guidelines for New Blocks
 
-1. R expressions: `exprs` (named or unnamed)
-2. Column selection: `columns`
-3. Grouping: `by`
-4. Mappings: descriptive names (`renames`, etc.)
-5. Structured config: descriptive names (`conditions`, etc.)
+When creating new blocks:
+
+1. **Match underlying function params when possible** (blockr.core pattern)
+2. **R expressions**: `exprs` (plural, named or unnamed)
+3. **Column selection**: `columns` (plural)
+4. **Grouping**: `by` (dplyr convention)
+5. **Mappings**: descriptive plural names (`renames`, `joins`, etc.)
+6. **Structured config**: descriptive plural names (`conditions`, `rules`, etc.)
+7. **Use plurals** for arguments accepting lists/vectors of items
+
+---
+
+## Design Rationale Summary
+
+The proposed `exprs` argument name:
+- ✓ Shorter and clearer than `string`
+- ✓ Technically accurate (list, not string)
+- ✓ Consistent across filter/mutate/summarize
+- ✓ Plural like `renames`, `columns`, `conditions`
+- ✓ Follows rlang convention (`exprs()`)
+- ✓ Signals R code/expressions clearly
+- ✓ Generic enough for different expression types
