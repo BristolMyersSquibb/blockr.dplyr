@@ -430,10 +430,7 @@ mod_value_filter_ui <- function(id) {
       }
 
       .value-filter-condition .selectize-input {
-        height: 38px !important;
         min-height: 38px;
-        display: flex;
-        align-items: center;
         margin-bottom: 0 !important;
       }
 
