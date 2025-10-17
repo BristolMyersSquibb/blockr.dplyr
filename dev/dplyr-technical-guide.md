@@ -276,6 +276,18 @@ results <- validate_blocks_batch(blocks)
 
 ---
 
+## Design Decisions: Argument Naming Conventions
+
+When creating new blocks, follow blockr.core's pattern: **match the underlying R function's argument names when possible**. When that's not feasible (like dplyr's `...`), use:
+
+1. **R expressions**: `exprs` (plural, named or unnamed)
+2. **Column selection**: `columns` (plural)
+3. **Grouping**: `by` (dplyr convention)
+4. **Mappings**: descriptive plural names (`renames`, `joins`, etc.)
+5. **Structured config**: descriptive plural names (`conditions`, `rules`, etc.)
+
+---
+
 ## Best Practices Summary
 
 ### Shiny Reactivity
