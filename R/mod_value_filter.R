@@ -419,8 +419,8 @@ mod_value_filter_ui <- function(id) {
         margin-bottom: 0 !important;
       }
 
-      /* Only apply height to form controls and selectize input, not the dropdown container */
-      .value-filter-condition .form-control {
+      /* Only apply height to form controls, but not selectize which needs to grow */
+      .value-filter-condition .form-control:not(.selectize-control):not(.selectize-dropdown) {
         height: 38px !important;
         margin-bottom: 0 !important;
       }
@@ -432,11 +432,6 @@ mod_value_filter_ui <- function(id) {
       .value-filter-condition .selectize-input {
         min-height: 38px;
         margin-bottom: 0 !important;
-      }
-
-      /* Allow dropdown to expand freely */
-      .value-filter-condition .selectize-dropdown {
-        height: auto !important;
       }
 
       .condition-remove {
