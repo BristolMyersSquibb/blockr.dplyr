@@ -92,7 +92,7 @@ block_responsive_css <- function() {
     }
 
     .block-help-text {
-      margin-top: -10px;  # offset the margin-bottom of the previous element
+      margin-top: 0px;
       padding-top: 0px;
       font-size: 0.875rem;
       color: #666;
