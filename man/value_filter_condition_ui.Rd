@@ -9,7 +9,6 @@ value_filter_condition_ui(
   column = NULL,
   values = character(0),
   mode = "include",
-  type = "values",
   available_columns = character(0),
   get_unique_values = function(col) character(0),
   show_remove = TRUE,
@@ -25,15 +24,13 @@ value_filter_condition_ui(
 
 \item{mode}{Include or exclude mode}
 
-\item{type}{Type of filter ("values" or "range")}
-
 \item{available_columns}{Available column choices}
 
 \item{get_unique_values}{Function to get unique values for a column}
 
 \item{show_remove}{Whether to show remove button}
 
-\item{ns}{Namespace function for conditional panels}
+\item{ns}{Namespace function (unused, kept for compatibility)}
 }
 \value{
 A div containing the row UI

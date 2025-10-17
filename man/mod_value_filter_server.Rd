@@ -20,7 +20,8 @@ A list with reactive expressions for conditions and preserve_order
 }
 \description{
 A Shiny module that manages value-based filter conditions. Users can select
-columns and choose specific values to include or exclude without writing
-R expressions. Supports multiple conditions with AND/OR logic.
+columns and choose specific discrete values to include or exclude without writing
+R expressions. Works with both numeric and categorical columns using multi-select
+inputs. Supports multiple conditions with AND/OR logic.
 }
 \keyword{internal}
