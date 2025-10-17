@@ -496,6 +496,14 @@ mod_value_filter_ui <- function(id) {
         color: #6c757d;
         font-style: italic;
       }
+
+      .value-filter-preserve-order {
+        margin-top: 20px;
+      }
+
+      .value-filter-preserve-order .checkbox {
+        font-size: 0.875rem;
+      }
       "
     ),
     div(
@@ -508,7 +516,10 @@ mod_value_filter_ui <- function(id) {
           label = "Add Condition",
           icon = icon("plus"),
           class = "btn btn-outline-secondary btn-sm"
-        ),
+        )
+      ),
+      div(
+        class = "value-filter-preserve-order",
         checkboxInput(
           ns("preserve_order"),
           label = "Preserve selection order",
