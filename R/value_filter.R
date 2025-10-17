@@ -7,8 +7,8 @@
 #'
 #' @param conditions List of filter conditions. Each condition should be a list
 #'   with elements: column (character), values (vector), mode ("include" or "exclude"),
-#'   optionally type ("values" or "range") for numeric filters, and optionally
-#'   operator ("&" or "|") specifying how this condition connects to the previous one
+#'   and optionally operator ("&" or "|") specifying how this condition connects to
+#'   the previous one
 #' @param preserve_order Logical. If TRUE, preserves the order of selected values
 #'   in the filtered output (default: FALSE)
 #' @param ... Additional arguments forwarded to [new_block()]
@@ -90,10 +90,42 @@ new_value_filter_block <- function(conditions = list(), preserve_order = FALSE, 
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        # Use value filter UI - no Submit button needed for reactive filtering
-        mod_value_filter_ui(NS(id, "vf"))
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for value filter block
+        tags$style(HTML(
+          "
+          .value-filter-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          "
+        )),
+
+        div(
+          class = "block-container value-filter-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Value Filter Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Select specific values to filter rows. Choose columns and values to include or exclude."
+                  )
+                ),
+                mod_value_filter_ui(NS(id, "vf"))
+              )
+            )
+          )
+        )
       )
     },
     class = "value_filter_block",
@@ -127,42 +159,29 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
       column <- condition$column
       values <- condition$values
       mode <- condition$mode %||% "include"
-      type <- condition$type %||% "values"
 
-      # Handle range conditions (from slider)
-      if (type == "range" && length(values) == 2 && is.numeric(values)) {
-        min_val <- values[1]
-        max_val <- values[2]
+      # Handle empty values - skip conditions with no values
+      if (is.null(values) || length(values) == 0) {
+        next # Skip conditions without values
+      }
 
-        if (mode == "include") {
-          filter_part <- glue::glue("`{column}` >= {min_val} & `{column}` <= {max_val}")
-        } else {
-          filter_part <- glue::glue("!(`{column}` >= {min_val} & `{column}` <= {max_val})")
+      # Format values for R expression
+      if (is.numeric(values)) {
+        values_str <- paste(values, collapse = ", ")
+      } else {
+        values_str <- paste(sprintf('"%s"', values), collapse = ", ")
+      }
+
+      # Build the condition string
+      if (mode == "include") {
+        filter_part <- glue::glue("`{column}` %in% c({values_str})")
+        # Track this for order preservation if enabled
+        if (preserve_order) {
+          order_columns <- c(order_columns, column)
+          order_values_list[[column]] <- values_str
         }
       } else {
-        # Handle empty values - skip conditions with no values
-        if (is.null(values) || length(values) == 0) {
-          next # Skip conditions without values
-        }
-
-        # Format values for R expression
-        if (is.numeric(values)) {
-          values_str <- paste(values, collapse = ", ")
-        } else {
-          values_str <- paste(sprintf('"%s"', values), collapse = ", ")
-        }
-
-        # Build the condition string
-        if (mode == "include") {
-          filter_part <- glue::glue("`{column}` %in% c({values_str})")
-          # Track this for order preservation if enabled
-          if (preserve_order && type == "values") {
-            order_columns <- c(order_columns, column)
-            order_values_list[[column]] <- values_str
-          }
-        } else {
-          filter_part <- glue::glue("!(`{column}` %in% c({values_str}))")
-        }
+        filter_part <- glue::glue("!(`{column}` %in% c({values_str}))")
       }
 
       filter_parts <- c(filter_parts, filter_part)

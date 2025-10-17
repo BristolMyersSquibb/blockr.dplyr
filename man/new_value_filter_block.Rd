@@ -9,8 +9,8 @@ new_value_filter_block(conditions = list(), preserve_order = FALSE, ...)
 \arguments{
 \item{conditions}{List of filter conditions. Each condition should be a list
 with elements: column (character), values (vector), mode ("include" or "exclude"),
-optionally type ("values" or "range") for numeric filters, and optionally
-operator ("&" or "|") specifying how this condition connects to the previous one}
+and optionally operator ("&" or "|") specifying how this condition connects to
+the previous one}
 
 \item{preserve_order}{Logical. If TRUE, preserves the order of selected values
 in the filtered output (default: FALSE)}
