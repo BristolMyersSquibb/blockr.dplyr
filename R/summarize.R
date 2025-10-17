@@ -3,7 +3,7 @@
 #' This block allows to add new variables by summarizing over groups
 #' (see [dplyr::summarize()]). Changes are applied after clicking the submit button.
 #'
-#' @param string Reactive expression returning character vector of
+#' @param exprs Reactive expression returning character vector of
 #'   expressions
 #' @param by Columns to define grouping
 #' @param unpack Logical flag to unpack data frame columns from helper functions.
@@ -25,14 +25,14 @@
 #' ```r
 #' # Without unpacking (default)
 #' new_summarize_block(
-#'   string = list(stats = "helper_func(...)"),
+#'   exprs = list(stats = "helper_func(...)"),
 #'   unpack = FALSE
 #' )
 #' # Result: Creates nested list-column "stats" containing the data frame
 #'
 #' # With unpacking
 #' new_summarize_block(
-#'   string = list(stats = "helper_func(...)"),
+#'   exprs = list(stats = "helper_func(...)"),
 #'   unpack = TRUE
 #' )
 #' # Result: Columns from helper_func() are unpacked into separate columns
@@ -62,7 +62,7 @@
 #' # With unpacking enabled
 #' serve(
 #'   new_summarize_block(
-#'     string = list(stats = "calc_stats(pick(everything()))"),
+#'     exprs = list(stats = "calc_stats(pick(everything()))"),
 #'     by = "group",
 #'     unpack = TRUE
 #'   ),
@@ -72,7 +72,7 @@
 #' }
 #' @export
 new_summarize_block <- function(
-  string = list(count = "dplyr::n()"),
+  exprs = list(count = "dplyr::n()"),
   by = character(),
   unpack = FALSE,
   ...
@@ -92,9 +92,9 @@ new_summarize_block <- function(
             initial_value = by
           )
 
-          r_string <- mod_multi_kvexpr_server(
+          r_exprs <- mod_multi_kvexpr_server(
             id = "mkv",
-            get_value = \() string,
+            get_value = \() exprs,
             get_cols = \() colnames(data())
           )
 
@@ -109,9 +109,9 @@ new_summarize_block <- function(
               # Auto-update when unpack changes
               apply_summarize(
                 data(),
-                r_string_validated(),
+                r_exprs_validated(),
                 r_expr_validated,
-                r_string_validated,
+                r_exprs_validated,
                 r_by_selection(),
                 r_unpack()
               )
@@ -120,18 +120,18 @@ new_summarize_block <- function(
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_summarize(string, by, unpack))
-          r_string_validated <- reactiveVal(string)
+          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
+          r_exprs_validated <- reactiveVal(exprs)
 
           # Auto-update when grouping changes
           observeEvent(r_by_selection(), {
             # Only update if we have validated expressions
-            if (length(r_string_validated()) > 0) {
+            if (length(r_exprs_validated()) > 0) {
               apply_summarize(
                 data(),
-                r_string_validated(),
+                r_exprs_validated(),
                 r_expr_validated,
-                r_string_validated,
+                r_exprs_validated,
                 r_by_selection(),
                 r_unpack()
               )
@@ -142,9 +142,9 @@ new_summarize_block <- function(
           observeEvent(input$submit, {
             apply_summarize(
               data(),
-              r_string(),
+              r_exprs(),
               r_expr_validated,
-              r_string_validated,
+              r_exprs_validated,
               r_by_selection(),
               r_unpack()
             )
@@ -153,7 +153,7 @@ new_summarize_block <- function(
           list(
             expr = r_expr_validated,
             state = list(
-              string = reactive(as.list(r_string_validated())),
+              exprs = reactive(as.list(r_exprs_validated())),
               by = r_by_selection,
               unpack = r_unpack
             )
@@ -370,27 +370,27 @@ parse_summarize <- function(
 
 apply_summarize <- function(
   data,
-  string,
+  exprs,
   r_expr_validated,
-  r_string_validated,
+  r_exprs_validated,
   by_selection,
   unpack = FALSE
 ) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
-  if (is.list(string)) {
-    string <- unlist(string)
+  if (is.list(exprs)) {
+    exprs <- unlist(exprs)
   }
 
   # If empty or only whitespace, return simple summarize
-  if (all(trimws(unname(string)) == "")) {
-    expr <- parse_summarize(string, character(), unpack)
+  if (all(trimws(unname(exprs)) == "")) {
+    expr <- parse_summarize(exprs, character(), unpack)
     r_expr_validated(expr)
     return()
   }
 
-  req(string)
-  stopifnot(is.character(string), !is.null(names(string)))
-  expr <- try(parse_summarize(string, by_selection, unpack))
+  req(exprs)
+  stopifnot(is.character(exprs), !is.null(names(exprs)))
+  expr <- try(parse_summarize(exprs, by_selection, unpack))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(
@@ -410,5 +410,5 @@ apply_summarize <- function(
     return()
   }
   r_expr_validated(expr)
-  r_string_validated(string)
+  r_exprs_validated(exprs)
 }

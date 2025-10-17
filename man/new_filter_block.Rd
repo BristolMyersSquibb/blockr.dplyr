@@ -4,10 +4,10 @@
 \alias{new_filter_block}
 \title{Filter block constructor}
 \usage{
-new_filter_block(string = "TRUE", ...)
+new_filter_block(exprs = "TRUE", ...)
 }
 \arguments{
-\item{string}{Reactive expression returning character vector of
+\item{exprs}{Reactive expression returning character vector of
 filter conditions (default: "TRUE" for no filtering)}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}

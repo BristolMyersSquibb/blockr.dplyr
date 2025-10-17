@@ -4,7 +4,7 @@
 #' (see [dplyr::filter()]). Supports multiple conditions with AND/OR logic.
 #' Changes are applied after clicking the submit button.
 #'
-#' @param string Reactive expression returning character vector of
+#' @param exprs Reactive expression returning character vector of
 #'   filter conditions (default: "TRUE" for no filtering)
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
@@ -36,54 +36,84 @@
 #' )
 #' }
 #' @export
-new_filter_block <- function(string = "TRUE", ...) {
+new_filter_block <- function(exprs = "TRUE", ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
           # Use multi-condition filter interface
-          r_string <- mod_multi_filter_server(
+          r_exprs <- mod_multi_filter_server(
             id = "mf",
-            get_value = \() string,
+            get_value = \() exprs,
             get_cols = \() colnames(data())
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_filter(string))
-          r_string_validated <- reactiveVal(string)
+          r_expr_validated <- reactiveVal(parse_filter(exprs))
+          r_exprs_validated <- reactiveVal(exprs)
 
           # Validate and update on submit
           observeEvent(input$submit, {
             apply_filter(
               data(),
-              r_string(),
+              r_exprs(),
               r_expr_validated,
-              r_string_validated
+              r_exprs_validated
             )
           })
 
           list(
             expr = r_expr_validated,
             state = list(
-              string = r_string_validated
+              exprs = r_exprs_validated
             )
           )
         }
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        # Use multi-condition filter UI
-        mod_multi_filter_ui(NS(id, "mf")),
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for filter block
+        tags$style(HTML(
+          "
+          .filter-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          "
+        )),
+
         div(
-          style = "text-align: right; margin-top: 10px;",
-          actionButton(
-            NS(id, "submit"),
-            "Submit",
-            icon = icon("paper-plane"),
-            class = "btn-primary"
+          class = "block-container filter-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Filter Conditions Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Filter rows with R expressions. Use Ctrl+Space for autocomplete."
+                  )
+                ),
+                mod_multi_filter_ui(
+                  NS(id, "mf"),
+                  extra_button = actionButton(
+                    NS(id, "submit"),
+                    "Submit",
+                    class = "btn-primary btn-sm"
+                  )
+                )
+              )
+            )
           )
         )
       )
@@ -102,18 +132,18 @@ parse_filter <- function(filter_string = "") {
   parse(text = text)[1]
 }
 
-apply_filter <- function(data, string, r_expr_validated, r_string_validated) {
+apply_filter <- function(data, exprs, r_expr_validated, r_exprs_validated) {
   # If empty or only whitespace, return simple filter
-  if (trimws(string) == "") {
+  if (trimws(exprs) == "") {
     expr <- parse_filter("")
     r_expr_validated(expr)
     return()
   }
 
-  req(string)
-  stopifnot(is.character(string))
+  req(exprs)
+  stopifnot(is.character(exprs))
 
-  expr <- try(parse_filter(string))
+  expr <- try(parse_filter(exprs))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(
@@ -134,5 +164,5 @@ apply_filter <- function(data, string, r_expr_validated, r_string_validated) {
     return()
   }
   r_expr_validated(expr)
-  r_string_validated(string)
+  r_exprs_validated(exprs)
 }

@@ -4,10 +4,10 @@
 \alias{new_mutate_block}
 \title{Mutate block constructor}
 \usage{
-new_mutate_block(string = list(new_col = "1"), by = character(), ...)
+new_mutate_block(exprs = list(new_col = "1"), by = character(), ...)
 }
 \arguments{
-\item{string}{Reactive expression returning character vector of
+\item{exprs}{Reactive expression returning character vector of
 expressions}
 
 \item{by}{Character vector of column names for grouping. Default is empty.}

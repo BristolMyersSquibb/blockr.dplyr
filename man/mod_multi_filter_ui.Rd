@@ -4,10 +4,12 @@
 \alias{mod_multi_filter_ui}
 \title{Create multi filter UI module}
 \usage{
-mod_multi_filter_ui(id)
+mod_multi_filter_ui(id, extra_button = NULL)
 }
 \arguments{
 \item{id}{The module ID}
+
+\item{extra_button}{Optional extra button (e.g., submit button) to place next to Add button}
 }
 \value{
 A div containing the UI elements

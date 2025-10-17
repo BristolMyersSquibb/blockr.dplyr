@@ -50,7 +50,7 @@ test_that("summarize block creates successfully", {
 
   # Test with custom expressions
   block2 <- new_summarize_block(
-    string = list(mean_val = "mean(x)"),
+    exprs = list(mean_val = "mean(x)"),
     by = c("group")
   )
   expect_s3_class(block2, "summarize_block")

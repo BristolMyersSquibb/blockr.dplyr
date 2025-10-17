@@ -92,6 +92,10 @@ new_rename_block <- function(
           .rename-block-container .block-form-grid {
             grid-template-columns: 1fr !important;
           }
+          .rename-block-container .block-help-text p {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+          }
           "
         )),
 

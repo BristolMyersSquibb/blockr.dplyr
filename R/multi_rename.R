@@ -228,8 +228,8 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--bs-gray-600);
-        font-size: 1.2em;
+        color: var(--bs-gray-400);
+        font-size: 0.9em;
         width: 30px;
       }
 
