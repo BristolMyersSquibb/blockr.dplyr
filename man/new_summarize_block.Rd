@@ -5,14 +5,14 @@
 \title{Summarize block constructor}
 \usage{
 new_summarize_block(
-  string = list(count = "dplyr::n()"),
+  exprs = list(count = "dplyr::n()"),
   by = character(),
   unpack = FALSE,
   ...
 )
 }
 \arguments{
-\item{string}{Reactive expression returning character vector of
+\item{exprs}{Reactive expression returning character vector of
 expressions}
 
 \item{by}{Columns to define grouping}
@@ -39,14 +39,14 @@ functions like \code{stat_label()} that return multiple statistics as columns.
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{# Without unpacking (default)
 new_summarize_block(
-  string = list(stats = "helper_func(...)"),
+  exprs = list(stats = "helper_func(...)"),
   unpack = FALSE
 )
 # Result: Creates nested list-column "stats" containing the data frame
 
 # With unpacking
 new_summarize_block(
-  string = list(stats = "helper_func(...)"),
+  exprs = list(stats = "helper_func(...)"),
   unpack = TRUE
 )
 # Result: Columns from helper_func() are unpacked into separate columns
@@ -77,7 +77,7 @@ calc_stats <- function(df) {
 # With unpacking enabled
 serve(
   new_summarize_block(
-    string = list(stats = "calc_stats(pick(everything()))"),
+    exprs = list(stats = "calc_stats(pick(everything()))"),
     by = "group",
     unpack = TRUE
   ),

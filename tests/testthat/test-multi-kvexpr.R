@@ -34,7 +34,7 @@ test_that("mutate block creates successfully", {
   expect_s3_class(block1, "block")
 
   # Test with custom expressions
-  block2 <- new_mutate_block(string = list(test_col = "1 + 1"))
+  block2 <- new_mutate_block(exprs = list(test_col = "1 + 1"))
   expect_s3_class(block2, "mutate_block")
 })
 

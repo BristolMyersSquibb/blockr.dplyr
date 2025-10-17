@@ -13,7 +13,7 @@ blockr.core::serve(
 
       # Filter block - filter by expression
       filtered = new_filter_block(
-        string = list(
+        exprs = list(
           high_mpg = "mpg > 20"
         )
       ),
@@ -30,7 +30,7 @@ blockr.core::serve(
 
       # Summarize the filtered data
       summary = new_summarize_block(
-        string = list(
+        exprs = list(
           avg_mpg = "mean(mpg)",
           avg_hp = "mean(hp)",
           count = "n()"

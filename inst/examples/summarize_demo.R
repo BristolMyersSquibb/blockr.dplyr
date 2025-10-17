@@ -14,14 +14,14 @@ blockr.core::serve(
 
       # Add a categorical grouping variable (cylinder count)
       prep = new_mutate_block(
-        string = list(
+        exprs = list(
           cyl_group = "as.factor(cyl)"
         )
       ),
 
       # Summarize by cylinder groups
       summary = new_summarize_block(
-        string = list(
+        exprs = list(
           avg_mpg = "mean(mpg)",
           avg_hp = "mean(hp)",
           avg_wt = "mean(wt)",

@@ -224,7 +224,7 @@ Calculate summary statistics with support for grouping and multiple expressions.
 library(blockr.dplyr)
 blockr.core::serve(
   new_summarize_block(
-    string = list(
+    exprs = list(
       avg_mpg = "mean(mpg)",
       max_hp = "max(hp)",
       count = "n()"
@@ -244,7 +244,7 @@ board <- blockr.ui::new_dag_board(
   blocks = c(
     data_block = new_dataset_block("mtcars"),
     summary_block = new_summarize_block(
-      string = list(avg_mpg = "mean(mpg)", count = "n()"),
+      exprs = list(avg_mpg = "mean(mpg)", count = "n()"),
       by = c("cyl")
     )
   ),
@@ -528,7 +528,7 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Summarize by car type
     summary_stats = new_summarize_block(
-      string = list(
+      exprs = list(
         avg_mpg = "mean(mpg)",
         avg_hp = "mean(hp)",
         avg_performance = "mean(performance)",
@@ -553,7 +553,7 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Group by species and summarize
     iris_summary = new_summarize_block(
-      string = list(
+      exprs = list(
         avg_sepal_length = "mean(sepal_length)",
         avg_petal_length = "mean(petal_length)",
         count = "n()"

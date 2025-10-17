@@ -3,7 +3,7 @@
 #' This block allows to add new variables and preserve existing ones
 #' (see [dplyr::mutate()]). Changes are applied after clicking the submit button.
 #'
-#' @param string Reactive expression returning character vector of
+#' @param exprs Reactive expression returning character vector of
 #'   expressions
 #' @param by Character vector of column names for grouping. Default is empty.
 #' @param ... Additional arguments forwarded to [new_block()]
@@ -24,7 +24,7 @@
 #' }
 #' @export
 new_mutate_block <- function(
-  string = list(new_col = "1"),
+  exprs = list(new_col = "1"),
   by = character(),
   ...
 ) {
@@ -36,9 +36,9 @@ new_mutate_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_string <- mod_multi_kvexpr_server(
+          r_exprs <- mod_multi_kvexpr_server(
             id = "mkv",
-            get_value = \() string,
+            get_value = \() exprs,
             get_cols = \() colnames(data())
           )
 
@@ -50,20 +50,20 @@ new_mutate_block <- function(
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_mutate(string, by))
-          r_string_validated <- reactiveVal(string)
+          r_expr_validated <- reactiveVal(parse_mutate(exprs, by))
+          r_exprs_validated <- reactiveVal(exprs)
           r_by_validated <- reactiveVal(by)
 
           # Auto-update when grouping changes
           observeEvent(r_by_selection(), {
             # Only update if we have validated expressions
-            if (length(r_string_validated()) > 0) {
+            if (length(r_exprs_validated()) > 0) {
               apply_mutate(
                 data(),
-                r_string_validated(),
+                r_exprs_validated(),
                 r_by_selection(),
                 r_expr_validated,
-                r_string_validated,
+                r_exprs_validated,
                 r_by_validated
               )
             }
@@ -73,10 +73,10 @@ new_mutate_block <- function(
           observeEvent(input$submit, {
             apply_mutate(
               data(),
-              r_string(),
+              r_exprs(),
               r_by_selection(),
               r_expr_validated,
-              r_string_validated,
+              r_exprs_validated,
               r_by_validated
             )
           })
@@ -84,7 +84,7 @@ new_mutate_block <- function(
           list(
             expr = r_expr_validated,
             state = list(
-              string = reactive(as.list(r_string_validated())),
+              exprs = reactive(as.list(r_exprs_validated())),
               by = r_by_validated
             )
           )
@@ -220,28 +220,28 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
 
 apply_mutate <- function(
   data,
-  string,
+  exprs,
   by_selection,
   r_expr_validated,
-  r_string_validated,
+  r_exprs_validated,
   r_by_validated
 ) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
-  if (is.list(string)) {
-    string <- unlist(string)
+  if (is.list(exprs)) {
+    exprs <- unlist(exprs)
   }
 
   # If empty or only whitespace, return simple mutate
-  if (all(trimws(unname(string)) == "")) {
-    expr <- parse_mutate(string, by_selection)
+  if (all(trimws(unname(exprs)) == "")) {
+    expr <- parse_mutate(exprs, by_selection)
     r_expr_validated(expr)
     r_by_validated(by_selection)
     return()
   }
 
-  req(string)
-  stopifnot(is.character(string), !is.null(names(string)))
-  expr <- try(parse_mutate(string, by_selection))
+  req(exprs)
+  stopifnot(is.character(exprs), !is.null(names(exprs)))
+  expr <- try(parse_mutate(exprs, by_selection))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(
@@ -261,6 +261,6 @@ apply_mutate <- function(
     return()
   }
   r_expr_validated(expr)
-  r_string_validated(string)
+  r_exprs_validated(exprs)
   r_by_validated(by_selection)
 }
