@@ -90,10 +90,42 @@ new_value_filter_block <- function(conditions = list(), preserve_order = FALSE, 
       )
     },
     function(id) {
-      div(
-        class = "m-3",
-        # Use value filter UI - no Submit button needed for reactive filtering
-        mod_value_filter_ui(NS(id, "vf"))
+      tagList(
+        shinyjs::useShinyjs(),
+
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for value filter block
+        tags$style(HTML(
+          "
+          .value-filter-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          "
+        )),
+
+        div(
+          class = "block-container value-filter-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Value Filter Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+                div(
+                  class = "block-help-text",
+                  p(
+                    "Select specific values to filter rows. Choose columns and values to include or exclude."
+                  )
+                ),
+                mod_value_filter_ui(NS(id, "vf"))
+              )
+            )
+          )
+        )
       )
     },
     class = "value_filter_block",

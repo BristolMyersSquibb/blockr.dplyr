@@ -16,7 +16,12 @@
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags tagList
 #' @keywords internal
-mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FALSE) {
+mod_value_filter_server <- function(
+  id,
+  get_value,
+  get_data,
+  preserve_order = FALSE
+) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -46,7 +51,6 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
-
 
     # Get available columns
     available_columns <- reactive({
@@ -129,7 +133,6 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
       result
     }
 
-
     # Add new condition
     observeEvent(input$add_condition, {
       current_indices <- r_condition_indices()
@@ -174,7 +177,6 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
         })
       })
     })
-
 
     # Render UI dynamically
     output$conditions_ui <- renderUI({
@@ -233,7 +235,7 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
               available_columns = cols,
               get_unique_values = get_unique_values,
               show_remove = (length(indices) > 1),
-              ns = ns  # Pass namespace function
+              ns = ns # Pass namespace function
             )
           )
         )
@@ -264,9 +266,13 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
                 if (j <= length(isolate(r_condition_indices()))) {
                   if (isolate(r_condition_indices())[j] == index) {
                     cond_column <- current_conds[[j]]$column
-                    if (!is.null(cond_column) && length(cond_column) > 0 &&
-                        !is.null(column) && length(column) > 0 &&
-                        cond_column == column) {
+                    if (
+                      !is.null(cond_column) &&
+                        length(cond_column) > 0 &&
+                        !is.null(column) &&
+                        length(column) > 0 &&
+                        cond_column == column
+                    ) {
                       saved_values <- current_conds[[j]]$values
                     }
                     break
@@ -281,13 +287,17 @@ mod_value_filter_server <- function(id, get_value, get_data, preserve_order = FA
               )
             } else {
               # Clear selections when no column selected
-              updateSelectizeInput(session, values_id, choices = list(), selected = character(0))
+              updateSelectizeInput(
+                session,
+                values_id,
+                choices = list(),
+                selected = character(0)
+              )
             }
           })
         })
       }
     })
-
 
     # Initialize preserve_order checkbox with saved value
     observe({
@@ -357,64 +367,130 @@ mod_value_filter_ui <- function(id) {
     shinyjs::useShinyjs(),
     tags$style(
       "
+      .value-filter-container {
+        margin-top: -8px;
+      }
+
       .value-filter-condition {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         background: none;
       }
-      
+
       .value-filter-condition .condition-controls {
-        display: flex;
-        gap: 15px;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 4px;
         align-items: end;
       }
-      
+
       .value-filter-condition .column-selector {
-        flex: 0 0 auto;
-        min-width: 120px;
-        width: 150px;
+        grid-column: 1;
+        grid-row: 1;
       }
 
       .value-filter-condition .values-selector {
-        flex: 1 1 auto;
-        min-width: 180px;
+        grid-column: 2;
+        grid-row: 1;
       }
 
-      .value-filter-condition .mode-selector {
-        flex: 0 0 auto;
-        min-width: 80px;
-        width: 90px;
-      }
-      
       .value-filter-condition .delete-selector {
-        flex: 0 0 auto;
+        grid-column: 3;
+        grid-row: 1;
         display: flex;
-        align-items: end;
-        padding-bottom: 5px;
+        align-items: center;
       }
-      
+
+      .value-filter-condition .mode-checkbox {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: flex;
+        align-items: center;
+        margin-top: 5px;
+      }
+
       .value-filter-condition label {
         font-size: 0.75rem;
         color: #6c757d;
         margin-bottom: 2px;
       }
-      
+
+      /* Remove default margins from Shiny inputs */
+      .value-filter-condition .shiny-input-container {
+        margin-bottom: 0 !important;
+      }
+
+      /* Only apply height to form controls and selectize input, not the dropdown container */
+      .value-filter-condition .form-control {
+        height: 38px !important;
+        margin-bottom: 0 !important;
+      }
+
+      .value-filter-condition .selectize-control {
+        margin-bottom: 0 !important;
+      }
+
+      .value-filter-condition .selectize-input {
+        height: 38px !important;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 0 !important;
+      }
+
+      /* Allow dropdown to expand freely */
+      .value-filter-condition .selectize-dropdown {
+        height: auto !important;
+      }
+
       .condition-remove {
-        background: none;
+        background: transparent;
         border: none;
         color: #6c757d;
-        padding: 6px;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 32px;
+        height: 38px;
+        width: 35px;
       }
-      
+
       .condition-remove:hover {
         color: #dc3545;
-        background: none;
-        border: none;
+        background: rgba(220, 53, 69, 0.1);
       }
-      
+
+      .value-filter-actions {
+        margin-top: 8px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .value-filter-actions .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .value-filter-actions .btn-outline-secondary:hover {
+        background-color: #f8f9fa;
+        border-color: #adb5bd;
+        color: #495057;
+      }
+
+      .value-filter-container .my-2 {
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+      }
+
+      .value-filter-container .my-2 .selectize-control.single .selectize-input {
+        border-color: #dee2e6;
+        color: #6c757d;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+        min-height: calc(1.5em + 0.5rem + 2px);
+      }
+
       .condition-count {
         font-size: 0.875rem;
         color: #6c757d;
@@ -426,21 +502,17 @@ mod_value_filter_ui <- function(id) {
       class = "value-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "d-flex justify-content-between align-items-center mt-3",
-        div(
-          actionButton(
-            ns("add_condition"),
-            label = "Add Condition",
-            icon = icon("plus"),
-            class = "btn btn-success btn-sm"
-          )
+        class = "value-filter-actions",
+        actionButton(
+          ns("add_condition"),
+          label = "Add Condition",
+          icon = icon("plus"),
+          class = "btn btn-outline-secondary btn-sm"
         ),
-        div(
-          checkboxInput(
-            ns("preserve_order"),
-            label = "Preserve selection order",
-            value = FALSE
-          )
+        checkboxInput(
+          ns("preserve_order"),
+          label = "Preserve selection order",
+          value = FALSE
         )
       )
     )
@@ -466,7 +538,7 @@ value_filter_condition_ui <- function(
   available_columns = character(0),
   get_unique_values = function(col) character(0),
   show_remove = TRUE,
-  ns = function(x) x  # Kept for compatibility
+  ns = function(x) x # Kept for compatibility
 ) {
   # Initialize choices - populate with actual values if we have a column
   unique_values <- if (!is.null(column) && column != "") {
@@ -504,26 +576,26 @@ value_filter_condition_ui <- function(
           )
         )
       ),
-      div(
-        class = "mode-selector",
-        checkboxInput(
-          paste0(id, "_mode"),
-          label = "Exclude",
-          value = (mode == "exclude")
-        )
-      ),
       if (show_remove) {
         div(
           class = "delete-selector",
           actionButton(
             paste0(id, "_remove"),
             label = NULL,
-            icon = icon("trash-can"),
+            icon = icon("xmark"),
             class = "condition-remove",
             title = "Remove this condition"
           )
         )
-      }
+      },
+      div(
+        class = "mode-checkbox",
+        checkboxInput(
+          paste0(id, "_mode"),
+          label = "Exclude",
+          value = (mode == "exclude")
+        )
+      )
     )
   )
 }

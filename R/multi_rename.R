@@ -215,7 +215,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         display: flex;
         width: 100%;
         align-items: stretch;
-        gap: 8px;
+        gap: 4px;
         margin-bottom: 8px;
       }
 
@@ -240,7 +240,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
       .multi-rename-pair .rename-delete {
         flex: 0 0 auto;
         height: 38px;
-        width: 45px;
+        width: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
