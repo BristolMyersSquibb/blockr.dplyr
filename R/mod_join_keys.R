@@ -33,7 +33,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
       .join-mapping-pair {
         display: flex;
         width: 100%;
-        align-items: stretch;
+        align-items: flex-end;
         gap: 4px;
         margin-bottom: 8px;
       }
@@ -50,6 +50,8 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         color: var(--bs-gray-400);
         font-size: 0.9em;
         width: 30px;
+        height: 38px;
+        margin-bottom: 0;
       }
 
       .join-mapping-pair .join-right {
@@ -97,9 +99,10 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         align-items: center;
       }
 
-      /* Ensure labels don't add extra bottom margin */
+      /* Ensure labels don't add extra bottom margin and align properly */
       .join-mapping-pair label.control-label {
         margin-bottom: 4px;
+        line-height: 1.2;
       }
 
       .join-actions {
@@ -124,7 +127,6 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
 
     div(
       class = "join-keys-container",
-      h5(label, style = "margin-bottom: 15px;"),
 
       # Natural join option (same column names)
       div(
@@ -279,11 +281,12 @@ mod_join_keys_server <- function(
       if (length(mappings) > 0) {
         map(seq_along(mappings), function(i) {
           create_mapping_row(
-            session$ns,
-            i,
-            mappings[[i]],
-            x_cols,
-            y_cols
+            ns = session$ns,
+            index = i,
+            mapping = mappings[[i]],
+            x_cols = x_cols,
+            y_cols = y_cols,
+            show_remove = (length(mappings) > 1)
           )
         })
       }
@@ -322,7 +325,9 @@ mod_join_keys_server <- function(
         x_col <- input[[paste0("x_col_", i)]]
         y_col <- input[[paste0("y_col_", i)]]
 
-        if (!is.null(x_col) && !is.null(y_col) && nzchar(x_col) && nzchar(y_col)) {
+        if (
+          !is.null(x_col) && !is.null(y_col) && nzchar(x_col) && nzchar(y_col)
+        ) {
           result <- c(result, list(list(x_col = x_col, y_col = y_col)))
         }
       }
@@ -366,17 +371,26 @@ mod_join_keys_server <- function(
         # Custom join - return named list
         # Two-phase pattern: use stored values if inputs don't exist yet
         mappings <- r_custom_mappings()
-        has_inputs <- length(mappings) > 0 && any(sapply(seq_along(mappings), function(i) {
-          paste0("x_col_", i) %in% names(input) && paste0("y_col_", i) %in% names(input)
-        }))
+        has_inputs <- length(mappings) > 0 &&
+          any(sapply(seq_along(mappings), function(i) {
+            paste0("x_col_", i) %in%
+              names(input) &&
+              paste0("y_col_", i) %in% names(input)
+          }))
 
         if (has_inputs) {
           # Phase 2: Read from inputs
           current_mappings <- get_current_mappings()
-          valid_mappings <- keep(current_mappings, ~ nzchar(.x$x_col) && nzchar(.x$y_col))
+          valid_mappings <- keep(
+            current_mappings,
+            ~ nzchar(.x$x_col) && nzchar(.x$y_col)
+          )
         } else {
           # Phase 1: Use stored initial values
-          valid_mappings <- keep(mappings, ~ nzchar(.x$x_col) && nzchar(.x$y_col))
+          valid_mappings <- keep(
+            mappings,
+            ~ nzchar(.x$x_col) && nzchar(.x$y_col)
+          )
         }
 
         if (length(valid_mappings) == 0) {
@@ -395,7 +409,14 @@ mod_join_keys_server <- function(
 }
 
 # Helper function to create a mapping row UI (matches rename block style)
-create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
+create_mapping_row <- function(
+  ns,
+  index,
+  mapping,
+  x_cols,
+  y_cols,
+  show_remove = TRUE
+) {
   div(
     class = "join-mapping-pair",
 
@@ -429,14 +450,16 @@ create_mapping_row <- function(ns, index, mapping, x_cols, y_cols) {
       )
     ),
 
-    # Delete button (matches rename block style)
-    actionButton(
-      ns(paste0("delete_", index)),
-      label = NULL,
-      icon = icon("xmark"),
-      class = "btn btn-sm join-delete",
-      title = "Remove join key"
-    )
+    # Delete button (conditionally rendered like rename block)
+    if (show_remove) {
+      actionButton(
+        ns(paste0("delete_", index)),
+        label = NULL,
+        icon = icon("xmark"),
+        class = "btn btn-sm join-delete",
+        title = "Remove join key"
+      )
+    }
   )
 }
 
