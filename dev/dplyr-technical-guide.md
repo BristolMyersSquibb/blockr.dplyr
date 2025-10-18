@@ -62,32 +62,259 @@ output$dynamic_ui <- renderUI({
 
 ## Dynamic UI Timing Issues
 
-**Issue**: When inputs are created inside `renderUI()` and content changes based on user interaction:
-- Old inputs are destroyed when renderUI content changes
-- New inputs take time to be registered with Shiny
-- Submit handlers may try to access inputs before they're fully available
+**The Problem**: When inputs are created inside `renderUI()`, they are not immediately available:
+- Inputs created in `renderUI()` take time to register with Shiny
+- Reading `input$x` before the input exists returns `NULL`
+- This causes issues during block initialization and when UI content changes
 
-**Solution**: Use static UI with `conditionalPanel()` instead of dynamic `renderUI()`:
+**IMPORTANT: Never use priority settings to solve timing issues.** Priority settings (`priority` argument in `observe()`, etc.) are not the right solution and create fragile, hard-to-maintain code.
+
+**The Right Solutions**:
+
+### For Static-Count Inputs (Preferred)
+
+When the number of inputs is fixed, avoid `renderUI()` entirely:
 
 ```r
-# PROBLEMATIC: Input in dynamic UI
+# ❌ PROBLEMATIC: Input in dynamic UI
 output$dynamic_ui <- renderUI({
-  selectInput(NS(id, "n"), "Number", choices = 1:10)  # Won't be available in input$n
+  selectInput(NS(id, "n"), "Number", choices = 1:10)  # Won't be available immediately
 })
 
-# SOLUTION: Input in static UI
+# ✅ SOLUTION: Static UI with updates
 function(id) {
   div(
-    selectInput(NS(id, "n"), "Number", choices = 1:10),  # Available in input$n
-    uiOutput(NS(id, "dynamic_ui"))  # Keep only non-critical elements dynamic
+    selectInput(NS(id, "n"), "Number", choices = 1:10),  # Always available
+    uiOutput(NS(id, "dynamic_display"))  # Reserve renderUI for display-only elements
   )
+}
+
+# Update choices dynamically in server
+observeEvent(data(), {
+  updateSelectInput(session, "n", choices = new_choices)
+})
+```
+
+### For Multi-Row Inputs (When renderUI is Unavoidable)
+
+When users can add/remove rows dynamically, `renderUI()` is necessary. Use the **two-phase initialization pattern** to handle timing:
+
+```r
+# The pattern used by all multi-row modules
+reactive({
+  indices <- r_indices()
+
+  # Check if inputs exist in the session yet
+  has_inputs <- any(sapply(indices, function(i) {
+    paste0("row_", i, "_input") %in% names(input)
+  }))
+
+  if (has_inputs) {
+    # Phase 2: Inputs exist, read from them
+    read_current_values_from_inputs()
+  } else {
+    # Phase 1: During initialization, use stored values
+    r_stored_values()
+  }
+})
+```
+
+**This two-phase pattern solves timing issues without priority settings.** See "Multi-Row Input Blocks" section below for details.
+
+**Summary**:
+- **Preferred**: Use static UI + `updateSelectInput()` when possible
+- **Exception**: Multi-row blocks need `renderUI()` + two-phase pattern
+- **Never**: Don't use priority settings to solve timing issues
+
+---
+
+## Multi-Row Input Blocks: When renderUI is Necessary
+
+### When You Need renderUI
+
+Some blocks allow users to **dynamically add and remove rows** at runtime. These require `renderUI()` because:
+
+1. **Variable number of inputs**: The count isn't known at UI definition time
+2. **Unique input IDs**: Each row needs distinct IDs (`expr_1`, `expr_2`, `expr_3`, etc.)
+3. **Dynamic creation/destruction**: Inputs must be created when rows are added and destroyed when removed
+4. **No alternative**: `updateSelectInput()` cannot create/destroy inputs
+
+**Examples in blockr.dplyr:**
+- **Mutate block**: Add/remove multiple expressions (`new_col = expr`)
+- **Summarize block**: Add/remove multiple summary expressions
+- **Filter block**: Add/remove multiple filter conditions with AND/OR logic
+- **Rename block**: Add/remove multiple rename pairs (`new_name <- old_name`)
+- **Join block**: Add/remove multiple join key mappings
+- **Arrange block**: Add/remove multiple sort columns
+
+### The Multi-Row Pattern
+
+All multi-row blocks follow the same pattern. Here's the complete structure with accurate implementation details:
+
+```r
+mod_multi_row_server <- function(id, get_value, get_cols) {
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+
+    # 1. Initialize from constructor parameters
+    # get_value and get_cols are plain functions (not reactives)
+    # They're passed as closures that capture constructor parameters
+    initial_values <- get_value()  # Called once at module creation
+    if (length(initial_values) == 0) {
+      initial_values <- list(default_value)
+    }
+
+    # 2. Track which row indices currently exist
+    r_indices <- reactiveVal(seq_along(initial_values))  # e.g., c(1, 2)
+    r_next_index <- reactiveVal(length(initial_values) + 1)  # e.g., 3
+    r_values <- reactiveVal(initial_values)
+
+    # 3. renderUI creates rows based on current indices
+    output$rows_ui <- renderUI({
+      indices <- r_indices()
+      values <- r_values()
+
+      tagList(
+        lapply(seq_along(indices), function(j) {
+          i <- indices[j]
+          create_row_ui(
+            ns(paste0("row_", i)),
+            value = values[[j]],
+            show_remove = (length(indices) > 1)
+          )
+        })
+      )
+    })
+
+    # 4. Add row button
+    observeEvent(input$add_row, {
+      current_indices <- r_indices()
+      new_index <- r_next_index()
+
+      r_indices(c(current_indices, new_index))
+      r_next_index(new_index + 1)
+
+      # Add new value to stored values
+      current_values <- get_current_values()
+      r_values(c(current_values, list(default_value)))
+    })
+
+    # 5. Dynamic remove button handlers (created in observe)
+    observe({
+      indices <- r_indices()
+      lapply(indices, function(i) {
+        observeEvent(input[[paste0("row_", i, "_remove")]], {
+          if (length(r_indices()) > 1) {
+            r_indices(setdiff(r_indices(), i))
+            r_values(get_current_values())
+          }
+        })
+      })
+    })
+
+    # 6. Helper function to read from inputs
+    get_current_values <- function() {
+      indices <- r_indices()
+      result <- list()
+      for (i in indices) {
+        val <- input[[paste0("row_", i, "_input")]]
+        if (!is.null(val) && val != "") {
+          result <- append(result, list(val))
+        }
+      }
+      result
+    }
+
+    # 7. TWO-PHASE PATTERN: Return reactive that handles initialization timing
+    reactive({
+      indices <- r_indices()
+
+      # Check if inputs exist in the session yet
+      has_inputs <- any(sapply(indices, function(i) {
+        paste0("row_", i, "_input") %in% names(input)
+      }))
+
+      if (has_inputs) {
+        # Phase 2: Inputs are registered, read current values from them
+        get_current_values()
+      } else {
+        # Phase 1: During initialization, inputs don't exist yet
+        # Use stored values from r_values() instead
+        r_values()
+      }
+    })
+  })
 }
 ```
 
-**Best Practices**:
-- Use static UI for inputs that need to be read in submit handlers
-- Reserve `renderUI()` for truly dynamic content (conditional panels, varying choices)
-- Consider `updateSelectInput()` for dynamic updates instead of full re-rendering
+### Module Usage in Blocks
+
+Multi-row modules are instantiated in block server functions like this:
+
+```r
+# In mutate block server (simplified)
+server = function(id, data) {
+  moduleServer(id, function(input, output, session) {
+    r_exprs <- mod_multi_kvexpr_server(
+      id = "mkv",
+      get_value = \() exprs,  # Plain function returning constructor param
+      get_cols = \() colnames(data())  # Function that reads reactive data()
+    )
+    # ...
+  })
+}
+```
+
+**Key points:**
+- `get_value = \() exprs` - Returns the constructor parameter (called once at initialization)
+- `get_cols = \() colnames(data())` - Function that can read from reactive `data()` when called in reactive context
+- Both are plain functions, not reactives themselves
+
+### Why This Avoids Timing Issues
+
+The **two-phase pattern** (step 7 above) solves the timing problem elegantly:
+
+1. **Phase 1 (Initialization)**: When the block first loads, `renderUI()` hasn't created inputs yet. The reactive returns stored values from `r_values()`.
+
+2. **Phase 2 (Normal operation)**: Once inputs exist in the session, the reactive reads directly from `input$*`.
+
+This approach:
+- ✅ Works reliably without priority settings
+- ✅ Handles initialization gracefully
+- ✅ Preserves values during row add/remove operations
+- ✅ Follows reactive programming best practices
+
+### Real Implementation Examples
+
+See these files for complete working implementations:
+
+- **[multi_kvexpr.R:125](blockr.dplyr/R/multi_kvexpr.R#L125)**: Key-value expressions (mutate, summarize)
+  - Two-phase pattern at lines 169-172
+- **[multi_filter.R:160](blockr.dplyr/R/multi_filter.R#L160)**: Filter conditions with AND/OR logic
+  - Two-phase pattern at lines 225-255
+- **[multi_rename.R:138](blockr.dplyr/R/multi_rename.R#L138)**: Rename pairs
+  - Two-phase pattern at lines 177-193
+- **[mod_join_keys.R:262](blockr.dplyr/R/mod_join_keys.R#L262)**: Join key mappings
+  - Two-phase pattern at lines 353-385
+- **[multi_arrange.R:129](blockr.dplyr/R/multi_arrange.R#L129)**: Multi-column sorting
+  - Two-phase pattern at lines 161-177
+
+All use the same two-phase pattern in their reactive return values.
+
+### Decision Framework
+
+```
+Do you need variable number of inputs (add/remove rows)?
+│
+├─ NO → Use static UI (see "Block Initialization Pattern")
+│        Examples: select, slice, distinct blocks
+│        Pattern: Static selectInput + updateSelectInput()
+│
+└─ YES → You need renderUI for multi-row inputs
+         Examples: mutate, filter, rename, join, arrange
+         Pattern: renderUI + two-phase initialization
+         ⚠️  NEVER use priority settings to solve timing
+```
 
 ---
 
@@ -187,94 +414,7 @@ If suggestions don't appear:
 - This package uses roxygen2 for documentation and NAMESPACE generation
 - After modifying imports (e.g., adding @importFrom statements), run `devtools::document()` or `roxygen2::roxygenise()`
 - Do not edit NAMESPACE directly - use roxygen comments in R files
-- **README.md is generated from README.Rmd** - Always edit README.Rmd, never edit README.md directly
 
-### Code Formatting
-
-This project uses **Air**, an extremely fast R code formatter written in Rust.
-
-**Installation:**
-```bash
-# Unix/macOS
-curl -LsSf https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.sh | sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/posit-dev/air/releases/download/0.1.1/air-installer.ps1 | iex"
-```
-
-**Usage:**
-```bash
-# Format entire project
-air format .
-
-# Check formatting (useful for CI/CD)
-air format . --check
-```
-
-**Why Air?**
-- ~100x faster than styler (written in Rust vs R)
-- Easy CI/CD integration with pre-compiled binary
-- Editor integration: format-on-save support in VS Code, RStudio, Positron
-
----
-
-## Screenshot Validation
-
-### Using the Validation Agent
-
-**ALWAYS USE THE VALIDATION AGENT FOR BLOCK VALIDATION**
-
-The blockr ecosystem includes a specialized `blockr-validate-blocks` agent that handles screenshot validation automatically.
-
-#### Core Principle
-- **✅ Working Block**: Screenshot shows both configuration UI and rendered output
-- **❌ Broken Block**: Screenshot shows only configuration UI, no output
-
-#### Key Benefits
-
-1. **Automated Configuration**: Agent knows how to configure each block type optimally
-2. **Comprehensive Testing**: Tests all block types systematically
-3. **Error Analysis**: Provides detailed diagnosis when blocks fail
-4. **Consistent Results**: Standardized validation across all blockr packages
-
-#### Common Issues Revealed
-
-- **Missing `allow_empty_state`**: Blocks won't evaluate due to empty optional fields
-- **Malformed dplyr expressions**: Syntax errors preventing table rendering
-- **Broken reactive flows**: Field validation failures blocking data flow
-- **UI timing issues**: Dynamic UI elements not properly initialized
-- **State management issues**: Missing or incorrect state list configurations
-
-#### Development Workflow
-
-1. **Block Creation**: Use validation agent after implementing new block
-2. **Refactoring**: Validate changes don't break rendering
-3. **Debugging**: First diagnostic step when blocks misbehave
-4. **Code Review**: Visual proof that blocks work end-to-end
-
-#### Manual Validation (Advanced)
-
-```r
-# Single block validation
-library(blockr.ggplot)  # Provides validation functions
-result <- validate_block_screenshot(
-  new_select_block(columns = c("mpg", "cyl", "hp")),
-  data = mtcars,
-  filename = "select-test.png"
-)
-
-# Batch validation
-blocks <- list(
-  select = new_select_block(columns = c("mpg", "cyl")),
-  filter = new_filter_block(),
-  mutate = new_mutate_block()
-)
-results <- validate_blocks_batch(blocks)
-```
-
-**File Locations**: Screenshots saved to `man/figures/*.png`
-
----
 
 ## Design Decisions: Argument Naming Conventions
 
