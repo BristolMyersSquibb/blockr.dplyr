@@ -86,17 +86,29 @@ new_select_block <- function(
           r_initialized <- reactiveVal(FALSE)
 
           # Update reactive values when inputs change
-          observeEvent(input$columns, {
-            r_columns(input$columns)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$columns,
+            {
+              r_columns(input$columns)
+            },
+            ignoreNULL = FALSE
+          )
 
-          observeEvent(input$exclude, {
-            r_exclude(input$exclude)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$exclude,
+            {
+              r_exclude(input$exclude)
+            },
+            ignoreNULL = FALSE
+          )
 
-          observeEvent(input$distinct, {
-            r_distinct(input$distinct)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$distinct,
+            {
+              r_distinct(input$distinct)
+            },
+            ignoreNULL = FALSE
+          )
 
           # Restore initial selection once on startup (like slice block)
           observe({
@@ -112,19 +124,23 @@ new_select_block <- function(
           })
 
           # Update choices when data changes, preserve current selection
-          observeEvent(colnames(data()), {
-            if (r_initialized()) {
-              req(data())
-              cols <- colnames(data())
+          observeEvent(
+            colnames(data()),
+            {
+              if (r_initialized()) {
+                req(data())
+                cols <- colnames(data())
 
-              updateSelectizeInput(
-                session,
-                "columns",
-                choices = cols,
-                selected = r_columns()  # Preserve current selection
-              )
-            }
-          }, ignoreNULL = FALSE)
+                updateSelectizeInput(
+                  session,
+                  "columns",
+                  choices = cols,
+                  selected = r_columns() # Preserve current selection
+                )
+              }
+            },
+            ignoreNULL = FALSE
+          )
 
           list(
             expr = reactive({
@@ -151,7 +167,9 @@ new_select_block <- function(
 
                 if (is_exclude) {
                   # Exclude mode: use minus syntax
-                  select_expr <- glue::glue("dplyr::select(data, -c({cols_str}))")
+                  select_expr <- glue::glue(
+                    "dplyr::select(data, -c({cols_str}))"
+                  )
                 } else {
                   # Include mode: regular select
                   select_expr <- glue::glue("dplyr::select(data, {cols_str})")
@@ -273,9 +291,9 @@ new_select_block <- function(
                     div(
                       selectizeInput(
                         NS(id, "columns"),
-                        label = NULL,  # No label
-                        choices = columns,       # Initialize with constructor parameter
-                        selected = columns,      # Pre-select constructor parameter
+                        label = NULL, # No label
+                        choices = columns, # Initialize with constructor parameter
+                        selected = columns, # Pre-select constructor parameter
                         multiple = TRUE,
                         width = "100%",
                         options = list(

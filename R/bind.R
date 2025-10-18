@@ -33,7 +33,6 @@ new_bind_rows_block <- function(id_name = "", ...) {
       moduleServer(
         id,
         function(input, output, session) {
-
           arg_names <- reactive(
             set_names(names(...args), dot_args_names(...args))
           )
@@ -178,7 +177,6 @@ new_bind_cols_block <- function(...) {
       moduleServer(
         id,
         function(input, output, session) {
-
           arg_names <- reactive(
             set_names(names(...args), dot_args_names(...args))
           )

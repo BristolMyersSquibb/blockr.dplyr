@@ -287,7 +287,12 @@ test_that("parse_value_filter supports logic operators", {
   # Test OR logic between conditions
   conditions <- list(
     list(column = "Species", values = c("setosa"), mode = "include"),
-    list(column = "Species", values = c("versicolor"), mode = "include", operator = "|")
+    list(
+      column = "Species",
+      values = c("versicolor"),
+      mode = "include",
+      operator = "|"
+    )
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
 
@@ -299,8 +304,18 @@ test_that("parse_value_filter supports logic operators", {
   # Test mixed AND/OR logic
   conditions <- list(
     list(column = "Species", values = c("setosa"), mode = "include"),
-    list(column = "Sepal.Length", values = c(5.1), mode = "exclude", operator = "&"),
-    list(column = "Species", values = c("versicolor"), mode = "include", operator = "|")
+    list(
+      column = "Sepal.Length",
+      values = c(5.1),
+      mode = "exclude",
+      operator = "&"
+    ),
+    list(
+      column = "Species",
+      values = c("versicolor"),
+      mode = "include",
+      operator = "|"
+    )
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
 
@@ -398,7 +413,11 @@ test_that("value filter handles mixed NA, empty, and regular values", {
 
   # Test include mode with all three types
   conditions <- list(
-    list(column = "species", values = c("setosa", "<empty>", "<NA>"), mode = "include")
+    list(
+      column = "species",
+      values = c("setosa", "<empty>", "<NA>"),
+      mode = "include"
+    )
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
   result <- eval(expr, envir = list(data = test_data))

@@ -107,7 +107,12 @@ parse_enhanced_filter <- function(filter_string = "") {
   parse(text = text)[1]
 }
 
-apply_enhanced_filter <- function(data, string, r_expr_validated, r_string_validated) {
+apply_enhanced_filter <- function(
+  data,
+  string,
+  r_expr_validated,
+  r_string_validated
+) {
   # If empty or only whitespace, return simple filter
   if (trimws(string) == "") {
     expr <- parse_enhanced_filter("")

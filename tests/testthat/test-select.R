@@ -121,7 +121,7 @@ test_that("select block expression generation - exclude mode", {
       expect_true(inherits(expr_result, "call"))
       expr_text <- deparse(expr_result)
       expect_true(any(grepl("dplyr::select", expr_text)))
-      expect_true(any(grepl("-c", expr_text)))  # Minus syntax
+      expect_true(any(grepl("-c", expr_text))) # Minus syntax
       expect_true(any(grepl("b", expr_text)))
     }
   )

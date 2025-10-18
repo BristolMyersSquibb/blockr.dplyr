@@ -45,7 +45,11 @@
 #' )
 #' }
 #' @export
-new_value_filter_block <- function(conditions = list(), preserve_order = FALSE, ...) {
+new_value_filter_block <- function(
+  conditions = list(),
+  preserve_order = FALSE,
+  ...
+) {
   new_transform_block(
     function(id, data) {
       moduleServer(
@@ -70,7 +74,10 @@ new_value_filter_block <- function(conditions = list(), preserve_order = FALSE, 
             # Always try to parse, even with empty/invalid conditions
             tryCatch(
               {
-                parse_value_filter(current_conditions, preserve_order = current_preserve_order)
+                parse_value_filter(
+                  current_conditions,
+                  preserve_order = current_preserve_order
+                )
               },
               error = function(e) {
                 # Fallback to identity filter if parsing fails
@@ -183,27 +190,45 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
         }
 
         if (mode == "include") {
-          filter_parts_current <- c(filter_parts_current, glue::glue("`{column}` %in% c({values_str})"))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue("`{column}` %in% c({values_str})")
+          )
         } else {
-          filter_parts_current <- c(filter_parts_current, glue::glue("!(`{column}` %in% c({values_str}))"))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue("!(`{column}` %in% c({values_str}))")
+          )
         }
       }
 
       # Add NA handling
       if (has_na) {
         if (mode == "include") {
-          filter_parts_current <- c(filter_parts_current, glue::glue("is.na(`{column}`)"))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue("is.na(`{column}`)")
+          )
         } else {
-          filter_parts_current <- c(filter_parts_current, glue::glue("!is.na(`{column}`)"))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue("!is.na(`{column}`)")
+          )
         }
       }
 
       # Add empty string handling
       if (has_empty) {
         if (mode == "include") {
-          filter_parts_current <- c(filter_parts_current, glue::glue('`{column}` == ""'))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue('`{column}` == ""')
+          )
         } else {
-          filter_parts_current <- c(filter_parts_current, glue::glue('`{column}` != ""'))
+          filter_parts_current <- c(
+            filter_parts_current,
+            glue::glue('`{column}` != ""')
+          )
         }
       }
 
@@ -211,10 +236,18 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
       if (length(filter_parts_current) > 1) {
         if (mode == "include") {
           # For include mode: value1 OR value2 OR is.na OR empty
-          filter_part <- paste0("(", paste(filter_parts_current, collapse = " | "), ")")
+          filter_part <- paste0(
+            "(",
+            paste(filter_parts_current, collapse = " | "),
+            ")"
+          )
         } else {
           # For exclude mode: NOT value1 AND NOT value2 AND NOT is.na AND NOT empty
-          filter_part <- paste0("(", paste(filter_parts_current, collapse = " & "), ")")
+          filter_part <- paste0(
+            "(",
+            paste(filter_parts_current, collapse = " & "),
+            ")"
+          )
         }
       } else if (length(filter_parts_current) == 1) {
         filter_part <- filter_parts_current[1]
@@ -230,7 +263,10 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
         if (all(!is.na(numeric_values))) {
           order_values_list[[column]] <- paste(numeric_values, collapse = ", ")
         } else {
-          order_values_list[[column]] <- paste(sprintf('"%s"', regular_values), collapse = ", ")
+          order_values_list[[column]] <- paste(
+            sprintf('"%s"', regular_values),
+            collapse = ", "
+          )
         }
       }
 

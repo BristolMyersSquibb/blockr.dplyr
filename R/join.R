@@ -59,14 +59,22 @@ new_join_block <- function(
           )
 
           # Sync module reactive back to state reactive
-          observeEvent(join_keys(), {
-            r_join_keys(join_keys())
-          }, ignoreInit = TRUE)
+          observeEvent(
+            join_keys(),
+            {
+              r_join_keys(join_keys())
+            },
+            ignoreInit = TRUE
+          )
 
           # Update join type when input changes
-          observeEvent(input$type, {
-            r_join_type(input$type)
-          }, ignoreInit = TRUE)
+          observeEvent(
+            input$type,
+            {
+              r_join_type(input$type)
+            },
+            ignoreInit = TRUE
+          )
 
           # Build join expression
           build_join_expr <- function(join_type, keys) {
@@ -198,7 +206,10 @@ new_join_block <- function(
                 class = "block-section-grid",
 
                 # Join keys configuration module
-                mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration")
+                mod_join_keys_ui(
+                  NS(id, "join_keys"),
+                  label = "Join Configuration"
+                )
               )
             )
           )

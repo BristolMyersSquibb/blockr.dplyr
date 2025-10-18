@@ -198,7 +198,8 @@ new_slice_block <- function(
                   backticked_cols <- backtick_if_needed(by_cols)
                   param_name <- if (use_dot) ".by" else "by"
                   return(paste0(
-                    param_name, " = c(",
+                    param_name,
+                    " = c(",
                     paste0(backticked_cols, collapse = ", "),
                     ")"
                   ))
