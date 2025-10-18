@@ -264,7 +264,7 @@ new_slice_block <- function(
                 # Apply backticks to non-syntactic column names
                 args <- paste0(
                   args,
-                  ', weight_by = ',
+                  ", weight_by = ",
                   backtick_if_needed(weight_by_val)
                 )
               }

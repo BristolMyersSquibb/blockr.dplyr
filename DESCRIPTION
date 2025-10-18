@@ -32,7 +32,6 @@ Imports:
     bslib,
     jsonlite,
     shinyjs,
-    DT,
     utils,
     datasets
 Suggests:

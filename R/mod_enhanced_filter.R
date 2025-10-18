@@ -490,7 +490,7 @@ mod_enhanced_filter_server <- function(
         }
       }
 
-      return(NULL)
+      NULL
     }
 
     # Track mode changes and update conditionalPanel
@@ -750,7 +750,7 @@ mod_enhanced_filter_server <- function(
         }
       }
 
-      return("TRUE")
+      "TRUE"
     }
 
     # Update ACE editor when simple UI inputs change

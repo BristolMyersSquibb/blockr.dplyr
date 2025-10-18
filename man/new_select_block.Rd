@@ -7,13 +7,13 @@
 new_select_block(columns = character(), exclude = FALSE, distinct = FALSE, ...)
 }
 \arguments{
-\item{columns}{Selected columns (character vector)}
+\item{columns}{Selected columns (character vector). If empty, selects all columns.}
 
 \item{exclude}{Logical. If TRUE, uses exclude mode (dplyr minus syntax: \code{-c(col1, col2)}).
 If FALSE (default), uses include mode (selects specified columns).}
 
 \item{distinct}{Logical. If TRUE, keeps only distinct/unique rows after selecting columns.
-If FALSE (default), returns all rows.}
+If FALSE (default), returns all rows. This replaces the old \code{new_distinct_block()} functionality.}
 
 \item{...}{Forwarded to \code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}}
 }
@@ -24,6 +24,9 @@ an exclude mode allows for negative selection using dplyr's minus syntax.
 Optionally, distinct rows can be kept after selection.
 }
 \details{
+\strong{Note}: This block replaces the deprecated \code{new_distinct_block()}. Use the
+\code{distinct} parameter to get unique rows after column selection.
+
 The select block provides a sortable multi-select interface where columns can be:
 \itemize{
 \item Selected/deselected by clicking

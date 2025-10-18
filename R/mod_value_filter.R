@@ -29,11 +29,11 @@ display_to_actual <- function(value, original_type = "character") {
 #' @noRd
 actual_to_display <- function(value) {
   if (is.na(value)) {
-    return("<NA>")
+    "<NA>"
   } else if (identical(value, "")) {
-    return("<empty>")
+    "<empty>"
   } else {
-    return(as.character(value))
+    as.character(value)
   }
 }
 
