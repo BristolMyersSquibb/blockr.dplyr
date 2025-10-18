@@ -25,7 +25,7 @@ test_that("value_filter block constructor", {
 
 test_that("parse_value_filter function", {
   # Test empty conditions
-  expr <- parse_value_filter(list())
+  expr <- blockr.dplyr:::parse_value_filter(list())
   expect_type(expr, "expression")
 
   # Test single include condition with character values
@@ -36,7 +36,7 @@ test_that("parse_value_filter function", {
       mode = "include"
     )
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
   expect_true(grepl("Species.*%in%.*\"setosa\".*\"versicolor\"", deparse(expr)))
 
@@ -44,7 +44,7 @@ test_that("parse_value_filter function", {
   conditions <- list(
     list(column = "Species", values = c("virginica"), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
   expect_true(grepl("!.*Species.*%in%.*\"virginica\"", deparse(expr)))
 
@@ -52,7 +52,7 @@ test_that("parse_value_filter function", {
   conditions <- list(
     list(column = "Sepal.Length", values = c(5.1, 5.4), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
   expect_true(grepl("Sepal.Length.*%in%.*5.1.*5.4", deparse(expr)))
 
@@ -61,7 +61,7 @@ test_that("parse_value_filter function", {
     list(column = "Species", values = c("setosa"), mode = "include"),
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
   expr_str <- paste(deparse(expr), collapse = " ")
   expect_true(grepl(
@@ -75,21 +75,21 @@ test_that("parse_value_filter handles edge cases", {
   conditions <- list(
     list(column = NULL, values = c("test"), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_true(grepl("TRUE", deparse(expr)))
 
   # Test condition with empty values
   conditions <- list(
     list(column = "Species", values = character(0), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_true(grepl("TRUE", deparse(expr)))
 
   # Test condition with NULL values
   conditions <- list(
     list(column = "Species", values = NULL, mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_true(grepl("TRUE", deparse(expr)))
 
   # Test mixed valid and invalid conditions
@@ -98,7 +98,7 @@ test_that("parse_value_filter handles edge cases", {
     list(column = NULL, values = c("test"), mode = "include"),
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
   expr_str <- paste(deparse(expr), collapse = " ")
   expect_true(grepl(
@@ -112,7 +112,7 @@ test_that("apply_value_filter function validates input", {
   conditions <- list(
     list(column = "Species", values = c("setosa"), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
   expect_type(expr, "expression")
 
   # Test evaluation doesn't error
@@ -120,7 +120,7 @@ test_that("apply_value_filter function validates input", {
   expect_false(inherits(result, "try-error"))
 
   # Test parse_value_filter with empty conditions
-  expr <- parse_value_filter(list())
+  expr <- blockr.dplyr:::parse_value_filter(list())
   expect_type(expr, "expression")
 
   result <- try(eval(expr, envir = list(data = iris)), silent = TRUE)
@@ -132,7 +132,7 @@ test_that("value filter generates correct dplyr expressions", {
   conditions <- list(
     list(column = "Species", values = c("setosa"), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   # Test that it creates a valid dplyr filter
   result <- eval(expr, envir = list(data = iris))
@@ -143,7 +143,7 @@ test_that("value filter generates correct dplyr expressions", {
   conditions <- list(
     list(column = "Species", values = c("setosa"), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -158,7 +158,7 @@ test_that("value filter generates correct dplyr expressions", {
       mode = "include"
     )
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -171,7 +171,7 @@ test_that("value filter works with numeric columns", {
   conditions <- list(
     list(column = "Sepal.Length", values = c(5.1, 5.4, 5.8), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -181,7 +181,7 @@ test_that("value filter works with numeric columns", {
   conditions <- list(
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -198,7 +198,7 @@ test_that("value filter handles multiple conditions", {
     ),
     list(column = "Sepal.Length", values = c(5.1, 5.4, 5.8), mode = "include")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -210,7 +210,7 @@ test_that("value filter handles multiple conditions", {
     list(column = "Species", values = c("setosa"), mode = "include"),
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -289,7 +289,7 @@ test_that("parse_value_filter supports logic operators", {
     list(column = "Species", values = c("setosa"), mode = "include"),
     list(column = "Species", values = c("versicolor"), mode = "include", operator = "|")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   result <- eval(expr, envir = list(data = iris))
   expect_s3_class(result, "data.frame")
@@ -302,7 +302,7 @@ test_that("parse_value_filter supports logic operators", {
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude", operator = "&"),
     list(column = "Species", values = c("versicolor"), mode = "include", operator = "|")
   )
-  expr <- parse_value_filter(conditions)
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
 
   # Should be: (Species == "setosa" & Sepal.Length != 5.1) | Species == "versicolor"
   result <- eval(expr, envir = list(data = iris))
@@ -314,4 +314,126 @@ test_that("default operator %||% works correctly", {
   expect_equal("value" %||% "default", "value")
   expect_equal(character(0) %||% "default", character(0))
   expect_equal(0 %||% "default", 0)
+})
+
+test_that("value filter handles NA values correctly", {
+  # Create test data with NAs
+  test_data <- data.frame(
+    x = c(1, 2, NA, 4, 5),
+    y = c("a", "b", NA, "d", "e"),
+    stringsAsFactors = FALSE
+  )
+
+  # Test include mode with NA in numeric column
+  conditions <- list(
+    list(column = "x", values = c("1", "<NA>"), mode = "include")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  expect_equal(nrow(result), 2)
+  expect_true(1 %in% result$x)
+  expect_true(any(is.na(result$x)))
+
+  # Test include mode with NA in character column
+  conditions <- list(
+    list(column = "y", values = c("a", "<NA>"), mode = "include")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  expect_equal(nrow(result), 2)
+  expect_true("a" %in% result$y)
+  expect_true(any(is.na(result$y)))
+
+  # Test exclude mode with NA
+  conditions <- list(
+    list(column = "x", values = c("<NA>"), mode = "exclude")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  expect_equal(nrow(result), 4)
+  expect_false(any(is.na(result$x)))
+})
+
+test_that("value filter handles empty strings correctly", {
+  # Create test data with empty strings
+  test_data <- data.frame(
+    x = c("a", "b", "", "d", "e"),
+    y = c("foo", "", "bar", "", "baz"),
+    stringsAsFactors = FALSE
+  )
+
+  # Test include mode with empty string
+  conditions <- list(
+    list(column = "x", values = c("a", "<empty>"), mode = "include")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  expect_equal(nrow(result), 2)
+  expect_true("a" %in% result$x)
+  expect_true("" %in% result$x)
+
+  # Test exclude mode with empty string
+  conditions <- list(
+    list(column = "y", values = c("<empty>"), mode = "exclude")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  expect_equal(nrow(result), 3)
+  expect_false("" %in% result$y)
+  expect_true(all(result$y != ""))
+})
+
+test_that("value filter handles mixed NA, empty, and regular values", {
+  # Create test data with NAs, empty strings, and regular values
+  test_data <- data.frame(
+    species = c("setosa", "", NA, "versicolor", "setosa", ""),
+    value = c(1, 2, 3, NA, 5, 6),
+    stringsAsFactors = FALSE
+  )
+
+  # Test include mode with all three types
+  conditions <- list(
+    list(column = "species", values = c("setosa", "<empty>", "<NA>"), mode = "include")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  # Data has: 2 setosa + 2 empty + 1 NA = 5 rows
+  expect_equal(nrow(result), 5)
+  expect_true("setosa" %in% result$species)
+  expect_true("" %in% result$species)
+  expect_true(any(is.na(result$species)))
+
+  # Test exclude mode with mixed values
+  conditions <- list(
+    list(column = "species", values = c("<empty>", "<NA>"), mode = "exclude")
+  )
+  expr <- blockr.dplyr:::parse_value_filter(conditions)
+  result <- eval(expr, envir = list(data = test_data))
+
+  # Data has 6 rows total, excluding 2 empty + 1 NA = 3 rows remain
+  expect_equal(nrow(result), 3)
+  expect_false("" %in% result$species)
+  expect_false(any(is.na(result$species)))
+  expect_true(all(result$species %in% c("setosa", "versicolor")))
+})
+
+test_that("helper functions convert values correctly", {
+  # Test blockr.dplyr:::actual_to_display
+  expect_equal(blockr.dplyr:::actual_to_display(NA), "<NA>")
+  expect_equal(blockr.dplyr:::actual_to_display(""), "<empty>")
+  expect_equal(blockr.dplyr:::actual_to_display("test"), "test")
+  expect_equal(blockr.dplyr:::actual_to_display(123), "123")
+
+  # Test blockr.dplyr:::display_to_actual
+  expect_true(is.na(blockr.dplyr:::display_to_actual("<NA>")))
+  expect_equal(blockr.dplyr:::display_to_actual("<empty>"), "")
+  expect_equal(blockr.dplyr:::display_to_actual("test"), "test")
+  expect_equal(blockr.dplyr:::display_to_actual("123", "numeric"), 123)
+  expect_equal(blockr.dplyr:::display_to_actual("123", "character"), "123")
 })

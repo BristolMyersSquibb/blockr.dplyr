@@ -165,23 +165,73 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
         next # Skip conditions without values
       }
 
-      # Format values for R expression
-      if (is.numeric(values)) {
-        values_str <- paste(values, collapse = ", ")
-      } else {
-        values_str <- paste(sprintf('"%s"', values), collapse = ", ")
+      # Separate special values from regular values
+      has_na <- "<NA>" %in% values
+      has_empty <- "<empty>" %in% values
+      regular_values <- values[!values %in% c("<NA>", "<empty>")]
+
+      # Build filter parts for regular values
+      filter_parts_current <- character(0)
+
+      if (length(regular_values) > 0) {
+        # Try to convert to numeric if all regular values are numeric strings
+        numeric_values <- suppressWarnings(as.numeric(regular_values))
+        if (all(!is.na(numeric_values))) {
+          values_str <- paste(numeric_values, collapse = ", ")
+        } else {
+          values_str <- paste(sprintf('"%s"', regular_values), collapse = ", ")
+        }
+
+        if (mode == "include") {
+          filter_parts_current <- c(filter_parts_current, glue::glue("`{column}` %in% c({values_str})"))
+        } else {
+          filter_parts_current <- c(filter_parts_current, glue::glue("!(`{column}` %in% c({values_str}))"))
+        }
       }
 
-      # Build the condition string
-      if (mode == "include") {
-        filter_part <- glue::glue("`{column}` %in% c({values_str})")
-        # Track this for order preservation if enabled
-        if (preserve_order) {
-          order_columns <- c(order_columns, column)
-          order_values_list[[column]] <- values_str
+      # Add NA handling
+      if (has_na) {
+        if (mode == "include") {
+          filter_parts_current <- c(filter_parts_current, glue::glue("is.na(`{column}`)"))
+        } else {
+          filter_parts_current <- c(filter_parts_current, glue::glue("!is.na(`{column}`)"))
         }
+      }
+
+      # Add empty string handling
+      if (has_empty) {
+        if (mode == "include") {
+          filter_parts_current <- c(filter_parts_current, glue::glue('`{column}` == ""'))
+        } else {
+          filter_parts_current <- c(filter_parts_current, glue::glue('`{column}` != ""'))
+        }
+      }
+
+      # Combine current filter parts with OR for include mode, AND for exclude mode
+      if (length(filter_parts_current) > 1) {
+        if (mode == "include") {
+          # For include mode: value1 OR value2 OR is.na OR empty
+          filter_part <- paste0("(", paste(filter_parts_current, collapse = " | "), ")")
+        } else {
+          # For exclude mode: NOT value1 AND NOT value2 AND NOT is.na AND NOT empty
+          filter_part <- paste0("(", paste(filter_parts_current, collapse = " & "), ")")
+        }
+      } else if (length(filter_parts_current) == 1) {
+        filter_part <- filter_parts_current[1]
       } else {
-        filter_part <- glue::glue("!(`{column}` %in% c({values_str}))")
+        next # Skip if no valid parts
+      }
+
+      # Track for order preservation if enabled (only for regular values)
+      if (preserve_order && length(regular_values) > 0) {
+        order_columns <- c(order_columns, column)
+        # Reconstruct values_str for order preservation
+        numeric_values <- suppressWarnings(as.numeric(regular_values))
+        if (all(!is.na(numeric_values))) {
+          order_values_list[[column]] <- paste(numeric_values, collapse = ", ")
+        } else {
+          order_values_list[[column]] <- paste(sprintf('"%s"', regular_values), collapse = ", ")
+        }
       }
 
       filter_parts <- c(filter_parts, filter_part)
