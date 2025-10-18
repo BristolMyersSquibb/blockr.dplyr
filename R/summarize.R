@@ -124,19 +124,23 @@ new_summarize_block <- function(
           r_exprs_validated <- reactiveVal(exprs)
 
           # Auto-update when grouping changes
-          observeEvent(r_by_selection(), {
-            # Only update if we have validated expressions
-            if (length(r_exprs_validated()) > 0) {
-              apply_summarize(
-                data(),
-                r_exprs_validated(),
-                r_expr_validated,
-                r_exprs_validated,
-                r_by_selection(),
-                r_unpack()
-              )
-            }
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            r_by_selection(),
+            {
+              # Only update if we have validated expressions
+              if (length(r_exprs_validated()) > 0) {
+                apply_summarize(
+                  data(),
+                  r_exprs_validated(),
+                  r_expr_validated,
+                  r_exprs_validated,
+                  r_by_selection(),
+                  r_unpack()
+                )
+              }
+            },
+            ignoreNULL = FALSE
+          )
 
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
@@ -212,7 +216,7 @@ new_summarize_block <- function(
             transform: rotate(90deg);
           }
           ",
-          id  # This is used for the %1$s placeholder in advanced-options ID
+          id # This is used for the %1$s placeholder in advanced-options ID
         ))),
 
         div(
@@ -301,8 +305,11 @@ new_summarize_block <- function(
                       class = "block-help-text",
                       style = "margin-top: 5px; font-size: 0.8rem;",
                       p(
-                        "Useful with ", tags$code("across()"), " to apply functions across columns, e.g., ",
-                        tags$code("across(where(is.numeric), mean)"), " computes means for all numeric columns."
+                        "Useful with ",
+                        tags$code("across()"),
+                        " to apply functions across columns, e.g., ",
+                        tags$code("across(where(is.numeric), mean)"),
+                        " computes means for all numeric columns."
                       )
                     )
                   )

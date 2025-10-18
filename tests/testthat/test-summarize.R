@@ -232,7 +232,9 @@ test_that("parse_summarize handles mixed named and unnamed expressions", {
 
   # Should have 4 columns: group1, mean_x, mean_y (unpacked), count
   expect_equal(ncol(result_data), 4)
-  expect_true(all(c("group1", "mean_x", "mean_y", "count") %in% names(result_data)))
+  expect_true(all(
+    c("group1", "mean_x", "mean_y", "count") %in% names(result_data)
+  ))
 })
 
 test_that("unnamed expressions work with column-based helpers", {
@@ -265,7 +267,9 @@ test_that("unnamed expressions work with column-based helpers", {
 
   # Should have 5 columns: group1 + 4 unpacked columns
   expect_equal(ncol(result), 5)
-  expect_true(all(c("group1", "mean_x", "mean_y", "sum_x", "sum_y") %in% names(result)))
+  expect_true(all(
+    c("group1", "mean_x", "mean_y", "sum_x", "sum_y") %in% names(result)
+  ))
 
   # Verify calculations
   expect_equal(result$mean_x[result$group1 == "A"], mean(c(1, 2)))

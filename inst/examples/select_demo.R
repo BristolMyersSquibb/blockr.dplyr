@@ -11,61 +11,48 @@ blockr.core::serve(
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
-      # Select specific columns for analysis
+      # Select specific columns for analysis with distinct combinations
       selected = new_select_block(
-        columns = c("mpg", "cyl", "hp", "wt")
+        columns = c("cyl", "gear"),
+        distinct = TRUE
       ),
 
-      # Add calculated columns using selected data
-      enhanced = new_mutate_block(
+      # Count how many cars have each cyl/gear combination
+      count_combos = new_summarize_block(
         exprs = list(
-          power_to_weight = "hp / wt",
-          efficiency_score = "mpg / cyl"
-        )
-      ),
-
-      # Summarize by cylinder count
-      summary = new_summarize_block(
-        exprs = list(
-          avg_mpg = "mean(mpg)",
-          avg_hp = "mean(hp)",
-          avg_power_to_weight = "mean(power_to_weight)",
-          avg_efficiency = "mean(efficiency_score)",
           count = "n()"
         ),
-        by = "cyl",
+        by = c("cyl", "gear"),
         unpack = FALSE
       )
     ),
     links = c(
       # Connect data flow
       new_link("data", "selected", "data"),
-      new_link("selected", "enhanced", "data"),
-      new_link("enhanced", "summary", "data")
+      new_link("data", "count_combos", "data")
     ),
     document = c(
-      "## Select Block Demo\n\n",
-      "This workflow demonstrates the `new_select_block()` for focused data analysis.\n\n",
+      "## Select Block Demo with Distinct\n\n",
+      "This workflow demonstrates the `new_select_block()` with the `distinct` parameter.\n\n",
       "The workflow:\n\n",
       "1. Loads the mtcars dataset (32 rows, 11 columns)\n",
-      "2. **Selects** only the columns needed for analysis:\n",
-      "   - `mpg` - Miles per gallon\n",
+      "2. **Selects** columns and **keeps only distinct combinations**:\n",
       "   - `cyl` - Number of cylinders\n",
-      "   - `hp` - Horsepower\n",
-      "   - `wt` - Weight (1000 lbs)\n",
-      "3. **Mutates** to add calculated columns:\n",
-      "   - `power_to_weight` - Power-to-weight ratio\n",
-      "   - `efficiency_score` - Fuel efficiency score\n",
-      "4. **Summarizes** by cylinder count\n\n",
+      "   - `gear` - Number of forward gears\n",
+      "   - `distinct = TRUE` - Keeps only unique cyl/gear combinations\n",
+      "3. **Counts** how many cars have each combination\n\n",
 
-      "### Why use select?\n\n",
-      "- Focus on relevant variables\n",
-      "- Simplify downstream analysis\n",
-      "- Improve performance with large datasets\n",
-      "- Make data pipelines more readable\n\n",
+      "### Why use select with distinct?\n\n",
+      "- **Streamlined workflow**: One block instead of two (`select` + `distinct`)\n",
+      "- **Clear intent**: \"I want these columns, unique only\"\n",
+      "- **Matches SQL**: Similar to `SELECT DISTINCT col1, col2`\n",
+      "- **Common pattern**: Often you select columns to see unique combinations\n\n",
 
-      "## Summary Statistics\n\n",
-      "![](blockr://summary)\n\n"
+      "## Unique Combinations\n\n",
+      "![](blockr://selected)\n\n",
+
+      "## Count by Combination\n\n",
+      "![](blockr://count_combos)\n\n"
     )
   )
 )

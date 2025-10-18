@@ -50,9 +50,12 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
         direction_id <- paste0("arrange_", i, "_direction")
 
         column <- input[[column_id]]
-        direction <- input[[direction_id]]
+        direction_checkbox <- input[[direction_id]]
 
-        if (!is.null(column) && !is.null(direction) && column != "") {
+        # Convert checkbox to direction: TRUE = "desc", FALSE/NULL = "asc"
+        direction <- if (isTRUE(direction_checkbox)) "desc" else "asc"
+
+        if (!is.null(column) && column != "") {
           result <- append(
             result,
             list(list(column = column, direction = direction))
@@ -195,23 +198,38 @@ mod_multi_arrange_ui <- function(id) {
         margin-bottom: 8px;
       }
 
-      .multi-arrange-row .arrange-priority {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        font-weight: bold;
-        color: var(--bs-gray-600);
-        font-size: 0.9em;
-      }
-
       .multi-arrange-row .arrange-column {
         flex: 1;
       }
 
       .multi-arrange-row .arrange-direction {
-        flex: 0 0 120px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        margin-left: 8px;
+      }
+
+      .multi-arrange-row .arrange-direction .shiny-input-container {
+        width: auto !important;
+        max-width: none !important;
+      }
+
+      .multi-arrange-row .arrange-direction .checkbox {
+        margin-bottom: 0;
+        margin-top: 0;
+      }
+
+      .multi-arrange-row .arrange-direction label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-weight: normal;
+        margin-bottom: 0;
+        padding-left: 4px;
+      }
+
+      .multi-arrange-row .arrange-direction input[type='checkbox'] {
+        margin-top: 0;
+        margin-right: 4px;
       }
 
       .multi-arrange-row .arrange-controls {
@@ -222,17 +240,19 @@ mod_multi_arrange_ui <- function(id) {
 
       .multi-arrange-row .arrange-delete {
         height: 38px;
-        width: 38px;
+        width: 35px;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #6c757d;
+        border: none;
+        background: transparent;
         padding: 0;
       }
 
       .multi-arrange-row .arrange-delete:hover {
-        color: var(--bs-white);
-        border-color: var(--bs-danger);
-        background: var(--bs-danger);
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
       }
 
       /* Remove default margins from Shiny inputs */
@@ -257,6 +277,17 @@ mod_multi_arrange_ui <- function(id) {
         display: flex;
         align-items: center;
       }
+
+      .multi-arrange-container .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .multi-arrange-container .btn-outline-secondary:hover {
+        border-color: #adb5bd;
+        background-color: #f8f9fa;
+        color: #495057;
+      }
     "
     ),
     div(
@@ -268,7 +299,7 @@ mod_multi_arrange_ui <- function(id) {
           ns("add_arrange"),
           label = "Add Sort Column",
           icon = icon("plus"),
-          class = "btn btn-success btn-sm"
+          class = "btn btn-outline-secondary btn-sm"
         )
       )
     )
@@ -293,11 +324,7 @@ multi_arrange_row_ui <- function(
   show_remove = TRUE
 ) {
   div(
-    class = "multi-arrange-row border border-dark-subtle rounded p-2",
-    div(
-      class = "arrange-priority",
-      sprintf("%d.", position)
-    ),
+    class = "multi-arrange-row",
     div(
       class = "arrange-column",
       selectInput(
@@ -310,12 +337,10 @@ multi_arrange_row_ui <- function(
     ),
     div(
       class = "arrange-direction",
-      selectInput(
+      checkboxInput(
         paste0(id, "_direction"),
-        label = NULL,
-        choices = list("Ascending" = "asc", "Descending" = "desc"),
-        selected = direction,
-        width = "100%"
+        label = "Desc",
+        value = (direction == "desc")
       )
     ),
     div(
@@ -324,8 +349,8 @@ multi_arrange_row_ui <- function(
         actionButton(
           paste0(id, "_remove"),
           label = NULL,
-          icon = icon("trash-can"),
-          class = "btn btn-outline-danger btn-sm arrange-delete",
+          icon = icon("xmark"),
+          class = "btn btn-sm arrange-delete",
           title = "Remove"
         )
       }

@@ -8,18 +8,6 @@ All developer documentation is in the [`dev/`](dev/) folder:
 - **[dev/ui-guidelines.md](dev/ui-guidelines.md)** - UI patterns and responsive layouts
 - **[dev/dplyr-technical-guide.md](dev/dplyr-technical-guide.md)** - Technical patterns specific to blockr.dplyr
 
-## Current State
-
-### Implemented Blocks ✅
-- **Single-table**: select, filter, mutate, arrange, summarize, slice, rename, distinct
-- **Multi-table**: join (all types), bind_rows, bind_cols
-- **Features**: Multi-expression support, ACE autocompletion, `.by` parameter, visual interfaces
-
-### Next Priority
-1. **pull()** - Extract single column as vector
-2. **count()** - Frequency counting shortcut
-3. **relocate()** - Column reordering
-
 ## Quick Reference
 
 ### Block Pattern

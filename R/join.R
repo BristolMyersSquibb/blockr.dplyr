@@ -58,46 +58,49 @@ new_join_block <- function(
             initial_keys = by
           )
 
-          # Update join type when input changes
-          observeEvent(input$type, {
-            if (input$type %in% names(join_types)) {
-              r_join_type(input$type)
-            }
-          })
+          # Sync module reactive back to state reactive
+          observeEvent(
+            join_keys(),
+            {
+              r_join_keys(join_keys())
+            },
+            ignoreInit = TRUE
+          )
 
-          # Update join type selector when data changes
-          observe({
-            updateSelectInput(
-              session,
-              inputId = "type",
-              choices = join_types,
-              selected = r_join_type()
-            )
-          })
+          # Update join type when input changes
+          observeEvent(
+            input$type,
+            {
+              r_join_type(input$type)
+            },
+            ignoreInit = TRUE
+          )
 
           # Build join expression
           build_join_expr <- function(join_type, keys) {
             # Handle different join key formats
             if (is.character(keys) && length(keys) > 0) {
-              # Simple character vector - natural join
+              # Character vector - natural join like c("name", "band")
               keys_str <- deparse(keys)
               parse(
                 text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})")
               )[[1]]
             } else if (is.list(keys) && length(keys) > 0) {
-              # Complex join - handle different name mappings
-              # Convert to dplyr join_by() compatible format
-              join_spec <- if (length(keys) == 1 && is.character(keys[[1]])) {
-                keys[[1]]
+              # Named list format - convert to dplyr's named character vector
+              by_vec <- unlist(keys)
+              if (length(by_vec) > 0) {
+                keys_str <- deparse(by_vec)
+                parse(
+                  text = glue::glue("dplyr::{join_type}(x, y, by = {keys_str})")
+                )[[1]]
               } else {
-                keys
+                # Empty - fallback to natural join
+                parse(
+                  text = glue::glue(
+                    "dplyr::{join_type}(x, y, by = intersect(colnames(x), colnames(y)))"
+                  )
+                )[[1]]
               }
-              join_spec_str <- deparse(join_spec)
-              parse(
-                text = glue::glue(
-                  "dplyr::{join_type}(x, y, by = {join_spec_str})"
-                )
-              )[[1]]
             } else {
               # Fallback to natural join on common columns
               parse(
@@ -110,7 +113,7 @@ new_join_block <- function(
 
           list(
             expr = reactive({
-              keys <- join_keys()
+              keys <- r_join_keys()
               # Only build expression if we have valid keys
               req(length(keys) > 0)
               if (is.list(keys)) {
@@ -120,7 +123,7 @@ new_join_block <- function(
             }),
             state = list(
               type = r_join_type,
-              by = join_keys
+              by = r_join_keys
             )
           )
         }
@@ -128,21 +131,92 @@ new_join_block <- function(
     },
     function(id) {
       tagList(
-        # Enhanced join type selector with descriptions
-        div(
-          class = "mb-3",
-          selectInput(
-            inputId = NS(id, "type"),
-            label = "Join Type",
-            choices = character(),
-            width = "100%"
-          )
-        ),
+        shinyjs::useShinyjs(),
 
-        # Join keys configuration module
-        mod_join_keys_ui(NS(id, "join_keys"), label = "Join Configuration"),
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Override grid to force single column for join block
+        tags$style(HTML(
+          "
+          .join-block-container .block-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .join-block-container .block-help-text {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+          }
+          .join-block-container .block-help-text p {
+            margin-top: 0;
+            margin-bottom: 0;
+          }
+          .join-block-container select {
+            max-width: 500px;
+          }
+          .join-block-container label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-bottom: 2px;
+          }
+          "
+        )),
+
+        div(
+          class = "block-container join-block-container",
+          div(
+            class = "block-form-grid",
+
+            # Help text
+            div(
+              class = "block-help-text",
+              p("Combine two datasets by matching rows on join keys.")
+            ),
+
+            # Join Type Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+
+                # Join type selector
+                div(
+                  class = "block-input-wrapper",
+                  selectInput(
+                    inputId = NS(id, "type"),
+                    label = "Join Type",
+                    choices = c(
+                      "Left Join - Keep all rows from left dataset" = "left_join",
+                      "Inner Join - Keep only matching rows from both datasets" = "inner_join",
+                      "Right Join - Keep all rows from right dataset" = "right_join",
+                      "Full Join - Keep all rows from both datasets" = "full_join",
+                      "Semi Join - Keep left rows that have matches in right" = "semi_join",
+                      "Anti Join - Keep left rows that have no matches in right" = "anti_join"
+                    ),
+                    selected = type,
+                    width = "100%"
+                  )
+                )
+              )
+            ),
+
+            # Join Configuration Section
+            div(
+              class = "block-section",
+              div(
+                class = "block-section-grid",
+
+                # Join keys configuration module
+                mod_join_keys_ui(
+                  NS(id, "join_keys"),
+                  label = "Join Configuration"
+                )
+              )
+            )
+          )
+        )
       )
     },
+    allow_empty_state = "by",
     class = "join_block",
     ...
   )

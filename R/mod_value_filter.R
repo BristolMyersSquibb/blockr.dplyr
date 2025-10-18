@@ -1,3 +1,42 @@
+#' Convert display value to actual value
+#'
+#' Converts special display strings back to their actual values (NA, empty string)
+#'
+#' @param value Character display value
+#' @param original_type The original data type ("numeric" or "character")
+#' @return The actual value (may be NA or empty string)
+#' @keywords internal
+#' @noRd
+display_to_actual <- function(value, original_type = "character") {
+  if (value == "<NA>") {
+    return(NA)
+  } else if (value == "<empty>") {
+    return("")
+  } else if (original_type == "numeric") {
+    return(as.numeric(value))
+  } else {
+    return(value)
+  }
+}
+
+#' Convert actual value to display value
+#'
+#' Converts actual values (including NA and empty strings) to display strings
+#'
+#' @param value The actual value
+#' @return Character display string
+#' @keywords internal
+#' @noRd
+actual_to_display <- function(value) {
+  if (is.na(value)) {
+    "<NA>"
+  } else if (identical(value, "")) {
+    "<empty>"
+  } else {
+    as.character(value)
+  }
+}
+
 #' Value filter condition module for selecting values from columns
 #'
 #' A Shiny module that manages value-based filter conditions. Users can select
@@ -66,20 +105,45 @@ mod_value_filter_server <- function(
       }
 
       values <- unique(r_data()[[column]])
-      # Remove NA values for display
-      values <- values[!is.na(values)]
+
+      # Track whether we have NAs and empty strings
+      has_na <- any(is.na(values))
+      has_empty <- FALSE
+
+      # Remove NAs temporarily for processing
+      values_non_na <- values[!is.na(values)]
 
       # Convert factors to character for consistent handling
-      if (is.factor(values)) {
-        values <- as.character(values)
+      if (is.factor(values_non_na)) {
+        values_non_na <- as.character(values_non_na)
+      }
+
+      # Check for empty strings in character vectors
+      if (is.character(values_non_na)) {
+        has_empty <- any(values_non_na == "")
+        # Remove empty strings temporarily
+        values_non_na <- values_non_na[values_non_na != ""]
       }
 
       # Sort values for better UX
-      if (is.numeric(values)) {
-        sort(values)
+      if (is.numeric(values_non_na)) {
+        sorted_values <- sort(values_non_na)
       } else {
-        sort(as.character(values))
+        sorted_values <- sort(as.character(values_non_na))
       }
+
+      # Convert all values to character for display
+      result <- as.character(sorted_values)
+
+      # Add special markers for empty strings and NAs at the end
+      if (has_empty) {
+        result <- c(result, "<empty>")
+      }
+      if (has_na) {
+        result <- c(result, "<NA>")
+      }
+
+      result
     }
 
     # Collect current values from all inputs
