@@ -430,17 +430,6 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
 
 ## To-Do List
 
-**Existing blocks to enhance:**
-- [ ] **slice block** - Review UI layout, ensure consistent styling with other blocks
-- [ ] **select block** - Rework UI, using multi-select dropdown for column selection
-- [ ] **arrange block** - Improve multi-column arrangement UI clarity
-- [ ] **distinct block** - Enhance reactive UI responsiveness and visual feedback
-- [ ] **Enhance `value_filter` to handle NA values** - Users need to be able to filter based on NA values.
-   - Would require special handling in expression generation (NA needs `is.na()` not `%in%`)
-   - Makes value_filter more complete and flexible
-   - Users could then exclude NAs by selecting NA and clicking "Exclude" checkbox
-- [ ] **join block** Visually enhance, complex join types can go to next version.
-
 **New blocks to implement:**
 - [ ] **pivot_wider block** - Transform long data to wide format (tidyr)
 - [ ] **pivot_longer block** - Transform wide data to long format (tidyr)
@@ -457,6 +446,11 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
 - ❌ `separate` / `unite` - Just specialized mutate operations with string functions
 - ❌ `drop_na` - Can use filter block with `!is.na(column)` or enhance value_filter to handle NAs
 - ❌ `relocate` - Can be done with select block (marginal benefit)
+- ❌ `distinct` - **MERGED INTO SELECT BLOCK** (2025-10: distinct is now a checkbox in select block)
+  - Rationale: 90% of distinct block UI duplicated select's column selection
+  - Common pattern: `select(cols) %>% distinct()` now becomes `select(cols, distinct = TRUE)`
+  - Follows SQL model: `SELECT DISTINCT` - distinct is a modifier, not a separate operation
+  - `new_distinct_block()` is deprecated but still functional for backward compatibility
 - ❌ `fill` - Less commonly used, wait for user demand
 - ❌ `group_by` / `ungroup` - The `.by` argument in individual blocks is more modern (dplyr 1.1.0+) and cleaner
 
@@ -466,6 +460,7 @@ When creating new blocks, follow blockr.core's pattern: **match the underlying R
 For a later iteration, we can add advanced modes for the following blocks:
 
 - Filter (combined simple/advanced mode)
+  - **Note**: Enhanced filter with expression mode could handle "find duplicates" functionality using `filter(n() > 1, .by = c(col1, col2))` pattern (similar to `janitor::get_dupes()`). This is more appropriate than adding to distinct block, as finding duplicates is fundamentally a filtering operation.
 - Joins (https://github.com/BristolMyersSquibb/blockr.dplyr/issues/21)
 - Arrange by expression
 

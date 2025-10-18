@@ -1,12 +1,28 @@
-#' Distinct block constructor
+#' Distinct block constructor (DEPRECATED)
 #'
-#' This block allows for removing duplicate rows from a data.frame
-#' based on selected columns (see [dplyr::distinct()]).
+#' **This block is deprecated.** Use [new_select_block()] with `distinct = TRUE` instead.
 #'
-#' @param columns Character vector of column names to check for uniqueness
-#' @param .keep_all Logical. If TRUE, keep all columns in the output. If FALSE,
-#'   only keep the columns used for determining uniqueness.
+#' The distinct functionality has been merged into the select block for a more
+#' streamlined workflow. Instead of using two blocks (`select` + `distinct`),
+#' you can now use a single select block with the distinct checkbox.
+#'
+#' @param columns Character vector of column names to check for uniqueness.
+#'   If empty, removes duplicate rows across all columns.
 #' @param ... Forwarded to [new_block()]
+#'
+#' @section Migration:
+#' Old approach (two blocks):
+#' ```r
+#' new_select_block(columns = c("Species", "Sepal.Length"))
+#' new_distinct_block()
+#' ```
+#'
+#' New approach (one block):
+#' ```r
+#' new_select_block(columns = c("Species", "Sepal.Length"), distinct = TRUE)
+#' ```
+#'
+#' @seealso [new_select_block()] for the replacement
 #'
 #' @importFrom dplyr distinct
 #' @importFrom glue glue
@@ -14,9 +30,13 @@
 #' @export
 new_distinct_block <- function(
   columns = character(),
-  .keep_all = TRUE,
   ...
 ) {
+  .Deprecated(
+    "new_select_block",
+    package = "blockr.dplyr",
+    msg = "new_distinct_block() is deprecated. Use new_select_block(columns, distinct = TRUE) instead."
+  )
   new_transform_block(
     function(id, data) {
       moduleServer(
@@ -26,7 +46,6 @@ new_distinct_block <- function(
 
           # Reactive for selected columns
           selected_columns <- reactiveVal(columns)
-          keep_all <- reactiveVal(.keep_all)
 
           # Get available columns from data
           available_columns <- reactive({
@@ -34,74 +53,26 @@ new_distinct_block <- function(
             colnames(data())
           })
 
-          # Count duplicates for preview
-          duplicate_count <- reactive({
-            req(data())
-            df <- data()
-
-            total_rows <- nrow(df)
-            cols <- selected_columns()
-
-            if (length(cols) == 0) {
-              # No columns selected: check duplicates across all columns
-              unique_rows <- nrow(unique(df))
-            } else {
-              # Selected columns determine uniqueness
-              unique_rows <- nrow(unique(df[, cols, drop = FALSE]))
-            }
-
-            total_rows - unique_rows
-          })
-
           # Update selected columns from input
           observeEvent(input$columns, {
             selected_columns(input$columns)
-          })
-
-          # Update keep_all from input
-          observeEvent(input$keep_all, {
-            keep_all(input$keep_all)
           })
 
           # UI output
           output$distinct_ui <- renderUI({
             req(available_columns())
 
-            tagList(
-              div(
-                class = "mb-3",
-                selectInput(
-                  ns("columns"),
-                  label = "Select columns for uniqueness check:",
-                  choices = available_columns(),
-                  selected = selected_columns(),
-                  multiple = TRUE,
-                  width = "100%"
-                ),
-                helpText("Leave empty to check all columns for duplicates")
+            div(
+              class = "mb-3",
+              selectInput(
+                ns("columns"),
+                label = "Select columns for uniqueness:",
+                choices = available_columns(),
+                selected = selected_columns(),
+                multiple = TRUE,
+                width = "100%"
               ),
-              div(
-                class = "mb-3",
-                checkboxInput(
-                  ns("keep_all"),
-                  label = "Keep all columns in output",
-                  value = keep_all()
-                )
-              ),
-              div(
-                class = "alert alert-info",
-                icon("info-circle"),
-                " ",
-                if (duplicate_count() > 0) {
-                  paste0(
-                    "Found ",
-                    duplicate_count(),
-                    " duplicate row(s) that will be removed"
-                  )
-                } else {
-                  "No duplicate rows found"
-                }
-              )
+              helpText("Leave empty to remove duplicate rows")
             )
           })
 
@@ -119,24 +90,13 @@ new_distinct_block <- function(
                   backtick_if_needed(selected_columns()),
                   collapse = ", "
                 )
-                if (keep_all()) {
-                  parse(
-                    text = glue::glue(
-                      "dplyr::distinct(data, {cols_expr}, .keep_all = TRUE)"
-                    )
-                  )[[1]]
-                } else {
-                  parse(
-                    text = glue::glue(
-                      "dplyr::distinct(data, {cols_expr}, .keep_all = FALSE)"
-                    )
-                  )[[1]]
-                }
+                parse(
+                  text = glue::glue("dplyr::distinct(data, {cols_expr})")
+                )[[1]]
               }
             }),
             state = list(
-              columns = selected_columns,
-              .keep_all = keep_all
+              columns = selected_columns
             )
           )
         }
