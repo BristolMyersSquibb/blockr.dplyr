@@ -4,7 +4,7 @@
 \alias{new_select_block}
 \title{Select block constructor}
 \usage{
-new_select_block(columns = character(), exclude = FALSE, ...)
+new_select_block(columns = character(), exclude = FALSE, distinct = FALSE, ...)
 }
 \arguments{
 \item{columns}{Selected columns (character vector)}
@@ -12,12 +12,16 @@ new_select_block(columns = character(), exclude = FALSE, ...)
 \item{exclude}{Logical. If TRUE, uses exclude mode (dplyr minus syntax: \code{-c(col1, col2)}).
 If FALSE (default), uses include mode (selects specified columns).}
 
+\item{distinct}{Logical. If TRUE, keeps only distinct/unique rows after selecting columns.
+If FALSE (default), returns all rows.}
+
 \item{...}{Forwarded to \code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}}
 }
 \description{
 This block allows performing column subsetting on \code{data.frame} objects (see
 \code{\link[dplyr:select]{dplyr::select()}}). Columns can be selected and reordered by dragging, and
 an exclude mode allows for negative selection using dplyr's minus syntax.
+Optionally, distinct rows can be kept after selection.
 }
 \details{
 The select block provides a sortable multi-select interface where columns can be:
@@ -39,6 +43,13 @@ The select block provides a sortable multi-select interface where columns can be
 \item Empty selection = select all (\code{select(data)})
 \item Efficient for large datasets when you want to remove just a few columns
 }
+
+\strong{Distinct mode (distinct = TRUE):}
+\itemize{
+\item Keeps only distinct rows after column selection
+\item Equivalent to piping \code{select()} output to \code{distinct()}
+\item Useful for finding unique combinations of selected columns
+}
 }
 \examples{
 \dontrun{
@@ -51,6 +62,12 @@ serve(new_select_block(columns = c("mpg", "cyl", "hp")), list(data = mtcars))
 
 # Exclude mode (select all except specified columns)
 serve(new_select_block(columns = c("gear", "carb"), exclude = TRUE), list(data = mtcars))
+
+# Select with distinct (unique combinations)
+serve(new_select_block(columns = c("cyl", "gear"), distinct = TRUE), list(data = mtcars))
+
+# Full deduplication (distinct on all columns)
+serve(new_select_block(distinct = TRUE), list(data = mtcars))
 
 # Connected blocks example
 serve(

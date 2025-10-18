@@ -5,11 +5,14 @@
 #' an exclude mode allows for negative selection using dplyr's minus syntax.
 #' Optionally, distinct rows can be kept after selection.
 #'
-#' @param columns Selected columns (character vector)
+#' **Note**: This block replaces the deprecated `new_distinct_block()`. Use the
+#' `distinct` parameter to get unique rows after column selection.
+#'
+#' @param columns Selected columns (character vector). If empty, selects all columns.
 #' @param exclude Logical. If TRUE, uses exclude mode (dplyr minus syntax: `-c(col1, col2)`).
 #'   If FALSE (default), uses include mode (selects specified columns).
 #' @param distinct Logical. If TRUE, keeps only distinct/unique rows after selecting columns.
-#'   If FALSE (default), returns all rows.
+#'   If FALSE (default), returns all rows. This replaces the old `new_distinct_block()` functionality.
 #' @param ... Forwarded to [new_transform_block()]
 #'
 #' @details
