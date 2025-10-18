@@ -185,8 +185,10 @@ new_slice_block <- function(
               prop_val <- 0.1
             }
 
-            # Format .by parameter
-            format_by <- function() {
+            # Format by/.by parameter
+            # Helper functions (slice_head, slice_tail, slice_min, slice_max, slice_sample) use 'by'
+            # Base slice() function uses '.by'
+            format_by <- function(use_dot = FALSE) {
               if (
                 length(by_val) > 0 && !all(by_val == "") && !all(is.na(by_val))
               ) {
@@ -194,8 +196,9 @@ new_slice_block <- function(
                 if (length(by_cols) > 0) {
                   # Apply backticks to non-syntactic column names
                   backticked_cols <- backtick_if_needed(by_cols)
+                  param_name <- if (use_dot) ".by" else "by"
                   return(paste0(
-                    ".by = c(",
+                    param_name, " = c(",
                     paste0(backticked_cols, collapse = ", "),
                     ")"
                   ))
@@ -204,8 +207,6 @@ new_slice_block <- function(
               NULL
             }
 
-            by_arg <- format_by()
-
             # Build expression based on type
             if (type_val == "head") {
               args <- if (use_prop_val) {
@@ -213,6 +214,7 @@ new_slice_block <- function(
               } else {
                 paste0("n = ", n_val)
               }
+              by_arg <- format_by(use_dot = FALSE)
               if (!is.null(by_arg)) {
                 args <- paste(args, by_arg, sep = ", ")
               }
@@ -223,6 +225,7 @@ new_slice_block <- function(
               } else {
                 paste0("n = ", n_val)
               }
+              by_arg <- format_by(use_dot = FALSE)
               if (!is.null(by_arg)) {
                 args <- paste(args, by_arg, sep = ", ")
               }
@@ -245,6 +248,7 @@ new_slice_block <- function(
                 ", with_ties = ",
                 if (with_ties_val) "TRUE" else "FALSE"
               )
+              by_arg <- format_by(use_dot = FALSE)
               if (!is.null(by_arg)) {
                 args <- paste(args, by_arg, sep = ", ")
               }
@@ -268,6 +272,7 @@ new_slice_block <- function(
                 ", replace = ",
                 if (replace_val) "TRUE" else "FALSE"
               )
+              by_arg <- format_by(use_dot = FALSE)
               if (!is.null(by_arg)) {
                 args <- paste(args, by_arg, sep = ", ")
               }
@@ -279,6 +284,7 @@ new_slice_block <- function(
                 return(parse(text = "data[0, , drop = FALSE]")) # Return empty data frame
               }
               args <- rows_val
+              by_arg <- format_by(use_dot = TRUE)
               if (!is.null(by_arg)) {
                 args <- paste(args, by_arg, sep = ", ")
               }
