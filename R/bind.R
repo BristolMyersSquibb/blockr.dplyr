@@ -82,17 +82,6 @@ new_bind_rows_block <- function(id_name = "", ...) {
         css_advanced_toggle(NS(id, "advanced-options")),
         css_doc_links(),
 
-        # Block header with documentation link
-        div(
-          class = "block-header-with-doc",
-          div(class = "block-header-title", "Bind Rows Block"),
-          doc_link(
-            text = "Help",
-            url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block",
-            tooltip = "View full documentation and examples"
-          )
-        ),
-
         # Block section with help text
         div(
           class = "block-section",
@@ -101,7 +90,13 @@ new_bind_rows_block <- function(id_name = "", ...) {
             div(
               class = "block-help-text",
               p(
-                "Stack datasets vertically. Columns are matched by name."
+                "Stack datasets vertically. Columns are matched by name. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
               )
             )
           )
@@ -192,17 +187,6 @@ new_bind_cols_block <- function(...) {
         css_responsive_grid(),
         css_doc_links(),
 
-        # Block header with documentation link
-        div(
-          class = "block-header-with-doc",
-          div(class = "block-header-title", "Bind Columns Block"),
-          doc_link(
-            text = "Help",
-            url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-columns-block",
-            tooltip = "View full documentation and examples"
-          )
-        ),
-
         # Block section with help text
         div(
           class = "block-section",
@@ -211,7 +195,13 @@ new_bind_cols_block <- function(...) {
             div(
               class = "block-help-text",
               p(
-                "Combine datasets horizontally. All datasets must have the same number of rows."
+                "Combine datasets horizontally. All datasets must have the same number of rows. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-columns-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
               )
             )
           )

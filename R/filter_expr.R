@@ -84,17 +84,6 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
         div(
           class = "block-container filter-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Filter Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#filter-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
@@ -106,14 +95,21 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
                 div(
                   class = "block-help-text",
                   p(
-                    "Filter rows with R expressions. Use Ctrl+Space for autocomplete."
+                    "Filter rows with R expressions. Use Ctrl+Space for autocomplete. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#filter-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
                   ),
                   div(
                     class = "expression-help-link",
-                    doc_link(
-                      text = "Expression helpers guide",
-                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#filter-helpers-if_any-and-if_all",
-                      tooltip = "Learn about filter helpers: if_any(), if_all(), and logical operators"
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#filter-helpers-if_any-and-if_all",
+                      target = "_blank",
+                      title = "Learn about filter helpers: if_any(), if_all(), and logical operators",
+                      "Expression helpers guide \u2197"
                     )
                   )
                 ),

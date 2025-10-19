@@ -98,17 +98,6 @@ new_arrange_block <- function(columns = character(), ...) {
         div(
           class = "block-container arrange-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Arrange Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
@@ -119,7 +108,15 @@ new_arrange_block <- function(columns = character(), ...) {
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Sort rows by columns. First row has highest priority.")
+                  p(
+                    "Sort rows by columns. First row has highest priority. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
+                  )
                 ),
                 mod_multi_arrange_ui(NS(id, "multi_arrange"))
               )

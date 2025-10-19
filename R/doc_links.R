@@ -73,7 +73,7 @@ css_doc_links <- function() {
 
     .block-header-with-doc {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       margin-bottom: 0.5rem;
       padding: 0.5rem 0;

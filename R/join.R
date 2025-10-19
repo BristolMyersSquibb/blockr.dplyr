@@ -158,24 +158,21 @@ new_join_block <- function(
         div(
           class = "block-container join-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Join Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
             # Help text
             div(
               class = "block-help-text",
-              p("Combine two datasets by matching rows on join keys.")
+              p(
+                "Combine two datasets by matching rows on join keys. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
+              )
             ),
 
             # Join Type Section

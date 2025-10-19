@@ -112,17 +112,6 @@ new_mutate_block <- function(
         div(
           class = "block-container mutate-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Mutate Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
@@ -134,14 +123,21 @@ new_mutate_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete."
+                    "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
                   ),
                   div(
                     class = "expression-help-link",
-                    doc_link(
-                      text = "Expression helpers guide",
-                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-mutate",
-                      tooltip = "Learn about common functions: lag(), lead(), case_when(), if_else(), and more"
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-mutate",
+                      target = "_blank",
+                      title = "Learn about common functions: lag(), lead(), case_when(), if_else(), and more",
+                      "Expression helpers guide \u2197"
                     )
                   )
                 ),

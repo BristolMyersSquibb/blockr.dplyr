@@ -143,7 +143,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         condition = sprintf("input['%s']", ns("use_natural_join")),
         selectInput(
           ns("natural_keys"),
-          label = "Select columns to join on:",
+          label = "Select columns to join on",
           choices = character(),
           selected = character(),
           multiple = TRUE

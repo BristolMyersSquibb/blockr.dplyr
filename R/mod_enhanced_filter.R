@@ -1039,7 +1039,7 @@ enhanced_filter_condition_ui <- function(
       class = "mode-toggle",
       radioButtons(
         paste0(id, "_mode"),
-        label = "Mode:",
+        label = "Mode",
         choices = c("Advanced" = "advanced", "Simple" = "simple"),
         selected = mode,
         inline = TRUE

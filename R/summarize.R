@@ -187,17 +187,6 @@ new_summarize_block <- function(
         div(
           class = "block-container summarize-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Summarize Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
@@ -209,14 +198,21 @@ new_summarize_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete."
+                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
                   ),
                   div(
                     class = "expression-help-link",
-                    doc_link(
-                      text = "Expression helpers guide",
-                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-summarize",
-                      tooltip = "Learn about summary functions: mean(), median(), sum(), n(), and more"
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-summarize",
+                      target = "_blank",
+                      title = "Learn about summary functions: mean(), median(), sum(), n(), and more",
+                      "Expression helpers guide \u2197"
                     )
                   )
                 ),

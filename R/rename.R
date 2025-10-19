@@ -101,17 +101,6 @@ new_rename_block <- function(
         div(
           class = "block-container rename-block-container",
 
-          # Block header with documentation link
-          div(
-            class = "block-header-with-doc",
-            div(class = "block-header-title", "Rename Block"),
-            doc_link(
-              text = "Help",
-              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block",
-              tooltip = "View full documentation and examples"
-            )
-          ),
-
           div(
             class = "block-form-grid",
 
@@ -122,7 +111,15 @@ new_rename_block <- function(
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Rename columns. Enter new name on the left, select column on the right.")
+                  p(
+                    "Rename columns. Enter new name on the left, select column on the right. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
+                  )
                 ),
                 mod_multi_rename_ui(
                   NS(id, "mr"),
