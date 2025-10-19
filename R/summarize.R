@@ -169,55 +169,19 @@ new_summarize_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("summarize"),
+        css_advanced_toggle(paste0(id, "-advanced-options"), use_subgrid = TRUE),
 
-        # Override grid to force single column for summarize block
-        tags$style(HTML(sprintf(
+        # Block-specific CSS
+        tags$style(HTML(
           "
-          .summarize-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .summarize-block-container .checkbox {
             font-size: 0.875rem;
           }
-          #%1$s-advanced-options {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: subgrid;
-            gap: 15px;
-          }
-          #%1$s-advanced-options.expanded {
-            max-height: 200px;
-            overflow: visible;
-            transition: max-height 0.5s ease-in;
-          }
-          .advanced-toggle {
-            cursor: pointer;
-            user-select: none;
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            grid-column: 1 / -1;
-            color: #6c757d;
-            font-size: 0.875rem;
-          }
-          .advanced-toggle .chevron {
-            transition: transform 0.2s;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-          }
-          .advanced-toggle .chevron.rotated {
-            transform: rotate(90deg);
-          }
-          ",
-          id # This is used for the %1$s placeholder in advanced-options ID
-        ))),
+          "
+        )),
 
         div(
           class = "block-container summarize-block-container",
@@ -270,19 +234,19 @@ new_summarize_block <- function(
             div(
               class = "block-section",
               div(
-                class = "advanced-toggle text-muted",
+                class = "block-advanced-toggle text-muted",
                 id = NS(id, "advanced-toggle"),
                 onclick = sprintf(
                   "
                   const section = document.getElementById('%s');
-                  const chevron = document.querySelector('#%s .chevron');
+                  const chevron = document.querySelector('#%s .block-chevron');
                   section.classList.toggle('expanded');
                   chevron.classList.toggle('rotated');
                   ",
                   NS(id, "advanced-options"),
                   NS(id, "advanced-toggle")
                 ),
-                tags$span(class = "chevron", "\u203A"),
+                tags$span(class = "block-chevron", "\u203A"),
                 "Show advanced options"
               )
             ),

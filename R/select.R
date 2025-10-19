@@ -198,65 +198,19 @@ new_select_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("select"),
+        css_inline_checkbox(),
 
-        # Force single column layout like filter/value_filter blocks
+        # Block-specific CSS
         tags$style(HTML(
           "
-          .select-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .select-block-container .block-help-text {
             margin-bottom: 0;
           }
           .select-block-container .block-help-text p {
             margin-bottom: 0;
-          }
-
-          /* Inline layout for columns input + exclude checkbox (match slice block) */
-          .select-columns-exclude-wrapper {
-            display: flex;
-            align-items: flex-end;
-            gap: 4px;
-            flex-wrap: nowrap;
-          }
-
-          .select-columns-exclude-wrapper > div:first-child {
-            flex: 1;
-            min-width: 0;
-          }
-
-          /* Exclude checkbox styling (match slice block proportion checkbox) */
-          .select-exclude-checkbox {
-            display: flex;
-            align-items: center;
-            margin-left: 0;
-            margin-bottom: 5px;
-          }
-
-          .select-exclude-checkbox .shiny-input-container {
-            width: auto !important;
-            max-width: none !important;
-            margin-bottom: 0 !important;
-          }
-
-          .select-exclude-checkbox .checkbox {
-            margin-bottom: 0;
-            margin-top: 0;
-          }
-
-          .select-exclude-checkbox label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            font-weight: normal;
-            margin-bottom: 0;
-            padding-left: 4px;
-          }
-
-          .select-exclude-checkbox input[type='checkbox'] {
-            margin-top: 0;
-            margin-right: 4px;
           }
 
           /* Distinct checkbox - keep as full-width option below */
@@ -286,7 +240,7 @@ new_select_block <- function(
                   class = "block-input-wrapper",
                   style = "grid-column: 1 / -1;",
                   div(
-                    class = "select-columns-exclude-wrapper",
+                    class = "block-inline-checkbox-wrapper",
                     div(
                       selectizeInput(
                         NS(id, "columns"),
@@ -303,7 +257,7 @@ new_select_block <- function(
                       )
                     ),
                     div(
-                      class = "select-exclude-checkbox",
+                      class = "block-inline-checkbox",
                       checkboxInput(
                         NS(id, "exclude"),
                         label = "Exclude",

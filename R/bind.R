@@ -77,8 +77,9 @@ new_bind_rows_block <- function(id_name = "", ...) {
     },
     ui = function(id) {
       tagList(
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_advanced_toggle(NS(id, "advanced-options")),
 
         # Block section with help text
         div(
@@ -94,59 +95,21 @@ new_bind_rows_block <- function(id_name = "", ...) {
           )
         ),
 
-        # CSS for collapsible section
-        tags$style(HTML(sprintf(
-          "
-          #%s {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-          }
-          #%s.expanded {
-            max-height: 500px;
-            overflow: visible;
-            transition: max-height 0.5s ease-in;
-          }
-          .advanced-toggle {
-            cursor: pointer;
-            user-select: none;
-            padding: 8px 0;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #6c757d;
-            font-size: 0.875rem;
-          }
-          .advanced-toggle .chevron {
-            transition: transform 0.2s;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-          }
-          .advanced-toggle .chevron.rotated {
-            transform: rotate(90deg);
-          }
-        ",
-          NS(id, "advanced-options"),
-          NS(id, "advanced-options")
-        ))),
-
         # Toggle button
         div(
-          class = "advanced-toggle text-muted",
+          class = "block-advanced-toggle text-muted",
           id = NS(id, "advanced-toggle"),
           onclick = sprintf(
             "
             const section = document.getElementById('%s');
-            const chevron = document.querySelector('#%s .chevron');
+            const chevron = document.querySelector('#%s .block-chevron');
             section.classList.toggle('expanded');
             chevron.classList.toggle('rotated');
           ",
             NS(id, "advanced-options"),
             NS(id, "advanced-toggle")
           ),
-          tags$span(class = "chevron", "\u203A"),
+          tags$span(class = "block-chevron", "\u203A"),
           "Show advanced options"
         ),
 
@@ -214,7 +177,7 @@ new_bind_cols_block <- function(...) {
     ui = function(id) {
       tagList(
         # Add responsive CSS
-        block_responsive_css(),
+        css_responsive_grid(),
 
         # Block section with help text
         div(

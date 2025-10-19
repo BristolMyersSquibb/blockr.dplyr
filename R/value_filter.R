@@ -100,17 +100,9 @@ new_value_filter_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
-
-        # Override grid to force single column for value filter block
-        tags$style(HTML(
-          "
-          .value-filter-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
-          "
-        )),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("value-filter"),
 
         div(
           class = "block-container value-filter-block-container",

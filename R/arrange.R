@@ -81,15 +81,13 @@ new_arrange_block <- function(columns = character(), ...) {
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("arrange"),
 
-        # CSS for arrange block
+        # Block-specific CSS
         tags$style(HTML(
           "
-          .arrange-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .arrange-block-container .block-help-text p {
             margin-bottom: 0;
           }

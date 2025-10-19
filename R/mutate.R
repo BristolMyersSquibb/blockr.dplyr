@@ -95,37 +95,15 @@ new_mutate_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("mutate"),
 
-        # Override grid to force single column for mutate block
+        # Block-specific CSS
         tags$style(HTML(
           "
-          .mutate-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .mutate-block-container .checkbox {
             font-size: 0.875rem;
-          }
-          .advanced-toggle {
-            cursor: pointer;
-            user-select: none;
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            grid-column: 1 / -1;
-            color: #6c757d;
-            font-size: 0.875rem;
-          }
-          .advanced-toggle .chevron {
-            transition: transform 0.2s;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-          }
-          .advanced-toggle .chevron.rotated {
-            transform: rotate(90deg);
           }
           "
         )),
