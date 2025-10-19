@@ -46,7 +46,7 @@ Supported operators include `>`, `<`, `==`, `!=`, `>=`, `<=` for comparisons, an
 If you prefer to filter by selecting values from dropdowns rather than writing expressions, use the value filter block instead. The value filter block is particularly useful for categorical data where you want to pick specific values visually.
 
 ```{r filter-block, out.width="100%", fig.cap="Filter block interface"}
-knitr::include_graphics("../man/figures/filter-block.png")
+knitr::include_graphics("../man/figures/filter-expr-block.png")
 ```
 
 ---

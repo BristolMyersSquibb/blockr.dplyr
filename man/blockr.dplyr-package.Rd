@@ -12,6 +12,7 @@ Extends 'blockr.core' with interactive blocks for visual data wrangling using 'd
 Useful links:
 \itemize{
   \item \url{https://bristolmyerssquibb.github.io/blockr.dplyr/}
+  \item Report bugs at \url{https://github.com/BristolMyersSquibb/blockr.dplyr/issues}
 }
 
 }

@@ -28,6 +28,7 @@ Description: Extends 'blockr.core' with interactive blocks for visual data
     joining, and arranging data, with support for complex expressions, grouping
     operations, and real-time validation.
 URL: https://bristolmyerssquibb.github.io/blockr.dplyr/
+BugReports: https://github.com/BristolMyersSquibb/blockr.dplyr/issues
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

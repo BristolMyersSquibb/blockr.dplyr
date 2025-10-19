@@ -230,7 +230,6 @@ mod_join_keys_server <- function(
     observe({
       req(!is.null(input$use_natural_join))
       if (isTRUE(input$use_natural_join != r_natural_join())) {
-        cat("[DEBUG mod_join_keys] Updating checkbox from", input$use_natural_join, "to:", r_natural_join(), "\n")
         updateCheckboxInput(session, "use_natural_join", value = r_natural_join())
       }
     })
@@ -266,14 +265,10 @@ mod_join_keys_server <- function(
 
     # Track natural join toggle
     observeEvent(input$use_natural_join, {
-      cat("[DEBUG mod_join_keys] input$use_natural_join changed to:", input$use_natural_join, "\n")
-      cat("[DEBUG mod_join_keys] r_natural_join was:", r_natural_join(), "\n")
       r_natural_join(input$use_natural_join)
-      cat("[DEBUG mod_join_keys] r_natural_join now:", r_natural_join(), "\n")
 
       # When switching to custom mode, ensure we have at least one mapping
       if (!input$use_natural_join && length(r_custom_mappings()) == 0) {
-        cat("[DEBUG mod_join_keys] Creating initial empty mapping\n")
         r_custom_mappings(list(list(x_col = "", y_col = "")))
       }
     })

@@ -36,7 +36,6 @@ reference:
 - title: Internal Functions
   desc: Internal UI components and helper functions
   contents:
-  - enhanced_filter_condition_ui
   - mod_by_selector_server
   - mod_by_selector_ui
   - mod_flexpr_server
