@@ -23,7 +23,7 @@ cat("Output directory: man/figures/\n\n")
 # =============================================================================
 # FILTER BLOCK - Filter high-performance cars
 # =============================================================================
-cat("1/11 - Filter block\n")
+cat("1/13 - Filter block\n")
 validate_block_screenshot(
   block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
   data = mtcars,
@@ -38,7 +38,7 @@ validate_block_screenshot(
 # =============================================================================
 # SELECT BLOCK - Choose key performance metrics
 # =============================================================================
-cat("2/11 - Select block\n")
+cat("2/13 - Select block\n")
 validate_block_screenshot(
   block = new_select_block(columns = c("mpg", "cyl", "hp", "wt", "qsec")),
   data = mtcars,
@@ -53,7 +53,7 @@ validate_block_screenshot(
 # =============================================================================
 # ARRANGE BLOCK - Sort by horsepower descending
 # =============================================================================
-cat("3/11 - Arrange block\n")
+cat("3/13 - Arrange block\n")
 validate_block_screenshot(
   block = new_arrange_block(columns = "hp", desc = TRUE),
   data = mtcars,
@@ -68,7 +68,7 @@ validate_block_screenshot(
 # =============================================================================
 # SLICE BLOCK - Top 5 most fuel-efficient cars
 # =============================================================================
-cat("4/11 - Slice block\n")
+cat("4/13 - Slice block\n")
 validate_block_screenshot(
   block = new_slice_block(type = "max", n = 5, by_column = "mpg"),
   data = mtcars,
@@ -83,7 +83,7 @@ validate_block_screenshot(
 # =============================================================================
 # MUTATE BLOCK - Calculate power-to-weight ratio
 # =============================================================================
-cat("5/11 - Mutate block\n")
+cat("5/13 - Mutate block\n")
 validate_block_screenshot(
   block = new_mutate_block(
     exprs = list(
@@ -103,7 +103,7 @@ validate_block_screenshot(
 # =============================================================================
 # RENAME BLOCK - Make column names more descriptive
 # =============================================================================
-cat("6/11 - Rename block\n")
+cat("6/13 - Rename block\n")
 validate_block_screenshot(
   block = new_rename_block(
     renames = list(
@@ -124,7 +124,7 @@ validate_block_screenshot(
 # =============================================================================
 # SUMMARIZE BLOCK - Statistics by cylinder count (with advanced options)
 # =============================================================================
-cat("7/11 - Summarize block\n")
+cat("7/13 - Summarize block\n")
 validate_block_screenshot(
   block = new_summarize_block(
     exprs = list(
@@ -147,7 +147,7 @@ validate_block_screenshot(
 # =============================================================================
 # JOIN BLOCK - Join performance and efficiency data
 # =============================================================================
-cat("8/11 - Join block\n")
+cat("8/13 - Join block\n")
 validate_block_screenshot(
   block = new_join_block(type = "left_join", by = c("mpg", "cyl")),
   data = list(
@@ -165,7 +165,7 @@ validate_block_screenshot(
 # =============================================================================
 # BIND ROWS BLOCK - Stack datasets vertically (with advanced options)
 # =============================================================================
-cat("9/11 - Bind rows block\n")
+cat("9/13 - Bind rows block\n")
 validate_block_screenshot(
   block = new_bind_rows_block(id_name = "source"),
   data = mtcars,
@@ -181,7 +181,7 @@ validate_block_screenshot(
 # =============================================================================
 # BIND COLS BLOCK - Combine datasets side-by-side
 # =============================================================================
-cat("10/11 - Bind cols block\n")
+cat("10/13 - Bind cols block\n")
 validate_block_screenshot(
   block = new_bind_cols_block(),
   data = mtcars,
@@ -196,7 +196,7 @@ validate_block_screenshot(
 # =============================================================================
 # VALUE FILTER BLOCK - Interactive value selection
 # =============================================================================
-cat("11/11 - Value filter block\n")
+cat("11/13 - Value filter block\n")
 validate_block_screenshot(
   block = new_value_filter_block(
     conditions = list(
@@ -205,6 +205,46 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "value-filter-block.png",
+  output_dir = "man/figures",
+  width = 800,
+  height = 600,
+  delay = 1,
+  verbose = FALSE
+)
+
+# =============================================================================
+# PIVOT LONGER BLOCK - Reshape wide data to long format (tidyr)
+# =============================================================================
+cat("12/13 - Pivot longer block\n")
+validate_block_screenshot(
+  block = new_pivot_longer_block(
+    cols = c("mpg", "hp", "wt", "qsec"),
+    names_to = "metric",
+    values_to = "value"
+  ),
+  data = mtcars,
+  filename = "pivot-longer-block.png",
+  output_dir = "man/figures",
+  width = 800,
+  height = 600,
+  delay = 1,
+  verbose = FALSE
+)
+
+# =============================================================================
+# PIVOT WIDER BLOCK - Reshape long data to wide format (tidyr)
+# =============================================================================
+cat("13/13 - Pivot wider block\n")
+# Use ChickWeight dataset - already in long format
+validate_block_screenshot(
+  block = new_pivot_wider_block(
+    names_from = "Time",
+    values_from = "weight",
+    names_prefix = "day_"
+  ),
+  data = datasets::ChickWeight[datasets::ChickWeight$Time %in% c(0, 10, 20) &
+                                datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5), ],
+  filename = "pivot-wider-block.png",
   output_dir = "man/figures",
   width = 800,
   height = 600,
