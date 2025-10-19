@@ -27,7 +27,7 @@ cat("1/13 - Filter block\n")
 validate_block_screenshot(
   block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
   data = mtcars,
-  filename = "filter-block.png",
+  filename = "filter-expr-block.png",
   output_dir = "man/figures",
   width = 800,
   height = 600,
