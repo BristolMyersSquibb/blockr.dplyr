@@ -8,13 +8,21 @@
 \description{
 Provides access to 'dplyr'-powered data wrangling as blocks for 'blockr.core'.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://bristolmyerssquibb.github.io/blockr.dplyr/}
+}
+
+}
 \author{
-\strong{Maintainer}: Nicolas Bennett \email{nicolas@cynkra.com}
+\strong{Maintainer}: Christoph Sax \email{christoph@cynkra.com} (\href{https://orcid.org/0000-0002-7192-7044}{ORCID})
 
 Authors:
 \itemize{
+  \item Nicolas Bennett \email{nicolas@cynkra.com}
   \item David Granjon \email{david@cynkra.com}
-  \item Christoph Sax \email{christoph@cynkra.com}
+  \item Mike Page \email{mike@cynkra.com}
 }
 
 }

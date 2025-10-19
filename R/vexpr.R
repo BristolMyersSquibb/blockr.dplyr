@@ -13,7 +13,7 @@
 #' @seealso [new_transform_block()]
 #' @examples
 #' \dontrun{
-#' serve(new_filter_block(), list(data = mtcars))
+#' serve(new_filter_expr_block(), list(data = mtcars))
 #' }
 #' @keywords internal
 mod_vexpr_server <- function(

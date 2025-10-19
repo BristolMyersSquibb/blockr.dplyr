@@ -51,3 +51,4 @@ serve(
 \seealso{
 \code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }
+\keyword{internal}

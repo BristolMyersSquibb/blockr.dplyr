@@ -25,7 +25,7 @@ cat("Output directory: man/figures/\n\n")
 # =============================================================================
 cat("1/11 - Filter block\n")
 validate_block_screenshot(
-  block = new_filter_block(exprs = "mpg > 20 & hp > 90"),
+  block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
   data = mtcars,
   filename = "filter-block.png",
   output_dir = "man/figures",

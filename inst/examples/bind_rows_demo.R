@@ -9,17 +9,17 @@ blockr.core::serve(
   blockr.md::new_md_board(
     blocks = c(
       # Create first dataset: iris setosa
-      setosa_data = new_filter_block(
+      setosa_data = new_filter_expr_block(
         expressions = list(Species = "Species == 'setosa'")
       ),
 
       # Create second dataset: iris versicolor
-      versicolor_data = new_filter_block(
+      versicolor_data = new_filter_expr_block(
         expressions = list(Species = "Species == 'versicolor'")
       ),
 
       # Create third dataset: iris virginica
-      virginica_data = new_filter_block(
+      virginica_data = new_filter_expr_block(
         expressions = list(Species = "Species == 'virginica'")
       ),
 

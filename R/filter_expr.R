@@ -1,6 +1,6 @@
-#' Filter block constructor
+#' Expression filter block constructor
 #'
-#' This block allows filtering rows in a data frame based on conditions
+#' This block allows filtering rows in a data frame based on R expressions
 #' (see [dplyr::filter()]). Supports multiple conditions with AND/OR logic.
 #' Changes are applied after clicking the submit button.
 #'
@@ -8,7 +8,7 @@
 #'   filter conditions (default: "TRUE" for no filtering)
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
-#' @return A block object for filter operations
+#' @return A block object for expression-based filter operations
 #' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon div
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
@@ -16,17 +16,17 @@
 #' \dontrun{
 #' # Basic usage with mtcars dataset
 #' library(blockr.core)
-#' serve(new_filter_block(), list(data = mtcars))
+#' serve(new_filter_expr_block(), list(data = mtcars))
 #'
 #' # With custom initial condition
-#' serve(new_filter_block("mpg > 20"), list(data = mtcars))
+#' serve(new_filter_expr_block("mpg > 20"), list(data = mtcars))
 #'
 #' # Connected blocks example
 #' serve(
 #'   new_board(
 #'     blocks = list(
 #'       a = new_dataset_block(),
-#'       b = new_filter_block()
+#'       b = new_filter_expr_block()
 #'     ),
 #'     links = links(
 #'       from = c("a"),
@@ -36,7 +36,7 @@
 #' )
 #' }
 #' @export
-new_filter_block <- function(exprs = "TRUE", ...) {
+new_filter_expr_block <- function(exprs = "TRUE", ...) {
   new_transform_block(
     function(id, data) {
       moduleServer(
@@ -50,12 +50,12 @@ new_filter_block <- function(exprs = "TRUE", ...) {
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_filter(exprs))
+          r_expr_validated <- reactiveVal(parse_filter_expr(exprs))
           r_exprs_validated <- reactiveVal(exprs)
 
           # Validate and update on submit
           observeEvent(input$submit, {
-            apply_filter(
+            apply_filter_expr(
               data(),
               r_exprs(),
               r_expr_validated,
@@ -110,12 +110,12 @@ new_filter_block <- function(exprs = "TRUE", ...) {
         )
       )
     },
-    class = "filter_block",
+    class = "filter_expr_block",
     ...
   )
 }
 
-parse_filter <- function(filter_string = "") {
+parse_filter_expr <- function(filter_string = "") {
   text <- if (filter_string == "") {
     "dplyr::filter(data)"
   } else {
@@ -124,10 +124,10 @@ parse_filter <- function(filter_string = "") {
   parse(text = text)[1]
 }
 
-apply_filter <- function(data, exprs, r_expr_validated, r_exprs_validated) {
+apply_filter_expr <- function(data, exprs, r_expr_validated, r_exprs_validated) {
   # If empty or only whitespace, return simple filter
   if (trimws(exprs) == "") {
-    expr <- parse_filter("")
+    expr <- parse_filter_expr("")
     r_expr_validated(expr)
     return()
   }
@@ -135,7 +135,7 @@ apply_filter <- function(data, exprs, r_expr_validated, r_exprs_validated) {
   req(exprs)
   stopifnot(is.character(exprs))
 
-  expr <- try(parse_filter(exprs))
+  expr <- try(parse_filter_expr(exprs))
   # Validation
   if (inherits(expr, "try-error")) {
     showNotification(

@@ -25,11 +25,11 @@ analysis_board <- blockr.ui::new_dag_board(
 
     # Prepare BOD data
     bod_select = new_select_block(c("Time", "demand")),
-    bod_filter = new_filter_block("demand > 10"),
+    bod_filter = new_filter_expr_block("demand > 10"),
 
     # Prepare ChickWeight data
     chick_select = new_select_block(c("Time", "weight", "Diet")),
-    chick_filter = new_filter_block("Time <= 10"),
+    chick_filter = new_filter_expr_block("Time <= 10"),
 
     # Join on shared Time column
     joined_data = new_join_block(type = "inner_join", by = c("Time" = "Time")),
@@ -41,7 +41,7 @@ analysis_board <- blockr.ui::new_dag_board(
     cars_data = new_dataset_block("mtcars", package = "datasets"),
 
     # Filter high-performance cars
-    fast_cars = new_filter_block("hp > 150"),
+    fast_cars = new_filter_expr_block("hp > 150"),
 
     # Add calculated fields - MULTI-EXPRESSION CAPABILITY
     cars_enhanced = new_mutate_block(list(
@@ -251,7 +251,7 @@ cat("Complex filtering with AND/OR logic trees\n\n")
 
 # Note: This shows the interface - actual conditions are configured in UI
 blockr.core::serve(
-  new_filter_block("mpg > 20 & hp > 100"), # Starting condition
+  new_filter_expr_block("mpg > 20 & hp > 100"), # Starting condition
   data = list(data = mtcars)
 )
 

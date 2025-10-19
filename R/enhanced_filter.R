@@ -39,7 +39,7 @@
 #'   )
 #' )
 #' }
-#' @export
+#' @keywords internal
 new_enhanced_filter_block <- function(string = "TRUE", ...) {
   new_transform_block(
     function(id, data) {
