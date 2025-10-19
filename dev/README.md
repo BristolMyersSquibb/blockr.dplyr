@@ -71,12 +71,7 @@ Covers blockr.dplyr-specific technical details:
 - **Examples:** `../inst/examples/` directory
 - **Block code:** `../R/` directory (filter.R, mutate.R, select.R, arrange.R, etc.)
 
-## For AI Assistants
-
-This documentation is optimized for both human developers and AI code assistants:
-
-- **[blocks-core-guide.md](blocks-core-guide.md)** - Universal patterns (reusable across blockr packages)
-- **[ui-guidelines.md](ui-guidelines.md)** - UI design patterns for dplyr blocks
+## Documentation Structure
 
 Each guide contains:
 - Complete patterns and templates

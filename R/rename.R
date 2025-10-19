@@ -86,6 +86,7 @@ new_rename_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("rename"),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -99,6 +100,7 @@ new_rename_block <- function(
 
         div(
           class = "block-container rename-block-container",
+
           div(
             class = "block-form-grid",
 
@@ -109,7 +111,15 @@ new_rename_block <- function(
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Rename columns. Enter new name on the left, select column on the right.")
+                  p(
+                    "Rename columns. Enter new name on the left, select column on the right. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
+                  )
                 ),
                 mod_multi_rename_ui(
                   NS(id, "mr"),
@@ -142,7 +152,7 @@ parse_rename <- function(rename_pairs = list()) {
       all(names(rename_pairs) == "" | is.na(names(rename_pairs)))
   ) {
     # No renames specified
-    return(parse(text = "dplyr::rename(data)")[1])
+    return(parse(text = "dplyr::rename(data)")[[1]])
   } else {
     # Convert list to character vector if needed
     if (is.list(rename_pairs)) {
@@ -160,7 +170,7 @@ parse_rename <- function(rename_pairs = list()) {
     )
     text <- glue::glue("dplyr::rename(data, {rename_exprs})")
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 #' Apply rename operation with validation

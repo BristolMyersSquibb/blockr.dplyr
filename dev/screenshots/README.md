@@ -15,7 +15,7 @@ This directory contains tools for generating screenshots of all blockr.dplyr blo
 From the root of the blockr.dplyr package:
 
 ```r
-source("inst/screenshots/generate_all.R")
+source("dev/screenshots/generate_all.R")
 ```
 
 This will:
@@ -26,7 +26,7 @@ This will:
 ### Generate a screenshot for a single block
 
 ```r
-source("inst/screenshots/validate-screenshot.R")
+source("dev/screenshots/validate-screenshot.R")
 
 # Example: Generate screenshot for filter block
 result <- validate_block_screenshot(

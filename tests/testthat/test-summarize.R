@@ -8,8 +8,8 @@ test_that("parse_summarize handles single expression", {
   single_expr <- list(count = "n()")
   result <- parse_summarize(single_expr)
 
-  expect_type(result, "expression")
-  code <- deparse(result[[1]])
+  expect_type(result, "language")
+  code <- deparse(result)
   expect_true(grepl("dplyr::summarize\\(data, count = n\\(\\)", code))
 })
 
@@ -22,8 +22,8 @@ test_that("parse_summarize handles multiple expressions", {
   )
   result <- parse_summarize(multi_expr)
 
-  expect_type(result, "expression")
-  code <- paste(deparse(result[[1]]), collapse = " ")
+  expect_type(result, "language")
+  code <- paste(deparse(result), collapse = " ")
   # Check that all expressions are included
   expect_true(grepl("dplyr::summarize", code))
   expect_true(grepl("mean_mpg", code))
@@ -36,8 +36,8 @@ test_that("parse_summarize handles grouping", {
   expr <- list(mean_mpg = "mean(mpg)")
   result <- parse_summarize(expr, by_selection = c("cyl", "am"))
 
-  expect_type(result, "expression")
-  code <- paste(deparse(result[[1]]), collapse = " ")
+  expect_type(result, "language")
+  code <- paste(deparse(result), collapse = " ")
   expect_true(grepl('\\.by = c\\("cyl", "am"\\)', code))
 })
 
@@ -151,9 +151,9 @@ test_that("parse_summarize handles unnamed expressions", {
   names(string_unnamed) <- ""
 
   result <- parse_summarize(string_unnamed, by_selection = "group1")
-  expect_type(result, "expression")
+  expect_type(result, "language")
 
-  code <- paste(deparse(result[[1]]), collapse = " ")
+  code <- paste(deparse(result), collapse = " ")
   # Should NOT have "name =" prefix
   expect_false(grepl("\\w+ = calc_stats", code))
   # Should have the expression directly
@@ -213,9 +213,9 @@ test_that("parse_summarize handles mixed named and unnamed expressions", {
   string_mixed <- c(string_mixed, count = "n()")
 
   result <- parse_summarize(string_mixed, by_selection = "group1")
-  expect_type(result, "expression")
+  expect_type(result, "language")
 
-  code <- paste(deparse(result[[1]]), collapse = " ")
+  code <- paste(deparse(result), collapse = " ")
   # Should have unnamed expression without "name ="
   expect_true(grepl("calc_means\\(x, y\\)", code))
   # Should have named expression with "name ="
@@ -274,4 +274,32 @@ test_that("unnamed expressions work with column-based helpers", {
   # Verify calculations
   expect_equal(result$mean_x[result$group1 == "A"], mean(c(1, 2)))
   expect_equal(result$mean_y[result$group1 == "A"], mean(c(10, 20)))
+})
+
+# Restorability Tests - Verify blocks can be created with parameters and work immediately
+test_that("summarize block restorability - simple expression", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with exprs parameter - this is what users would call
+  blk <- new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"))
+
+  # Verify the block works via testServer
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+
+      # Verify expression generation works
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+      expr_text <- deparse(expr_result)
+      expect_true(any(grepl("mean_mpg", expr_text)))
+      expect_true(any(grepl("mean\\(mpg\\)", expr_text)))
+    }
+  )
 })

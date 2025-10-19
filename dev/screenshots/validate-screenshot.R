@@ -4,7 +4,7 @@
 #' takes a screenshot, and returns the result. It's designed to be a
 #' simple, direct way to test whether a block implementation works correctly.
 #'
-#' @param block A blockr block object (e.g., from new_filter_block())
+#' @param block A blockr block object (e.g., from new_filter_expr_block())
 #' @param data Data to use for the block (default: mtcars)
 #' @param filename Name for the screenshot file (default: auto-generated)
 #' @param output_dir Directory to save screenshot (default: "man/figures")
@@ -25,7 +25,7 @@
 #' \dontrun{
 #' # Simple usage with default data (mtcars)
 #' result <- validate_block_screenshot(
-#'   new_filter_block("mpg > 20")
+#'   new_filter_expr_block("mpg > 20")
 #' )
 #'
 #' # With custom data
@@ -301,7 +301,7 @@ blockr.core::serve(
 #' \dontrun{
 #' # Test multiple blocks
 #' blocks <- list(
-#'   filter = new_filter_block("mpg > 20"),
+#'   filter = new_filter_expr_block("mpg > 20"),
 #'   select = new_select_block(columns = c("mpg", "cyl")),
 #'   arrange = new_arrange_block(columns = "mpg")
 #' )
@@ -315,7 +315,7 @@ blockr.core::serve(
 #'     block = new_summarize_block(),
 #'     expand_advanced = TRUE
 #'   ),
-#'   `filter-block` = new_filter_block("mpg > 20")
+#'   `filter-block` = new_filter_expr_block("mpg > 20")
 #' )
 #' results <- validate_blocks_batch(blocks)
 #' }

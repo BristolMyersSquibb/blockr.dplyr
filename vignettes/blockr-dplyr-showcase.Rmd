@@ -46,7 +46,7 @@ Supported operators include `>`, `<`, `==`, `!=`, `>=`, `<=` for comparisons, an
 If you prefer to filter by selecting values from dropdowns rather than writing expressions, use the value filter block instead. The value filter block is particularly useful for categorical data where you want to pick specific values visually.
 
 ```{r filter-block, out.width="100%", fig.cap="Filter block interface"}
-knitr::include_graphics("../man/figures/filter-block.png")
+knitr::include_graphics("../man/figures/filter-expr-block.png")
 ```
 
 ---
@@ -177,6 +177,34 @@ If datasets have columns with the same name, the suffix option controls how to h
 
 ```{r bind-cols-block, out.width="100%", fig.cap="Bind columns block interface"}
 knitr::include_graphics("../man/figures/bind-cols-block.png")
+```
+
+---
+
+## Pivot Longer Block
+
+The pivot longer block reshapes data from wide to long format using [tidyr::pivot_longer()](https://tidyr.tidyverse.org/reference/pivot_longer.html). Use this when column names represent values of a variable rather than variables themselves.
+
+Select which columns to pivot. These columns are transformed into two new columns: one containing the original column names (names_to parameter, default "name") and another containing the values (values_to parameter, default "value"). Unselected columns remain as identifiers.
+
+The names_prefix option removes common prefixes from column names. The values_drop_na option removes rows where the value is NA. This is useful for reshaping time series data, survey responses, or preparing data for visualization.
+
+```{r pivot-longer-block, out.width="100%", fig.cap="Pivot longer block interface"}
+knitr::include_graphics("../man/figures/pivot-longer-block.png")
+```
+
+---
+
+## Pivot Wider Block
+
+The pivot wider block reshapes data from long to wide format using [tidyr::pivot_wider()](https://tidyr.tidyverse.org/reference/pivot_wider.html). This is the inverse of pivot longer, creating a summary table where row-column combinations become cells.
+
+Select which column contains values for new column names (names_from) and which column contains cell values (values_from). The id_cols parameter specifies which columns identify each row. If empty, all columns not in names_from or values_from are used as identifiers.
+
+The names_prefix option adds a prefix to new column names. The values_fill parameter provides a value for missing combinations (e.g., "0" or leave as NA). This is useful for creating crosstabs, pivot tables, or comparing values across categories.
+
+```{r pivot-wider-block, out.width="100%", fig.cap="Pivot wider block interface"}
+knitr::include_graphics("../man/figures/pivot-wider-block.png")
 ```
 
 ---

@@ -9,7 +9,7 @@
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for mutate operations
-#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
+#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon tagList tags HTML
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
@@ -98,6 +98,7 @@ new_mutate_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("mutate"),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -110,6 +111,7 @@ new_mutate_block <- function(
 
         div(
           class = "block-container mutate-block-container",
+
           div(
             class = "block-form-grid",
 
@@ -121,7 +123,22 @@ new_mutate_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete."
+                    "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
+                  ),
+                  div(
+                    class = "expression-help-link",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-mutate",
+                      target = "_blank",
+                      title = "Learn about common functions: lag(), lead(), case_when(), if_else(), and more",
+                      "Expression helpers guide \u2197"
+                    )
                   )
                 ),
                 mod_multi_kvexpr_ui(
@@ -193,7 +210,7 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
       text <- glue::glue("dplyr::mutate(data, {mutate_string})")
     }
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 apply_mutate <- function(

@@ -2,6 +2,7 @@
 
 <!-- badges: start -->
 [![check](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml/badge.svg)](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml)
+[![coverage](https://codecov.io/gh/BristolMyersSquibb/blockr.dplyr/graph/badge.svg?token=VoOPRU65KA)](https://app.codecov.io/gh/BristolMyersSquibb/blockr.dplyr)
 <!-- badges: end -->
 
 blockr.dplyr provides interactive blocks for data transformation. Filter, sort, summarize, join, and manipulate data through visual interfaces.

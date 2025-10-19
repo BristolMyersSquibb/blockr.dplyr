@@ -103,9 +103,11 @@ new_value_filter_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("value-filter"),
+        css_doc_links(),
 
         div(
           class = "block-container value-filter-block-container",
+
           div(
             class = "block-form-grid",
 
@@ -117,7 +119,13 @@ new_value_filter_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Filter rows by selecting specific values. Choose to include or exclude."
+                    "Filter rows by selecting specific values. Choose to include or exclude. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#value-filter-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
                   )
                 ),
                 mod_value_filter_ui(NS(id, "vf"))
@@ -301,5 +309,5 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
     }
   }
 
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }

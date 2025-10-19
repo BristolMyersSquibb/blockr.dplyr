@@ -22,7 +22,7 @@ Handles user input and autocompletion.
 }
 \examples{
 \dontrun{
-serve(new_filter_block(), list(data = mtcars))
+serve(new_filter_expr_block(), list(data = mtcars))
 }
 }
 \seealso{

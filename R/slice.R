@@ -378,6 +378,7 @@ new_slice_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_inline_checkbox(),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -417,13 +418,22 @@ new_slice_block <- function(
 
         div(
           class = "block-container slice-block-container",
+
           div(
             class = "block-form-grid",
 
             # Help text
             div(
               class = "block-help-text",
-              p("Select rows by position, sampling, or extreme values.")
+              p(
+                "Select rows by position, sampling, or extreme values. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#slice-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
+              )
             ),
 
             # Slice Configuration Section

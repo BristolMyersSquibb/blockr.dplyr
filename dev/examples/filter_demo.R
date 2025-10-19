@@ -11,8 +11,8 @@ blockr.core::serve(
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
-      # Filter block - filter by expression
-      filtered = new_filter_block(
+      # Expression filter block - filter by expression
+      filtered = new_filter_expr_block(
         exprs = list(
           high_mpg = "mpg > 20"
         )
@@ -48,7 +48,7 @@ blockr.core::serve(
     document = c(
       "## Filter Blocks Style Comparison\n\n",
       "This workflow demonstrates three different filtering/transformation blocks:\n\n",
-      "1. **Filter Block**: Filter rows using R expressions\n",
+      "1. **Expression Filter Block**: Filter rows using R expressions\n",
       "2. **Value Filter Block**: Filter by selecting specific column values\n",
       "3. **Summarize Block**: Aggregate data with grouping\n\n",
 

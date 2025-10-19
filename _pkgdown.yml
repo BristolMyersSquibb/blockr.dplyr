@@ -1,4 +1,4 @@
-url: https://cynkra.github.io/blockr.dplyr/
+url: https://bristolmyerssquibb.github.io/blockr.dplyr/
 template:
   bootstrap: 5
 
@@ -20,8 +20,7 @@ reference:
   desc: Transform blocks for data manipulation
   contents:
   - new_select_block
-  - new_filter_block
-  - new_enhanced_filter_block
+  - new_filter_expr_block
   - new_value_filter_block
   - new_arrange_block
   - new_slice_block
@@ -31,11 +30,12 @@ reference:
   - new_join_block
   - new_bind_rows_block
   - new_bind_cols_block
+  - new_pivot_longer_block
+  - new_pivot_wider_block
 
 - title: Internal Functions
   desc: Internal UI components and helper functions
   contents:
-  - enhanced_filter_condition_ui
   - mod_by_selector_server
   - mod_by_selector_ui
   - mod_flexpr_server
@@ -55,4 +55,3 @@ articles:
   contents:
   - blockr-dplyr-showcase
   - expression-helpers
-  - dev-nonsyntactic-names

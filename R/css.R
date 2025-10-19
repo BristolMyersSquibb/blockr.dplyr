@@ -5,12 +5,12 @@
 #' framework classes (Bootstrap, Shiny, etc.) and prevent naming conflicts.
 #'
 #' **Required for all blocks:**
-#' - [css_responsive_grid()] - Base grid layout and block styling (REQUIRED)
+#' - `css_responsive_grid()` - Base grid layout and block styling (REQUIRED)
 #'
 #' **Common optional utilities:**
-#' - [css_single_column()] - Force single-column layout (common)
-#' - [css_advanced_toggle()] - Collapsible sections with toggle (optional)
-#' - [css_inline_checkbox()] - Checkbox/label styling for inline layouts (optional)
+#' - `css_single_column()` - Force single-column layout (common)
+#' - `css_advanced_toggle()` - Collapsible sections with toggle (optional)
+#' - `css_inline_checkbox()` - Checkbox/label styling for inline layouts (optional)
 #'
 #' **Usage in block UI:**
 #' ```r

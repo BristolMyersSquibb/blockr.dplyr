@@ -80,6 +80,7 @@ new_bind_rows_block <- function(id_name = "", ...) {
         # Add CSS
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options")),
+        css_doc_links(),
 
         # Block section with help text
         div(
@@ -89,7 +90,13 @@ new_bind_rows_block <- function(id_name = "", ...) {
             div(
               class = "block-help-text",
               p(
-                "Stack datasets vertically. Columns are matched by name."
+                "Stack datasets vertically. Columns are matched by name. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
               )
             )
           )
@@ -178,6 +185,7 @@ new_bind_cols_block <- function(...) {
       tagList(
         # Add responsive CSS
         css_responsive_grid(),
+        css_doc_links(),
 
         # Block section with help text
         div(
@@ -187,7 +195,13 @@ new_bind_cols_block <- function(...) {
             div(
               class = "block-help-text",
               p(
-                "Combine datasets horizontally. All datasets must have the same number of rows."
+                "Combine datasets horizontally. All datasets must have the same number of rows. ",
+                tags$a(
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-columns-block",
+                  target = "_blank",
+                  style = "text-decoration: none; font-size: 0.9em;",
+                  "\u2197"
+                )
               )
             )
           )

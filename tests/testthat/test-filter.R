@@ -1,57 +1,57 @@
-test_that("filter block constructor", {
+test_that("filter expr block constructor", {
   # Test basic constructor
-  blk <- new_filter_block()
-  expect_s3_class(blk, c("filter_block", "transform_block", "block"))
+  blk <- new_filter_expr_block()
+  expect_s3_class(blk, c("filter_expr_block", "transform_block", "block"))
 
   # Test constructor with filter condition
-  blk <- new_filter_block("mpg > 20")
-  expect_s3_class(blk, c("filter_block", "transform_block", "block"))
+  blk <- new_filter_expr_block("mpg > 20")
+  expect_s3_class(blk, c("filter_expr_block", "transform_block", "block"))
 
   # Test constructor with multiple conditions
-  blk <- new_filter_block("mpg > 20 & cyl == 6")
-  expect_s3_class(blk, c("filter_block", "transform_block", "block"))
+  blk <- new_filter_expr_block("mpg > 20 & cyl == 6")
+  expect_s3_class(blk, c("filter_expr_block", "transform_block", "block"))
 
   # Test that block always uses multi-condition interface
-  blk_multi <- new_filter_block()
-  expect_s3_class(blk_multi, c("filter_block", "transform_block", "block"))
+  blk_multi <- new_filter_expr_block()
+  expect_s3_class(blk_multi, c("filter_expr_block", "transform_block", "block"))
 })
 
-test_that("parse_filter function", {
+test_that("parse_filter_expr function", {
   # Test empty string
-  expr <- parse_filter("")
-  expect_type(expr, "expression")
+  expr <- blockr.dplyr:::parse_filter_expr("")
+  expect_type(expr, "language")
 
   # Test simple condition
-  expr <- parse_filter("mpg > 20")
-  expect_type(expr, "expression")
+  expr <- blockr.dplyr:::parse_filter_expr("mpg > 20")
+  expect_type(expr, "language")
 
   # Test complex condition
-  expr <- parse_filter("mpg > 20 & cyl == 4")
-  expect_type(expr, "expression")
+  expr <- blockr.dplyr:::parse_filter_expr("mpg > 20 & cyl == 4")
+  expect_type(expr, "language")
 
   # Test TRUE condition
-  expr <- parse_filter("TRUE")
-  expect_type(expr, "expression")
+  expr <- blockr.dplyr:::parse_filter_expr("TRUE")
+  expect_type(expr, "language")
 })
 
-test_that("apply_filter function handles errors", {
+test_that("apply_filter_expr function handles errors", {
   # Create mock reactive values
   r_expr_validated <- shiny::reactiveVal()
   r_string_validated <- shiny::reactiveVal()
 
   # Test with valid condition
   expect_silent(
-    apply_filter(mtcars, "mpg > 20", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(mtcars, "mpg > 20", r_expr_validated, r_string_validated)
   )
 
   # Test with empty string
   expect_silent(
-    apply_filter(mtcars, "", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(mtcars, "", r_expr_validated, r_string_validated)
   )
 
   # Test with whitespace only
   expect_silent(
-    apply_filter(mtcars, "  ", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(mtcars, "  ", r_expr_validated, r_string_validated)
   )
 })
 
@@ -108,30 +108,30 @@ test_that("mod_multi_filter_server handles empty conditions", {
   )
 })
 
-test_that("filter block integration with real data", {
-  # Test that filter block can be applied to real data
-  blk <- new_filter_block("mpg > 20")
-  expect_s3_class(blk, "filter_block")
+test_that("filter expr block integration with real data", {
+  # Test that filter expr block can be applied to real data
+  blk <- new_filter_expr_block("mpg > 20")
+  expect_s3_class(blk, "filter_expr_block")
 
   # Test with different conditions
-  blk2 <- new_filter_block("cyl == 4")
-  expect_s3_class(blk2, "filter_block")
+  blk2 <- new_filter_expr_block("cyl == 4")
+  expect_s3_class(blk2, "filter_expr_block")
 
   # Test complex condition
-  blk3 <- new_filter_block("mpg > 20 & cyl == 4 & hp < 100")
-  expect_s3_class(blk3, "filter_block")
+  blk3 <- new_filter_expr_block("mpg > 20 & cyl == 4 & hp < 100")
+  expect_s3_class(blk3, "filter_expr_block")
 })
 
-test_that("filter block default behavior", {
+test_that("filter expr block default behavior", {
   # Test default TRUE condition
-  blk_default <- new_filter_block()
-  expect_s3_class(blk_default, c("filter_block", "transform_block", "block"))
+  blk_default <- new_filter_expr_block()
+  expect_s3_class(blk_default, c("filter_expr_block", "transform_block", "block"))
 
   # Test with initial condition
-  blk_with_condition <- new_filter_block("mpg > 20")
+  blk_with_condition <- new_filter_expr_block("mpg > 20")
   expect_s3_class(
     blk_with_condition,
-    c("filter_block", "transform_block", "block")
+    c("filter_expr_block", "transform_block", "block")
   )
 })
 
@@ -160,17 +160,92 @@ test_that("mod_multi_filter_ui creates proper structure", {
   })))
 })
 
-test_that("filter block state management", {
+test_that("filter expr block state management", {
   # Test that block includes proper state for restoration
-  blk <- new_filter_block("mpg > 20")
+  blk <- new_filter_expr_block("mpg > 20")
 
   # The block should be constructible
-  expect_s3_class(blk, c("filter_block", "transform_block", "block"))
+  expect_s3_class(blk, c("filter_expr_block", "transform_block", "block"))
 })
 
-test_that("filter block construction with different conditions", {
+test_that("filter expr block construction with different conditions", {
   # All should work without errors
-  expect_no_error(new_filter_block("TRUE"))
-  expect_no_error(new_filter_block("mpg > 20"))
-  expect_no_error(new_filter_block("mpg > 20 & cyl == 4"))
+  expect_no_error(new_filter_expr_block("TRUE"))
+  expect_no_error(new_filter_expr_block("mpg > 20"))
+  expect_no_error(new_filter_expr_block("mpg > 20 & cyl == 4"))
+})
+
+# Restorability Tests - Verify blocks can be created with parameters and work immediately
+test_that("filter_expr block restorability - simple condition", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with exprs parameter - this is what users would call
+  blk <- new_filter_expr_block("mpg > 20")
+
+  # Verify the block works via testServer
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+
+      # Verify expression generation works
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("mpg > 20", expr_text))
+    }
+  )
+})
+
+test_that("filter_expr block restorability - complex condition", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with complex AND condition
+  blk <- new_filter_expr_block("mpg > 20 & cyl == 4")
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:15, c("mpg", "cyl", "hp")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("mpg > 20", expr_text))
+      expect_true(grepl("cyl == 4", expr_text))
+    }
+  )
+})
+
+test_that("filter_expr block restorability - multiple OR conditions", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with OR condition
+  blk <- new_filter_expr_block("cyl == 4 | cyl == 6")
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:20, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("cyl == 4", expr_text))
+      expect_true(grepl("cyl == 6", expr_text))
+    }
+  )
 })

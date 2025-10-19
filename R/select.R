@@ -202,6 +202,7 @@ new_select_block <- function(
         css_responsive_grid(),
         css_single_column("select"),
         css_inline_checkbox(),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -222,6 +223,7 @@ new_select_block <- function(
 
         div(
           class = "block-container select-block-container",
+
           div(
             class = "block-form-grid",
 
@@ -233,7 +235,13 @@ new_select_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Select and reorder columns. Drag to change order in output."
+                    "Select and reorder columns. Drag to change order in output. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#select-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
                   )
                 ),
                 div(

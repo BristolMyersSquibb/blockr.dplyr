@@ -143,7 +143,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         condition = sprintf("input['%s']", ns("use_natural_join")),
         selectInput(
           ns("natural_keys"),
-          label = "Select columns to join on:",
+          label = "Select columns to join on",
           choices = character(),
           selected = character(),
           multiple = TRUE
@@ -223,10 +223,15 @@ mod_join_keys_server <- function(
     r_natural_join <- reactiveVal(initial_natural)
     r_x_cols <- reactiveVal(character())
     r_y_cols <- reactiveVal(character())
+    r_first_natural_update <- reactiveVal(TRUE)  # Track first update to pre-populate columns
 
-    # Update checkbox to match initial state (can be in observe since checkbox updates are fine)
+    # Update checkbox to match initial state
+    # Only update when there's a mismatch to prevent reactive loops
     observe({
-      updateCheckboxInput(session, "use_natural_join", value = r_natural_join())
+      req(!is.null(input$use_natural_join))
+      if (isTRUE(input$use_natural_join != r_natural_join())) {
+        updateCheckboxInput(session, "use_natural_join", value = r_natural_join())
+      }
     })
 
     # Update column choices when data changes

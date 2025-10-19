@@ -28,7 +28,7 @@ dplyr_constructors <- registered_constructors[
 ]
 
 # Convert constructor names to expected filenames
-# e.g., "new_filter_block" -> "filter-block.png"
+# e.g., "new_filter_expr_block" -> "filter-expr-block.png"
 # e.g., "new_bind_cols_block" -> "bind-cols-block.png"
 expected_files <- sub("^new_", "", dplyr_constructors)  # Remove "new_" prefix
 expected_files <- gsub("_", "-", expected_files)         # Convert all underscores to hyphens

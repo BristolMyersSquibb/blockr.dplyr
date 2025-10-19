@@ -101,6 +101,10 @@ new_summarize_block <- function(
           # Unpack reactive value
           r_unpack <- reactiveVal(unpack)
 
+          # Store the validated expression (must be initialized before observeEvents that use them)
+          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
+          r_exprs_validated <- reactiveVal(exprs)
+
           # Observe unpack checkbox changes and update reactively
           observeEvent(
             input$unpack,
@@ -116,12 +120,9 @@ new_summarize_block <- function(
                 r_unpack()
               )
             },
-            ignoreNULL = FALSE
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE
           )
-
-          # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
-          r_exprs_validated <- reactiveVal(exprs)
 
           # Auto-update when grouping changes
           observeEvent(
@@ -139,7 +140,8 @@ new_summarize_block <- function(
                 )
               }
             },
-            ignoreNULL = FALSE
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE
           )
 
           # Validate and update on submit (for expression changes)
@@ -173,6 +175,7 @@ new_summarize_block <- function(
         css_responsive_grid(),
         css_single_column("summarize"),
         css_advanced_toggle(paste0(id, "-advanced-options"), use_subgrid = TRUE),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -185,6 +188,7 @@ new_summarize_block <- function(
 
         div(
           class = "block-container summarize-block-container",
+
           div(
             class = "block-form-grid",
 
@@ -196,7 +200,22 @@ new_summarize_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete."
+                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete. ",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
+                      target = "_blank",
+                      style = "text-decoration: none; font-size: 0.9em;",
+                      "\u2197"
+                    )
+                  ),
+                  div(
+                    class = "expression-help-link",
+                    tags$a(
+                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-summarize",
+                      target = "_blank",
+                      title = "Learn about summary functions: mean(), median(), sum(), n(), and more",
+                      "Expression helpers guide \u2197"
+                    )
                   )
                 ),
                 mod_multi_kvexpr_ui(
@@ -336,7 +355,7 @@ parse_summarize <- function(
       glue::glue("dplyr::summarize(data, {summarize_string})")
     }
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 apply_summarize <- function(
