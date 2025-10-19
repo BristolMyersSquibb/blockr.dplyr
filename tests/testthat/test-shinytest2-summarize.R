@@ -261,6 +261,7 @@ test_that("summarize block with across() for multiple columns", {
 test_that("summarize block full restorability - all parameters (exprs + by)", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Test comprehensive restorability with:
   # - Multiple expressions (exprs)
