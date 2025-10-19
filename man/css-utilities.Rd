@@ -11,14 +11,14 @@ framework classes (Bootstrap, Shiny, etc.) and prevent naming conflicts.
 \details{
 \strong{Required for all blocks:}
 \itemize{
-\item \code{\link[=css_responsive_grid]{css_responsive_grid()}} - Base grid layout and block styling (REQUIRED)
+\item \code{css_responsive_grid()} - Base grid layout and block styling (REQUIRED)
 }
 
 \strong{Common optional utilities:}
 \itemize{
-\item \code{\link[=css_single_column]{css_single_column()}} - Force single-column layout (common)
-\item \code{\link[=css_advanced_toggle]{css_advanced_toggle()}} - Collapsible sections with toggle (optional)
-\item \code{\link[=css_inline_checkbox]{css_inline_checkbox()}} - Checkbox/label styling for inline layouts (optional)
+\item \code{css_single_column()} - Force single-column layout (common)
+\item \code{css_advanced_toggle()} - Collapsible sections with toggle (optional)
+\item \code{css_inline_checkbox()} - Checkbox/label styling for inline layouts (optional)
 }
 
 \strong{Usage in block UI:}
