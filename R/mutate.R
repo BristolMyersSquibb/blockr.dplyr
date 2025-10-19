@@ -210,7 +210,7 @@ parse_mutate <- function(mutate_string = "", by_selection = character()) {
       text <- glue::glue("dplyr::mutate(data, {mutate_string})")
     }
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 apply_mutate <- function(

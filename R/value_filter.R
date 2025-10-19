@@ -309,5 +309,5 @@ parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
     }
   }
 
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }

@@ -353,7 +353,7 @@ parse_summarize <- function(
       glue::glue("dplyr::summarize(data, {summarize_string})")
     }
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 apply_summarize <- function(

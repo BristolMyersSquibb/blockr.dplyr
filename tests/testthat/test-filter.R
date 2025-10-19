@@ -19,19 +19,19 @@ test_that("filter expr block constructor", {
 test_that("parse_filter_expr function", {
   # Test empty string
   expr <- blockr.dplyr:::parse_filter_expr("")
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test simple condition
   expr <- blockr.dplyr:::parse_filter_expr("mpg > 20")
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test complex condition
   expr <- blockr.dplyr:::parse_filter_expr("mpg > 20 & cyl == 4")
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test TRUE condition
   expr <- blockr.dplyr:::parse_filter_expr("TRUE")
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 })
 
 test_that("apply_filter_expr function handles errors", {

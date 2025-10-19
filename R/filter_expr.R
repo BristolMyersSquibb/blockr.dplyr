@@ -138,7 +138,7 @@ parse_filter_expr <- function(filter_string = "") {
   } else {
     glue::glue("dplyr::filter(data, {filter_string})")
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 apply_filter_expr <- function(data, exprs, r_expr_validated, r_exprs_validated) {

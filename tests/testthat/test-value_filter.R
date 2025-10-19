@@ -26,7 +26,7 @@ test_that("value_filter block constructor", {
 test_that("parse_value_filter function", {
   # Test empty conditions
   expr <- blockr.dplyr:::parse_value_filter(list())
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test single include condition with character values
   conditions <- list(
@@ -37,7 +37,7 @@ test_that("parse_value_filter function", {
     )
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
   expect_true(grepl("Species.*%in%.*\"setosa\".*\"versicolor\"", deparse(expr)))
 
   # Test single exclude condition with character values
@@ -45,7 +45,7 @@ test_that("parse_value_filter function", {
     list(column = "Species", values = c("virginica"), mode = "exclude")
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
   expect_true(grepl("!.*Species.*%in%.*\"virginica\"", deparse(expr)))
 
   # Test single include condition with numeric values
@@ -53,7 +53,7 @@ test_that("parse_value_filter function", {
     list(column = "Sepal.Length", values = c(5.1, 5.4), mode = "include")
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
   expect_true(grepl("Sepal.Length.*%in%.*5.1.*5.4", deparse(expr)))
 
   # Test multiple conditions (combined with AND)
@@ -62,7 +62,7 @@ test_that("parse_value_filter function", {
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
   expr_str <- paste(deparse(expr), collapse = " ")
   expect_true(grepl(
     "Species.*%in%.*\"setosa\".*&.*!.*Sepal.Length.*%in%.*5.1",
@@ -99,7 +99,7 @@ test_that("parse_value_filter handles edge cases", {
     list(column = "Sepal.Length", values = c(5.1), mode = "exclude")
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
   expr_str <- paste(deparse(expr), collapse = " ")
   expect_true(grepl(
     "Species.*%in%.*\"setosa\".*&.*!.*Sepal.Length.*%in%.*5.1",
@@ -113,7 +113,7 @@ test_that("apply_value_filter function validates input", {
     list(column = "Species", values = c("setosa"), mode = "include")
   )
   expr <- blockr.dplyr:::parse_value_filter(conditions)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test evaluation doesn't error
   result <- try(eval(expr, envir = list(data = iris)), silent = TRUE)
@@ -121,7 +121,7 @@ test_that("apply_value_filter function validates input", {
 
   # Test parse_value_filter with empty conditions
   expr <- blockr.dplyr:::parse_value_filter(list())
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   result <- try(eval(expr, envir = list(data = iris)), silent = TRUE)
   expect_false(inherits(result, "try-error"))

@@ -170,7 +170,7 @@ parse_rename <- function(rename_pairs = list()) {
     )
     text <- glue::glue("dplyr::rename(data, {rename_exprs})")
   }
-  parse(text = text)[1]
+  parse(text = text)[[1]]
 }
 
 #' Apply rename operation with validation
