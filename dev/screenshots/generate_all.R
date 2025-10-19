@@ -5,7 +5,7 @@
 # This script creates screenshots of all blocks for use in pkgdown documentation.
 # Screenshots are saved to man/figures/ directory.
 #
-# To run: source("inst/screenshots/generate_all.R")
+# To run: source("dev/screenshots/generate_all.R")
 
 # Set NOT_CRAN environment variable BEFORE loading any packages
 # This is required for shinytest2 to work in non-interactive mode
@@ -15,7 +15,7 @@ Sys.setenv(NOT_CRAN = "true")
 devtools::load_all(".")
 
 # Source the validation function
-source("inst/screenshots/validate-screenshot.R")
+source("dev/screenshots/validate-screenshot.R")
 
 cat("Generating screenshots for all blockr.dplyr blocks...\n")
 cat("Output directory: man/figures/\n\n")
@@ -242,8 +242,11 @@ validate_block_screenshot(
     values_from = "weight",
     names_prefix = "day_"
   ),
-  data = datasets::ChickWeight[datasets::ChickWeight$Time %in% c(0, 10, 20) &
-                                datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5), ],
+  data = datasets::ChickWeight[
+    datasets::ChickWeight$Time %in%
+      c(0, 10, 20) &
+      datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5),
+  ],
   filename = "pivot-wider-block.png",
   output_dir = "man/figures",
   width = 800,
@@ -259,4 +262,4 @@ cat("Screenshots saved to: man/figures/\n\n")
 # VALIDATION: Check screenshots match registry
 # =============================================================================
 
-source("inst/screenshots/validate_registry.R")
+source("dev/screenshots/validate_registry.R")
