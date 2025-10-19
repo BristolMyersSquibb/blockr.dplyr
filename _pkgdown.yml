@@ -20,8 +20,7 @@ reference:
   desc: Transform blocks for data manipulation
   contents:
   - new_select_block
-  - new_filter_block
-  - new_enhanced_filter_block
+  - new_filter_expr_block
   - new_value_filter_block
   - new_arrange_block
   - new_slice_block
@@ -31,6 +30,8 @@ reference:
   - new_join_block
   - new_bind_rows_block
   - new_bind_cols_block
+  - new_pivot_longer_block
+  - new_pivot_wider_block
 
 - title: Internal Functions
   desc: Internal UI components and helper functions

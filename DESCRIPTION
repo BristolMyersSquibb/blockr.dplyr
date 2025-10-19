@@ -32,6 +32,7 @@ Imports:
     shiny,
     blockr.core (>= 0.0.1),
     dplyr,
+    tidyr,
     shinyAce,
     glue,
     htmltools,
