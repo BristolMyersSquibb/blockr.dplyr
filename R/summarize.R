@@ -101,6 +101,10 @@ new_summarize_block <- function(
           # Unpack reactive value
           r_unpack <- reactiveVal(unpack)
 
+          # Store the validated expression (must be initialized before observeEvents that use them)
+          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
+          r_exprs_validated <- reactiveVal(exprs)
+
           # Observe unpack checkbox changes and update reactively
           observeEvent(
             input$unpack,
@@ -116,12 +120,9 @@ new_summarize_block <- function(
                 r_unpack()
               )
             },
-            ignoreNULL = FALSE
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE
           )
-
-          # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
-          r_exprs_validated <- reactiveVal(exprs)
 
           # Auto-update when grouping changes
           observeEvent(
@@ -139,7 +140,8 @@ new_summarize_block <- function(
                 )
               }
             },
-            ignoreNULL = FALSE
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE
           )
 
           # Validate and update on submit (for expression changes)
