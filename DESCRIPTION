@@ -2,23 +2,28 @@ Package: blockr.dplyr
 Title: Data Wrangling Blocks for 'blockr.core'
 Version: 0.0.2
 Authors@R:
-    c(person(given = "Nicolas",
-             family = "Bennett",
+    c(person(given = "Christoph",
+             family = "Sax",
              role = c("aut", "cre"),
+             email = "christoph@cynkra.com",
+             comment = c(ORCID = "0000-0002-7192-7044")),
+      person(given = "Nicolas",
+             family = "Bennett",
+             role = "aut",
              email = "nicolas@cynkra.com"),
       person(given = "David",
              family = "Granjon",
-             role = c("aut"),
+             role = "aut",
              email = "david@cynkra.com"),
-      person(given = "Christoph",
-             family = "Sax",
-             role = c("aut"),
-             email = "christoph@cynkra.com")
+      person(given = "Mike",
+             family = "Page",
+             role = "aut",
+             email = "mike@cynkra.com")
     )
-Maintainer: Nicolas Bennett <nicolas@cynkra.com>
+Maintainer: Christoph Sax <christoph@cynkra.com>
 Description: Provides access to 'dplyr'-powered data wrangling as blocks for
     'blockr.core'.
-URL: https://cynkra.github.io/blockr.dplyr/
+URL: https://bristolmyerssquibb.github.io/blockr.dplyr/
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
