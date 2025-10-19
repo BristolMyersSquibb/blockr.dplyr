@@ -4,9 +4,9 @@
 \name{blockr.dplyr-package}
 \alias{blockr.dplyr}
 \alias{blockr.dplyr-package}
-\title{blockr.dplyr: Data Wrangling Blocks for 'blockr.core'}
+\title{blockr.dplyr: Interactive 'dplyr' Data Transformation Blocks}
 \description{
-Provides access to 'dplyr'-powered data wrangling as blocks for 'blockr.core'.
+Extends 'blockr.core' with interactive blocks for visual data wrangling using 'dplyr' and 'tidyr' operations. Users can build data transformation pipelines through a graphical interface without writing code directly. Includes blocks for filtering, selecting, mutating, summarizing, joining, and arranging data, with support for complex expressions, grouping operations, and real-time validation.
 }
 \seealso{
 Useful links:

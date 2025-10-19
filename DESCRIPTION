@@ -1,6 +1,6 @@
 Package: blockr.dplyr
-Title: Data Wrangling Blocks for 'blockr.core'
-Version: 0.0.2
+Title: Interactive 'dplyr' Data Transformation Blocks
+Version: 0.1.0
 Authors@R:
     c(person(given = "Christoph",
              family = "Sax",
@@ -21,8 +21,12 @@ Authors@R:
              email = "mike@cynkra.com")
     )
 Maintainer: Christoph Sax <christoph@cynkra.com>
-Description: Provides access to 'dplyr'-powered data wrangling as blocks for
-    'blockr.core'.
+Description: Extends 'blockr.core' with interactive blocks for visual data
+    wrangling using 'dplyr' and 'tidyr' operations. Users can build data
+    transformation pipelines through a graphical interface without writing code
+    directly. Includes blocks for filtering, selecting, mutating, summarizing,
+    joining, and arranging data, with support for complex expressions, grouping
+    operations, and real-time validation.
 URL: https://bristolmyerssquibb.github.io/blockr.dplyr/
 License: GPL (>= 3)
 Encoding: UTF-8
