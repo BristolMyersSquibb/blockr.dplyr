@@ -4,3 +4,4 @@
 ^\.lintr$
 ^\.claude$
 ^dev$
+^CLAUDE\.md$
