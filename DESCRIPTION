@@ -18,6 +18,7 @@ Authors@R:
 Maintainer: Nicolas Bennett <nicolas@cynkra.com>
 Description: Provides access to 'dplyr'-powered data wrangling as blocks for
     'blockr.core'.
+URL: https://cynkra.github.io/blockr.dplyr/
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -38,7 +39,8 @@ Suggests:
     testthat (>= 3.0.0),
     shinytest2,
     knitr,
-    rmarkdown
+    rmarkdown,
+    pkgdown
 VignetteBuilder: knitr
 Remotes: cynkra/blockr.core
 Config/testthat/edition: 3
