@@ -15,20 +15,20 @@ test_that("rename block constructor", {
 test_that("parse_rename function", {
   # Test empty renames
   expr <- parse_rename(list())
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test single rename
   expr <- parse_rename(list(miles_per_gallon = "mpg"))
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test multiple renames
   expr <- parse_rename(list(miles_per_gallon = "mpg", cylinders = "cyl"))
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Test with named vector
   renames <- c(horsepower = "hp", weight = "wt")
   expr <- parse_rename(renames)
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 })
 
 test_that("apply_rename function handles validation", {

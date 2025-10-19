@@ -152,7 +152,7 @@ parse_rename <- function(rename_pairs = list()) {
       all(names(rename_pairs) == "" | is.na(names(rename_pairs)))
   ) {
     # No renames specified
-    return(parse(text = "dplyr::rename(data)")[1])
+    return(parse(text = "dplyr::rename(data)")[[1]])
   } else {
     # Convert list to character vector if needed
     if (is.list(rename_pairs)) {

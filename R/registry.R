@@ -12,7 +12,9 @@ register_dplyr_blocks <- function() {
       "new_bind_rows_block",
       "new_bind_cols_block",
       "new_rename_block",
-      "new_slice_block"
+      "new_slice_block",
+      "new_pivot_longer_block",
+      "new_pivot_wider_block"
     ),
     name = c(
       "select block",
@@ -25,7 +27,9 @@ register_dplyr_blocks <- function() {
       "bind rows block",
       "bind columns block",
       "rename block",
-      "slice block"
+      "slice block",
+      "pivot longer block",
+      "pivot wider block"
     ),
     description = c(
       "Subset columns in a data.frame (supports distinct rows)",
@@ -38,9 +42,13 @@ register_dplyr_blocks <- function() {
       "Stack data.frames vertically by matching column names",
       "Combine data.frames side-by-side (requires same row count)",
       "Rename columns in a data.frame",
-      "Select rows by position, value, or sampling with optional grouping"
+      "Select rows by position, value, or sampling with optional grouping",
+      "Reshape data from wide to long format",
+      "Reshape data from long to wide format"
     ),
     category = c(
+      "transform",
+      "transform",
       "transform",
       "transform",
       "transform",

@@ -3,8 +3,8 @@ test_that("multi_kvexpr handles single expression", {
   single_expr <- list(new_col = "mpg + 1")
   result <- parse_mutate(single_expr)
 
-  expect_type(result, "expression")
-  code <- deparse(result[[1]])
+  expect_type(result, "language")
+  code <- deparse(result)
   expect_true(grepl("dplyr::mutate\\(data, new_col = mpg \\+ 1\\)", code))
 })
 
@@ -17,8 +17,8 @@ test_that("multi_kvexpr handles multiple expressions", {
   )
   result <- parse_mutate(multi_expr)
 
-  expect_type(result, "expression")
-  code <- paste(deparse(result[[1]]), collapse = " ")
+  expect_type(result, "language")
+  code <- paste(deparse(result), collapse = " ")
   # Check that all expressions are included
   expect_true(grepl("dplyr::mutate", code))
   expect_true(grepl("col1", code))
