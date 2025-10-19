@@ -11,20 +11,20 @@ test_that("mutate block constructor with by parameter", {
 test_that("parse_mutate handles .by parameter", {
   # Test without grouping
   expr1 <- parse_mutate(c(new_col = "mpg * 2"))
-  expect_type(expr1, "expression")
+  expect_type(expr1, "language")
   code1 <- deparse(expr1)
   expect_true(grepl("dplyr::mutate\\(data, new_col = mpg \\* 2\\)", code1))
   expect_false(grepl("\\.by", code1))
 
   # Test with grouping
   expr2 <- parse_mutate(c(avg_mpg = "mean(mpg)"), c("cyl"))
-  expect_type(expr2, "expression")
+  expect_type(expr2, "language")
   code2 <- deparse(expr2)
   expect_true(grepl("dplyr::mutate.*\\.by = c\\(\"cyl\"\\)", code2))
 
   # Test with multiple grouping columns
   expr3 <- parse_mutate(c(avg_mpg = "mean(mpg)"), c("cyl", "am"))
-  expect_type(expr3, "expression")
+  expect_type(expr3, "language")
   code3 <- deparse(expr3)
   expect_true(grepl('\\.by = c\\("cyl".*"am"\\)', paste(code3, collapse = " ")))
 })
@@ -56,13 +56,13 @@ test_that("mutate block with .by executes correctly", {
 test_that("mutate block handles empty .by parameter", {
   # Test with empty character vector
   expr1 <- parse_mutate(c(new_col = "mpg * 2"), character())
-  expect_type(expr1, "expression")
+  expect_type(expr1, "language")
   code1 <- deparse(expr1)
   expect_false(grepl("\\.by", code1))
 
   # Test with empty string in by parameter
   expr2 <- parse_mutate(c(new_col = "mpg * 2"), c(""))
-  expect_type(expr2, "expression")
+  expect_type(expr2, "language")
   code2 <- deparse(expr2)
   expect_false(grepl("\\.by", code2))
 })
@@ -77,7 +77,7 @@ test_that("mutate block with multiple expressions", {
     is_efficient = "mpg > 20"
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Execute and verify
   data <- mtcars[1:5, c("mpg", "cyl", "hp")]
@@ -102,7 +102,7 @@ test_that("mutate block with complex expressions using existing columns", {
     efficiency_score = "(mpg * hp) / (wt * 100)"
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Execute and verify
   data <- mtcars[1:5, c("mpg", "hp", "wt")]
@@ -125,7 +125,7 @@ test_that("mutate block with ifelse function", {
     cyl_type = 'ifelse(cyl <= 4, "small", ifelse(cyl <= 6, "medium", "large"))'
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Execute and verify
   data <- mtcars[1:10, c("mpg", "cyl")]
@@ -148,7 +148,7 @@ test_that("mutate block with case_when function", {
     efficiency = 'case_when(mpg > 25 ~ "excellent", mpg > 20 ~ "good", mpg > 15 ~ "fair", TRUE ~ "poor")'
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Execute and verify
   data <- mtcars[1:15, c("mpg", "cyl")]
@@ -168,7 +168,7 @@ test_that("mutate block overwriting existing columns", {
     hp = "hp + 10"      # Overwrite hp column
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   # Execute and verify
   data <- mtcars[1:5, c("mpg", "cyl", "hp")]
@@ -200,7 +200,7 @@ test_that("mutate block with NA handling", {
     sum_xy = "x + y"  # Will produce NA where either is NA
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   result <- eval(expr)
 
@@ -226,7 +226,7 @@ test_that("mutate block with grouped calculations", {
     by = c("cyl")
   )
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   data <- mtcars[1:12, c("mpg", "cyl")]
   result <- eval(expr)
@@ -254,7 +254,7 @@ test_that("mutate block with sequential column dependencies", {
     mpg8 = "mpg4 * 2"   # Uses mpg4 created in same mutate
   ))
 
-  expect_type(expr, "expression")
+  expect_type(expr, "language")
 
   data <- mtcars[1:3, c("mpg", "cyl")]
   result <- eval(expr)
@@ -288,13 +288,13 @@ test_that("mutate block restorability - single expression", {
 
       # Verify expression generation works
       expr_result <- result$expr()
-      expect_true(inherits(expr_result, "expression"))
-      # Extract first element of expression
-      expr_call <- expr_result[[1]]
-      expect_true(inherits(expr_call, "call"))
-      expr_text <- deparse(expr_call)
-      expect_true(any(grepl("mpg2", expr_text)))
-      expect_true(any(grepl("mpg \\* 2", expr_text)))
+      expect_true(inherits(expr_result, "call"))
+      # Verify it is a call
+      
+      
+      expr_text <- deparse(expr_result)
+      expect_true(grepl("mpg2", expr_text))
+      expect_true(grepl("mpg \\* 2", expr_text))
     }
   )
 })
@@ -317,11 +317,11 @@ test_that("mutate block restorability - multiple expressions", {
 
       result <- session$returned
       expr_result <- result$expr()
-      expect_true(inherits(expr_result, "expression"))
-      expr_call <- expr_result[[1]]
-      expect_true(inherits(expr_call, "call"))
+      expect_true(inherits(expr_result, "call"))
+      
+      
 
-      expr_text <- paste(deparse(expr_call), collapse = " ")
+      expr_text <- paste(deparse(expr_result), collapse = " ")
       expect_true(grepl("mpg2", expr_text))
       expect_true(grepl("hp_per_cyl", expr_text))
     }
@@ -355,11 +355,11 @@ test_that("mutate block restorability - with grouping", {
 
       result <- session$returned
       expr_result <- result$expr()
-      expect_true(inherits(expr_result, "expression"))
-      expr_call <- expr_result[[1]]
-      expect_true(inherits(expr_call, "call"))
+      expect_true(inherits(expr_result, "call"))
+      
+      
 
-      expr_text <- paste(deparse(expr_call), collapse = " ")
+      expr_text <- paste(deparse(expr_result), collapse = " ")
       expect_true(grepl("avg_mpg", expr_text))
       # Check for .by parameter (the grouping)
       expect_true(grepl("by", expr_text))
@@ -393,11 +393,11 @@ test_that("mutate block restorability - complex combination", {
 
       result <- session$returned
       expr_result <- result$expr()
-      expect_true(inherits(expr_result, "expression"))
-      expr_call <- expr_result[[1]]
-      expect_true(inherits(expr_call, "call"))
+      expect_true(inherits(expr_result, "call"))
+      
+      
 
-      expr_text <- paste(deparse(expr_call), collapse = " ")
+      expr_text <- paste(deparse(expr_result), collapse = " ")
       # Verify all expressions are included
       expect_true(grepl("avg_mpg", expr_text))
       expect_true(grepl("max_hp", expr_text))
