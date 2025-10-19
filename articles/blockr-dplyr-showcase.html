@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blockr.dplyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/BristolMyersSquibb/blockr.dplyr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -58,7 +59,7 @@
       <h1>blockr.dplyr Showcase: Data Wrangling Blocks</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/BristolMyersSquibb/blockr.dplyr/blob/main/vignettes/blockr-dplyr-showcase.Rmd" class="external-link"><code>vignettes/blockr-dplyr-showcase.Rmd</code></a></small>
       <div class="d-none name"><code>blockr-dplyr-showcase.Rmd</code></div>
     </div>
 
@@ -111,7 +112,7 @@ than writing expressions, use the value filter block instead. The value
 filter block is particularly useful for categorical data where you want
 to pick specific values visually.</p>
 <div class="figure">
-<img src="../reference/figures/filter-block.png" alt="Filter block interface" width="100%"><p class="caption">
+<img src="../reference/figures/filter-expr-block.png" alt="Filter block interface" width="100%"><p class="caption">
 Filter block interface
 </p>
 </div>
@@ -331,6 +332,50 @@ Bind columns block interface
 <hr>
 </div>
 <div class="section level2">
+<h2 id="pivot-longer-block">Pivot Longer Block<a class="anchor" aria-label="anchor" href="#pivot-longer-block"></a>
+</h2>
+<p>The pivot longer block reshapes data from wide to long format using
+<a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a>.
+Use this when column names represent values of a variable rather than
+variables themselves.</p>
+<p>Select which columns to pivot. These columns are transformed into two
+new columns: one containing the original column names (names_to
+parameter, default “name”) and another containing the values (values_to
+parameter, default “value”). Unselected columns remain as
+identifiers.</p>
+<p>The names_prefix option removes common prefixes from column names.
+The values_drop_na option removes rows where the value is NA. This is
+useful for reshaping time series data, survey responses, or preparing
+data for visualization.</p>
+<div class="figure">
+<img src="../reference/figures/pivot-longer-block.png" alt="Pivot longer block interface" width="100%"><p class="caption">
+Pivot longer block interface
+</p>
+</div>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="pivot-wider-block">Pivot Wider Block<a class="anchor" aria-label="anchor" href="#pivot-wider-block"></a>
+</h2>
+<p>The pivot wider block reshapes data from long to wide format using <a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a>.
+This is the inverse of pivot longer, creating a summary table where
+row-column combinations become cells.</p>
+<p>Select which column contains values for new column names (names_from)
+and which column contains cell values (values_from). The id_cols
+parameter specifies which columns identify each row. If empty, all
+columns not in names_from or values_from are used as identifiers.</p>
+<p>The names_prefix option adds a prefix to new column names. The
+values_fill parameter provides a value for missing combinations (e.g.,
+“0” or leave as NA). This is useful for creating crosstabs, pivot
+tables, or comparing values across categories.</p>
+<div class="figure">
+<img src="../reference/figures/pivot-wider-block.png" alt="Pivot wider block interface" width="100%"><p class="caption">
+Pivot wider block interface
+</p>
+</div>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="building-data-pipelines">Building Data Pipelines<a class="anchor" aria-label="anchor" href="#building-data-pipelines"></a>
 </h2>
 <p>Blocks work together in pipelines. The output from one block becomes
@@ -344,7 +389,7 @@ stage.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Nicolas Bennett, David Granjon, Christoph Sax.</p>
+  <p>Developed by Christoph Sax, Nicolas Bennett, David Granjon, Mike Page.</p>
 </div>
 
 <div class="pkgdown-footer-right">

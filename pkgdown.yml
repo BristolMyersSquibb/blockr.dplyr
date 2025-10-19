@@ -3,9 +3,8 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   blockr-dplyr-showcase: blockr-dplyr-showcase.html
-  dev-nonsyntactic-names: dev-nonsyntactic-names.html
   expression-helpers: expression-helpers.html
-last_built: 2025-10-19T15:17Z
+last_built: 2025-10-19T22:52Z
 urls:
-  reference: https://cynkra.github.io/blockr.dplyr/reference
-  article: https://cynkra.github.io/blockr.dplyr/articles
+  reference: https://bristolmyerssquibb.github.io/blockr.dplyr/reference
+  article: https://bristolmyerssquibb.github.io/blockr.dplyr/articles
