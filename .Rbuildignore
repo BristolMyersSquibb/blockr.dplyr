@@ -5,3 +5,6 @@
 ^\.claude$
 ^dev$
 ^CLAUDE\.md$
+^docs$
+^pkgdown$
+^_pkgdown\.yml$

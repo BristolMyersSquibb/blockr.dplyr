@@ -83,15 +83,13 @@ new_rename_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("rename"),
 
-        # Override grid to force single column for rename block
+        # Block-specific CSS
         tags$style(HTML(
           "
-          .rename-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .rename-block-container .block-help-text p {
             margin-top: 0;
             margin-bottom: 0.5rem;
@@ -111,7 +109,7 @@ new_rename_block <- function(
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Rename columns with new names.")
+                  p("Rename columns. Enter new name on the left, select column on the right.")
                 ),
                 mod_multi_rename_ui(
                   NS(id, "mr"),

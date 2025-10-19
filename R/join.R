@@ -133,17 +133,15 @@ new_join_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("join"),
+        css_inline_checkbox(),
 
-        # Override grid to force single column for join block
+        # Block-specific CSS
         tags$style(HTML(
           "
-          .join-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
           .join-block-container .block-help-text {
-            margin-top: 0.5rem;
             margin-bottom: 0.5rem;
           }
           .join-block-container .block-help-text p {
@@ -152,11 +150,6 @@ new_join_block <- function(
           }
           .join-block-container select {
             max-width: 500px;
-          }
-          .join-block-container label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            margin-bottom: 2px;
           }
           "
         )),

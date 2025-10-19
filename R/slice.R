@@ -375,69 +375,21 @@ new_slice_block <- function(
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
+        # Add CSS
+        css_responsive_grid(),
+        css_inline_checkbox(),
 
-        # Add custom CSS for slice block
+        # Block-specific CSS
         tags$style(HTML(
           "
-          /*
-           * Slice block uses ggplot-style responsive grid layout
-           * All inputs participate in the grid via block-input-wrapper
-           * Grid automatically adjusts columns based on available width
-           */
+          /* Slice block uses responsive grid layout - all inputs participate via block-input-wrapper */
 
-          /* Match value filter label styling */
+          /* Control label styling */
           .slice-block-container .control-label {
             font-size: 0.875rem;
             color: #666;
             margin-bottom: 4px;
             font-weight: normal;
-          }
-
-          /* Inline layout for number input + checkbox */
-          .slice-number-proportion-wrapper {
-            display: flex;
-            align-items: flex-end;
-            gap: 4px;
-            flex-wrap: nowrap;
-          }
-
-          .slice-number-proportion-wrapper > div:first-child {
-            flex: 1;
-            min-width: 0;
-          }
-
-          /* Proportion checkbox styling (match arrange block) */
-          .slice-proportion-checkbox {
-            display: flex;
-            align-items: center;
-            margin-left: 0;
-            margin-bottom: 5px;
-          }
-
-          .slice-proportion-checkbox .shiny-input-container {
-            width: auto !important;
-            max-width: none !important;
-            margin-bottom: 0 !important;
-          }
-
-          .slice-proportion-checkbox .checkbox {
-            margin-bottom: 0;
-            margin-top: 0;
-          }
-
-          .slice-proportion-checkbox label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            font-weight: normal;
-            margin-bottom: 0;
-            padding-left: 4px;
-          }
-
-          .slice-proportion-checkbox input[type='checkbox'] {
-            margin-top: 0;
-            margin-right: 4px;
           }
 
           /* Type-specific checkboxes (Include ties, With replacement) */
@@ -504,7 +456,7 @@ new_slice_block <- function(
                   conditionalPanel(
                     condition = sprintf("input['%s'] != 'custom'", ns("type")),
                     div(
-                      class = "slice-number-proportion-wrapper",
+                      class = "block-inline-checkbox-wrapper",
                       div(
                         # Number of rows input
                         conditionalPanel(
@@ -531,7 +483,7 @@ new_slice_block <- function(
                         )
                       ),
                       div(
-                        class = "slice-proportion-checkbox",
+                        class = "block-inline-checkbox",
                         checkboxInput(
                           ns("use_prop"),
                           label = "Proportion",
@@ -591,7 +543,7 @@ new_slice_block <- function(
                   div(
                     class = "block-input-wrapper",
                     div(
-                      class = "slice-number-proportion-wrapper",
+                      class = "block-inline-checkbox-wrapper",
                       div(
                         selectInput(
                           ns("order_by"),
@@ -601,7 +553,7 @@ new_slice_block <- function(
                         )
                       ),
                       div(
-                        class = "slice-proportion-checkbox",
+                        class = "block-inline-checkbox",
                         checkboxInput(
                           ns("with_ties"),
                           label = "Include ties",
@@ -618,7 +570,7 @@ new_slice_block <- function(
                   div(
                     class = "block-input-wrapper",
                     div(
-                      class = "slice-number-proportion-wrapper",
+                      class = "block-inline-checkbox-wrapper",
                       div(
                         selectInput(
                           ns("weight_by"),
@@ -628,7 +580,7 @@ new_slice_block <- function(
                         )
                       ),
                       div(
-                        class = "slice-proportion-checkbox",
+                        class = "block-inline-checkbox",
                         checkboxInput(
                           ns("replace"),
                           label = "Sample with replacement",

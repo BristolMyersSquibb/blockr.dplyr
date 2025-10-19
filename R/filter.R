@@ -76,17 +76,9 @@ new_filter_block <- function(exprs = "TRUE", ...) {
       tagList(
         shinyjs::useShinyjs(),
 
-        # Add responsive CSS
-        block_responsive_css(),
-
-        # Override grid to force single column for filter block
-        tags$style(HTML(
-          "
-          .filter-block-container .block-form-grid {
-            grid-template-columns: 1fr !important;
-          }
-          "
-        )),
+        # Add CSS
+        css_responsive_grid(),
+        css_single_column("filter"),
 
         div(
           class = "block-container filter-block-container",
