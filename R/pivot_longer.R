@@ -20,6 +20,7 @@
 #' @return A block object for pivot_longer operations
 #' @importFrom shiny req showNotification NS moduleServer reactive observeEvent textInput checkboxInput tagList tags HTML div p
 #' @importFrom glue glue
+#' @importFrom tidyr pivot_longer
 #' @seealso [new_transform_block()], [tidyr::pivot_longer()]
 #' @examples
 #' \dontrun{

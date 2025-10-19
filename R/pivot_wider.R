@@ -20,6 +20,7 @@
 #' @return A block object for pivot_wider operations
 #' @importFrom shiny req showNotification NS moduleServer reactive observeEvent textInput selectInput tagList tags HTML div p
 #' @importFrom glue glue
+#' @importFrom tidyr pivot_wider
 #' @seealso [new_transform_block()], [tidyr::pivot_wider()]
 #' @examples
 #' \dontrun{
