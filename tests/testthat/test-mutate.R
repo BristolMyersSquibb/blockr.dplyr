@@ -66,3 +66,344 @@ test_that("mutate block handles empty .by parameter", {
   code2 <- deparse(expr2)
   expect_false(grepl("\\.by", code2))
 })
+
+test_that("mutate block with multiple expressions", {
+  skip_if_not_installed("dplyr")
+
+  # Test multiple mutations
+  expr <- parse_mutate(c(
+    mpg2 = "mpg * 2",
+    hp_per_cyl = "hp / cyl",
+    is_efficient = "mpg > 20"
+  ))
+
+  expect_type(expr, "expression")
+
+  # Execute and verify
+  data <- mtcars[1:5, c("mpg", "cyl", "hp")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 6) # original 3 + 3 new columns
+  expect_true("mpg2" %in% names(result))
+  expect_true("hp_per_cyl" %in% names(result))
+  expect_true("is_efficient" %in% names(result))
+
+  # Verify calculations
+  expect_equal(result$mpg2, result$mpg * 2)
+  expect_equal(result$hp_per_cyl, result$hp / result$cyl)
+})
+
+test_that("mutate block with complex expressions using existing columns", {
+  skip_if_not_installed("dplyr")
+
+  # Test using multiple existing columns in computation
+  expr <- parse_mutate(c(
+    power_weight_ratio = "hp / wt",
+    efficiency_score = "(mpg * hp) / (wt * 100)"
+  ))
+
+  expect_type(expr, "expression")
+
+  # Execute and verify
+  data <- mtcars[1:5, c("mpg", "hp", "wt")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 5) # original 3 + 2 new
+  expect_true("power_weight_ratio" %in% names(result))
+  expect_true("efficiency_score" %in% names(result))
+
+  # Verify calculations are correct
+  expect_equal(result$power_weight_ratio, result$hp / result$wt)
+})
+
+test_that("mutate block with ifelse function", {
+  skip_if_not_installed("dplyr")
+
+  # Test ifelse conditional mutation
+  expr <- parse_mutate(c(
+    mpg_category = 'ifelse(mpg > 20, "high", "low")',
+    cyl_type = 'ifelse(cyl <= 4, "small", ifelse(cyl <= 6, "medium", "large"))'
+  ))
+
+  expect_type(expr, "expression")
+
+  # Execute and verify
+  data <- mtcars[1:10, c("mpg", "cyl")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 4)
+  expect_true("mpg_category" %in% names(result))
+  expect_true("cyl_type" %in% names(result))
+
+  # Verify logical categories
+  expect_true(all(result$mpg_category %in% c("high", "low")))
+  expect_true(all(result$cyl_type %in% c("small", "medium", "large")))
+})
+
+test_that("mutate block with case_when function", {
+  skip_if_not_installed("dplyr")
+
+  # Test case_when for complex conditionals
+  expr <- parse_mutate(c(
+    efficiency = 'case_when(mpg > 25 ~ "excellent", mpg > 20 ~ "good", mpg > 15 ~ "fair", TRUE ~ "poor")'
+  ))
+
+  expect_type(expr, "expression")
+
+  # Execute and verify
+  data <- mtcars[1:15, c("mpg", "cyl")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 3)
+  expect_true("efficiency" %in% names(result))
+  expect_true(all(result$efficiency %in% c("excellent", "good", "fair", "poor")))
+})
+
+test_that("mutate block overwriting existing columns", {
+  skip_if_not_installed("dplyr")
+
+  # Test mutating an existing column (should replace it)
+  expr <- parse_mutate(c(
+    mpg = "mpg * 1.5",  # Overwrite mpg column
+    hp = "hp + 10"      # Overwrite hp column
+  ))
+
+  expect_type(expr, "expression")
+
+  # Execute and verify
+  data <- mtcars[1:5, c("mpg", "cyl", "hp")]
+  original_mpg <- data$mpg
+  original_hp <- data$hp
+  result <- eval(expr)
+
+  # Should still have same number of columns
+  expect_equal(ncol(result), 3)
+
+  # Values should be transformed, not original
+  expect_equal(result$mpg, original_mpg * 1.5)
+  expect_equal(result$hp, original_hp + 10)
+})
+
+test_that("mutate block with NA handling", {
+  skip_if_not_installed("dplyr")
+
+  # Create data with NAs
+  data <- data.frame(
+    x = c(1, 2, NA, 4, 5),
+    y = c(10, NA, 30, 40, 50)
+  )
+
+  # Test mutations that handle NAs
+  expr <- parse_mutate(c(
+    x_filled = "ifelse(is.na(x), 0, x)",
+    has_na = "is.na(x) | is.na(y)",
+    sum_xy = "x + y"  # Will produce NA where either is NA
+  ))
+
+  expect_type(expr, "expression")
+
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 5)
+  expect_true("x_filled" %in% names(result))
+  expect_true("has_na" %in% names(result))
+
+  # Verify NA handling
+  expect_equal(result$x_filled[3], 0)  # NA was replaced with 0
+  expect_true(result$has_na[2])  # Row 2 has NA in y
+  expect_true(is.na(result$sum_xy[3]))  # NA + number = NA
+})
+
+test_that("mutate block with grouped calculations", {
+  skip_if_not_installed("dplyr")
+
+  # Test mutate with .by performing group-wise operations
+  expr <- parse_mutate(
+    c(
+      mpg_rank = "rank(mpg)",
+      mpg_centered = "mpg - mean(mpg)"
+    ),
+    by = c("cyl")
+  )
+
+  expect_type(expr, "expression")
+
+  data <- mtcars[1:12, c("mpg", "cyl")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 4)
+  expect_true("mpg_rank" %in% names(result))
+  expect_true("mpg_centered" %in% names(result))
+
+  # Within each cylinder group, centered values should sum to ~0
+  library(dplyr)
+  group_sums <- result %>%
+    group_by(cyl) %>%
+    summarize(sum_centered = sum(mpg_centered))
+
+  expect_true(all(abs(group_sums$sum_centered) < 0.01))
+})
+
+test_that("mutate block with sequential column dependencies", {
+  skip_if_not_installed("dplyr")
+
+  # Test creating columns that depend on previously created columns
+  expr <- parse_mutate(c(
+    mpg2 = "mpg * 2",
+    mpg4 = "mpg2 * 2",  # Uses mpg2 created in same mutate
+    mpg8 = "mpg4 * 2"   # Uses mpg4 created in same mutate
+  ))
+
+  expect_type(expr, "expression")
+
+  data <- mtcars[1:3, c("mpg", "cyl")]
+  result <- eval(expr)
+
+  expect_equal(ncol(result), 5)
+
+  # Verify sequential dependencies work
+  expect_equal(result$mpg2, result$mpg * 2)
+  expect_equal(result$mpg4, result$mpg2 * 2)
+  expect_equal(result$mpg8, result$mpg4 * 2)
+  expect_equal(result$mpg8, result$mpg * 8)
+})
+
+# Restorability Tests - Verify blocks can be created with parameters and work immediately
+test_that("mutate block restorability - single expression", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with exprs parameter - this is what users would call
+  blk <- new_mutate_block(exprs = list(mpg2 = "mpg * 2"))
+
+  # Verify the block works via testServer
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:5, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+
+      # Verify expression generation works
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "expression"))
+      # Extract first element of expression
+      expr_call <- expr_result[[1]]
+      expect_true(inherits(expr_call, "call"))
+      expr_text <- deparse(expr_call)
+      expect_true(any(grepl("mpg2", expr_text)))
+      expect_true(any(grepl("mpg \\* 2", expr_text)))
+    }
+  )
+})
+
+test_that("mutate block restorability - multiple expressions", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with multiple expressions
+  blk <- new_mutate_block(exprs = list(
+    mpg2 = "mpg * 2",
+    hp_per_cyl = "hp / cyl"
+  ))
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:5, c("mpg", "cyl", "hp")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "expression"))
+      expr_call <- expr_result[[1]]
+      expect_true(inherits(expr_call, "call"))
+
+      expr_text <- paste(deparse(expr_call), collapse = " ")
+      expect_true(grepl("mpg2", expr_text))
+      expect_true(grepl("hp_per_cyl", expr_text))
+    }
+  )
+})
+
+test_that("mutate block restorability - with grouping", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+  skip("testServer cannot test sub-module initialization; use shinytest2 instead")
+
+  # NOTE: This test is skipped because testServer has a limitation:
+  # Sub-modules like mod_by_selector_server don't properly initialize their
+  # inputs in the testServer context. The production code works correctly
+  # (verified in inst/examples/mutate_demo.R), and this is properly tested
+  # via shinytest2 integration tests (test-shinytest2-mutate.R).
+  #
+  # The block DOES restore the `by` parameter correctly in real apps.
+
+  # Create block with exprs AND by parameters
+  blk <- new_mutate_block(
+    exprs = list(avg_mpg = "mean(mpg)"),
+    by = c("cyl")
+  )
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "expression"))
+      expr_call <- expr_result[[1]]
+      expect_true(inherits(expr_call, "call"))
+
+      expr_text <- paste(deparse(expr_call), collapse = " ")
+      expect_true(grepl("avg_mpg", expr_text))
+      # Check for .by parameter (the grouping)
+      expect_true(grepl("by", expr_text))
+      expect_true(grepl("cyl", expr_text))
+    }
+  )
+})
+
+test_that("mutate block restorability - complex combination", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+  skip("testServer cannot test sub-module initialization; use shinytest2 instead")
+
+  # NOTE: See comment in "mutate block restorability - with grouping" test above
+
+  # Create block with multiple exprs and grouping
+  blk <- new_mutate_block(
+    exprs = list(
+      avg_mpg = "mean(mpg)",
+      max_hp = "max(hp)",
+      count = "n()"
+    ),
+    by = c("cyl", "am")
+  )
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:15, c("mpg", "cyl", "hp", "am")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "expression"))
+      expr_call <- expr_result[[1]]
+      expect_true(inherits(expr_call, "call"))
+
+      expr_text <- paste(deparse(expr_call), collapse = " ")
+      # Verify all expressions are included
+      expect_true(grepl("avg_mpg", expr_text))
+      expect_true(grepl("max_hp", expr_text))
+      expect_true(grepl("count", expr_text))
+      # Verify grouping is included (.by parameter)
+      expect_true(grepl("by", expr_text))
+    }
+  )
+})

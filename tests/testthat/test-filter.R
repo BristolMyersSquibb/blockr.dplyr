@@ -174,3 +174,78 @@ test_that("filter expr block construction with different conditions", {
   expect_no_error(new_filter_expr_block("mpg > 20"))
   expect_no_error(new_filter_expr_block("mpg > 20 & cyl == 4"))
 })
+
+# Restorability Tests - Verify blocks can be created with parameters and work immediately
+test_that("filter_expr block restorability - simple condition", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with exprs parameter - this is what users would call
+  blk <- new_filter_expr_block("mpg > 20")
+
+  # Verify the block works via testServer
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expect_true(is.reactive(result$expr))
+
+      # Verify expression generation works
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("mpg > 20", expr_text))
+    }
+  )
+})
+
+test_that("filter_expr block restorability - complex condition", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with complex AND condition
+  blk <- new_filter_expr_block("mpg > 20 & cyl == 4")
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:15, c("mpg", "cyl", "hp")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("mpg > 20", expr_text))
+      expect_true(grepl("cyl == 4", expr_text))
+    }
+  )
+})
+
+test_that("filter_expr block restorability - multiple OR conditions", {
+  skip_if_not_installed("shiny")
+  skip_if_not_installed("dplyr")
+
+  # Create block with OR condition
+  blk <- new_filter_expr_block("cyl == 4 | cyl == 6")
+
+  shiny::testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars[1:20, c("mpg", "cyl")])),
+    {
+      session$flushReact()
+
+      result <- session$returned
+      expr_result <- result$expr()
+      expect_true(inherits(expr_result, "call"))
+
+      expr_text <- paste(deparse(expr_result), collapse = " ")
+      expect_true(grepl("cyl == 4", expr_text))
+      expect_true(grepl("cyl == 6", expr_text))
+    }
+  )
+})
