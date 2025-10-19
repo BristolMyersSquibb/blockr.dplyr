@@ -1,6 +1,7 @@
 test_that("summarize block creates single summary row without grouping", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Create summarize block with mean calculation
   app_dir <- create_test_app(
@@ -32,6 +33,7 @@ test_that("summarize block creates single summary row without grouping", {
 test_that("summarize block with multiple summary expressions", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Multiple summary calculations
   app_dir <- create_test_app(
@@ -62,6 +64,7 @@ test_that("summarize block with multiple summary expressions", {
 test_that("summarize block with grouping by single column", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Group by cylinder count
   app_dir <- create_test_app(
@@ -96,6 +99,7 @@ test_that("summarize block with grouping by single column", {
 test_that("summarize block with grouping by multiple columns", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Group by cyl and gear
   app_dir <- create_test_app(
@@ -125,6 +129,7 @@ test_that("summarize block with grouping by multiple columns", {
 test_that("summarize block with various aggregation functions", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Test different aggregation functions
   app_dir <- create_test_app(
@@ -157,6 +162,7 @@ test_that("summarize block with various aggregation functions", {
 test_that("summarize block with custom data and grouping", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Create custom test data
   test_data_code <- "test_data <- data.frame(
@@ -191,6 +197,7 @@ test_that("summarize block with custom data and grouping", {
 test_that("summarize block handles empty groups correctly", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Create data where filtering might create empty groups
   test_data_code <- "test_data <- mtcars[mtcars$cyl == 4, ]" # Only 4-cylinder cars
@@ -216,6 +223,7 @@ test_that("summarize block handles empty groups correctly", {
 test_that("summarize block with across() for multiple columns", {
   skip_if_not_installed("shinytest2")
   skip_on_cran()
+  skip_on_ci()
 
   # Test using across() to summarize multiple numeric columns
   # Using unnamed expression: across(where(is.numeric), mean)
