@@ -209,7 +209,6 @@ new_select_block <- function(
           }
           .select-block-container .block-help-text {
             margin-bottom: 0;
-            margin-top: -8px;
           }
           .select-block-container .block-help-text p {
             margin-bottom: 0;

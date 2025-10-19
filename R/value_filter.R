@@ -125,7 +125,7 @@ new_value_filter_block <- function(
                 div(
                   class = "block-help-text",
                   p(
-                    "Select specific values to filter rows. Choose columns and values to include or exclude."
+                    "Filter rows by selecting specific values. Choose to include or exclude."
                   )
                 ),
                 mod_value_filter_ui(NS(id, "vf"))

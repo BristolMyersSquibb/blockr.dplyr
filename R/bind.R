@@ -77,6 +77,23 @@ new_bind_rows_block <- function(id_name = "", ...) {
     },
     ui = function(id) {
       tagList(
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Block section with help text
+        div(
+          class = "block-section",
+          div(
+            class = "block-section-grid",
+            div(
+              class = "block-help-text",
+              p(
+                "Stack datasets vertically. Columns are matched by name."
+              )
+            )
+          )
+        ),
+
         # CSS for collapsible section
         tags$style(HTML(sprintf(
           "
@@ -195,7 +212,24 @@ new_bind_cols_block <- function(...) {
       )
     },
     ui = function(id) {
-      tagList()
+      tagList(
+        # Add responsive CSS
+        block_responsive_css(),
+
+        # Block section with help text
+        div(
+          class = "block-section",
+          div(
+            class = "block-section-grid",
+            div(
+              class = "block-help-text",
+              p(
+                "Combine datasets horizontally. All datasets must have the same number of rows."
+              )
+            )
+          )
+        )
+      )
     },
     dat_valid = function(...args) {
       stopifnot(length(...args) >= 1L)

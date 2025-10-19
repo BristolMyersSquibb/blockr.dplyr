@@ -111,7 +111,7 @@ new_rename_block <- function(
                 class = "block-section-grid",
                 div(
                   class = "block-help-text",
-                  p("Rename columns with new names.")
+                  p("Rename columns. Enter new name on the left, select column on the right.")
                 ),
                 mod_multi_rename_ui(
                   NS(id, "mr"),

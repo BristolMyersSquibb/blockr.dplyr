@@ -11,7 +11,8 @@
 # This is required for shinytest2 to work in non-interactive mode
 Sys.setenv(NOT_CRAN = "true")
 
-library(blockr.dplyr)
+# Load package with devtools::load_all() to ensure latest changes are picked up
+devtools::load_all(".")
 
 # Source the validation function
 source("inst/screenshots/validate-screenshot.R")
@@ -30,7 +31,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -45,7 +46,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -60,7 +61,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -75,7 +76,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -95,7 +96,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -116,7 +117,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -138,7 +139,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   expand_advanced = TRUE,
   verbose = FALSE
 )
@@ -157,7 +158,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -172,7 +173,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   expand_advanced = TRUE,
   verbose = FALSE
 )
@@ -188,7 +189,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 
@@ -207,7 +208,7 @@ validate_block_screenshot(
   output_dir = "man/figures",
   width = 800,
   height = 600,
-  delay = 5,
+  delay = 1,
   verbose = FALSE
 )
 

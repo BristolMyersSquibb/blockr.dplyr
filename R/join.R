@@ -143,7 +143,6 @@ new_join_block <- function(
             grid-template-columns: 1fr !important;
           }
           .join-block-container .block-help-text {
-            margin-top: 0.5rem;
             margin-bottom: 0.5rem;
           }
           .join-block-container .block-help-text p {
