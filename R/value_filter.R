@@ -103,9 +103,22 @@ new_value_filter_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("value-filter"),
+        css_doc_links(),
 
         div(
           class = "block-container value-filter-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Value Filter Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#value-filter-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 

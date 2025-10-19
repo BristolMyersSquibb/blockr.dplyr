@@ -173,6 +173,7 @@ new_summarize_block <- function(
         css_responsive_grid(),
         css_single_column("summarize"),
         css_advanced_toggle(paste0(id, "-advanced-options"), use_subgrid = TRUE),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -185,6 +186,18 @@ new_summarize_block <- function(
 
         div(
           class = "block-container summarize-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Summarize Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 
@@ -197,6 +210,14 @@ new_summarize_block <- function(
                   class = "block-help-text",
                   p(
                     "Create summary columns with R expressions. Use Ctrl+Space for autocomplete."
+                  ),
+                  div(
+                    class = "expression-help-link",
+                    doc_link(
+                      text = "Expression helpers guide",
+                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-summarize",
+                      tooltip = "Learn about summary functions: mean(), median(), sum(), n(), and more"
+                    )
                   )
                 ),
                 mod_multi_kvexpr_ui(

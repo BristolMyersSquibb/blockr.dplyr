@@ -79,9 +79,22 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
         # Add CSS
         css_responsive_grid(),
         css_single_column("filter"),
+        css_doc_links(),
 
         div(
           class = "block-container filter-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Filter Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#filter-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 
@@ -94,6 +107,14 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
                   class = "block-help-text",
                   p(
                     "Filter rows with R expressions. Use Ctrl+Space for autocomplete."
+                  ),
+                  div(
+                    class = "expression-help-link",
+                    doc_link(
+                      text = "Expression helpers guide",
+                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#filter-helpers-if_any-and-if_all",
+                      tooltip = "Learn about filter helpers: if_any(), if_all(), and logical operators"
+                    )
                   )
                 ),
                 mod_multi_filter_ui(

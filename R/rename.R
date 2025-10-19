@@ -86,6 +86,7 @@ new_rename_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("rename"),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -99,6 +100,18 @@ new_rename_block <- function(
 
         div(
           class = "block-container rename-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Rename Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 

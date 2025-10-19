@@ -84,6 +84,7 @@ new_arrange_block <- function(columns = character(), ...) {
         # Add CSS
         css_responsive_grid(),
         css_single_column("arrange"),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -96,6 +97,18 @@ new_arrange_block <- function(columns = character(), ...) {
 
         div(
           class = "block-container arrange-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Arrange Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 

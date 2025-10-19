@@ -137,6 +137,7 @@ new_join_block <- function(
         css_responsive_grid(),
         css_single_column("join"),
         css_inline_checkbox(),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -156,6 +157,18 @@ new_join_block <- function(
 
         div(
           class = "block-container join-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Join Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 

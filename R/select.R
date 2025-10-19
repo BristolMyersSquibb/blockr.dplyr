@@ -202,6 +202,7 @@ new_select_block <- function(
         css_responsive_grid(),
         css_single_column("select"),
         css_inline_checkbox(),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -222,6 +223,18 @@ new_select_block <- function(
 
         div(
           class = "block-container select-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Select Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#select-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 

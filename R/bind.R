@@ -80,6 +80,18 @@ new_bind_rows_block <- function(id_name = "", ...) {
         # Add CSS
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options")),
+        css_doc_links(),
+
+        # Block header with documentation link
+        div(
+          class = "block-header-with-doc",
+          div(class = "block-header-title", "Bind Rows Block"),
+          doc_link(
+            text = "Help",
+            url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block",
+            tooltip = "View full documentation and examples"
+          )
+        ),
 
         # Block section with help text
         div(
@@ -178,6 +190,18 @@ new_bind_cols_block <- function(...) {
       tagList(
         # Add responsive CSS
         css_responsive_grid(),
+        css_doc_links(),
+
+        # Block header with documentation link
+        div(
+          class = "block-header-with-doc",
+          div(class = "block-header-title", "Bind Columns Block"),
+          doc_link(
+            text = "Help",
+            url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-columns-block",
+            tooltip = "View full documentation and examples"
+          )
+        ),
 
         # Block section with help text
         div(

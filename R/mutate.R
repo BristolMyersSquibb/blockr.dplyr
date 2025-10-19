@@ -9,7 +9,7 @@
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for mutate operations
-#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
+#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon tagList tags HTML
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
@@ -98,6 +98,7 @@ new_mutate_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("mutate"),
+        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -110,6 +111,18 @@ new_mutate_block <- function(
 
         div(
           class = "block-container mutate-block-container",
+
+          # Block header with documentation link
+          div(
+            class = "block-header-with-doc",
+            div(class = "block-header-title", "Mutate Block"),
+            doc_link(
+              text = "Help",
+              url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block",
+              tooltip = "View full documentation and examples"
+            )
+          ),
+
           div(
             class = "block-form-grid",
 
@@ -122,6 +135,14 @@ new_mutate_block <- function(
                   class = "block-help-text",
                   p(
                     "Create or modify columns with R expressions. Use Ctrl+Space for autocomplete."
+                  ),
+                  div(
+                    class = "expression-help-link",
+                    doc_link(
+                      text = "Expression helpers guide",
+                      url = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-mutate",
+                      tooltip = "Learn about common functions: lag(), lead(), case_when(), if_else(), and more"
+                    )
                   )
                 ),
                 mod_multi_kvexpr_ui(
