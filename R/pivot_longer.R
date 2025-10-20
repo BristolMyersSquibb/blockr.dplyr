@@ -196,7 +196,7 @@ new_pivot_longer_block <- function(
               p(
                 "Reshape data from wide to long format. Select columns to pivot into rows. ",
                 tags$a(
-                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html",
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-longer-block",
                   target = "_blank",
                   style = "text-decoration: none; font-size: 0.9em;",
                   "\u2197"

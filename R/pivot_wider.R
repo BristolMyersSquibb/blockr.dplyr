@@ -237,7 +237,7 @@ new_pivot_wider_block <- function(
               p(
                 "Reshape data from long to wide format. Select columns that define new column names and values. ",
                 tags$a(
-                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html",
+                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-wider-block",
                   target = "_blank",
                   style = "text-decoration: none; font-size: 0.9em;",
                   "\u2197"

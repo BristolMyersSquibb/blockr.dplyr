@@ -35,19 +35,21 @@ This opens a visual interface in your web browser. Add blocks using the "+" butt
 
 ## Available Blocks
 
-blockr.dplyr provides 11 data transformation blocks:
+blockr.dplyr provides 13 data transformation blocks:
 
-- select: choose which columns to keep
-- filter: keep rows that meet conditions
-- value_filter: filter by selecting values from dropdowns
-- arrange: sort rows by column values
-- slice: select specific rows by position or value
-- mutate: create or modify columns
-- rename: change column names
-- summarize: calculate statistics, optionally by groups
-- join: combine two datasets based on common columns
-- bind_rows: stack datasets vertically
-- bind_cols: combine datasets side-by-side
+- [select](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#select-block): choose which columns to keep
+- [expression_filter](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#expression-filter-block): keep rows that meet conditions
+- [value_filter](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#value-filter-block): filter by selecting values from dropdowns
+- [arrange](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block): sort rows by column values
+- [slice](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#slice-block): select specific rows by position or value
+- [mutate](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block): create or modify columns
+- [rename](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block): change column names
+- [summarize](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block): calculate statistics, optionally by groups
+- [join](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block): combine two datasets based on common columns
+- [pivot_longer](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-longer-block): reshape data from wide to long format
+- [pivot_wider](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-wider-block): reshape data from long to wide format
+- [bind_rows](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block): stack datasets vertically
+- [bind_cols](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-cols-block): combine datasets side-by-side
 
 See `vignette("blockr-dplyr-showcase")` for a complete showcase with screenshots and detailed explanations of each block.
 
