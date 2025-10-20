@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Three blocks accept expressions: **filter**, **mutate**, and **summarize**.
+Three blocks accept expressions: **expression filter**, **mutate**, and **summarize**.
 
 Helper functions make expressions more powerful by applying operations to multiple columns at once. This vignette covers:
 
@@ -32,7 +32,7 @@ See also: [dplyr column-wise operations](https://dplyr.tidyverse.org/articles/co
 
 ## Expression Blocks
 
-**Filter block**: Logical expressions to keep rows
+**Expression filter block**: Logical expressions to keep rows
 
 - Expressions return TRUE/FALSE for each row
 - Use comparison operators: `>`, `<`, `==`, `!=`, `>=`, `<=`
@@ -258,7 +258,7 @@ calc_stats(pick(everything()))
 
 ## Filter Helpers: if_any() and if_all()
 
-Check conditions across multiple columns in the filter block.
+Check conditions across multiple columns in the expression filter block.
 
 **if_any()**: TRUE when condition is true for **at least one** column
 ```
@@ -313,7 +313,7 @@ across(c(hp, wt), list(mean = mean, sd = sd, min = min, max = max))
 across(everything(), \(x) sum(!is.na(x)))
 ```
 
-### Filter Block
+### Expression Filter Block
 ```
 # Complete rows only
 if_all(everything(), \(x) !is.na(x))
