@@ -88,13 +88,21 @@ new_pivot_longer_block <- function(
             r_values_to(input$values_to)
           })
 
-          observeEvent(input$values_drop_na, {
-            r_values_drop_na(input$values_drop_na)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$values_drop_na,
+            {
+              r_values_drop_na(input$values_drop_na)
+            },
+            ignoreNULL = FALSE
+          )
 
-          observeEvent(input$names_prefix, {
-            r_names_prefix(input$names_prefix)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$names_prefix,
+            {
+              r_names_prefix(input$names_prefix)
+            },
+            ignoreNULL = FALSE
+          )
 
           list(
             expr = reactive({
@@ -107,7 +115,10 @@ new_pivot_longer_block <- function(
               }
 
               # Build column selection with backticks if needed
-              cols_str <- paste(backtick_if_needed(selected_cols), collapse = ", ")
+              cols_str <- paste(
+                backtick_if_needed(selected_cols),
+                collapse = ", "
+              )
 
               # Build the pivot_longer expression
               args <- list()

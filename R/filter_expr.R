@@ -141,7 +141,12 @@ parse_filter_expr <- function(filter_string = "") {
   parse(text = text)[[1]]
 }
 
-apply_filter_expr <- function(data, exprs, r_expr_validated, r_exprs_validated) {
+apply_filter_expr <- function(
+  data,
+  exprs,
+  r_expr_validated,
+  r_exprs_validated
+) {
   # If empty or only whitespace, return simple filter
   if (trimws(exprs) == "") {
     expr <- parse_filter_expr("")

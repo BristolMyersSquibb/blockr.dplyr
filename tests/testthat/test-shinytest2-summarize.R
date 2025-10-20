@@ -8,7 +8,11 @@ test_that("summarize block creates single summary row without grouping", {
     block_code = 'serve(new_summarize_block(exprs = list(mean_mpg = "mean(mpg)")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_simple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_simple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -40,7 +44,11 @@ test_that("summarize block with multiple summary expressions", {
     block_code = 'serve(new_summarize_block(exprs = list(mean_mpg = "mean(mpg)", sum_hp = "sum(hp)", count = "n()")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_multiple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_multiple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -71,7 +79,11 @@ test_that("summarize block with grouping by single column", {
     block_code = 'serve(new_summarize_block(exprs = list(mean_mpg = "mean(mpg)", count = "n()"), by = "cyl"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_group_single")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_group_single"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -106,7 +118,11 @@ test_that("summarize block with grouping by multiple columns", {
     block_code = 'serve(new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"), by = c("cyl", "gear")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_group_multiple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_group_multiple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -136,7 +152,11 @@ test_that("summarize block with various aggregation functions", {
     block_code = 'serve(new_summarize_block(exprs = list(min_mpg = "min(mpg)", max_mpg = "max(mpg)", median_mpg = "median(mpg)", sd_mpg = "sd(mpg)", n = "n()"), by = "cyl"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_functions")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_functions"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -144,7 +164,8 @@ test_that("summarize block with various aggregation functions", {
 
   # Verify all summary columns are present
   expect_true(all(
-    c("cyl", "min_mpg", "max_mpg", "median_mpg", "sd_mpg", "n") %in% names(result_data)
+    c("cyl", "min_mpg", "max_mpg", "median_mpg", "sd_mpg", "n") %in%
+      names(result_data)
   ))
 
   # Verify calculations for cyl == 6
@@ -153,7 +174,11 @@ test_that("summarize block with various aggregation functions", {
 
   expect_equal(cyl_6_result$min_mpg, min(cyl_6_data$mpg), tolerance = 0.0001)
   expect_equal(cyl_6_result$max_mpg, max(cyl_6_data$mpg), tolerance = 0.0001)
-  expect_equal(cyl_6_result$median_mpg, median(cyl_6_data$mpg), tolerance = 0.0001)
+  expect_equal(
+    cyl_6_result$median_mpg,
+    median(cyl_6_data$mpg),
+    tolerance = 0.0001
+  )
   expect_equal(cyl_6_result$n, nrow(cyl_6_data))
 
   cleanup_test_app(app_dir, app)
@@ -176,7 +201,11 @@ test_that("summarize block with custom data and grouping", {
     block_code = 'serve(new_summarize_block(exprs = list(total = "sum(value)", avg = "mean(value)", count = "n()"), by = "category"), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_custom")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_custom"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -207,7 +236,11 @@ test_that("summarize block handles empty groups correctly", {
     block_code = 'serve(new_summarize_block(exprs = list(mean_mpg = "mean(mpg)", count = "n()"), by = "cyl"), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_empty_groups")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_empty_groups"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -233,7 +266,11 @@ test_that("summarize block with across() for multiple columns", {
     block_code = 'serve(new_summarize_block(exprs = setNames("across(where(is.numeric), mean)", ""), by = character(0)), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_across")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_across"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -245,7 +282,7 @@ test_that("summarize block with across() for multiple columns", {
   # Should have mean for all numeric columns (mpg, cyl, disp, hp, drat, wt, qsec, vs, am, gear, carb)
   # When using unnamed across(), columns get named with the function: mean_mpg, mean_cyl, etc.
   numeric_cols <- names(mtcars)[sapply(mtcars, is.numeric)]
-  expected_cols <- paste0("mpg_", "mean")  # Check at least one column exists
+  expected_cols <- paste0("mpg_", "mean") # Check at least one column exists
 
   # Just verify we got some columns back and they contain means
   expect_true(ncol(result_data) >= length(numeric_cols))
@@ -288,7 +325,11 @@ test_that("summarize block full restorability - all parameters (exprs + by)", {
     ), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "summarize_full_restore")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "summarize_full_restore"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -311,7 +352,11 @@ test_that("summarize block full restorability - all parameters (exprs + by)", {
   group_data <- mtcars[mtcars$cyl == 4 & mtcars$am == 1, ]
   if (nrow(group_data) > 0) {
     group_result <- result_data[result_data$cyl == 4 & result_data$am == 1, ]
-    expect_equal(group_result$mean_mpg, mean(group_data$mpg), tolerance = 0.0001)
+    expect_equal(
+      group_result$mean_mpg,
+      mean(group_data$mpg),
+      tolerance = 0.0001
+    )
     expect_equal(group_result$max_hp, max(group_data$hp), tolerance = 0.0001)
     expect_equal(group_result$count, nrow(group_data))
   }

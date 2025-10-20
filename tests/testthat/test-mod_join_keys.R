@@ -4,7 +4,10 @@ test_that("mod_join_keys_ui creates proper structure", {
   # Should be a tagList containing styles and a div
   expect_s3_class(ui, "shiny.tag.list")
   expect_true(grepl("join-keys-container", as.character(ui)))
-  expect_true(grepl("Join Keys", as.character(ui)) || grepl("Use natural join", as.character(ui)))
+  expect_true(
+    grepl("Join Keys", as.character(ui)) ||
+      grepl("Use natural join", as.character(ui))
+  )
 })
 
 test_that("mod_join_keys_ui with custom label", {

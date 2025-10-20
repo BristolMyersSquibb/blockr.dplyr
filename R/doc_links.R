@@ -37,7 +37,7 @@ doc_link <- function(
   link <- tags$a(
     href = url,
     target = "_blank",
-    rel = "noopener noreferrer",  # Security best practice
+    rel = "noopener noreferrer", # Security best practice
     class = paste("block-doc-link", class),
     span(text, class = "link-text"),
     " ",
@@ -62,7 +62,8 @@ doc_link <- function(
 #' @importFrom shiny tags HTML
 #' @keywords internal
 css_doc_links <- function() {
-  tags$style(HTML("
+  tags$style(HTML(
+    "
     .block-doc-link:hover {
       color: #0d6efd !important;
     }
@@ -89,5 +90,6 @@ css_doc_links <- function() {
       margin-bottom: 0.5rem;
       display: block;
     }
-  "))
+  "
+  ))
 }

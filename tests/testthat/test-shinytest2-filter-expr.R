@@ -7,7 +7,11 @@ test_that("filter expr block filters rows correctly with simple condition", {
     block_code = 'serve(new_filter_expr_block("mpg > 20"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_simple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_simple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -41,7 +45,11 @@ test_that("filter expr block handles multiple conditions with AND logic", {
     block_code = 'serve(new_filter_expr_block("mpg > 20 & cyl == 4"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_multiple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_multiple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -69,7 +77,11 @@ test_that("filter expr block with empty/TRUE condition returns all rows", {
     block_code = 'serve(new_filter_expr_block(), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_empty")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_empty"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -91,14 +103,20 @@ test_that("filter expr block handles complex conditions", {
     block_code = 'serve(new_filter_expr_block("(mpg > 25 | hp > 200) & cyl != 6"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_complex")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_complex"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
   result_data <- values$export$result
 
   # Calculate expected result
-  expected_data <- mtcars[(mtcars$mpg > 25 | mtcars$hp > 200) & mtcars$cyl != 6, ]
+  expected_data <- mtcars[
+    (mtcars$mpg > 25 | mtcars$hp > 200) & mtcars$cyl != 6,
+  ]
 
   # Verify row count
   expect_equal(nrow(result_data), nrow(expected_data))
@@ -119,7 +137,11 @@ test_that("filter expr block returns empty data frame when no rows match", {
     block_code = 'serve(new_filter_expr_block("mpg > 100"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_no_match")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_no_match"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -152,7 +174,11 @@ test_that("filter expr block with character column conditions", {
     block_code = 'serve(new_filter_expr_block("city == \'NYC\'"), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_character")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_character"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -180,10 +206,17 @@ test_that("filter expr block handles numeric comparisons correctly", {
 
   for (test_case in test_cases) {
     app_dir <- create_test_app(
-      block_code = sprintf('serve(new_filter_expr_block("%s"), data = list(data = mtcars))', test_case$condition)
+      block_code = sprintf(
+        'serve(new_filter_expr_block("%s"), data = list(data = mtcars))',
+        test_case$condition
+      )
     )
 
-    app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_numeric")
+    app <- shinytest2::AppDriver$new(
+      app_dir,
+      timeout = 30000,
+      name = "filter_numeric"
+    )
     app$wait_for_idle()
 
     values <- app$get_values(export = TRUE)
@@ -208,7 +241,11 @@ test_that("filter expr block with dplyr helper functions", {
     block_code = 'serve(new_filter_expr_block("dplyr::between(mpg, 15, 25)"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "filter_between")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "filter_between"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

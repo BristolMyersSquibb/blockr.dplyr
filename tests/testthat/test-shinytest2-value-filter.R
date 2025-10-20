@@ -7,7 +7,11 @@ test_that("value_filter block filters by selected values", {
     block_code = 'serve(new_value_filter_block(conditions = list(list(column = "cyl", values = c(4, 6), mode = "include"))), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "value_filter")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "value_filter"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

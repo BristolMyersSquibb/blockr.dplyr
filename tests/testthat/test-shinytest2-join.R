@@ -49,7 +49,11 @@ test_that("join block full restorability - different join types", {
     block_code = 'serve(new_join_block(type = "inner_join", by = list("id" = "id")), data = list(x = data_x, y = data_y))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir_inner, timeout = 30000, name = "join_inner")
+  app <- shinytest2::AppDriver$new(
+    app_dir_inner,
+    timeout = 30000,
+    name = "join_inner"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -89,7 +93,11 @@ test_that("join block full restorability - multiple join keys", {
     ), data = list(x = data_x, y = data_y))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "join_multi_key")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "join_multi_key"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -106,7 +114,10 @@ test_that("join block full restorability - multiple join keys", {
 
   # Verify the join worked correctly
   # id=1, group=A should match (has y_val)
-  expect_false(is.na(result_data[result_data$id == 1 & result_data$group == "A", "y_val"]))
+  expect_false(is.na(result_data[
+    result_data$id == 1 & result_data$group == "A",
+    "y_val"
+  ]))
 
   cleanup_test_app(app_dir, app)
 })
@@ -136,7 +147,11 @@ test_that("join block full restorability - different column names", {
     ), data = list(x = data_x, y = data_y))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "join_diff_names")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "join_diff_names"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

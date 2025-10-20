@@ -41,17 +41,32 @@ test_that("apply_filter_expr function handles errors", {
 
   # Test with valid condition
   expect_silent(
-    blockr.dplyr:::apply_filter_expr(mtcars, "mpg > 20", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(
+      mtcars,
+      "mpg > 20",
+      r_expr_validated,
+      r_string_validated
+    )
   )
 
   # Test with empty string
   expect_silent(
-    blockr.dplyr:::apply_filter_expr(mtcars, "", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(
+      mtcars,
+      "",
+      r_expr_validated,
+      r_string_validated
+    )
   )
 
   # Test with whitespace only
   expect_silent(
-    blockr.dplyr:::apply_filter_expr(mtcars, "  ", r_expr_validated, r_string_validated)
+    blockr.dplyr:::apply_filter_expr(
+      mtcars,
+      "  ",
+      r_expr_validated,
+      r_string_validated
+    )
   )
 })
 
@@ -125,7 +140,10 @@ test_that("filter expr block integration with real data", {
 test_that("filter expr block default behavior", {
   # Test default TRUE condition
   blk_default <- new_filter_expr_block()
-  expect_s3_class(blk_default, c("filter_expr_block", "transform_block", "block"))
+  expect_s3_class(
+    blk_default,
+    c("filter_expr_block", "transform_block", "block")
+  )
 
   # Test with initial condition
   blk_with_condition <- new_filter_expr_block("mpg > 20")

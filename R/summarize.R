@@ -174,7 +174,10 @@ new_summarize_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("summarize"),
-        css_advanced_toggle(paste0(id, "-advanced-options"), use_subgrid = TRUE),
+        css_advanced_toggle(
+          paste0(id, "-advanced-options"),
+          use_subgrid = TRUE
+        ),
         css_doc_links(),
 
         # Block-specific CSS

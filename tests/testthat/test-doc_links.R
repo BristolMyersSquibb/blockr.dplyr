@@ -99,7 +99,9 @@ test_that("css_doc_links contains valid CSS syntax", {
   expect_true(grepl("#[0-9a-fA-F]{6}", css_content))
 
   # Should have some size/spacing definitions
-  expect_true(grepl("[0-9.]+rem", css_content) || grepl("[0-9.]+px", css_content))
+  expect_true(
+    grepl("[0-9.]+rem", css_content) || grepl("[0-9.]+px", css_content)
+  )
 })
 
 test_that("doc_link works with real blockr documentation URLs", {

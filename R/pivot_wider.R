@@ -99,17 +99,25 @@ new_pivot_wider_block <- function(
           r_names_prefix <- reactiveVal(names_prefix)
 
           # Update reactive values when inputs change
-          observeEvent(input$values_fill, {
-            r_values_fill(input$values_fill)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$values_fill,
+            {
+              r_values_fill(input$values_fill)
+            },
+            ignoreNULL = FALSE
+          )
 
           observeEvent(input$names_sep, {
             r_names_sep(input$names_sep)
           })
 
-          observeEvent(input$names_prefix, {
-            r_names_prefix(input$names_prefix)
-          }, ignoreNULL = FALSE)
+          observeEvent(
+            input$names_prefix,
+            {
+              r_names_prefix(input$names_prefix)
+            },
+            ignoreNULL = FALSE
+          )
 
           list(
             expr = reactive({
@@ -117,7 +125,9 @@ new_pivot_wider_block <- function(
               values_from_cols <- r_values_from()
 
               # Require at least names_from and values_from to be specified
-              if (length(names_from_cols) == 0 || length(values_from_cols) == 0) {
+              if (
+                length(names_from_cols) == 0 || length(values_from_cols) == 0
+              ) {
                 # If essential parameters missing, return data unchanged
                 showNotification(
                   "Please select columns for 'names from' and 'values from'",
@@ -131,13 +141,21 @@ new_pivot_wider_block <- function(
               names_from_str <- if (length(names_from_cols) == 1) {
                 backtick_if_needed(names_from_cols)
               } else {
-                paste0("c(", paste(backtick_if_needed(names_from_cols), collapse = ", "), ")")
+                paste0(
+                  "c(",
+                  paste(backtick_if_needed(names_from_cols), collapse = ", "),
+                  ")"
+                )
               }
 
               values_from_str <- if (length(values_from_cols) == 1) {
                 backtick_if_needed(values_from_cols)
               } else {
-                paste0("c(", paste(backtick_if_needed(values_from_cols), collapse = ", "), ")")
+                paste0(
+                  "c(",
+                  paste(backtick_if_needed(values_from_cols), collapse = ", "),
+                  ")"
+                )
               }
 
               # Build the pivot_wider expression
@@ -148,7 +166,11 @@ new_pivot_wider_block <- function(
               # Add optional parameters
               id_cols_selected <- r_id_cols()
               if (length(id_cols_selected) > 0) {
-                id_cols_str <- paste0("c(", paste(backtick_if_needed(id_cols_selected), collapse = ", "), ")")
+                id_cols_str <- paste0(
+                  "c(",
+                  paste(backtick_if_needed(id_cols_selected), collapse = ", "),
+                  ")"
+                )
                 args$id_cols <- id_cols_str
               }
 

@@ -6,7 +6,11 @@
 #' @param data_code R code to create the data as a character string (optional)
 #' @param data_name Name of the data variable (default: "mtcars")
 #' @return Path to the temporary app directory
-create_test_app <- function(block_code, data_code = NULL, data_name = "mtcars") {
+create_test_app <- function(
+  block_code,
+  data_code = NULL,
+  data_name = "mtcars"
+) {
   app_dir <- tempfile("blockr_test_")
   dir.create(app_dir)
 
@@ -15,19 +19,23 @@ create_test_app <- function(block_code, data_code = NULL, data_name = "mtcars") 
   find_pkg_root <- function() {
     # Try testthat::test_path() first (available during test execution)
     if (requireNamespace("testthat", quietly = TRUE)) {
-      tryCatch({
-        test_dir <- testthat::test_path()
-        # Go up from tests/testthat to package root
-        pkg_root <- normalizePath(file.path(test_dir, "..", ".."))
-        if (file.exists(file.path(pkg_root, "DESCRIPTION"))) {
-          return(pkg_root)
-        }
-      }, error = function(e) {})
+      tryCatch(
+        {
+          test_dir <- testthat::test_path()
+          # Go up from tests/testthat to package root
+          pkg_root <- normalizePath(file.path(test_dir, "..", ".."))
+          if (file.exists(file.path(pkg_root, "DESCRIPTION"))) {
+            return(pkg_root)
+          }
+        },
+        error = function(e) {}
+      )
     }
 
     # Fallback: search upward from current directory
     search_dir <- getwd()
-    for (i in 1:5) {  # Search up to 5 levels
+    for (i in 1:5) {
+      # Search up to 5 levels
       if (file.exists(file.path(search_dir, "DESCRIPTION"))) {
         return(normalizePath(search_dir))
       }

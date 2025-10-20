@@ -64,13 +64,16 @@ validate_block_screenshot <- function(
   # Set NOT_CRAN environment variable for shinytest2
   old_not_cran <- Sys.getenv("NOT_CRAN", unset = NA)
   Sys.setenv(NOT_CRAN = "true")
-  on.exit({
-    if (is.na(old_not_cran)) {
-      Sys.unsetenv("NOT_CRAN")
-    } else {
-      Sys.setenv(NOT_CRAN = old_not_cran)
-    }
-  }, add = TRUE)
+  on.exit(
+    {
+      if (is.na(old_not_cran)) {
+        Sys.unsetenv("NOT_CRAN")
+      } else {
+        Sys.setenv(NOT_CRAN = old_not_cran)
+      }
+    },
+    add = TRUE
+  )
 
   # Check dependencies
   if (!requireNamespace("shinytest2", quietly = TRUE)) {
@@ -193,34 +196,40 @@ blockr.core::serve(
 
       # Try to expand advanced options if requested
       if (expand_advanced) {
-        tryCatch({
-          # Try to find and click the advanced toggle
-          # The selector may vary, try common patterns
-          advanced_selectors <- c(
-            ".advanced-toggle",
-            "[id$='advanced-toggle']",
-            "[onclick*='advanced']"
-          )
+        tryCatch(
+          {
+            # Try to find and click the advanced toggle
+            # The selector may vary, try common patterns
+            advanced_selectors <- c(
+              ".advanced-toggle",
+              "[id$='advanced-toggle']",
+              "[onclick*='advanced']"
+            )
 
-          for (selector in advanced_selectors) {
-            tryCatch({
-              app$run_js(sprintf(
-                "document.querySelector('%s')?.click();",
-                selector
-              ))
-              # Wait for animation/expansion
-              Sys.sleep(0.5)
-              break
-            }, error = function(e) {
-              # Try next selector
-            })
+            for (selector in advanced_selectors) {
+              tryCatch(
+                {
+                  app$run_js(sprintf(
+                    "document.querySelector('%s')?.click();",
+                    selector
+                  ))
+                  # Wait for animation/expansion
+                  Sys.sleep(0.5)
+                  break
+                },
+                error = function(e) {
+                  # Try next selector
+                }
+              )
+            }
+          },
+          error = function(e) {
+            # Block doesn't have advanced options - that's fine
+            if (verbose) {
+              cat("  (No advanced options found - continuing)\n")
+            }
           }
-        }, error = function(e) {
-          # Block doesn't have advanced options - that's fine
-          if (verbose) {
-            cat("  (No advanced options found - continuing)\n")
-          }
-        })
+        )
       }
 
       # Remove existing file if it exists (to allow overwriting)
