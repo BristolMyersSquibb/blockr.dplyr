@@ -37,7 +37,7 @@ The select block provides a sortable multi-select interface where columns can be
 \strong{Include mode (exclude = FALSE, default):}
 \itemize{
 \item Selected columns are included in output
-\item Empty selection = select nothing (\code{select(data, -everything())})
+\item Empty selection = select all (\code{select(data, dplyr::everything())})
 }
 
 \strong{Exclude mode (exclude = TRUE):}
