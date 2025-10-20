@@ -226,7 +226,6 @@ new_pivot_wider_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options"), use_subgrid = TRUE),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(

@@ -86,7 +86,6 @@ new_rename_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("rename"),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(

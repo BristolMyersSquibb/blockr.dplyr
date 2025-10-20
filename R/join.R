@@ -137,7 +137,6 @@ new_join_block <- function(
         css_responsive_grid(),
         css_single_column("join"),
         css_inline_checkbox(),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(

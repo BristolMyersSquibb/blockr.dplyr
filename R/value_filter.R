@@ -103,7 +103,6 @@ new_value_filter_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("value-filter"),
-        css_doc_links(),
 
         div(
           class = "block-container value-filter-block-container",

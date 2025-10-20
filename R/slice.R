@@ -378,7 +378,6 @@ new_slice_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_inline_checkbox(),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(
