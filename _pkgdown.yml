@@ -38,8 +38,6 @@ reference:
   contents:
   - mod_by_selector_server
   - mod_by_selector_ui
-  - mod_flexpr_server
-  - mod_flexpr_ui
   - mod_join_keys_server
   - mod_join_keys_ui
   - multi_arrange_row_ui
