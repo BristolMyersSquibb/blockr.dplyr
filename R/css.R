@@ -316,3 +316,40 @@ css_inline_checkbox <- function() {
     "
   ))
 }
+
+#' CSS for documentation helper links
+#'
+#' Provides standardized styling for inline documentation links,
+#' typically used to link to expression helpers or block documentation.
+#'
+#' Defines the following class:
+#' - `.expression-help-link` - Styled documentation link with margins
+#'
+#' Used by: mutate, filter_expr, summarize
+#'
+#' @return HTML style tag with documentation link CSS
+#' @noRd
+#' @examples
+#' \dontrun{
+#' # In a block's UI function:
+#' tagList(
+#'   css_responsive_grid(),
+#'   css_doc_links(),
+#'   # ... HTML with documentation links ...
+#'   div(
+#'     class = "expression-help-link",
+#'     tags$a(href = "...", target = "_blank", "Documentation \u2197")
+#'   )
+#' )
+#' }
+css_doc_links <- function() {
+  tags$style(HTML(
+    "
+    .expression-help-link {
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    "
+  ))
+}

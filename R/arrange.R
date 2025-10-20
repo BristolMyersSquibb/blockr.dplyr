@@ -84,7 +84,6 @@ new_arrange_block <- function(columns = character(), ...) {
         # Add CSS
         css_responsive_grid(),
         css_single_column("arrange"),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(

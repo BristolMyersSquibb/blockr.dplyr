@@ -5,7 +5,14 @@ test_that("join block constructor with defaults", {
 
 test_that("join block constructor with type parameter", {
   # Test all join types
-  join_types <- c("left_join", "inner_join", "right_join", "full_join", "semi_join", "anti_join")
+  join_types <- c(
+    "left_join",
+    "inner_join",
+    "right_join",
+    "full_join",
+    "semi_join",
+    "anti_join"
+  )
 
   for (jtype in join_types) {
     blk <- new_join_block(type = jtype)
@@ -298,7 +305,11 @@ test_that("join block with no by parameter uses UI interaction", {
 
   # When by is not provided in constructor, it's determined via UI
   x_data <- data.frame(id = 1:3, name = c("A", "B", "C"), x_val = c(10, 20, 30))
-  y_data <- data.frame(id = 1:3, name = c("A", "B", "C"), y_val = c(100, 200, 300))
+  y_data <- data.frame(
+    id = 1:3,
+    name = c("A", "B", "C"),
+    y_val = c(100, 200, 300)
+  )
 
   blk <- new_join_block(type = "left_join")
 

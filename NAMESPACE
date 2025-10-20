@@ -2,8 +2,6 @@
 
 export(mod_by_selector_server)
 export(mod_by_selector_ui)
-export(mod_flexpr_server)
-export(mod_flexpr_ui)
 export(mod_join_keys_server)
 export(mod_join_keys_ui)
 export(new_arrange_block)

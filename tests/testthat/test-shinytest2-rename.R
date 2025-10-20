@@ -7,7 +7,11 @@ test_that("rename block renames columns", {
     block_code = 'serve(new_rename_block(list(miles_per_gallon = "mpg")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "rename_column")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "rename_column"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

@@ -7,7 +7,11 @@ test_that("arrange block sorts data correctly", {
     block_code = 'serve(new_arrange_block(columns = list(list(column = "mpg", direction = "asc"))), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "arrange_asc")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "arrange_asc"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -32,7 +36,11 @@ test_that("arrange block sorts descending", {
     block_code = 'serve(new_arrange_block(columns = list(list(column = "hp", direction = "desc"))), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "arrange_desc")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "arrange_desc"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -58,7 +66,11 @@ test_that("arrange block full restorability - multiple columns with mixed direct
     )), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "arrange_multi")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "arrange_multi"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

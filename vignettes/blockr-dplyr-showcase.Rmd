@@ -37,9 +37,9 @@ knitr::include_graphics("../man/figures/select-block.png")
 
 ---
 
-## Filter Block
+## Expression Filter Block
 
-The filter block keeps only rows that meet specific conditions. Enter logical expressions using column names and comparison operators. This block is designed for users who want to write filter conditions as expressions.
+The expression filter block keeps only rows that meet specific conditions. Enter logical expressions using column names and comparison operators. This block is designed for users who want to write filter conditions as expressions.
 
 Supported operators include `>`, `<`, `==`, `!=`, `>=`, `<=` for comparisons, and `%in%` for checking membership in a set of values. Combine multiple conditions using `&` (AND) to require all conditions to be true, or `|` (OR) to require at least one condition to be true. The expression editor provides syntax highlighting and validates your expressions. Examples: `mpg > 20`, `cyl == 4 | cyl == 6`, `hp > 100 & wt < 3`.
 
@@ -59,7 +59,7 @@ For each filter condition, select a column from the dropdown. The interface disp
 
 Add multiple conditions using the "+" button. Each condition can be combined with the previous one using AND (all conditions must be true) or OR (at least one condition must be true) logic. The "preserve order" option maintains the order of selected values in the output.
 
-For more complex filter conditions using comparisons or calculations, use the filter block instead. The filter block allows you to write expressions like `mpg > 20` or `hp / wt > 50` which cannot be expressed through value selection.
+For more complex filter conditions using comparisons or calculations, use the expression filter block instead. The expression filter block allows you to write expressions like `mpg > 20` or `hp / wt > 50` which cannot be expressed through value selection.
 
 ```{r value-filter-block, out.width="100%", fig.cap="Value filter block interface"}
 knitr::include_graphics("../man/figures/value-filter-block.png")

@@ -23,7 +23,7 @@
 #'
 #' **Include mode (exclude = FALSE, default):**
 #' - Selected columns are included in output
-#' - Empty selection = select nothing (`select(data, -everything())`)
+#' - Empty selection = select all (`select(data, dplyr::everything())`)
 #'
 #' **Exclude mode (exclude = TRUE):**
 #' - Selected columns are excluded from output using minus syntax
@@ -202,7 +202,6 @@ new_select_block <- function(
         css_responsive_grid(),
         css_single_column("select"),
         css_inline_checkbox(),
-        css_doc_links(),
 
         # Block-specific CSS
         tags$style(HTML(

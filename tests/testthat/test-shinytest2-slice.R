@@ -7,7 +7,11 @@ test_that("slice block selects first rows (head)", {
     block_code = 'serve(new_slice_block(type = "head", n = 5), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "slice_head")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "slice_head"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -37,7 +41,11 @@ test_that("slice block full restorability - tail with n parameter", {
     block_code = 'serve(new_slice_block(type = "tail", n = 3), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "slice_tail")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "slice_tail"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -45,7 +53,7 @@ test_that("slice block full restorability - tail with n parameter", {
 
   # Verify we got last 3 rows
   expect_equal(nrow(result_data), 3)
-  expect_equal(result_data, mtcars[(nrow(mtcars)-2):nrow(mtcars), ])
+  expect_equal(result_data, mtcars[(nrow(mtcars) - 2):nrow(mtcars), ])
 
   cleanup_test_app(app_dir, app)
 })
@@ -61,7 +69,11 @@ test_that("slice block full restorability - with grouping (by parameter)", {
     block_code = 'serve(new_slice_block(type = "head", n = 2, by = "cyl"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "slice_grouped")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "slice_grouped"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -89,7 +101,11 @@ test_that("slice block full restorability - custom rows parameter", {
     block_code = 'serve(new_slice_block(type = "custom", rows = "c(1, 5, 10, 15)"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "slice_custom")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "slice_custom"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

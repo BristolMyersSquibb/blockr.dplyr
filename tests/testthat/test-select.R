@@ -140,7 +140,7 @@ test_that("select block expression generation - empty selection", {
     b = c("x", "y", "z")
   ))
 
-  # Empty selection in include mode = select nothing
+  # Empty selection in include mode = select all
   blk_include <- new_select_block(columns = character(0), exclude = FALSE)
 
   shiny::testServer(

@@ -18,7 +18,11 @@ test_that("pivot_wider block basic functionality", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_basic")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_basic"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -70,7 +74,11 @@ test_that("pivot_wider block without explicit id_cols", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_auto_id")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_auto_id"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -108,7 +116,11 @@ test_that("pivot_wider block with names_prefix parameter", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_prefix")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_prefix"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -144,7 +156,11 @@ test_that("pivot_wider block with values_fill parameter", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_fill")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_fill"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -184,7 +200,11 @@ test_that("pivot_wider block with ChickWeight (real-world example)", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_chick")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_chick"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -227,7 +247,11 @@ test_that("pivot_wider block with names_sep parameter", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_sep")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_sep"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -273,7 +297,11 @@ test_that("pivot_wider block full restorability - key parameters", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_wider_full_restore")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_wider_full_restore"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -301,8 +329,14 @@ test_that("pivot_wider block full restorability - key parameters", {
   expect_setequal(result_data$patient, c("P1", "P2", "P3"))
 
   # Verify values are correct
-  expect_equal(result_data[result_data$patient == "P1", "visit_baseline"][[1]], 100)
-  expect_equal(result_data[result_data$patient == "P1", "visit_followup"][[1]], 95)
+  expect_equal(
+    result_data[result_data$patient == "P1", "visit_baseline"][[1]],
+    100
+  )
+  expect_equal(
+    result_data[result_data$patient == "P1", "visit_followup"][[1]],
+    95
+  )
 
   cleanup_test_app(app_dir, app)
 })

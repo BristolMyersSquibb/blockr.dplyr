@@ -7,7 +7,11 @@ test_that("mutate block adds new column", {
     block_code = 'serve(new_mutate_block(exprs = list(mpg_squared = "mpg * mpg")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "mutate_add")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "mutate_add"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -37,7 +41,11 @@ test_that("mutate block with grouping (single group)", {
     block_code = 'serve(new_mutate_block(exprs = list(mean_mpg = "mean(mpg)"), by = "cyl"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "mutate_grouped")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "mutate_grouped"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -72,7 +80,11 @@ test_that("mutate block with multiple expressions and multiple grouping columns"
     ), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "mutate_multi_group")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "mutate_multi_group"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -86,7 +98,9 @@ test_that("mutate block with multiple expressions and multiple grouping columns"
   # Verify grouping worked for avg_mpg - should be same for all rows with same cyl+am
   for (cyl_val in unique(result_data$cyl)) {
     for (am_val in unique(result_data$am)) {
-      group_rows <- result_data[result_data$cyl == cyl_val & result_data$am == am_val, ]
+      group_rows <- result_data[
+        result_data$cyl == cyl_val & result_data$am == am_val,
+      ]
       if (nrow(group_rows) > 0) {
         # avg_mpg should be constant within each cyl+am group
         expect_true(all(group_rows$avg_mpg == group_rows$avg_mpg[1]))

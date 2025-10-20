@@ -20,7 +20,11 @@ test_that("pivot_longer block basic functionality", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_longer_basic")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_longer_basic"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -43,7 +47,9 @@ test_that("pivot_longer block basic functionality", {
   expect_false("measurement_c" %in% names(result_data))
 
   # Verify metric column contains the original column names
-  expect_true(all(c("measurement_a", "measurement_b", "measurement_c") %in% result_data$metric))
+  expect_true(all(
+    c("measurement_a", "measurement_b", "measurement_c") %in% result_data$metric
+  ))
 
   cleanup_test_app(app_dir, app)
 })
@@ -71,7 +77,11 @@ test_that("pivot_longer block with names_prefix parameter", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_longer_prefix")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_longer_prefix"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -110,7 +120,11 @@ test_that("pivot_longer block with values_drop_na parameter", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_longer_dropna")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_longer_dropna"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -138,7 +152,11 @@ test_that("pivot_longer block with mtcars (real-world example)", {
     ), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_longer_mtcars")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_longer_mtcars"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -148,7 +166,10 @@ test_that("pivot_longer block with mtcars (real-world example)", {
   expect_equal(nrow(result_data), 96)
 
   # Verify correct columns
-  expect_true(all(c("cyl", "disp", "drat", "qsec", "vs", "am", "gear", "carb") %in% names(result_data)))
+  expect_true(all(
+    c("cyl", "disp", "drat", "qsec", "vs", "am", "gear", "carb") %in%
+      names(result_data)
+  ))
   expect_true("metric" %in% names(result_data))
   expect_true("value" %in% names(result_data))
 
@@ -188,7 +209,11 @@ test_that("pivot_longer block full restorability - all parameters", {
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "pivot_longer_full_restore")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "pivot_longer_full_restore"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)

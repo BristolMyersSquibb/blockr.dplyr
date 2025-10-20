@@ -80,7 +80,6 @@ new_bind_rows_block <- function(id_name = "", ...) {
         # Add CSS
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options")),
-        css_doc_links(),
 
         # Block section with help text
         div(
@@ -185,7 +184,6 @@ new_bind_cols_block <- function(...) {
       tagList(
         # Add responsive CSS
         css_responsive_grid(),
-        css_doc_links(),
 
         # Block section with help text
         div(

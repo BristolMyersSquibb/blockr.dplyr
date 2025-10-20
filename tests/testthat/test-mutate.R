@@ -156,7 +156,9 @@ test_that("mutate block with case_when function", {
 
   expect_equal(ncol(result), 3)
   expect_true("efficiency" %in% names(result))
-  expect_true(all(result$efficiency %in% c("excellent", "good", "fair", "poor")))
+  expect_true(all(
+    result$efficiency %in% c("excellent", "good", "fair", "poor")
+  ))
 })
 
 test_that("mutate block overwriting existing columns", {
@@ -164,8 +166,8 @@ test_that("mutate block overwriting existing columns", {
 
   # Test mutating an existing column (should replace it)
   expr <- parse_mutate(c(
-    mpg = "mpg * 1.5",  # Overwrite mpg column
-    hp = "hp + 10"      # Overwrite hp column
+    mpg = "mpg * 1.5", # Overwrite mpg column
+    hp = "hp + 10" # Overwrite hp column
   ))
 
   expect_type(expr, "language")
@@ -197,7 +199,7 @@ test_that("mutate block with NA handling", {
   expr <- parse_mutate(c(
     x_filled = "ifelse(is.na(x), 0, x)",
     has_na = "is.na(x) | is.na(y)",
-    sum_xy = "x + y"  # Will produce NA where either is NA
+    sum_xy = "x + y" # Will produce NA where either is NA
   ))
 
   expect_type(expr, "language")
@@ -209,9 +211,9 @@ test_that("mutate block with NA handling", {
   expect_true("has_na" %in% names(result))
 
   # Verify NA handling
-  expect_equal(result$x_filled[3], 0)  # NA was replaced with 0
-  expect_true(result$has_na[2])  # Row 2 has NA in y
-  expect_true(is.na(result$sum_xy[3]))  # NA + number = NA
+  expect_equal(result$x_filled[3], 0) # NA was replaced with 0
+  expect_true(result$has_na[2]) # Row 2 has NA in y
+  expect_true(is.na(result$sum_xy[3])) # NA + number = NA
 })
 
 test_that("mutate block with grouped calculations", {
@@ -250,8 +252,8 @@ test_that("mutate block with sequential column dependencies", {
   # Test creating columns that depend on previously created columns
   expr <- parse_mutate(c(
     mpg2 = "mpg * 2",
-    mpg4 = "mpg2 * 2",  # Uses mpg2 created in same mutate
-    mpg8 = "mpg4 * 2"   # Uses mpg4 created in same mutate
+    mpg4 = "mpg2 * 2", # Uses mpg2 created in same mutate
+    mpg8 = "mpg4 * 2" # Uses mpg4 created in same mutate
   ))
 
   expect_type(expr, "language")
@@ -290,8 +292,7 @@ test_that("mutate block restorability - single expression", {
       expr_result <- result$expr()
       expect_true(inherits(expr_result, "call"))
       # Verify it is a call
-      
-      
+
       expr_text <- deparse(expr_result)
       expect_true(grepl("mpg2", expr_text))
       expect_true(grepl("mpg \\* 2", expr_text))
@@ -304,10 +305,12 @@ test_that("mutate block restorability - multiple expressions", {
   skip_if_not_installed("dplyr")
 
   # Create block with multiple expressions
-  blk <- new_mutate_block(exprs = list(
-    mpg2 = "mpg * 2",
-    hp_per_cyl = "hp / cyl"
-  ))
+  blk <- new_mutate_block(
+    exprs = list(
+      mpg2 = "mpg * 2",
+      hp_per_cyl = "hp / cyl"
+    )
+  )
 
   shiny::testServer(
     blk$expr_server,
@@ -318,8 +321,6 @@ test_that("mutate block restorability - multiple expressions", {
       result <- session$returned
       expr_result <- result$expr()
       expect_true(inherits(expr_result, "call"))
-      
-      
 
       expr_text <- paste(deparse(expr_result), collapse = " ")
       expect_true(grepl("mpg2", expr_text))

@@ -8,7 +8,11 @@ test_that("select block selects single column correctly", {
   )
 
   # Launch app
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_single")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_single"
+  )
 
   # Wait for app to be ready
   app$wait_for_idle()
@@ -42,7 +46,11 @@ test_that("select block selects multiple columns in order", {
     block_code = 'serve(new_select_block(columns = c("mpg", "cyl", "hp")), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_multiple")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_multiple"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -67,7 +75,11 @@ test_that("select block exclude mode works correctly", {
     block_code = 'serve(new_select_block(columns = c("gear", "carb"), exclude = TRUE), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_exclude")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_exclude"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -102,7 +114,11 @@ test_that("select block with distinct returns unique rows", {
     block_code = 'serve(new_select_block(columns = c("cyl", "gear"), distinct = TRUE), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_distinct")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_distinct"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -130,7 +146,11 @@ test_that("select block with empty selection selects all columns", {
     block_code = 'serve(new_select_block(columns = character(0)), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_empty")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_empty"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
@@ -155,7 +175,11 @@ test_that("select block UI interaction changes output", {
     block_code = 'serve(new_select_block(columns = "mpg"), data = list(data = mtcars))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_interaction")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_interaction"
+  )
   app$wait_for_idle()
 
   # Initial state - only mpg
@@ -201,7 +225,11 @@ test_that("select block with distinct checkbox toggle", {
     block_code = 'serve(new_select_block(columns = "x", distinct = FALSE), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_distinct_toggle")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_distinct_toggle"
+  )
   app$wait_for_idle()
 
   # Initial state - distinct = FALSE, should have 5 rows
@@ -251,7 +279,11 @@ test_that("select block full restorability - all parameters (columns + exclude +
     ), data = list(data = test_data))'
   )
 
-  app <- shinytest2::AppDriver$new(app_dir, timeout = 30000, name = "select_full_restore")
+  app <- shinytest2::AppDriver$new(
+    app_dir,
+    timeout = 30000,
+    name = "select_full_restore"
+  )
   app$wait_for_idle()
 
   values <- app$get_values(export = TRUE)
