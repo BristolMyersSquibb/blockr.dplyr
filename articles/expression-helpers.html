@@ -68,7 +68,7 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>Three blocks accept expressions: <strong>filter</strong>,
+<p>Three blocks accept expressions: <strong>expression filter</strong>,
 <strong>mutate</strong>, and <strong>summarize</strong>.</p>
 <p>Helper functions make expressions more powerful by applying
 operations to multiple columns at once. This vignette covers:</p>
@@ -87,7 +87,8 @@ window functions</a>.</p>
 <div class="section level2">
 <h2 id="expression-blocks">Expression Blocks<a class="anchor" aria-label="anchor" href="#expression-blocks"></a>
 </h2>
-<p><strong>Filter block</strong>: Logical expressions to keep rows</p>
+<p><strong>Expression filter block</strong>: Logical expressions to keep
+rows</p>
 <ul>
 <li>Expressions return TRUE/FALSE for each row</li>
 <li>Use comparison operators: <code>&gt;</code>, <code>&lt;</code>,
@@ -426,7 +427,8 @@ columns</li>
 <div class="section level2">
 <h2 id="filter-helpers-if_any-and-if_all">Filter Helpers: if_any() and if_all()<a class="anchor" aria-label="anchor" href="#filter-helpers-if_any-and-if_all"></a>
 </h2>
-<p>Check conditions across multiple columns in the filter block.</p>
+<p>Check conditions across multiple columns in the expression filter
+block.</p>
 <p><strong>if_any()</strong>: TRUE when condition is true for <strong>at
 least one</strong> column</p>
 <pre><code><span><span class="co"># Rows with any NA</span></span>
@@ -479,7 +481,7 @@ least one</strong> column</p>
 <span><span class="fu">across</span><span class="op">(</span><span class="fu">everything</span><span class="op">(</span><span class="op">)</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="filter-block">Filter Block<a class="anchor" aria-label="anchor" href="#filter-block"></a>
+<h3 id="expression-filter-block">Expression Filter Block<a class="anchor" aria-label="anchor" href="#expression-filter-block"></a>
 </h3>
 <pre><code><span><span class="co"># Complete rows only</span></span>
 <span><span class="fu">if_all</span><span class="op">(</span><span class="fu">everything</span><span class="op">(</span><span class="op">)</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>

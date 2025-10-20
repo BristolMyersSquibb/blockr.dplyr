@@ -9,20 +9,14 @@
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/index.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/blockr.dplyr-package.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/css-utilities.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/css_doc_links.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/doc_link.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/index.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/keep.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/map.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/map_chr.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_by_selector_server.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_by_selector_ui.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_flexpr_server.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_flexpr_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_join_keys_server.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_join_keys_ui.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_kvexpr_server.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_kvexpr_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_multi_arrange_server.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_multi_arrange_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_multi_filter_server.html</loc></url>
@@ -33,8 +27,6 @@
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_multi_rename_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_value_filter_server.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_value_filter_ui.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_vexpr_server.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/mod_vexpr_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/multi_arrange_row_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/multi_filter_condition_ui.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/multi_kvexpr_row_ui.html</loc></url>
@@ -55,14 +47,11 @@
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/null-coalescing.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/parse_value_filter.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_ace_example.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_flexpr_example.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_kvexpr_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_multi_arrange_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_multi_filter_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_multi_kvexpr_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_multi_rename_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_value_filter_example.html</loc></url>
-<url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/run_vexpr_example.html</loc></url>
 <url><loc>https://bristolmyerssquibb.github.io/blockr.dplyr/reference/value_filter_condition_ui.html</loc></url>
 </urlset>
 

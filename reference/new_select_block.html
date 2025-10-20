@@ -85,7 +85,7 @@ If FALSE (default), returns all rows. This replaces the old <code>new_distinct_b
 <li><p>Reordered by dragging (order is preserved in output)</p></li>
 <li><p>Removed individually using the × button</p></li>
 </ul><p><strong>Include mode (exclude = FALSE, default):</strong></p><ul><li><p>Selected columns are included in output</p></li>
-<li><p>Empty selection = select nothing (<code>select(data, -everything())</code>)</p></li>
+<li><p>Empty selection = select all (<code>select(data, dplyr::everything())</code>)</p></li>
 </ul><p><strong>Exclude mode (exclude = TRUE):</strong></p><ul><li><p>Selected columns are excluded from output using minus syntax</p></li>
 <li><p>Empty selection = select all (<code>select(data)</code>)</p></li>
 <li><p>Efficient for large datasets when you want to remove just a few columns</p></li>
