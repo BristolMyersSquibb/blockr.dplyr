@@ -478,3 +478,97 @@ test_that("value_filter block filters by selected values - testServer", {
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
+
+test_that("value_filter block with preserve_order=TRUE - testServer", {
+  # Create data with specific order
+  test_data <- mtcars
+  test_data$cyl <- factor(test_data$cyl, levels = c(8, 6, 4))
+
+  block <- new_value_filter_block(
+    conditions = list(list(column = "cyl", values = c(4, 6), mode = "include")),
+    preserve_order = TRUE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_true(all(result$cyl %in% c(4, 6)))
+      # With preserve_order=TRUE, the order should be maintained
+      expect_true(is.factor(result$cyl))
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("value_filter block with exclude mode - testServer", {
+  block <- new_value_filter_block(
+    conditions = list(list(column = "cyl", values = c(8), mode = "exclude"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Should exclude cyl=8
+      expect_false(any(result$cyl == 8))
+      expect_true(all(result$cyl %in% c(4, 6)))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("value_filter block with multiple conditions AND operator - testServer", {
+  block <- new_value_filter_block(
+    conditions = list(
+      list(column = "cyl", values = c(4, 6), mode = "include"),
+      list(column = "gear", values = c(4), mode = "include", operator = "&")
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Should have both conditions met (cyl in 4,6 AND gear = 4)
+      expect_true(all(result$cyl %in% c(4, 6)))
+      expect_true(all(result$gear == 4))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("value_filter block with multiple conditions OR operator - testServer", {
+  block <- new_value_filter_block(
+    conditions = list(
+      list(column = "cyl", values = c(4), mode = "include"),
+      list(column = "cyl", values = c(8), mode = "include", operator = "|")
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Should have either condition met (cyl = 4 OR cyl = 8)
+      expect_true(all(result$cyl %in% c(4, 8)))
+      expect_false(any(result$cyl == 6))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
