@@ -118,16 +118,11 @@ new_pivot_wider_block <- function(
               names_from_cols <- r_names_from()
               values_from_cols <- r_values_from()
 
-              # Require at least names_from and values_from to be specified
+              # If parameters not yet configured, return data unchanged (pass-through)
               if (
                 length(names_from_cols) == 0 || length(values_from_cols) == 0
               ) {
-                # If essential parameters missing, return data unchanged
-                showNotification(
-                  "Please select columns for 'names from' and 'values from'",
-                  type = "warning",
-                  duration = 3
-                )
+                # Empty parameters are a valid initial state, not an error
                 return(parse(text = "data")[[1]])
               }
 
@@ -367,7 +362,7 @@ new_pivot_wider_block <- function(
       )
     },
     class = "pivot_wider_block",
-    allow_empty_state = c("id_cols", "values_fill", "names_prefix"),
+    allow_empty_state = c("names_from", "values_from", "id_cols", "values_fill", "names_prefix"),
     ...
   )
 }

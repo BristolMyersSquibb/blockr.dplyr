@@ -41,12 +41,13 @@ mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
     r_by_selection <- reactiveVal(initial_value)
 
     # Update reactive value when selection changes
+    # Note: ignoreNULL = FALSE removed to prevent overwriting initial values
+    # in testServer context where inputs may not be initialized
     observeEvent(
       input$by_columns,
       {
         r_by_selection(input$by_columns %||% character())
-      },
-      ignoreNULL = FALSE
+      }
     )
 
     # Update choices when data changes, preserving selection
