@@ -133,20 +133,21 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         class = "form-group",
         checkboxInput(
           ns("use_natural_join"),
-          label = "Use natural join (match columns with same names)",
+          label = "Use natural join (automatically join on all common columns)",
           value = FALSE
         )
       ),
 
-      # Natural join column selector
+      # Natural join info - show which columns will be used
       conditionalPanel(
         condition = sprintf("input['%s']", ns("use_natural_join")),
-        selectInput(
-          ns("natural_keys"),
-          label = "Select columns to join on",
-          choices = character(),
-          selected = character(),
-          multiple = TRUE
+        div(
+          class = "block-help-text",
+          style = "margin-top: 8px;",
+          p(
+            "Joining on: ",
+            uiOutput(ns("natural_keys_display"), inline = TRUE)
+          )
         )
       ),
 
@@ -247,23 +248,21 @@ mod_join_keys_server <- function(
       if (length(x_cols) > 0 && length(y_cols) > 0) {
         r_x_cols(x_cols)
         r_y_cols(y_cols)
+      }
+    })
 
-        # Update natural join choices
-        common_cols <- intersect(x_cols, y_cols)
-        updateSelectInput(
-          session,
-          "natural_keys",
-          choices = common_cols,
-          selected = if (r_natural_join()) {
-            if (is.character(initial_keys)) {
-              initial_keys
-            } else {
-              common_cols
-            }
-          } else {
-            character()
-          }
-        )
+    # Render natural join column display
+    output$natural_keys_display <- renderUI({
+      req(get_x_cols, get_y_cols)
+      x_cols <- get_x_cols()
+      y_cols <- get_y_cols()
+
+      common_cols <- intersect(x_cols, y_cols)
+
+      if (length(common_cols) == 0) {
+        tags$em("No common columns found between datasets")
+      } else {
+        tags$span(paste(common_cols, collapse = ", "))
       }
     })
 
@@ -374,8 +373,9 @@ mod_join_keys_server <- function(
     # Return reactive join specification
     reactive({
       if (r_natural_join()) {
-        # Natural join - return character vector
-        input$natural_keys %||% character()
+        # Natural join - return ALL common columns automatically
+        req(get_x_cols, get_y_cols)
+        intersect(get_x_cols(), get_y_cols())
       } else {
         # Custom join - return named list
         # Two-phase pattern: use stored values if inputs don't exist yet
