@@ -80,6 +80,8 @@ new_pivot_longer_block <- function(
           r_names_prefix <- reactiveVal(names_prefix)
 
           # Update reactive values when inputs change
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
           observeEvent(input$names_to, {
             r_names_to(input$names_to)
           })
@@ -88,21 +90,13 @@ new_pivot_longer_block <- function(
             r_values_to(input$values_to)
           })
 
-          observeEvent(
-            input$values_drop_na,
-            {
-              r_values_drop_na(input$values_drop_na)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$values_drop_na, {
+            r_values_drop_na(input$values_drop_na)
+          })
 
-          observeEvent(
-            input$names_prefix,
-            {
-              r_names_prefix(input$names_prefix)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$names_prefix, {
+            r_names_prefix(input$names_prefix)
+          })
 
           list(
             expr = reactive({

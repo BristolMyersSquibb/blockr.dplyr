@@ -99,25 +99,19 @@ new_pivot_wider_block <- function(
           r_names_prefix <- reactiveVal(names_prefix)
 
           # Update reactive values when inputs change
-          observeEvent(
-            input$values_fill,
-            {
-              r_values_fill(input$values_fill)
-            },
-            ignoreNULL = FALSE
-          )
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
+          observeEvent(input$values_fill, {
+            r_values_fill(input$values_fill)
+          })
 
           observeEvent(input$names_sep, {
             r_names_sep(input$names_sep)
           })
 
-          observeEvent(
-            input$names_prefix,
-            {
-              r_names_prefix(input$names_prefix)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$names_prefix, {
+            r_names_prefix(input$names_prefix)
+          })
 
           list(
             expr = reactive({

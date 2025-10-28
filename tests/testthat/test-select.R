@@ -233,6 +233,40 @@ test_that("select block reactive updates", {
 })
 
 # Data transformation tests using block_server
-# NOTE: select_block appears to have an issue with block_server initialization
-# The existing expr_server tests cover data transformation adequately
-# TODO: Investigate why session$returned$result() returns NULL for select_block
+test_that("select block selects columns - testServer", {
+  block <- new_select_block(columns = c("mpg", "cyl", "hp"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), nrow(mtcars))
+      expect_equal(ncol(result), 3)
+      expect_true(all(c("mpg", "cyl", "hp") %in% names(result)))
+      expect_false("wt" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("select block with exclude mode - testServer", {
+  block <- new_select_block(columns = c("mpg", "cyl"), exclude = TRUE)
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_false("mpg" %in% names(result))
+      expect_false("cyl" %in% names(result))
+      expect_true("hp" %in% names(result))
+      expect_true("wt" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

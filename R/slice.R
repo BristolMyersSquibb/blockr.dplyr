@@ -95,65 +95,39 @@ new_slice_block <- function(
           )
 
           # Update reactiveVals when inputs change
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
           observeEvent(input$type, {
             r_type(input$type)
           })
 
-          observeEvent(
-            input$n,
-            {
-              r_n(input$n)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$n, {
+            r_n(input$n)
+          })
 
-          observeEvent(
-            input$prop,
-            {
-              r_prop(input$prop)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$prop, {
+            r_prop(input$prop)
+          })
 
-          observeEvent(
-            input$order_by,
-            {
-              r_order_by(input$order_by)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$order_by, {
+            r_order_by(input$order_by)
+          })
 
-          observeEvent(
-            input$with_ties,
-            {
-              r_with_ties(input$with_ties)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$with_ties, {
+            r_with_ties(input$with_ties)
+          })
 
-          observeEvent(
-            input$weight_by,
-            {
-              r_weight_by(input$weight_by)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$weight_by, {
+            r_weight_by(input$weight_by)
+          })
 
-          observeEvent(
-            input$replace,
-            {
-              r_replace(input$replace)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$replace, {
+            r_replace(input$replace)
+          })
 
-          observeEvent(
-            input$rows,
-            {
-              r_rows(input$rows)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$rows, {
+            r_rows(input$rows)
+          })
 
           # Restore type selector on initialization
           observe({
@@ -298,41 +272,21 @@ new_slice_block <- function(
 
           # Reactive expression that updates immediately
           slice_expr <- reactive({
-            req(input$type)
-
-            # Get current input values with defaults
-            n_val <- if (is.null(input$n)) n else as.integer(input$n)
-            prop_val <- if (is.null(input$prop)) {
-              prop
-            } else {
-              as.numeric(input$prop)
-            }
+            # Use state reactiveVals with fallback to constructor parameters
+            # This ensures the expression works in both testServer and production
+            type_val <- r_type()
+            n_val <- r_n()
+            prop_val <- r_prop()
             use_prop_val <- isTRUE(input$use_prop)
-            order_by_val <- if (is.null(input$order_by)) {
-              order_by
-            } else {
-              input$order_by
-            }
-            with_ties_val <- if (is.null(input$with_ties)) {
-              with_ties
-            } else {
-              input$with_ties
-            }
-            weight_by_val <- if (is.null(input$weight_by)) {
-              weight_by
-            } else {
-              input$weight_by
-            }
-            replace_val <- if (is.null(input$replace)) {
-              replace
-            } else {
-              input$replace
-            }
-            rows_val <- if (is.null(input$rows)) rows else input$rows
+            order_by_val <- r_order_by()
+            with_ties_val <- r_with_ties()
+            weight_by_val <- r_weight_by()
+            replace_val <- r_replace()
+            rows_val <- r_rows()
             by_val <- r_by_selection()
 
             build_slice_expr(
-              input$type,
+              type_val,
               n_val,
               prop_val,
               use_prop_val,
