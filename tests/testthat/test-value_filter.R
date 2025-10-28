@@ -456,3 +456,25 @@ test_that("helper functions convert values correctly", {
   expect_equal(blockr.dplyr:::display_to_actual("123", "numeric"), 123)
   expect_equal(blockr.dplyr:::display_to_actual("123", "character"), "123")
 })
+
+# Data transformation tests using block_server
+test_that("value_filter block filters by selected values - testServer", {
+  block <- new_value_filter_block(
+    conditions = list(list(column = "cyl", values = c(4, 6), mode = "include"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify filtering worked
+      expect_true(is.data.frame(result))
+      expect_true(all(result$cyl %in% c(4, 6)))
+      expect_false(any(result$cyl == 8))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

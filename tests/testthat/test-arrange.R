@@ -108,3 +108,68 @@ test_that("arrange specifications format", {
   blk2 <- new_arrange_block(specs_mixed)
   expect_s3_class(blk2, c("arrange_block", "transform_block", "block"))
 })
+
+# Data transformation tests using block_server
+test_that("arrange block sorts data ascending - testServer", {
+  block <- new_arrange_block(columns = list(list(column = "mpg", direction = "asc")))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify data is sorted by mpg ascending
+      expect_equal(nrow(result), nrow(mtcars))
+      expect_true(all(diff(result$mpg) >= 0))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("arrange block sorts data descending - testServer", {
+  block <- new_arrange_block(columns = list(list(column = "hp", direction = "desc")))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify data is sorted by hp descending
+      expect_true(all(diff(result$hp) <= 0))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("arrange block multi-column sort - testServer", {
+  block <- new_arrange_block(columns = list(
+    list(column = "cyl", direction = "asc"),
+    list(column = "mpg", direction = "desc")
+  ))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify we got all rows
+      expect_equal(nrow(result), nrow(mtcars))
+
+      # Verify primary sort: cyl ascending
+      cyl_order <- unique(result$cyl)
+      expect_true(all(diff(cyl_order) >= 0))
+
+      # Verify secondary sort within each cyl group: mpg descending
+      for (cyl_val in unique(result$cyl)) {
+        cyl_group <- result[result$cyl == cyl_val, ]
+        if (nrow(cyl_group) > 1) {
+          expect_true(all(diff(cyl_group$mpg) <= 0))
+        }
+      }
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

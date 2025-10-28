@@ -303,3 +303,43 @@ test_that("summarize block restorability - simple expression", {
     }
   )
 })
+
+# Data transformation tests using block_server
+test_that("summarize block simple aggregation - testServer", {
+  block <- new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_equal(nrow(result), 1)
+      expect_true("mean_mpg" %in% names(result))
+      expect_equal(result$mean_mpg, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block with grouping - testServer", {
+  block <- new_summarize_block(
+    exprs = list(mean_mpg = "mean(mpg)", count = "n()"),
+    by = "cyl"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should have one row per cyl group
+      expect_equal(nrow(result), length(unique(mtcars$cyl)))
+      expect_true("cyl" %in% names(result))
+      expect_true("mean_mpg" %in% names(result))
+      expect_true("count" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
