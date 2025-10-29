@@ -55,7 +55,7 @@ Features reactive UI with immediate updates and comprehensive grouping support.<
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">new_slice_block</span><span class="op">(</span></span>
 <span>  type <span class="op">=</span> <span class="st">"head"</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  prop <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  prop <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  order_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  with_ties <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  weight_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -75,11 +75,11 @@ Features reactive UI with immediate updates and comprehensive grouping support.<
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Number of rows to select (integer)</p></dd>
+<dd><p>Number of rows to select (default: 5). Mutually exclusive with prop.</p></dd>
 
 
 <dt id="arg-prop">prop<a class="anchor" aria-label="anchor" href="#arg-prop"></a></dt>
-<dd><p>Proportion of rows to select (0 to 1)</p></dd>
+<dd><p>Proportion of rows to select (0 to 1, default: NULL). When specified, n is ignored.</p></dd>
 
 
 <dt id="arg-order-by">order_by<a class="anchor" aria-label="anchor" href="#arg-order-by"></a></dt>
