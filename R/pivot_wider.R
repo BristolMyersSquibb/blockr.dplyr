@@ -123,7 +123,7 @@ new_pivot_wider_block <- function(
                 length(names_from_cols) == 0 || length(values_from_cols) == 0
               ) {
                 # Empty parameters are a valid initial state, not an error
-                return(parse(text = "data")[[1]])
+                return(parse(text = "identity(data)")[[1]])
               }
 
               # Build column selection with backticks if needed

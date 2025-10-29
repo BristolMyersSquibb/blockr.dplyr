@@ -105,7 +105,7 @@ new_pivot_longer_block <- function(
               # Handle empty selection
               if (length(selected_cols) == 0) {
                 # If no columns selected, return data unchanged
-                return(parse(text = "data")[[1]])
+                return(parse(text = "identity(data)")[[1]])
               }
 
               # Build column selection with backticks if needed
