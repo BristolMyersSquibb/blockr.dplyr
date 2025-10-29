@@ -7,7 +7,7 @@
 new_slice_block(
   type = "head",
   n = 5,
-  prop = 0.1,
+  prop = NULL,
   order_by = character(),
   with_ties = TRUE,
   weight_by = character(),
@@ -20,9 +20,9 @@ new_slice_block(
 \arguments{
 \item{type}{Character string specifying slice type: "head", "tail", "min", "max", "sample", or "custom"}
 
-\item{n}{Number of rows to select (integer)}
+\item{n}{Number of rows to select (default: 5). Mutually exclusive with prop.}
 
-\item{prop}{Proportion of rows to select (0 to 1)}
+\item{prop}{Proportion of rows to select (0 to 1, default: NULL). When specified, n is ignored.}
 
 \item{order_by}{Column name to order by (for slice_min/slice_max)}
 
