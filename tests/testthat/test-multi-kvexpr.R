@@ -62,3 +62,89 @@ test_that("mutate block handles execution", {
   expect_equal(result$double_mpg, data$mpg * 2)
   expect_equal(result$hp_per_100, data$hp / 100)
 })
+
+# Module tests for multi_kvexpr coverage - testing initialization paths
+test_that("mod_multi_kvexpr_server initializes without error from named vector", {
+  # Test named vector to list conversion (lines 22-26)
+  expect_no_error({
+    testServer(mod_multi_kvexpr_server, args = list(
+      get_value = function() c(col1 = "mpg * 2", col2 = "hp / 100"),
+      get_cols = function() c("mpg", "hp", "wt")
+    ), {
+      session$flushReact()
+      result <- session$returned()
+      # Module should initialize and return a list
+      expect_type(result, "list")
+    })
+  })
+})
+
+test_that("mod_multi_kvexpr_server initializes with empty list", {
+  # Test empty initialization fallback (lines 27-29)
+  expect_no_error({
+    testServer(mod_multi_kvexpr_server, args = list(
+      get_value = function() list(),
+      get_cols = function() c("mpg", "hp", "wt")
+    ), {
+      session$flushReact()
+      result <- session$returned()
+      # Should fallback to default
+      expect_type(result, "list")
+      expect_length(result, 1)
+    })
+  })
+})
+
+test_that("mod_multi_kvexpr_server initializes with NULL", {
+  # Test NULL initialization (lines 27-29)
+  expect_no_error({
+    testServer(mod_multi_kvexpr_server, args = list(
+      get_value = function() NULL,
+      get_cols = function() c("mpg", "hp", "wt")
+    ), {
+      session$flushReact()
+      result <- session$returned()
+      # Should fallback to default
+      expect_type(result, "list")
+      expect_length(result, 1)
+    })
+  })
+})
+
+test_that("mod_multi_kvexpr_server handles empty name expressions", {
+  # Test empty name handling (lines 62-69)
+  empty_name_list <- list("across(everything(), mean)")
+  names(empty_name_list) <- ""
+
+  expect_no_error({
+    testServer(mod_multi_kvexpr_server, args = list(
+      get_value = function() empty_name_list,
+      get_cols = function() c("mpg", "hp", "wt")
+    ), {
+      session$flushReact()
+      result <- session$returned()
+      # Should allow empty names for unpacking expressions
+      expect_type(result, "list")
+    })
+  })
+})
+
+test_that("mod_multi_kvexpr_server tests add functionality", {
+  # Test add operation setup (lines 81-101)
+  expect_no_error({
+    testServer(mod_multi_kvexpr_server, args = list(
+      get_value = function() list(col1 = "1"),
+      get_cols = function() c("mpg", "hp", "wt")
+    ), {
+      session$flushReact()
+
+      # Simulate clicking add button
+      session$setInputs(add_expr = 1)
+      session$flushReact()
+
+      # Module should handle add without error
+      result <- session$returned()
+      expect_type(result, "list")
+    })
+  })
+})

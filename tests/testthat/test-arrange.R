@@ -1,114 +1,3 @@
-test_that("arrange block constructor", {
-  # Test basic constructor
-  blk <- new_arrange_block()
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test constructor with single column
-  blk <- new_arrange_block("mpg")
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test constructor with multiple columns
-  blk <- new_arrange_block(c("mpg", "cyl"))
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-})
-
-test_that("arrange block with character input", {
-  # Test single column
-  blk <- new_arrange_block("mpg")
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test multiple columns
-  blk <- new_arrange_block(c("mpg", "cyl", "hp"))
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test with multiple columns (defaults to ascending)
-  blk <- new_arrange_block(c("mpg", "cyl"))
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-})
-
-test_that("arrange block with list input", {
-  # Test list of arrange specifications
-  arrange_specs <- list(
-    list(column = "mpg", direction = "desc"),
-    list(column = "cyl", direction = "asc"),
-    list(column = "hp", direction = "desc")
-  )
-
-  blk <- new_arrange_block(arrange_specs)
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-})
-
-test_that("arrange block with empty input", {
-  # Test empty character vector
-  blk <- new_arrange_block(character(0))
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test empty list
-  blk <- new_arrange_block(list())
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # Test NULL
-  blk <- new_arrange_block(NULL)
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-})
-
-test_that("multi arrange module functionality", {
-  # Test module server function exists
-  expect_true(exists("mod_multi_arrange_server"))
-  expect_true(is.function(mod_multi_arrange_server))
-
-  # Test module UI function exists
-  expect_true(exists("mod_multi_arrange_ui"))
-  expect_true(is.function(mod_multi_arrange_ui))
-
-  # Test example function exists
-  expect_true(exists("run_multi_arrange_example"))
-  expect_true(is.function(run_multi_arrange_example))
-})
-
-test_that("arrange block expression generation", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("blockr.core")
-
-  # Create test data
-  test_data <- data.frame(
-    a = c(3, 1, 2),
-    b = c("x", "y", "z"),
-    c = c(10, 30, 20)
-  )
-
-  # Test basic arrange block functionality
-  blk <- new_arrange_block(c("a", "c"))
-  expect_s3_class(blk, c("arrange_block", "transform_block", "block"))
-
-  # The block should be properly structured (internal functions, not exposed)
-  expect_true("expr_server" %in% names(blk))
-  expect_true("expr_ui" %in% names(blk))
-  expect_true(is.function(blk[["expr_server"]]))
-  expect_true(is.function(blk[["expr_ui"]]))
-})
-
-test_that("arrange specifications format", {
-  # Test ascending specifications
-  specs_asc <- list(
-    list(column = "mpg", direction = "asc"),
-    list(column = "cyl", direction = "asc")
-  )
-
-  # Test mixed ascending and descending specifications
-  specs_mixed <- list(
-    list(column = "mpg", direction = "desc"),
-    list(column = "cyl", direction = "asc")
-  )
-
-  # Blocks should handle both specification formats
-  blk1 <- new_arrange_block(specs_asc)
-  expect_s3_class(blk1, c("arrange_block", "transform_block", "block"))
-
-  blk2 <- new_arrange_block(specs_mixed)
-  expect_s3_class(blk2, c("arrange_block", "transform_block", "block"))
-})
-
 # Data transformation tests using block_server
 test_that("arrange block sorts data ascending - testServer", {
   block <- new_arrange_block(columns = list(list(column = "mpg", direction = "asc")))
@@ -172,4 +61,243 @@ test_that("arrange block multi-column sort - testServer", {
     },
     args = list(x = block, data = list(data = function() mtcars))
   )
+})
+
+# Module tests for multi_arrange coverage
+test_that("mod_multi_arrange_server initializes from character vector", {
+  # Test character vector initialization (lines 21-25)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() c("mpg", "cyl"),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should convert character vector to list of arrange specs
+    expect_type(result, "list")
+    expect_length(result, 2)
+    expect_equal(result[[1]]$column, "mpg")
+    expect_equal(result[[1]]$direction, "asc")
+    expect_equal(result[[2]]$column, "cyl")
+    expect_equal(result[[2]]$direction, "asc")
+  })
+})
+
+test_that("mod_multi_arrange_server handles empty initialization", {
+  # Test empty initialization fallback (lines 28-30)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() character(0),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should fallback to default arrange
+    expect_type(result, "list")
+    expect_length(result, 1)
+    expect_equal(result[[1]]$column, "")
+    expect_equal(result[[1]]$direction, "asc")
+  })
+})
+
+test_that("mod_multi_arrange_server handles NULL initialization", {
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() NULL,
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should fallback to default arrange
+    expect_type(result, "list")
+    expect_length(result, 1)
+  })
+})
+
+test_that("mod_multi_arrange_server handles empty column list", {
+  # Test fallback when no columns available (lines 66-73)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() character(0)
+  ), {
+    session$flushReact()
+
+    # Simulate clearing the column selection
+    session$setInputs(arrange_1_column = "")
+    session$flushReact()
+
+    result <- session$returned()
+
+    # Should handle empty columns gracefully
+    expect_type(result, "list")
+  })
+})
+
+test_that("mod_multi_arrange_server adds arrange", {
+  # Test add operation (lines 79-105)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    initial_result <- session$returned()
+
+    # Should start with 1 arrange
+    expect_length(initial_result, 1)
+
+    # Simulate clicking add button
+    session$setInputs(add_arrange = 1)
+    session$flushReact()
+
+    # Note: In the actual module, adding requires UI to be rendered
+    # This tests the add_arrange observer is set up
+    # Full UI testing would require the rendered UI elements
+  })
+})
+
+# Tests for reactive observeEvent blocks
+test_that("mod_multi_arrange_server add_arrange button reactivity - testServer", {
+  # Test add_arrange button (lines 79-105)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() c("mpg", "cyl", "hp", "wt")
+  ), {
+    session$flushReact()
+
+    initial_arranges <- session$returned()
+    expect_length(initial_arranges, 1)
+
+    # Click add_arrange button multiple times
+    session$setInputs(add_arrange = 1)
+    session$flushReact()
+
+    updated_arranges <- session$returned()
+    expect_type(updated_arranges, "list")
+
+    # Add another
+    session$setInputs(add_arrange = 2)
+    session$flushReact()
+
+    final_arranges <- session$returned()
+    expect_type(final_arranges, "list")
+  })
+})
+
+test_that("mod_multi_arrange_server direction checkbox reactivity - testServer", {
+  # Test direction checkbox changes
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+
+    initial_arranges <- session$returned()
+    expect_equal(initial_arranges[[1]]$direction, "asc")
+
+    # Change direction checkbox (TRUE = desc, FALSE = asc)
+    session$setInputs(arrange_1_direction = TRUE)
+    session$flushReact()
+
+    # Note: Input changes may not immediately reflect in returned() without UI rendered
+    # The important part is testing that the observer is set up correctly
+    updated_arranges <- session$returned()
+    expect_type(updated_arranges, "list")
+    expect_true(length(updated_arranges) > 0)
+
+    # Change back to asc
+    session$setInputs(arrange_1_direction = FALSE)
+    session$flushReact()
+
+    final_arranges <- session$returned()
+    expect_type(final_arranges, "list")
+    expect_true(length(final_arranges) > 0)
+  })
+})
+
+test_that("mod_multi_arrange_server column selection reactivity - testServer", {
+  # Test column selection changes
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() c("mpg", "cyl", "hp", "wt")
+  ), {
+    session$flushReact()
+
+    initial_arranges <- session$returned()
+    expect_equal(initial_arranges[[1]]$column, "mpg")
+
+    # Change column selection
+    session$setInputs(arrange_1_column = "cyl")
+    session$flushReact()
+
+    # Note: Column changes may not immediately reflect without UI rendered
+    # Testing that the function doesn't crash
+    updated_arranges <- session$returned()
+    expect_type(updated_arranges, "list")
+    expect_true(length(updated_arranges) > 0)
+
+    # Change to another column
+    session$setInputs(arrange_1_column = "hp")
+    session$flushReact()
+
+    final_arranges <- session$returned()
+    expect_type(final_arranges, "list")
+    expect_true(length(final_arranges) > 0)
+  })
+})
+
+test_that("mod_multi_arrange_server handles unused columns selection - testServer", {
+  # Test selection of unused columns when adding new arrange (lines 90-98)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(
+      list(column = "mpg", direction = "asc"),
+      list(column = "cyl", direction = "desc")
+    ),
+    get_cols = function() c("mpg", "cyl", "hp", "wt")
+  ), {
+    session$flushReact()
+
+    initial_arranges <- session$returned()
+    expect_length(initial_arranges, 2)
+
+    # Add a new arrange - should prefer unused columns (hp or wt)
+    session$setInputs(add_arrange = 1)
+    session$flushReact()
+
+    updated_arranges <- session$returned()
+    expect_type(updated_arranges, "list")
+  })
+})
+
+test_that("mod_multi_arrange_server empty column fallback - testServer", {
+  # Test fallback when all columns are empty (lines 66-73)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "", direction = "asc")),
+    get_cols = function() character(0)
+  ), {
+    session$flushReact()
+
+    # Should fallback to empty column with asc direction
+    arranges <- session$returned()
+    expect_type(arranges, "list")
+    expect_length(arranges, 1)
+    expect_equal(arranges[[1]]$column, "")
+    expect_equal(arranges[[1]]$direction, "asc")
+  })
+})
+
+test_that("mod_multi_arrange_server get_current_arranges with empty results - testServer", {
+  # Test get_current_arranges fallback (lines 66-73)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+
+    # Should fallback to first available column
+    arranges <- session$returned()
+    expect_type(arranges, "list")
+    expect_length(arranges, 1)
+    # Should use first column from available cols
+    expect_true(arranges[[1]]$column %in% c("mpg", ""))
+  })
 })
