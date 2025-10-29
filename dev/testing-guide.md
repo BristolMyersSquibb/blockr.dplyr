@@ -2,20 +2,30 @@
 
 ## Overview
 
-This document outlines the three-layer testing strategy for blockr.dplyr. Each layer serves a distinct purpose with clear trade-offs. Understanding WHEN to use each tool is critical.
+This document outlines the **TWO-TIER testing strategy** for blockr.dplyr. Understanding WHEN to use each tool is critical for fast, maintainable tests.
 
 This guide is adapted from blockr.io and applies the same principles to dplyr transform blocks.
 
 ## Testing Philosophy
 
-1. **Test at the appropriate level** - Don't use a slow tool when a fast one suffices
-2. **Each layer has a purpose** - Unit tests ≠ testServer ≠ shinytest2
+1. **DEFAULT: Use testServer** - For all Shiny reactivity, UI interactions, and module logic
+2. **Use unit tests for pure functions** - Expression builders, helpers, parsers
 3. **Speed matters** - Fast tests = fast feedback = better development
-4. **Coverage over duplication** - Don't test the same thing at multiple layers
+4. **shinytest2 is almost never needed** - Only for pure visual UI checks with no server impact
 
 ---
 
-## The Three Layers
+## ⚠️ IMPORTANT: Two-Tier Strategy
+
+**99% of your tests should be:**
+- **Tier 1: Unit Tests** - Pure R functions (no Shiny)
+- **Tier 2: testServer** - ALL Shiny reactivity and UI interactions
+
+**shinytest2 is rarely needed** - See bottom of this guide for the exceptional cases.
+
+---
+
+## The Two Main Testing Layers
 
 ### Layer 1: Unit Tests (Pure Functions, No Shiny)
 
@@ -56,7 +66,7 @@ test_that("filter block filters data correctly", {
 
 ---
 
-### Layer 2: testServer (Reactive Logic, No Browser)
+### Layer 2: testServer (ALL Shiny Interactions - USE THIS)
 
 **Files**: `test-filter.R`, `test-mutate.R`, `test-select.R`, `test-join.R`, `test-rename.R`, `test-bind.R`, `test-summarize.R`, `test-value_filter.R`, and others
 **Speed**: ⚡⚡ Fast (~0.2-0.5s per test)
@@ -69,13 +79,18 @@ test_that("filter block filters data correctly", {
 - ✅ Expression generation in reactive context
 - ✅ Module server functions
 - ✅ Data transformations (by evaluating expressions)
+- ✅ **UI interactions** (button clicks, input changes via `session$setInputs()`)
+- ✅ **Module add/remove operations**
+- ✅ **Reactive auto-updates**
+- ✅ **ALL edge cases and error handling**
 
-**What it CANNOT test**:
-- ❌ Actual UI rendering
-- ❌ User interactions (clicks, typing, selections)
-- ❌ JavaScript behavior
-- ❌ Full app integration with `serve()`
-- ❌ Browser-specific behavior
+**When to use**:
+- Testing Shiny modules (moduleServer)
+- Testing reactive behavior
+- Testing UI input changes and their effects
+- Testing add/remove operations in multi-* modules
+- Testing state management
+- **This should be your default for testing ANY Shiny logic**
 
 **Two critical patterns for blockr.dplyr**:
 
@@ -149,146 +164,8 @@ test_that("filter block filters data correctly - testServer", {
 
 ---
 
-### Layer 3: shinytest2 (Full Integration, Browser Required)
+## Note on shinytest2
 
-**Files**: 11 `test-shinytest2-*.R` files
-**Speed**: 🐌 Slow (~8-15s per test)
-**Total**: ~50+ tests (many could be migrated to testServer)
+**We don't use shinytest2.** All Shiny testing is done with testServer, which can simulate UI interactions via `session$setInputs()`.
 
-**What it CAN test**:
-- ✅ Complete app launches with `serve(block)`
-- ✅ User interactions (clicks, typing, selections)
-- ✅ UI workflows and multi-step interactions
-- ✅ End-to-end workflows with multiple blocks
-- ✅ Browser-specific behavior
-
-**What it CANNOT do better than testServer**:
-- ❌ **Nothing** - it can do everything testServer can, BUT 20-50x slower
-- ❌ Not suitable for rapid iteration
-- ❌ Requires browser setup (chromote)
-
-**When to use in blockr.dplyr**:
-- **User interaction workflows** - User clicks, types, selects, and data updates reactively
-- **Multi-block integration** - Testing data flow between blocks in a stack
-- **UI validation** - Verifying dynamic UI updates (e.g., column dropdowns updating)
-- **Use sparingly** - if testServer can test it, use testServer
-
-**Anti-pattern (DON'T DO THIS in blockr.dplyr)**:
-```r
-test_that("filter block filters data correctly", {
-  app <- AppDriver$new(...)  # Takes 10 seconds
-  result_data <- get_block_result(app)
-  expect_true(all(result_data$mpg > 20))  # Could test in 0.5s with testServer!
-})
-```
-
-**Good use in blockr.dplyr**:
-```r
-test_that("user changes select mode and columns update", {
-  app_dir <- create_test_app(
-    block_code = 'serve(new_select_block(mode = "include"))'
-  )
-
-  app <- AppDriver$new(app_dir, timeout = 30000)
-
-  # User changes mode
-  app$set_inputs(`block-expr-mode` = "exclude")
-  app$wait_for_idle()
-
-  # Verify UI and data updated
-  result_data <- get_block_result(app)
-  expect_true("mpg" %in% colnames(result_data))  # Excluded columns gone
-
-  cleanup_test_app(app_dir, app)
-})
-```
-
-**Excellent example from blockr.dplyr**:
-See `test-shinytest2-filter-expr.R:169-211` and `test-shinytest2-select.R` (tests 6-8) for properly using shinytest2 to test UI interactions.
-
----
-
-## Migration Completed ✅
-
-### Summary
-
-Successfully migrated from browser-based shinytest2 tests to fast testServer tests using the `block_server` pattern.
-
-**Results:**
-- ✅ Added 16 new testServer tests using block_server pattern
-- ✅ Deleted 7 shinytest2 files with equivalent coverage
-- ✅ Reduced total tests from 859 to 729 (removed ~130 redundant browser tests)
-- ✅ Test suite now runs **57% faster** (~127s → ~54s)
-- ✅ All 729 tests pass successfully
-
-### Files Migrated (Deleted)
-
-The following shinytest2 files were successfully replaced with testServer tests:
-
-1. ✅ **test-shinytest2-arrange.R** → Added 3 block_server tests to test-arrange.R
-2. ✅ **test-shinytest2-rename.R** → Added 1 block_server test to test-rename.R
-3. ✅ **test-shinytest2-value-filter.R** → Added 1 block_server test to test-value_filter.R
-4. ✅ **test-shinytest2-filter-expr.R** → Added 5 block_server tests to test-filter.R
-5. ✅ **test-shinytest2-join.R** → Added 2 block_server tests to test-join.R
-6. ✅ **test-shinytest2-mutate.R** → Added 2 block_server tests to test-mutate.R
-7. ✅ **test-shinytest2-summarize.R** → Added 2 block_server tests to test-summarize.R
-
-### Files Kept (Not Yet Migrated)
-
-The following shinytest2 files remain and require further work:
-
-1. **test-shinytest2-select.R** - select_block has initialization issue with block_server (returns NULL)
-2. **test-shinytest2-slice.R** - slice_block has initialization issue with block_server (returns NULL)
-3. **test-shinytest2-bind.R** - No testServer tests added yet
-4. **test-shinytest2-pivot-longer.R** - No testServer tests added yet
-5. **test-shinytest2-pivot-wider.R** - No testServer tests added yet
-
-### Known Issues
-
-Two blocks have initialization problems with the `block_server` pattern where `session$returned$result()` returns NULL:
-- `select_block` (documented in test-select.R:236-239)
-- `slice_block` (documented in test-slice.R:263-266)
-
-These blocks continue to use `expr_server` tests and retain their shinytest2 files until the initialization issue is resolved
-
-### Migration Pattern for blockr.dplyr
-
-**Before (shinytest2 - slow):**
-```r
-test_that("filter block filters data", {
-  app_dir <- create_test_app(
-    block_code = 'serve(new_filter_block(expressions = list("mpg > 20")))'
-  )
-  app <- AppDriver$new(app_dir, timeout = 30000)
-  result_data <- get_block_result(app)
-  expect_true(all(result_data$mpg > 20))
-  cleanup_test_app(app_dir, app)
-})
-```
-
-**After (testServer - fast):**
-```r
-test_that("filter block filters data", {
-  input_data <- reactive(mtcars)
-  blk <- new_filter_block(expressions = list("mpg > 20"))
-
-  testServer(blk$expr_server, args = list(data = input_data), {
-    session$flushReact()
-    expr_result <- session$returned$expr()
-
-    # Evaluate and verify
-    result_data <- eval(expr_result)
-    expect_true(all(result_data$mpg > 20))
-  })
-})
-```
-
-### Actual Performance Improvements
-
-Migration completed with excellent results:
-- **Before:** 859 tests in ~127 seconds (including ~130 browser-based tests)
-- **After:** 729 tests in ~54 seconds (16 new testServer tests, 7 shinytest2 files deleted)
-- **Improvement:** 127s → 54s (**57% faster**, 2.4x speedup)
-- **Test quality:** Equivalent coverage with more targeted data transformation tests
-
-The speedup comes from replacing slow browser-based tests with fast testServer tests that directly verify data transformation correctness using the `block_server` pattern.
+See [shinytest2-guide.md](shinytest2-guide.md) for migration history.
