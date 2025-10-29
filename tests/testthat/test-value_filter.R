@@ -572,3 +572,156 @@ test_that("value_filter block with multiple conditions OR operator - testServer"
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
+
+# Additional mod_value_filter_server tests for coverage
+test_that("mod_value_filter_server handles empty initial conditions", {
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() list(),
+      get_data = function() mtcars
+    ),
+    {
+      session$flushReact()
+      result <- session$getReturned()
+
+      # Should return empty conditions list
+      conditions <- result$conditions()
+      expect_type(conditions, "list")
+    }
+  )
+})
+
+test_that("mod_value_filter_server handles numeric columns", {
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() list(),
+      get_data = function() mtcars
+    ),
+    {
+      session$flushReact()
+
+      # Test numeric column unique values
+      mpg_values <- get_unique_values("mpg")
+      expect_true(length(mpg_values) > 0)
+      expect_true(
+        is.numeric(mpg_values) ||
+          all(grepl("^[0-9.]+$", mpg_values))
+      )
+
+      # Test another numeric column
+      hp_values <- get_unique_values("hp")
+      expect_true(length(hp_values) > 0)
+    }
+  )
+})
+
+test_that("mod_value_filter_server with preserve_order parameter", {
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() list(),
+      get_data = function() iris,
+      preserve_order = TRUE
+    ),
+    {
+      session$flushReact()
+
+      # Module should initialize without error
+      result <- session$getReturned()
+      expect_type(result, "list")
+    }
+  )
+})
+
+test_that("mod_value_filter_server handles multiple conditions", {
+  multi_conditions <- list(
+    list(column = "cyl", values = c(4, 6), mode = "include"),
+    list(column = "gear", values = c(4), mode = "include", operator = "&")
+  )
+
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() multi_conditions,
+      get_data = function() mtcars
+    ),
+    {
+      session$flushReact()
+      result <- session$getReturned()
+
+      # Should have multiple conditions
+      conditions <- result$conditions()
+      expect_length(conditions, 2)
+      expect_equal(conditions[[1]]$column, "cyl")
+      expect_equal(conditions[[2]]$column, "gear")
+      expect_equal(conditions[[2]]$operator, "&")
+    }
+  )
+})
+
+test_that("mod_value_filter_server handles exclude mode", {
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() list(
+        list(column = "Species", values = c("virginica"), mode = "exclude")
+      ),
+      get_data = function() iris
+    ),
+    {
+      session$flushReact()
+      result <- session$getReturned()
+
+      # Check exclude mode is set
+      conditions <- result$conditions()
+      expect_equal(conditions[[1]]$mode, "exclude")
+    }
+  )
+})
+
+test_that("mod_value_filter_server handles OR operator", {
+  or_conditions <- list(
+    list(column = "Species", values = c("setosa"), mode = "include"),
+    list(column = "Species", values = c("versicolor"), mode = "include", operator = "|")
+  )
+
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() or_conditions,
+      get_data = function() iris
+    ),
+    {
+      session$flushReact()
+      result <- session$getReturned()
+
+      # Check OR operator is set
+      conditions <- result$conditions()
+      expect_equal(conditions[[2]]$operator, "|")
+    }
+  )
+})
+
+test_that("mod_value_filter_server with mixed column types", {
+  # Test data with numeric, character, and factor columns
+  testServer(
+    mod_value_filter_server,
+    args = list(
+      get_value = function() list(),
+      get_data = function() iris
+    ),
+    {
+      session$flushReact()
+
+      # Test numeric column
+      numeric_values <- get_unique_values("Sepal.Length")
+      expect_true(length(numeric_values) > 0)
+
+      # Test factor column
+      factor_values <- get_unique_values("Species")
+      expect_equal(sort(factor_values), sort(c("setosa", "versicolor", "virginica")))
+    }
+  )
+})

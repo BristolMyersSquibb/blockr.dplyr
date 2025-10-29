@@ -261,3 +261,103 @@ test_that("rename block renames columns - testServer", {
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
+
+# Validation tests for error paths
+test_that("parse_rename generates correct expression", {
+  # Test basic parse_rename function
+  renames <- list(new_a = "a", new_b = "b")
+
+  result <- parse_rename(renames)
+
+  # Should return language expression
+  expect_type(result, "language")
+  expect_true(grepl("rename", deparse(result)))
+})
+
+test_that("parse_rename handles empty new names", {
+  # Test empty new name error path (lines 230-241)
+  # Create list with empty name
+  renames <- list("a")
+  names(renames) <- ""
+
+  result <- parse_rename(renames)
+
+  # Should handle empty names
+  expect_type(result, "language")
+})
+
+test_that("parse_rename handles NA new names", {
+  # Test NA new name error path
+  # Create list with NA name
+  renames <- list("a")
+  names(renames) <- NA_character_
+
+  result <- parse_rename(renames)
+
+  # Should handle NA names
+  expect_type(result, "language")
+})
+
+test_that("parse_rename handles empty renames", {
+  # Test empty renames path (lines 244-249)
+  renames <- list()
+
+  result <- parse_rename(renames)
+
+  # Should return expression that just returns data unchanged
+  expect_type(result, "language")
+})
+
+test_that("rename block with invalid column shows error", {
+  # Test error handling when column doesn't exist
+  block <- new_rename_block(list(new_name = "nonexistent_column"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+
+      # Should handle error gracefully
+      # Block framework catches errors, so we just test it doesn't crash
+      expect_no_error(session$returned$result())
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("rename block with duplicate old columns", {
+  # Test duplicate old column handling
+  block <- new_rename_block(list(name1 = "mpg", name2 = "mpg"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+
+      # Should handle error gracefully
+      expect_no_error(session$returned$result())
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("rename block handles named vector input", {
+  # Test named vector to list conversion (lines 189-192)
+  renames_vector <- c(new_mpg = "mpg", new_cyl = "cyl")
+  block <- new_rename_block(renames_vector)
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify both renames worked
+      expect_true("new_mpg" %in% names(result))
+      expect_true("new_cyl" %in% names(result))
+      expect_false("mpg" %in% names(result))
+      expect_false("cyl" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

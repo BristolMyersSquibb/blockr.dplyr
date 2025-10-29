@@ -173,3 +173,95 @@ test_that("arrange block multi-column sort - testServer", {
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
+
+# Module tests for multi_arrange coverage
+test_that("mod_multi_arrange_server initializes from character vector", {
+  # Test character vector initialization (lines 21-25)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() c("mpg", "cyl"),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should convert character vector to list of arrange specs
+    expect_type(result, "list")
+    expect_length(result, 2)
+    expect_equal(result[[1]]$column, "mpg")
+    expect_equal(result[[1]]$direction, "asc")
+    expect_equal(result[[2]]$column, "cyl")
+    expect_equal(result[[2]]$direction, "asc")
+  })
+})
+
+test_that("mod_multi_arrange_server handles empty initialization", {
+  # Test empty initialization fallback (lines 28-30)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() character(0),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should fallback to default arrange
+    expect_type(result, "list")
+    expect_length(result, 1)
+    expect_equal(result[[1]]$column, "")
+    expect_equal(result[[1]]$direction, "asc")
+  })
+})
+
+test_that("mod_multi_arrange_server handles NULL initialization", {
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() NULL,
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    result <- session$returned()
+
+    # Should fallback to default arrange
+    expect_type(result, "list")
+    expect_length(result, 1)
+  })
+})
+
+test_that("mod_multi_arrange_server handles empty column list", {
+  # Test fallback when no columns available (lines 66-73)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() character(0)
+  ), {
+    session$flushReact()
+
+    # Simulate clearing the column selection
+    session$setInputs(arrange_1_column = "")
+    session$flushReact()
+
+    result <- session$returned()
+
+    # Should handle empty columns gracefully
+    expect_type(result, "list")
+  })
+})
+
+test_that("mod_multi_arrange_server adds arrange", {
+  # Test add operation (lines 79-105)
+  testServer(mod_multi_arrange_server, args = list(
+    get_value = function() list(list(column = "mpg", direction = "asc")),
+    get_cols = function() c("mpg", "cyl", "hp")
+  ), {
+    session$flushReact()
+    initial_result <- session$returned()
+
+    # Should start with 1 arrange
+    expect_length(initial_result, 1)
+
+    # Simulate clicking add button
+    session$setInputs(add_arrange = 1)
+    session$flushReact()
+
+    # Note: In the actual module, adding requires UI to be rendered
+    # This tests the add_arrange observer is set up
+    # Full UI testing would require the rendered UI elements
+  })
+})

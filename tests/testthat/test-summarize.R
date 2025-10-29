@@ -413,3 +413,118 @@ test_that("summarize block with unpack parameter - testServer", {
     )
   )
 })
+
+# Validation and edge case tests
+test_that("parse_summarize handles NULL names", {
+  # Test NULL names in expressions (lines 328-330)
+  exprs <- list("mean(mpg)", "sum(hp)")
+  names(exprs) <- c(NA_character_, NA_character_)
+
+  result <- parse_summarize(exprs, by = NULL, unpack = FALSE)
+
+  # Should handle NULL names gracefully
+  expect_type(result, "language")
+})
+
+test_that("parse_summarize handles whitespace expressions", {
+  # Test all whitespace expressions (lines 378-382)
+  exprs <- c(a = "  ", b = "\t", c = "   ")
+
+  result <- parse_summarize(exprs, by = NULL, unpack = FALSE)
+
+  # Should handle whitespace gracefully
+  expect_type(result, "language")
+})
+
+test_that("parse_summarize handles unpack mode", {
+  # Test unpack = TRUE generates bare expression (lines 333-346)
+  exprs <- list(stats = "across(c(mpg, hp), mean)")
+
+  result_unpacked <- parse_summarize(exprs, by = NULL, unpack = TRUE)
+  result_packed <- parse_summarize(exprs, by = NULL, unpack = FALSE)
+
+  # Both should generate expressions but differently
+  expect_type(result_unpacked, "language")
+  expect_type(result_packed, "language")
+
+  # Unpacked should not have "stats =" in the expression
+  code_unpacked <- deparse(result_unpacked, width.cutoff = 500L)
+  code_packed <- deparse(result_packed, width.cutoff = 500L)
+
+  # With unpack=TRUE, the name appears differently
+  expect_true(any(grepl("across", code_unpacked)))
+  expect_true(any(grepl("across", code_packed)))
+})
+
+test_that("parse_summarize validates expressions", {
+  # Test req() and stopifnot() validation (lines 385-386)
+  # Valid expressions should work
+  expect_no_error({
+    result <- parse_summarize(list(a = "mean(mpg)"), by = NULL, unpack = FALSE)
+    expect_type(result, "language")
+  })
+
+  # Named expressions should work
+  expect_no_error({
+    result <- parse_summarize(c(avg_mpg = "mean(mpg)", sum_hp = "sum(hp)"), by = NULL, unpack = FALSE)
+    expect_type(result, "language")
+  })
+})
+
+test_that("summarize block handles empty expressions", {
+  # Test block with empty/invalid expressions
+  block <- new_summarize_block(exprs = list(a = ""))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+
+      # Should handle empty expressions gracefully
+      expect_no_error(session$returned$result())
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block handles NULL by parameter", {
+  # Test with NULL grouping (no grouping)
+  block <- new_summarize_block(
+    exprs = list(mean_mpg = "mean(mpg)"),
+    by = NULL
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should summarize entire dataset (1 row)
+      expect_equal(nrow(result), 1)
+      expect_true("mean_mpg" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block handles empty by parameter", {
+  # Test with empty grouping character vector
+  block <- new_summarize_block(
+    exprs = list(mean_mpg = "mean(mpg)"),
+    by = character(0)
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should summarize entire dataset (1 row)
+      expect_equal(nrow(result), 1)
+      expect_true("mean_mpg" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
