@@ -81,7 +81,7 @@ new_value_filter_block <- function(
               },
               error = function(e) {
                 # Fallback to identity filter if parsing fails
-                parse(text = "dplyr::filter(data, TRUE)")[1]
+                parse(text = "dplyr::filter(data, TRUE)")[[1]]
               }
             )
           })

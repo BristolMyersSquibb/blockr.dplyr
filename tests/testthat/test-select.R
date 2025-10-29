@@ -231,3 +231,126 @@ test_that("select block reactive updates", {
     }
   )
 })
+
+# Data transformation tests using block_server
+test_that("select block selects columns - testServer", {
+  block <- new_select_block(columns = c("mpg", "cyl", "hp"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), nrow(mtcars))
+      expect_equal(ncol(result), 3)
+      expect_true(all(c("mpg", "cyl", "hp") %in% names(result)))
+      expect_false("wt" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("select block with exclude mode - testServer", {
+  block <- new_select_block(columns = c("mpg", "cyl"), exclude = TRUE)
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_false("mpg" %in% names(result))
+      expect_false("cyl" %in% names(result))
+      expect_true("hp" %in% names(result))
+      expect_true("wt" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("select block with distinct=TRUE and specific columns - testServer", {
+  # Create data with duplicate rows
+  test_data <- data.frame(
+    cyl = c(4, 4, 6, 6, 8, 8),
+    gear = c(4, 4, 4, 5, 3, 3),
+    am = c(1, 1, 1, 1, 0, 0),
+    mpg = c(21, 21, 19, 20, 15, 15)
+  )
+
+  block <- new_select_block(columns = c("cyl", "gear"), distinct = TRUE)
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Should only have cyl and gear columns
+      expect_equal(ncol(result), 2)
+      expect_true(all(c("cyl", "gear") %in% names(result)))
+      # Should have only unique combinations
+      expect_equal(nrow(result), 4)  # (4,4), (6,4), (6,5), (8,3)
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("select block with distinct=TRUE and empty selection - testServer", {
+  # Create data with fully duplicate rows
+  test_data <- data.frame(
+    a = c(1, 1, 2, 2, 3),
+    b = c("x", "x", "y", "y", "z")
+  )
+
+  block <- new_select_block(columns = character(0), distinct = TRUE)
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # With empty selection + distinct, should deduplicate all columns
+      expect_equal(ncol(result), 2)  # All columns
+      expect_equal(nrow(result), 3)  # Only unique rows (1,x), (2,y), (3,z)
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("select block with distinct=TRUE and exclude=TRUE - testServer", {
+  test_data <- data.frame(
+    id = c(1, 1, 2, 2, 3),
+    value_a = c(10, 10, 20, 20, 30),
+    value_b = c(15, 15, 25, 25, 35),
+    flag = c("A", "A", "B", "B", "C")
+  )
+
+  # Exclude value_a, then get distinct
+  block <- new_select_block(
+    columns = c("value_a"),
+    exclude = TRUE,
+    distinct = TRUE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Should have id, value_b, flag (not value_a)
+      expect_false("value_a" %in% names(result))
+      expect_true(all(c("id", "value_b", "flag") %in% names(result)))
+      # Should have unique combinations of remaining columns
+      expect_equal(nrow(result), 3)  # 3 unique combinations
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})

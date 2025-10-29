@@ -303,3 +303,113 @@ test_that("summarize block restorability - simple expression", {
     }
   )
 })
+
+# Data transformation tests using block_server
+test_that("summarize block simple aggregation - testServer", {
+  block <- new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_equal(nrow(result), 1)
+      expect_true("mean_mpg" %in% names(result))
+      expect_equal(result$mean_mpg, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block with grouping - testServer", {
+  block <- new_summarize_block(
+    exprs = list(mean_mpg = "mean(mpg)", count = "n()"),
+    by = "cyl"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should have one row per cyl group
+      expect_equal(nrow(result), length(unique(mtcars$cyl)))
+      expect_true("cyl" %in% names(result))
+      expect_true("mean_mpg" %in% names(result))
+      expect_true("count" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block with unpack parameter - testServer", {
+  # Test data with multiple numeric columns
+  test_data <- data.frame(
+    mpg = c(21, 21, 22.8, 21.4),
+    hp = c(110, 110, 93, 110),
+    wt = c(2.6, 2.8, 2.3, 3.2),
+    cyl = c(6, 6, 4, 6)
+  )
+
+  # NOTE: Testing unpack with across() which returns a data frame
+  # With unpack=TRUE, across(c(mpg, hp), mean) should unpack to separate mpg and hp columns
+  # With unpack=FALSE, it should create a nested data frame column
+
+  # Test with unpack=TRUE - columns should be unpacked
+  block_unpacked <- new_summarize_block(
+    exprs = list(stats = "across(c(mpg, hp), mean)"),
+    by = "cyl",
+    unpack = TRUE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_unpacked),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # With unpack=TRUE, columns from across() should be unpacked directly
+      # Result should have: cyl, mpg, hp (unpacked from across)
+      expect_true("cyl" %in% names(result))
+      expect_true("mpg" %in% names(result))
+      expect_true("hp" %in% names(result))
+      # Should NOT have a nested "stats" column
+      expect_false("stats" %in% names(result))
+    },
+    args = list(
+      x = block_unpacked,
+      data = list(data = function() test_data)
+    )
+  )
+
+  # Test with unpack=FALSE - should create nested list-column
+  block_nested <- new_summarize_block(
+    exprs = list(stats = "across(c(mpg, hp), mean)"),
+    by = "cyl",
+    unpack = FALSE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_nested),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # With unpack=FALSE, should have cyl and stats (nested df)
+      expect_true("cyl" %in% names(result))
+      expect_true("stats" %in% names(result))
+      # Should NOT have individual mpg/hp columns
+      # (they're nested inside stats)
+      # Note: We can't easily test the nested structure content
+      # but we verify the column names show the nesting happened
+    },
+    args = list(
+      x = block_nested,
+      data = list(data = function() test_data)
+    )
+  )
+})

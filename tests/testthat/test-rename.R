@@ -240,3 +240,24 @@ test_that("rename validation works correctly", {
     r_renames
   ))
 })
+
+# Data transformation tests using block_server
+test_that("rename block renames columns - testServer", {
+  block <- new_rename_block(list(miles_per_gallon = "mpg"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify renaming worked
+      expect_true(is.data.frame(result))
+      expect_true("miles_per_gallon" %in% names(result))
+      expect_false("mpg" %in% names(result))
+      expect_equal(result$miles_per_gallon, mtcars$mpg)
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

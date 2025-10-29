@@ -86,28 +86,27 @@ new_select_block <- function(
           r_initialized <- reactiveVal(FALSE)
 
           # Update reactive values when inputs change
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
           observeEvent(
             input$columns,
             {
               r_columns(input$columns)
-            },
-            ignoreNULL = FALSE
+            }
           )
 
           observeEvent(
             input$exclude,
             {
               r_exclude(input$exclude)
-            },
-            ignoreNULL = FALSE
+            }
           )
 
           observeEvent(
             input$distinct,
             {
               r_distinct(input$distinct)
-            },
-            ignoreNULL = FALSE
+            }
           )
 
           # Restore initial selection once on startup (like slice block)

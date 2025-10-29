@@ -43,7 +43,7 @@ new_arrange_block <- function(columns = character(), ...) {
 
               if (length(arranges) == 0) {
                 # No arrange specifications - return identity
-                parse(text = "data")[1]
+                parse(text = "data")[[1]]
               } else {
                 # Build arrange expressions
                 arrange_exprs <- sapply(arranges, function(arr) {

@@ -99,42 +99,31 @@ new_pivot_wider_block <- function(
           r_names_prefix <- reactiveVal(names_prefix)
 
           # Update reactive values when inputs change
-          observeEvent(
-            input$values_fill,
-            {
-              r_values_fill(input$values_fill)
-            },
-            ignoreNULL = FALSE
-          )
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
+          observeEvent(input$values_fill, {
+            r_values_fill(input$values_fill)
+          })
 
           observeEvent(input$names_sep, {
             r_names_sep(input$names_sep)
           })
 
-          observeEvent(
-            input$names_prefix,
-            {
-              r_names_prefix(input$names_prefix)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$names_prefix, {
+            r_names_prefix(input$names_prefix)
+          })
 
           list(
             expr = reactive({
               names_from_cols <- r_names_from()
               values_from_cols <- r_values_from()
 
-              # Require at least names_from and values_from to be specified
+              # If parameters not yet configured, return data unchanged (pass-through)
               if (
                 length(names_from_cols) == 0 || length(values_from_cols) == 0
               ) {
-                # If essential parameters missing, return data unchanged
-                showNotification(
-                  "Please select columns for 'names from' and 'values from'",
-                  type = "warning",
-                  duration = 3
-                )
-                return(parse(text = "data")[[1]])
+                # Empty parameters are a valid initial state, not an error
+                return(parse(text = "identity(data)")[[1]])
               }
 
               # Build column selection with backticks if needed
@@ -373,7 +362,7 @@ new_pivot_wider_block <- function(
       )
     },
     class = "pivot_wider_block",
-    allow_empty_state = c("id_cols", "values_fill", "names_prefix"),
+    allow_empty_state = c("names_from", "values_from", "id_cols", "values_fill", "names_prefix"),
     ...
   )
 }

@@ -6,8 +6,8 @@
 #' Features reactive UI with immediate updates and comprehensive grouping support.
 #'
 #' @param type Character string specifying slice type: "head", "tail", "min", "max", "sample", or "custom"
-#' @param n Number of rows to select (integer)
-#' @param prop Proportion of rows to select (0 to 1)
+#' @param n Number of rows to select (default: 5). Mutually exclusive with prop.
+#' @param prop Proportion of rows to select (0 to 1, default: NULL). When specified, n is ignored.
 #' @param order_by Column name to order by (for slice_min/slice_max)
 #' @param with_ties Logical, whether to include ties (for slice_min/slice_max)
 #' @param weight_by Column name for weighted sampling (for slice_sample)
@@ -39,7 +39,7 @@
 new_slice_block <- function(
   type = "head",
   n = 5,
-  prop = 0.1,
+  prop = NULL,
   order_by = character(),
   with_ties = TRUE,
   weight_by = character(),
@@ -62,6 +62,9 @@ new_slice_block <- function(
           r_weight_by <- reactiveVal(weight_by)
           r_replace <- reactiveVal(replace)
           r_rows <- reactiveVal(rows)
+
+          # Determine initial mode based on constructor params
+          r_value_mode <- reactiveVal(if (is.null(prop)) "count" else "prop")
 
           # Group by selector using unified componen
           r_by_selection <- mod_by_selector_server(
@@ -88,72 +91,54 @@ new_slice_block <- function(
               order_choices <- c("", valid_cols)
               weight_choices <- c("", valid_cols)
 
-              updateSelectInput(session, "order_by", choices = order_choices)
-              updateSelectInput(session, "weight_by", choices = weight_choices)
+              updateSelectInput(session, "order_by",
+                                choices = order_choices,
+                                selected = r_order_by())
+              updateSelectInput(session, "weight_by",
+                                choices = weight_choices,
+                                selected = r_weight_by())
             },
             ignoreNULL = FALSE
           )
 
           # Update reactiveVals when inputs change
+          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
+          # in testServer context where inputs may not be initialized
           observeEvent(input$type, {
             r_type(input$type)
           })
 
-          observeEvent(
-            input$n,
-            {
-              r_n(input$n)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$n, {
+            r_n(input$n)
+          })
 
-          observeEvent(
-            input$prop,
-            {
-              r_prop(input$prop)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$prop, {
+            r_prop(input$prop)
+          })
 
-          observeEvent(
-            input$order_by,
-            {
-              r_order_by(input$order_by)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$order_by, {
+            r_order_by(input$order_by)
+          })
 
-          observeEvent(
-            input$with_ties,
-            {
-              r_with_ties(input$with_ties)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$with_ties, {
+            r_with_ties(input$with_ties)
+          })
 
-          observeEvent(
-            input$weight_by,
-            {
-              r_weight_by(input$weight_by)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$weight_by, {
+            r_weight_by(input$weight_by)
+          })
 
-          observeEvent(
-            input$replace,
-            {
-              r_replace(input$replace)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$replace, {
+            r_replace(input$replace)
+          })
 
-          observeEvent(
-            input$rows,
-            {
-              r_rows(input$rows)
-            },
-            ignoreNULL = FALSE
-          )
+          observeEvent(input$rows, {
+            r_rows(input$rows)
+          })
+
+          observeEvent(input$value_mode, {
+            r_value_mode(input$value_mode)
+          })
 
           # Restore type selector on initialization
           observe({
@@ -169,7 +154,6 @@ new_slice_block <- function(
             type_val,
             n_val,
             prop_val,
-            use_prop_val,
             order_by_val,
             with_ties_val,
             weight_by_val,
@@ -177,6 +161,9 @@ new_slice_block <- function(
             rows_val,
             by_val
           ) {
+            # Determine mode: if prop is NULL, use n
+            use_prop <- !is.null(prop_val)
+
             # Validate inputs
             if (is.null(n_val) || n_val <= 0) {
               n_val <- 1
@@ -210,7 +197,7 @@ new_slice_block <- function(
 
             # Build expression based on type
             if (type_val == "head") {
-              args <- if (use_prop_val) {
+              args <- if (use_prop) {
                 paste0("prop = ", prop_val)
               } else {
                 paste0("n = ", n_val)
@@ -221,7 +208,7 @@ new_slice_block <- function(
               }
               return(parse(text = sprintf("dplyr::slice_head(data, %s)", args)))
             } else if (type_val == "tail") {
-              args <- if (use_prop_val) {
+              args <- if (use_prop) {
                 paste0("prop = ", prop_val)
               } else {
                 paste0("n = ", n_val)
@@ -239,7 +226,7 @@ new_slice_block <- function(
               func <- if (type_val == "min") "slice_min" else "slice_max"
               # Apply backticks to non-syntactic column names
               args <- backtick_if_needed(order_by_val)
-              if (use_prop_val) {
+              if (use_prop) {
                 args <- paste0(args, ", prop = ", prop_val)
               } else {
                 args <- paste0(args, ", n = ", n_val)
@@ -255,7 +242,7 @@ new_slice_block <- function(
               }
               return(parse(text = sprintf("dplyr::%s(data, %s)", func, args)))
             } else if (type_val == "sample") {
-              args <- if (use_prop_val) {
+              args <- if (use_prop) {
                 paste0("prop = ", prop_val)
               } else {
                 paste0("n = ", n_val)
@@ -298,44 +285,29 @@ new_slice_block <- function(
 
           # Reactive expression that updates immediately
           slice_expr <- reactive({
-            req(input$type)
-
-            # Get current input values with defaults
-            n_val <- if (is.null(input$n)) n else as.integer(input$n)
-            prop_val <- if (is.null(input$prop)) {
-              prop
-            } else {
-              as.numeric(input$prop)
-            }
-            use_prop_val <- isTRUE(input$use_prop)
-            order_by_val <- if (is.null(input$order_by)) {
-              order_by
-            } else {
-              input$order_by
-            }
-            with_ties_val <- if (is.null(input$with_ties)) {
-              with_ties
-            } else {
-              input$with_ties
-            }
-            weight_by_val <- if (is.null(input$weight_by)) {
-              weight_by
-            } else {
-              input$weight_by
-            }
-            replace_val <- if (is.null(input$replace)) {
-              replace
-            } else {
-              input$replace
-            }
-            rows_val <- if (is.null(input$rows)) rows else input$rows
+            # Use state reactiveVals with fallback to constructor parameters
+            # This ensures the expression works in both testServer and production
+            type_val <- r_type()
+            n_val <- r_n()
+            prop_val <- r_prop()
+            order_by_val <- r_order_by()
+            with_ties_val <- r_with_ties()
+            weight_by_val <- r_weight_by()
+            replace_val <- r_replace()
+            rows_val <- r_rows()
             by_val <- r_by_selection()
 
+            # Set prop_val to NULL if in count mode, n_val to NULL if in prop mode
+            if (r_value_mode() == "count") {
+              prop_val <- NULL
+            } else {
+              n_val <- NULL
+            }
+
             build_slice_expr(
-              input$type,
+              type_val,
               n_val,
               prop_val,
-              use_prop_val,
               order_by_val,
               with_ties_val,
               weight_by_val,
@@ -352,6 +324,7 @@ new_slice_block <- function(
               type = r_type,
               n = r_n,
               prop = r_prop,
+              value_mode = r_value_mode,
               order_by = r_order_by,
               with_ties = r_with_ties,
               weight_by = r_weight_by,
@@ -459,45 +432,47 @@ new_slice_block <- function(
                   )
                 ),
 
-                # Right column: Number/Proportion input + checkbox
+                # Value mode selector (Count vs Proportion)
                 div(
                   class = "block-input-wrapper",
                   conditionalPanel(
                     condition = sprintf("input['%s'] != 'custom'", ns("type")),
-                    div(
-                      class = "block-inline-checkbox-wrapper",
-                      div(
-                        # Number of rows input
-                        conditionalPanel(
-                          condition = sprintf("!input['%s']", ns("use_prop")),
-                          numericInput(
-                            ns("n"),
-                            label = "Number of rows",
-                            value = n,
-                            min = 1,
-                            step = 1
-                          )
-                        ),
-                        # Proportion input
-                        conditionalPanel(
-                          condition = sprintf("input['%s']", ns("use_prop")),
-                          numericInput(
-                            ns("prop"),
-                            label = "Proportion (0 to 1)",
-                            value = prop,
-                            min = 0,
-                            max = 1,
-                            step = 0.01
-                          )
-                        )
-                      ),
-                      div(
-                        class = "block-inline-checkbox",
-                        checkboxInput(
-                          ns("use_prop"),
-                          label = "Proportion",
-                          value = FALSE
-                        )
+                    radioButtons(
+                      ns("value_mode"),
+                      label = NULL,
+                      choices = c("Count" = "count", "Proportion" = "prop"),
+                      selected = if (is.null(prop)) "count" else "prop",
+                      inline = TRUE
+                    )
+                  )
+                ),
+
+                # Number/Proportion input
+                div(
+                  class = "block-input-wrapper",
+                  conditionalPanel(
+                    condition = sprintf("input['%s'] != 'custom'", ns("type")),
+                    # Number of rows input
+                    conditionalPanel(
+                      condition = sprintf("input['%s'] == 'count'", ns("value_mode")),
+                      numericInput(
+                        ns("n"),
+                        label = "Number of rows",
+                        value = n,
+                        min = 1,
+                        step = 1
+                      )
+                    ),
+                    # Proportion input
+                    conditionalPanel(
+                      condition = sprintf("input['%s'] == 'prop'", ns("value_mode")),
+                      numericInput(
+                        ns("prop"),
+                        label = "Proportion (0 to 1)",
+                        value = if (is.null(prop)) 0.1 else prop,
+                        min = 0,
+                        max = 1,
+                        step = 0.01
                       )
                     )
                   )

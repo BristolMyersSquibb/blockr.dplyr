@@ -267,3 +267,92 @@ test_that("filter_expr block restorability - multiple OR conditions", {
     }
   )
 })
+
+# Data transformation tests using block_server
+test_that("filter expr block filters simple condition - testServer", {
+  block <- new_filter_expr_block("mpg > 20")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify filtering
+      expected_rows <- nrow(mtcars[mtcars$mpg > 20, ])
+      expect_equal(nrow(result), expected_rows)
+      expect_true(all(result$mpg > 20))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("filter expr block handles multiple AND conditions - testServer", {
+  block <- new_filter_expr_block("mpg > 20 & cyl == 4")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify both conditions
+      expect_true(all(result$mpg > 20))
+      expect_true(all(result$cyl == 4))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("filter expr block with empty condition returns all - testServer", {
+  block <- new_filter_expr_block()
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should return all rows
+      expect_equal(nrow(result), nrow(mtcars))
+      expect_equal(ncol(result), ncol(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("filter expr block complex OR/AND logic - testServer", {
+  block <- new_filter_expr_block("(mpg > 25 | hp > 200) & cyl != 6")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Verify complex logic
+      expect_true(all(result$cyl != 6))
+      expect_true(all(result$mpg > 25 | result$hp > 200))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("filter expr block no matches returns empty - testServer", {
+  block <- new_filter_expr_block("mpg > 100")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Should be empty but preserve structure
+      expect_equal(nrow(result), 0)
+      expect_equal(ncol(result), ncol(mtcars))
+      expect_equal(names(result), names(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

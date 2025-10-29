@@ -328,3 +328,42 @@ test_that("mutate block restorability - multiple expressions", {
     }
   )
 })
+
+# Data transformation tests using block_server
+test_that("mutate block adds new column - testServer", {
+  block <- new_mutate_block(exprs = list(mpg_squared = "mpg * mpg"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mpg_squared" %in% names(result))
+      expect_equal(result$mpg_squared, mtcars$mpg * mtcars$mpg)
+      expect_true(all(names(mtcars) %in% names(result)))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("mutate block with grouping - testServer", {
+  block <- new_mutate_block(exprs = list(mean_mpg = "mean(mpg)"), by = "cyl")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mean_mpg" %in% names(result))
+
+      # Verify grouping worked - mean should be constant within each cyl group
+      for (cyl_val in unique(result$cyl)) {
+        cyl_rows <- result[result$cyl == cyl_val, ]
+        expect_true(all(cyl_rows$mean_mpg == cyl_rows$mean_mpg[1]))
+      }
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})

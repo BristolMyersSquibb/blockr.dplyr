@@ -317,3 +317,43 @@ test_that("join block with no by parameter uses UI interaction", {
   # The actual join keys would be selected via UI interaction
   expect_s3_class(blk, c("join_block", "transform_block", "block"))
 })
+
+# Data transformation tests using block_server
+test_that("join block left join - testServer", {
+  data_x <- data.frame(id = c(1, 2, 3), name = c('Alice', 'Bob', 'Charlie'))
+  data_y <- data.frame(id = c(1, 2, 4), age = c(25, 30, 35))
+
+  block <- new_join_block(type = "left_join", by = c("id"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("name" %in% names(result))
+      expect_true("age" %in% names(result))
+      expect_equal(nrow(result), 3)
+    },
+    args = list(x = block, data = list(x = function() data_x, y = function() data_y))
+  )
+})
+
+test_that("join block inner join - testServer", {
+  data_x <- data.frame(id = c(1, 2, 3), x_val = c(10, 20, 30))
+  data_y <- data.frame(id = c(2, 3, 4), y_val = c(200, 300, 400))
+
+  block <- new_join_block(type = "inner_join", by = c("id"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_equal(nrow(result), 2)
+      expect_true(all(c("x_val", "y_val") %in% names(result)))
+    },
+    args = list(x = block, data = list(x = function() data_x, y = function() data_y))
+  )
+})
