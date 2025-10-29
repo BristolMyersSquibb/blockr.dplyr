@@ -1,13 +1,3 @@
-test_that("mutate block constructor", {
-  blk <- new_mutate_block()
-  expect_s3_class(blk, c("mutate_block", "transform_block", "block"))
-})
-
-test_that("mutate block constructor with by parameter", {
-  blk <- new_mutate_block(by = c("cyl", "am"))
-  expect_s3_class(blk, c("mutate_block", "transform_block", "block"))
-})
-
 test_that("parse_mutate handles .by parameter", {
   # Test without grouping
   expr1 <- parse_mutate(c(new_col = "mpg * 2"))

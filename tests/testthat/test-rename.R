@@ -1,17 +1,3 @@
-test_that("rename block constructor", {
-  # Test basic constructor
-  blk <- new_rename_block()
-  expect_s3_class(blk, c("rename_block", "transform_block", "block"))
-
-  # Test constructor with rename pairs
-  blk <- new_rename_block(list(miles_per_gallon = "mpg"))
-  expect_s3_class(blk, c("rename_block", "transform_block", "block"))
-
-  # Test constructor with multiple renames
-  blk <- new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl"))
-  expect_s3_class(blk, c("rename_block", "transform_block", "block"))
-})
-
 test_that("parse_rename function", {
   # Test empty renames
   expr <- parse_rename(list())

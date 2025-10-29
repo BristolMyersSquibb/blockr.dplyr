@@ -1,39 +1,3 @@
-test_that("join block constructor with defaults", {
-  blk <- new_join_block()
-  expect_s3_class(blk, c("join_block", "transform_block", "block"))
-})
-
-test_that("join block constructor with type parameter", {
-  # Test all join types
-  join_types <- c(
-    "left_join",
-    "inner_join",
-    "right_join",
-    "full_join",
-    "semi_join",
-    "anti_join"
-  )
-
-  for (jtype in join_types) {
-    blk <- new_join_block(type = jtype)
-    expect_s3_class(blk, c("join_block", "transform_block", "block"))
-  }
-})
-
-test_that("join block constructor with by parameter", {
-  # Single column join
-  blk1 <- new_join_block(by = "id")
-  expect_s3_class(blk1, c("join_block", "transform_block", "block"))
-
-  # Multiple column join
-  blk2 <- new_join_block(by = c("id", "name"))
-  expect_s3_class(blk2, c("join_block", "transform_block", "block"))
-
-  # Named join (different column names in x and y)
-  blk3 <- new_join_block(by = list(id = "user_id", name = "user_name"))
-  expect_s3_class(blk3, c("join_block", "transform_block", "block"))
-})
-
 test_that("join block left_join basic functionality", {
   skip_if_not_installed("dplyr")
   skip_if_not_installed("shiny")

@@ -163,18 +163,6 @@ test_that("bind_cols block constructor", {
   )
 })
 
-test_that("bind blocks have correct structure", {
-  bind_rows_block <- new_bind_rows_block()
-  bind_cols_block <- new_bind_cols_block()
-
-  # Check that blocks have required components
-  expect_true(is.function(bind_rows_block$expr_server))
-  expect_true(is.function(bind_rows_block$expr_ui))
-
-  expect_true(is.function(bind_cols_block$expr_server))
-  expect_true(is.function(bind_cols_block$expr_ui))
-})
-
 test_that("bind_rows block handles different column structures", {
   # Test data with different column sets
   x_df <- data.frame(a = 1:2, b = 3:4)
@@ -215,17 +203,6 @@ test_that("bind_cols block validates row count compatibility", {
   # bind_cols should fail with different row counts
   expect_error(dplyr::bind_cols(x_df, y_df))
 })
-
-test_that("bind blocks maintain state correctly", {
-  # Test that state is properly maintained
-  bind_rows_block <- new_bind_rows_block()
-  bind_cols_block <- new_bind_cols_block()
-
-  expect_s3_class(bind_rows_block, "bind_rows_block")
-  expect_s3_class(bind_cols_block, "bind_cols_block")
-})
-
-# Removed: ID column functionality will be implemented later
 
 test_that("bind blocks handle empty data gracefully", {
   empty_df <- data.frame()

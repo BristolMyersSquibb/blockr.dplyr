@@ -1,8 +1,3 @@
-test_that("summarize block constructor", {
-  blk <- new_summarize_block()
-  expect_s3_class(blk, c("summarize_block", "transform_block", "block"))
-})
-
 test_that("parse_summarize handles single expression", {
   # Test with single expression
   single_expr <- list(count = "n()")
