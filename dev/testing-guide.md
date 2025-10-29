@@ -168,4 +168,31 @@ test_that("filter block filters data correctly - testServer", {
 
 **We don't use shinytest2.** All Shiny testing is done with testServer, which can simulate UI interactions via `session$setInputs()`.
 
-See [shinytest2-guide.md](shinytest2-guide.md) for migration history.
+### When would shinytest2 be useful? (Very rare cases)
+
+ShinyTest2 performs **full browser-based testing** - it launches a real Shiny app in a headless browser (Chrome/Chromium) and simulates user clicks, typing, etc.
+
+**Use shinytest2 ONLY for:**
+- ✅ **Visual regression testing** - Catching CSS/layout changes via screenshots
+- ✅ **Complex JavaScript interactions** - Custom JS widgets that testServer can't simulate
+- ✅ **Browser-specific rendering bugs** - Issues that only appear in actual browser rendering
+- ✅ **Third-party widget integration** - External JS libraries with complex DOM manipulation
+
+**DO NOT use shinytest2 for:**
+- ❌ Testing reactive logic (use testServer)
+- ❌ Testing data transformations (use testServer with block_server)
+- ❌ Testing module interactions (use testServer)
+- ❌ Testing input changes and their effects (use testServer with session$setInputs)
+- ❌ Testing button clicks, checkboxes, dropdowns (use testServer)
+
+**Why we avoid shinytest2:**
+- 🐌 **Very slow** (~2-5 seconds per test vs 0.2s with testServer)
+- 🔧 **Brittle** - Breaks on minor UI changes, CSS updates, timing issues
+- 🖥️ **Platform-dependent** - Requires Chrome/Chromium installation
+- 🐛 **Harder to debug** - Failures are less clear than testServer errors
+
+**Key insight:** If you can test it with `session$setInputs()` in testServer, that's always better than shinytest2.
+
+### Historical note
+
+We previously used shinytest2 but found that 100% of those tests could be replaced with faster, more reliable testServer tests. We removed all shinytest2 tests in October 2025.
