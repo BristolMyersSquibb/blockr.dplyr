@@ -61,6 +61,21 @@ register_dplyr_blocks <- function() {
       "transform",
       "transform"
     ),
+    icon = c(
+      "layout-sidebar-inset-reverse", # select block
+      "bezier2", # join block
+      "sort-down-alt", # arrange block
+      "pencil-square", # mutate block
+      "calculator", # summarize block
+      "code-slash", # filter_expr block
+      "filter", # value_filter block
+      "arrows-collapse-vertical", # bind_rows block
+      "arrows-collapse", # bind_cols block
+      "tags", # rename block
+      "scissors", # slice block
+      "arrow-down-up", # pivot_longer block
+      "arrow-left-right" # pivot_wider block
+    ),
     package = utils::packageName(),
     overwrite = TRUE
   )
