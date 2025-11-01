@@ -13,11 +13,17 @@ blockr.dplyr is part of the blockr ecosystem. blockr.core provides the workflow 
 
 ## Installation
 
+You can install blockr.dplyr from CRAN:
+
+```r
+install.packages("blockr.dplyr")
+```
+
+Or install the development version from GitHub:
+
 ```r
 # install.packages("devtools")
 devtools::install_github("BristolMyersSquibb/blockr.dplyr")
-devtools::install_github("BristolMyersSquibb/blockr.core")
-devtools::install_github("BristolMyersSquibb/blockr.ui")
 ```
 
 ## Getting Started

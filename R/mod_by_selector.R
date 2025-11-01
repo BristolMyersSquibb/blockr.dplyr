@@ -1,4 +1,4 @@
-#' Unified Group By Column Selector Module
+#' Unified Group By Column Selector Module (Internal)
 #'
 #' A reusable Shiny module for selecting group by columns across all blocks
 #' that support the .by parameter in dplyr operations.
@@ -11,7 +11,8 @@
 #' @return For UI function, returns a shiny tag. For server function, returns a reactive
 #'   containing selected column names.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 mod_by_selector_ui <- function(
   id,
   label = "Group by columns (optional)",
@@ -28,13 +29,14 @@ mod_by_selector_ui <- function(
   )
 }
 
-#' Group By Column Selector Server Module
+#' Group By Column Selector Server Module (Internal)
 #'
 #' @param id Character string. Module ID.
 #' @param get_cols Reactive function that returns available column names.
 #' @param initial_value Character vector. Initial selected columns.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
   moduleServer(id, function(input, output, session) {
     # Reactive to store current selection

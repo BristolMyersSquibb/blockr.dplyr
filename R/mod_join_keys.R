@@ -1,4 +1,4 @@
-#' Join Keys Mapping Module
+#' Join Keys Mapping Module (Internal)
 #'
 #' A reusable Shiny module for configuring join keys between two data frames.
 #' Supports both same-name joins (natural joins) and different-name joins
@@ -10,7 +10,8 @@
 #' @return For UI function, returns a shiny tag. For server function, returns a reactive
 #'   containing join key specifications.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 mod_join_keys_ui <- function(id, label = "Join Keys") {
   ns <- NS(id)
 
@@ -176,14 +177,15 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
   )
 }
 
-#' Join Keys Server Module
+#' Join Keys Server Module (Internal)
 #'
 #' @param id Character string. Module ID.
 #' @param get_x_cols Reactive function that returns column names from the first dataset.
 #' @param get_y_cols Reactive function that returns column names from the second dataset.
 #' @param initial_keys List or character vector. Initial join keys.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 mod_join_keys_server <- function(
   id,
   get_x_cols,
