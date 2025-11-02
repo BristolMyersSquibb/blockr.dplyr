@@ -18,31 +18,34 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars dataset
-#' library(blockr.core)
-#' serve(new_value_filter_block(), list(data = mtcars))
+#' # Create a value filter block
+#' new_value_filter_block()
 #'
-#' # With initial condition
-#' serve(new_value_filter_block(
-#'   conditions = list(
-#'     list(column = "cyl", values = c(4, 6), mode = "include")
-#'   )
-#' ), list(data = mtcars))
+#' if (interactive()) {
+#'   # Basic usage with mtcars dataset
+#'   library(blockr.core)
+#'   serve(new_value_filter_block(), list(data = mtcars))
 #'
-#' # Connected blocks example
-#' serve(
-#'   new_board(
-#'     blocks = list(
-#'       a = new_dataset_block(),
-#'       b = new_value_filter_block()
-#'     ),
-#'     links = links(
-#'       from = c("a"),
-#'       to = c("b")
+#'   # With initial condition
+#'   serve(new_value_filter_block(
+#'     conditions = list(
+#'       list(column = "cyl", values = c(4, 6), mode = "include")
+#'     )
+#'   ), list(data = mtcars))
+#'
+#'   # Connected blocks example
+#'   serve(
+#'     new_board(
+#'       blocks = list(
+#'         a = new_dataset_block(),
+#'         b = new_value_filter_block()
+#'       ),
+#'       links = links(
+#'         from = c("a"),
+#'         to = c("b")
+#'       )
 #'     )
 #'   )
-#' )
 #' }
 #' @export
 new_value_filter_block <- function(

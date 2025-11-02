@@ -20,73 +20,76 @@ multi-column support including same-name and different-name joins (see
 \code{\link[dplyr:mutate-joins]{dplyr::left_join()}}, \code{\link[dplyr:mutate-joins]{dplyr::inner_join()}}, etc.).
 }
 \examples{
-\dontrun{
-library(blockr.core)
-library(blockr.dplyr)
+# Create a join block
+new_join_block(type = "left_join")
 
-# Basic left join - automatically detects common columns
-serve(
-  new_board(
-    blocks = list(
-      data1 = new_dataset_block(dataset = "band_members"),
-      data2 = new_dataset_block(dataset = "band_instruments"),
-      joined = new_join_block(type = "left_join")
-    ),
-    links = links(
-      from = c("data1", "data2"),
-      to = c("joined", "joined"),
-      input = c("x", "y")
+if (interactive()) {
+  library(blockr.core)
+  library(blockr.dplyr)
+
+  # Basic left join - automatically detects common columns
+  serve(
+    new_board(
+      blocks = list(
+        data1 = new_dataset_block(dataset = "band_members"),
+        data2 = new_dataset_block(dataset = "band_instruments"),
+        joined = new_join_block(type = "left_join")
+      ),
+      links = links(
+        from = c("data1", "data2"),
+        to = c("joined", "joined"),
+        input = c("x", "y")
+      )
     )
   )
-)
 
-# Inner join with explicit join column
-serve(
-  new_board(
-    blocks = list(
-      data1 = new_dataset_block(dataset = "band_members"),
-      data2 = new_dataset_block(dataset = "band_instruments"),
-      joined = new_join_block(type = "inner_join", by = "name")
-    ),
-    links = links(
-      from = c("data1", "data2"),
-      to = c("joined", "joined"),
-      input = c("x", "y")
+  # Inner join with explicit join column
+  serve(
+    new_board(
+      blocks = list(
+        data1 = new_dataset_block(dataset = "band_members"),
+        data2 = new_dataset_block(dataset = "band_instruments"),
+        joined = new_join_block(type = "inner_join", by = "name")
+      ),
+      links = links(
+        from = c("data1", "data2"),
+        to = c("joined", "joined"),
+        input = c("x", "y")
+      )
     )
   )
-)
 
-# Right join - keep all rows from right dataset
-serve(
-  new_board(
-    blocks = list(
-      data1 = new_dataset_block(dataset = "band_members"),
-      data2 = new_dataset_block(dataset = "band_instruments"),
-      joined = new_join_block(type = "right_join")
-    ),
-    links = links(
-      from = c("data1", "data2"),
-      to = c("joined", "joined"),
-      input = c("x", "y")
+  # Right join - keep all rows from right dataset
+  serve(
+    new_board(
+      blocks = list(
+        data1 = new_dataset_block(dataset = "band_members"),
+        data2 = new_dataset_block(dataset = "band_instruments"),
+        joined = new_join_block(type = "right_join")
+      ),
+      links = links(
+        from = c("data1", "data2"),
+        to = c("joined", "joined"),
+        input = c("x", "y")
+      )
     )
   )
-)
 
-# Anti join - find rows in left without matches in right
-serve(
-  new_board(
-    blocks = list(
-      data1 = new_dataset_block(dataset = "band_members"),
-      data2 = new_dataset_block(dataset = "band_instruments"),
-      joined = new_join_block(type = "anti_join")
-    ),
-    links = links(
-      from = c("data1", "data2"),
-      to = c("joined", "joined"),
-      input = c("x", "y")
+  # Anti join - find rows in left without matches in right
+  serve(
+    new_board(
+      blocks = list(
+        data1 = new_dataset_block(dataset = "band_members"),
+        data2 = new_dataset_block(dataset = "band_instruments"),
+        joined = new_join_block(type = "anti_join")
+      ),
+      links = links(
+        from = c("data1", "data2"),
+        to = c("joined", "joined"),
+        input = c("x", "y")
+      )
     )
   )
-)
 }
 
 }

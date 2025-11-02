@@ -13,27 +13,30 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars dataset
-#' library(blockr.core)
-#' serve(new_filter_expr_block(), list(data = mtcars))
+#' # Create a filter block
+#' new_filter_expr_block("mpg > 20")
 #'
-#' # With custom initial condition
-#' serve(new_filter_expr_block("mpg > 20"), list(data = mtcars))
+#' if (interactive()) {
+#'   # Basic usage with mtcars dataset
+#'   library(blockr.core)
+#'   serve(new_filter_expr_block(), list(data = mtcars))
 #'
-#' # Connected blocks example
-#' serve(
-#'   new_board(
-#'     blocks = list(
-#'       a = new_dataset_block(),
-#'       b = new_filter_expr_block()
-#'     ),
-#'     links = links(
-#'       from = c("a"),
-#'       to = c("b")
+#'   # With custom initial condition
+#'   serve(new_filter_expr_block("mpg > 20"), list(data = mtcars))
+#'
+#'   # Connected blocks example
+#'   serve(
+#'     new_board(
+#'       blocks = list(
+#'         a = new_dataset_block(),
+#'         b = new_filter_expr_block()
+#'       ),
+#'       links = links(
+#'         from = c("a"),
+#'         to = c("b")
+#'       )
 #'     )
 #'   )
-#' )
 #' }
 #' @export
 new_filter_expr_block <- function(exprs = "TRUE", ...) {

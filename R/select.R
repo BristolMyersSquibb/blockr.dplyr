@@ -36,36 +36,39 @@
 #' - Useful for finding unique combinations of selected columns
 #'
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars dataset
-#' library(blockr.core)
-#' serve(new_select_block(), list(data = mtcars))
+#' # Create a select block
+#' new_select_block(columns = c("mpg", "cyl", "hp"))
 #'
-#' # With initial column selection
-#' serve(new_select_block(columns = c("mpg", "cyl", "hp")), list(data = mtcars))
+#' if (interactive()) {
+#'   # Basic usage with mtcars dataset
+#'   library(blockr.core)
+#'   serve(new_select_block(), list(data = mtcars))
 #'
-#' # Exclude mode (select all except specified columns)
-#' serve(new_select_block(columns = c("gear", "carb"), exclude = TRUE), list(data = mtcars))
+#'   # With initial column selection
+#'   serve(new_select_block(columns = c("mpg", "cyl", "hp")), list(data = mtcars))
 #'
-#' # Select with distinct (unique combinations)
-#' serve(new_select_block(columns = c("cyl", "gear"), distinct = TRUE), list(data = mtcars))
+#'   # Exclude mode (select all except specified columns)
+#'   serve(new_select_block(columns = c("gear", "carb"), exclude = TRUE), list(data = mtcars))
 #'
-#' # Full deduplication (distinct on all columns)
-#' serve(new_select_block(distinct = TRUE), list(data = mtcars))
+#'   # Select with distinct (unique combinations)
+#'   serve(new_select_block(columns = c("cyl", "gear"), distinct = TRUE), list(data = mtcars))
 #'
-#' # Connected blocks example
-#' serve(
-#'   new_board(
-#'     blocks = list(
-#'       a = new_dataset_block(),
-#'       b = new_select_block()
-#'     ),
-#'     links = links(
-#'       from = c("a"),
-#'       to = c("b")
+#'   # Full deduplication (distinct on all columns)
+#'   serve(new_select_block(distinct = TRUE), list(data = mtcars))
+#'
+#'   # Connected blocks example
+#'   serve(
+#'     new_board(
+#'       blocks = list(
+#'         a = new_dataset_block(),
+#'         b = new_select_block()
+#'       ),
+#'       links = links(
+#'         from = c("a"),
+#'         to = c("b")
+#'       )
 #'     )
 #'   )
-#' )
 #' }
 #' @export
 new_select_block <- function(

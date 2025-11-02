@@ -13,14 +13,17 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars datase
-#' library(blockr.core)
-#' serve(new_mutate_block(), data = list(data = mtcars))
+#' # Create a mutate block
+#' new_mutate_block(exprs = list(mpg_squared = "mpg^2"))
 #'
-#' # With a custom datase
-#' df <- tibble::tibble(x = 1:5, `2025 Sales` = letters[1:5], .name_repair = "minimal")
-#' serve(new_mutate_block(), data = list(data = df))
+#' if (interactive()) {
+#'   # Basic usage with mtcars datase
+#'   library(blockr.core)
+#'   serve(new_mutate_block(), data = list(data = mtcars))
+#'
+#'   # With a custom datase
+#'   df <- tibble::tibble(x = 1:5, `2025 Sales` = letters[1:5], .name_repair = "minimal")
+#'   serve(new_mutate_block(), data = list(data = df))
 #' }
 #' @export
 new_mutate_block <- function(

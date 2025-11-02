@@ -13,30 +13,33 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars dataset
-#' library(blockr.core)
-#' serve(new_rename_block(), data = list(data = mtcars))
+#' # Create a rename block
+#' new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl"))
 #'
-#' # With predefined renames
-#' serve(
-#'   new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
-#'   data = list(data = mtcars)
-#' )
+#' if (interactive()) {
+#'   # Basic usage with mtcars dataset
+#'   library(blockr.core)
+#'   serve(new_rename_block(), data = list(data = mtcars))
 #'
-#' # Connected blocks example
-#' serve(
-#'   new_board(
-#'     blocks = list(
-#'       a = new_dataset_block(),
-#'       b = new_rename_block(list(horsepower = "hp"))
-#'     ),
-#'     links = links(
-#'       from = c("a"),
-#'       to = c("b")
+#'   # With predefined renames
+#'   serve(
+#'     new_rename_block(list(miles_per_gallon = "mpg", cylinders = "cyl")),
+#'     data = list(data = mtcars)
+#'   )
+#'
+#'   # Connected blocks example
+#'   serve(
+#'     new_board(
+#'       blocks = list(
+#'         a = new_dataset_block(),
+#'         b = new_rename_block(list(horsepower = "hp"))
+#'       ),
+#'       links = links(
+#'         from = c("a"),
+#'         to = c("b")
+#'       )
 #'     )
 #'   )
-#' )
 #' }
 #' @export
 new_rename_block <- function(

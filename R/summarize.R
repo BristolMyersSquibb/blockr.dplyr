@@ -39,36 +39,39 @@
 #' ```
 #'
 #' @examples
-#' \dontrun{
-#' # Basic usage with mtcars dataset
-#' library(blockr.core)
-#' serve(new_summarize_block(), list(data = mtcars))
+#' # Create a summarize block
+#' new_summarize_block()
 #'
-#' # With a custom dataset
-#' df <- data.frame(x = 1:5, y = letters[1:5])
-#' serve(new_summarize_block(), list(data = df))
+#' if (interactive()) {
+#'   # Basic usage with mtcars dataset
+#'   library(blockr.core)
+#'   serve(new_summarize_block(), list(data = mtcars))
 #'
-#' # Using unpack to expand helper function results
-#' # Define the helper in your environment first
-#' calc_stats <- function(df) {
-#'   data.frame(
-#'     mean_x = mean(df$x),
-#'     mean_y = mean(df$y),
-#'     sum_x = sum(df$x),
-#'     sum_y = sum(df$y)
+#'   # With a custom dataset
+#'   df <- data.frame(x = 1:5, y = letters[1:5])
+#'   serve(new_summarize_block(), list(data = df))
+#'
+#'   # Using unpack to expand helper function results
+#'   # Define the helper in your environment first
+#'   calc_stats <- function(df) {
+#'     data.frame(
+#'       mean_x = mean(df$x),
+#'       mean_y = mean(df$y),
+#'       sum_x = sum(df$x),
+#'       sum_y = sum(df$y)
+#'     )
+#'   }
+#'
+#'   # With unpacking enabled
+#'   serve(
+#'     new_summarize_block(
+#'       exprs = list(stats = "calc_stats(pick(everything()))"),
+#'       by = "group",
+#'       unpack = TRUE
+#'     ),
+#'     list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
 #'   )
-#' }
-#'
-#' # With unpacking enabled
-#' serve(
-#'   new_summarize_block(
-#'     exprs = list(stats = "calc_stats(pick(everything()))"),
-#'     by = "group",
-#'     unpack = TRUE
-#'   ),
-#'   list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
-#' )
-#' # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
+#'   # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
 #' }
 #' @export
 new_summarize_block <- function(

@@ -8,48 +8,51 @@
 #' @param ... Forwarded to [new_block()]
 #'
 #' @examples
-#' \dontrun{
-#' library(blockr.core)
-#' library(blockr.dplyr)
+#' # Create an arrange block
+#' new_arrange_block(columns = "mpg")
 #'
-#' # Basic usage - single column ascending
-#' serve(new_arrange_block(columns = "mpg"), list(data = mtcars))
+#' if (interactive()) {
+#'   library(blockr.core)
+#'   library(blockr.dplyr)
 #'
-#' # Multiple columns with custom directions
-#' serve(
-#'   new_arrange_block(
-#'     columns = list(
-#'       list(column = "cyl", direction = "asc"),
-#'       list(column = "mpg", direction = "desc")
-#'     )
-#'   ),
-#'   list(data = mtcars)
-#' )
+#'   # Basic usage - single column ascending
+#'   serve(new_arrange_block(columns = "mpg"), list(data = mtcars))
 #'
-#' # Connected blocks - sort after categorizing
-#' serve(
-#'   new_board(
-#'     blocks = list(
-#'       data = new_dataset_block(dataset = "mtcars"),
-#'       categorized = new_mutate_block(
-#'         exprs = list(
-#'           car_type = "dplyr::case_when(cyl <= 4 ~ 'Economy', cyl <= 6 ~ 'Standard', TRUE ~ 'Performance')"
-#'         )
-#'       ),
-#'       sorted = new_arrange_block(
-#'         columns = list(
-#'           list(column = "car_type", direction = "asc"),
-#'           list(column = "mpg", direction = "desc"),
-#'           list(column = "hp", direction = "desc")
-#'         )
+#'   # Multiple columns with custom directions
+#'   serve(
+#'     new_arrange_block(
+#'       columns = list(
+#'         list(column = "cyl", direction = "asc"),
+#'         list(column = "mpg", direction = "desc")
 #'       )
 #'     ),
-#'     links = links(
-#'       from = c("data", "categorized"),
-#'       to = c("categorized", "sorted")
+#'     list(data = mtcars)
+#'   )
+#'
+#'   # Connected blocks - sort after categorizing
+#'   serve(
+#'     new_board(
+#'       blocks = list(
+#'         data = new_dataset_block(dataset = "mtcars"),
+#'         categorized = new_mutate_block(
+#'           exprs = list(
+#'             car_type = "dplyr::case_when(cyl <= 4 ~ 'Economy', cyl <= 6 ~ 'Standard', TRUE ~ 'Performance')"
+#'           )
+#'         ),
+#'         sorted = new_arrange_block(
+#'           columns = list(
+#'             list(column = "car_type", direction = "asc"),
+#'             list(column = "mpg", direction = "desc"),
+#'             list(column = "hp", direction = "desc")
+#'           )
+#'         )
+#'       ),
+#'       links = links(
+#'         from = c("data", "categorized"),
+#'         to = c("categorized", "sorted")
+#'       )
 #'     )
 #'   )
-#' )
 #' }
 #'
 #' @export

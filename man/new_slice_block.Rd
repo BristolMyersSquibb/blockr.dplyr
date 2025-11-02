@@ -48,19 +48,22 @@ This block allows row selection using various dplyr slice functions
 Features reactive UI with immediate updates and comprehensive grouping support.
 }
 \examples{
-\dontrun{
-# Basic usage
-library(blockr.core)
-serve(new_slice_block(), list(data = mtcars))
+# Create a slice block
+new_slice_block(type = "head", n = 5)
 
-# Select first 5 rows
-serve(new_slice_block(type = "head", n = 5), list(data = mtcars))
+if (interactive()) {
+  # Basic usage
+  library(blockr.core)
+  serve(new_slice_block(), list(data = mtcars))
 
-# Select rows with highest mpg values
-serve(new_slice_block(type = "max", order_by = "mpg", n = 3), list(data = mtcars))
+  # Select first 5 rows
+  serve(new_slice_block(type = "head", n = 5), list(data = mtcars))
 
-# Random sampling
-serve(new_slice_block(type = "sample", n = 10, replace = FALSE), list(data = mtcars))
+  # Select rows with highest mpg values
+  serve(new_slice_block(type = "max", order_by = "mpg", n = 3), list(data = mtcars))
+
+  # Random sampling
+  serve(new_slice_block(type = "sample", n = 10, replace = FALSE), list(data = mtcars))
 }
 }
 \seealso{

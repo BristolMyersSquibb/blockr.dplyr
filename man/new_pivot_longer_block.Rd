@@ -41,34 +41,37 @@ into two columns: one containing the original column names and another containin
 the values (see \code{\link[tidyr:pivot_longer]{tidyr::pivot_longer()}}).
 }
 \examples{
-\dontrun{
-# Basic usage with wide format data
-library(blockr.core)
-wide_data <- data.frame(
-  id = 1:3,
-  measurement_a = c(10, 20, 30),
-  measurement_b = c(15, 25, 35),
-  measurement_c = c(12, 22, 32)
-)
-serve(
-  new_pivot_longer_block(
-    cols = c("measurement_a", "measurement_b", "measurement_c"),
-    names_to = "measurement_type",
-    values_to = "value"
-  ),
-  data = list(data = wide_data)
-)
+# Create a pivot longer block
+new_pivot_longer_block()
 
-# With names_prefix to clean column names
-serve(
-  new_pivot_longer_block(
-    cols = c("measurement_a", "measurement_b", "measurement_c"),
-    names_to = "type",
-    values_to = "measurement",
-    names_prefix = "measurement_"
-  ),
-  data = list(data = wide_data)
-)
+if (interactive()) {
+  # Basic usage with wide format data
+  library(blockr.core)
+  wide_data <- data.frame(
+    id = 1:3,
+    measurement_a = c(10, 20, 30),
+    measurement_b = c(15, 25, 35),
+    measurement_c = c(12, 22, 32)
+  )
+  serve(
+    new_pivot_longer_block(
+      cols = c("measurement_a", "measurement_b", "measurement_c"),
+      names_to = "measurement_type",
+      values_to = "value"
+    ),
+    data = list(data = wide_data)
+  )
+
+  # With names_prefix to clean column names
+  serve(
+    new_pivot_longer_block(
+      cols = c("measurement_a", "measurement_b", "measurement_c"),
+      names_to = "type",
+      values_to = "measurement",
+      names_prefix = "measurement_"
+    ),
+    data = list(data = wide_data)
+  )
 }
 }
 \seealso{

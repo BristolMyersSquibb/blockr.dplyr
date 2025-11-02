@@ -43,41 +43,44 @@ into new columns (see \code{\link[tidyr:pivot_wider]{tidyr::pivot_wider()}}). Th
 of pivot_longer.
 }
 \examples{
-\dontrun{
-# Basic usage with long format data
-library(blockr.core)
-long_data <- data.frame(
-  id = rep(1:3, each = 3),
-  measurement_type = rep(c("a", "b", "c"), 3),
-  value = c(10, 15, 12, 20, 25, 22, 30, 35, 32)
-)
-serve(
-  new_pivot_wider_block(
-    names_from = "measurement_type",
-    values_from = "value"
-  ),
-  data = list(data = long_data)
-)
+# Create a pivot wider block
+new_pivot_wider_block()
 
-# With values_fill to replace NAs
-serve(
-  new_pivot_wider_block(
-    names_from = "measurement_type",
-    values_from = "value",
-    values_fill = "0"
-  ),
-  data = list(data = long_data)
-)
+if (interactive()) {
+  # Basic usage with long format data
+  library(blockr.core)
+  long_data <- data.frame(
+    id = rep(1:3, each = 3),
+    measurement_type = rep(c("a", "b", "c"), 3),
+    value = c(10, 15, 12, 20, 25, 22, 30, 35, 32)
+  )
+  serve(
+    new_pivot_wider_block(
+      names_from = "measurement_type",
+      values_from = "value"
+    ),
+    data = list(data = long_data)
+  )
 
-# With custom names_prefix
-serve(
-  new_pivot_wider_block(
-    names_from = "measurement_type",
-    values_from = "value",
-    names_prefix = "measure_"
-  ),
-  data = list(data = long_data)
-)
+  # With values_fill to replace NAs
+  serve(
+    new_pivot_wider_block(
+      names_from = "measurement_type",
+      values_from = "value",
+      values_fill = "0"
+    ),
+    data = list(data = long_data)
+  )
+
+  # With custom names_prefix
+  serve(
+    new_pivot_wider_block(
+      names_from = "measurement_type",
+      values_from = "value",
+      names_prefix = "measure_"
+    ),
+    data = list(data = long_data)
+  )
 }
 }
 \seealso{
