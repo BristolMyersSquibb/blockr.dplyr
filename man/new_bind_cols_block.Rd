@@ -18,3 +18,45 @@ using \code{\link[dplyr:bind_cols]{dplyr::bind_cols()}}. It combines data frames
 requiring them to have the same number of rows. Duplicate column names
 are automatically handled by dplyr.
 }
+\examples{
+\dontrun{
+library(blockr.core)
+library(blockr.dplyr)
+
+# Basic usage - combine different datasets horizontally
+serve(
+  new_board(
+    blocks = list(
+      iris_data = new_dataset_block(dataset = "iris"),
+      mtcars_data = new_dataset_block(dataset = "mtcars"),
+      head1 = new_slice_block(type = "head", n = 5),
+      head2 = new_slice_block(type = "head", n = 5),
+      combined = new_bind_cols_block()
+    ),
+    links = links(
+      from = c("iris_data", "mtcars_data", "head1", "head2"),
+      to = c("head1", "head2", "combined", "combined"),
+      input = c("data", "data", "1", "2")
+    )
+  )
+)
+
+# Combine selected columns from same dataset
+serve(
+  new_board(
+    blocks = list(
+      mtcars_data = new_dataset_block(dataset = "mtcars"),
+      engine_cols = new_select_block(columns = c("mpg", "cyl", "hp")),
+      weight_cols = new_select_block(columns = c("wt", "qsec")),
+      combined = new_bind_cols_block()
+    ),
+    links = links(
+      from = c("mtcars_data", "mtcars_data", "engine_cols", "weight_cols"),
+      to = c("engine_cols", "weight_cols", "combined", "combined"),
+      input = c("data", "data", "1", "2")
+    )
+  )
+)
+}
+
+}
