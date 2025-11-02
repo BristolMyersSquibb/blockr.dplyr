@@ -20,3 +20,44 @@ This block allows for row-wise combination of two or more data frames
 using \code{\link[dplyr:bind_rows]{dplyr::bind_rows()}}. It stacks data frames vertically, matching
 columns by name and filling missing columns with NA values.
 }
+\examples{
+\dontrun{
+library(blockr.core)
+library(blockr.dplyr)
+
+# Basic usage - stack filtered datasets
+serve(
+  new_board(
+    blocks = list(
+      iris_data = new_dataset_block(dataset = "iris"),
+      setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
+      versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+      combined = new_bind_rows_block()
+    ),
+    links = links(
+      from = c("iris_data", "iris_data", "setosa", "versicolor"),
+      to = c("setosa", "versicolor", "combined", "combined"),
+      input = c("data", "data", "1", "2")
+    )
+  )
+)
+
+# With ID column to track source
+serve(
+  new_board(
+    blocks = list(
+      iris_data = new_dataset_block(dataset = "iris"),
+      setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
+      versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+      combined = new_bind_rows_block(id_name = "source")
+    ),
+    links = links(
+      from = c("iris_data", "iris_data", "setosa", "versicolor"),
+      to = c("setosa", "versicolor", "combined", "combined"),
+      input = c("data", "data", "1", "2")
+    )
+  )
+)
+}
+
+}

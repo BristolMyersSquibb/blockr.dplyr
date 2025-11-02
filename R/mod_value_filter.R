@@ -55,6 +55,7 @@ actual_to_display <- function(value) {
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags tagList
 #' @keywords internal
+#' @noRd
 mod_value_filter_server <- function(
   id,
   get_value,
@@ -424,6 +425,7 @@ mod_value_filter_server <- function(
 #' @param id The module ID
 #' @return A div containing the UI elements
 #' @keywords internal
+#' @noRd
 mod_value_filter_ui <- function(id) {
   ns <- NS(id)
 
@@ -597,6 +599,8 @@ mod_value_filter_ui <- function(id) {
 #' @param show_remove Whether to show remove button
 #' @param ns Namespace function (unused, kept for compatibility)
 #' @return A div containing the row UI
+#' @keywords internal
+#' @noRd
 value_filter_condition_ui <- function(
   id,
   column = NULL,

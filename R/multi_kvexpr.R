@@ -13,6 +13,7 @@
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
 #' @keywords internal
+#' @noRd
 mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -178,6 +179,7 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
 #' @param extra_button Optional UI element (e.g., submit button) to display on the right side
 #' @return A div containing the UI elements
 #' @keywords internal
+#' @noRd
 mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
 
@@ -286,6 +288,8 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
 #' @param value Expression value
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
+#' @keywords internal
+#' @noRd
 multi_kvexpr_row_ui <- function(
   id,
   name = "new_col",

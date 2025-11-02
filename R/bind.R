@@ -26,6 +26,47 @@ dot_args_names <- function(x) {
 #' @param ... Forwarded to [new_block()]
 #'
 #' @return A block object for bind_rows operations
+#'
+#' @examples
+#' \dontrun{
+#' library(blockr.core)
+#' library(blockr.dplyr)
+#'
+#' # Basic usage - stack filtered datasets
+#' serve(
+#'   new_board(
+#'     blocks = list(
+#'       iris_data = new_dataset_block(dataset = "iris"),
+#'       setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
+#'       versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+#'       combined = new_bind_rows_block()
+#'     ),
+#'     links = links(
+#'       from = c("iris_data", "iris_data", "setosa", "versicolor"),
+#'       to = c("setosa", "versicolor", "combined", "combined"),
+#'       input = c("data", "data", "1", "2")
+#'     )
+#'   )
+#' )
+#'
+#' # With ID column to track source
+#' serve(
+#'   new_board(
+#'     blocks = list(
+#'       iris_data = new_dataset_block(dataset = "iris"),
+#'       setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
+#'       versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+#'       combined = new_bind_rows_block(id_name = "source")
+#'     ),
+#'     links = links(
+#'       from = c("iris_data", "iris_data", "setosa", "versicolor"),
+#'       to = c("setosa", "versicolor", "combined", "combined"),
+#'       input = c("data", "data", "1", "2")
+#'     )
+#'   )
+#' )
+#' }
+#'
 #' @export
 new_bind_rows_block <- function(id_name = "", ...) {
   new_transform_block(
@@ -156,6 +197,48 @@ new_bind_rows_block <- function(id_name = "", ...) {
 #' @param ... Forwarded to [new_block()]
 #'
 #' @return A block object for bind_cols operations
+#'
+#' @examples
+#' \dontrun{
+#' library(blockr.core)
+#' library(blockr.dplyr)
+#'
+#' # Basic usage - combine different datasets horizontally
+#' serve(
+#'   new_board(
+#'     blocks = list(
+#'       iris_data = new_dataset_block(dataset = "iris"),
+#'       mtcars_data = new_dataset_block(dataset = "mtcars"),
+#'       head1 = new_slice_block(type = "head", n = 5),
+#'       head2 = new_slice_block(type = "head", n = 5),
+#'       combined = new_bind_cols_block()
+#'     ),
+#'     links = links(
+#'       from = c("iris_data", "mtcars_data", "head1", "head2"),
+#'       to = c("head1", "head2", "combined", "combined"),
+#'       input = c("data", "data", "1", "2")
+#'     )
+#'   )
+#' )
+#'
+#' # Combine selected columns from same dataset
+#' serve(
+#'   new_board(
+#'     blocks = list(
+#'       mtcars_data = new_dataset_block(dataset = "mtcars"),
+#'       engine_cols = new_select_block(columns = c("mpg", "cyl", "hp")),
+#'       weight_cols = new_select_block(columns = c("wt", "qsec")),
+#'       combined = new_bind_cols_block()
+#'     ),
+#'     links = links(
+#'       from = c("mtcars_data", "mtcars_data", "engine_cols", "weight_cols"),
+#'       to = c("engine_cols", "weight_cols", "combined", "combined"),
+#'       input = c("data", "data", "1", "2")
+#'     )
+#'   )
+#' )
+#' }
+#'
 #' @export
 new_bind_cols_block <- function(...) {
   new_transform_block(
