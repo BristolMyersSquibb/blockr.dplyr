@@ -13,6 +13,7 @@
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
 #' @keywords internal
+#' @noRd
 mod_multi_filter_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -262,6 +263,7 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
 #' @param extra_button Optional extra button (e.g., submit button) to place next to Add button
 #' @return A div containing the UI elements
 #' @keywords internal
+#' @noRd
 mod_multi_filter_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
 
@@ -360,6 +362,8 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
 #' @param value Condition value
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
+#' @keywords internal
+#' @noRd
 multi_filter_condition_ui <- function(id, value = "TRUE", show_remove = TRUE) {
   div(
     class = paste(
