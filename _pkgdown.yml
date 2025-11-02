@@ -33,19 +33,10 @@ reference:
   - new_pivot_longer_block
   - new_pivot_wider_block
 
-- title: Internal Functions
-  desc: Internal UI components and helper functions
+- title: Helper Functions
+  desc: Exported helper functions for building filter expressions
   contents:
-  - mod_by_selector_server
-  - mod_by_selector_ui
-  - mod_join_keys_server
-  - mod_join_keys_ui
-  - multi_arrange_row_ui
-  - multi_filter_condition_ui
-  - multi_kvexpr_row_ui
-  - multi_rename_row_ui
   - parse_value_filter
-  - value_filter_condition_ui
 
 articles:
 - title: Getting Started
