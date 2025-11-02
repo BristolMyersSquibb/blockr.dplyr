@@ -27,6 +27,7 @@ are automatically handled by dplyr."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/blockr-dplyr-showcase.html">Showcase</a></li>
     <li><a class="dropdown-item" href="../articles/expression-helpers.html">Expression Helpers</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/BristolMyersSquibb/blockr.dplyr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -68,6 +69,50 @@ are automatically handled by dplyr.</p>
     <p>A block object for bind_cols operations</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.dplyr/">blockr.dplyr</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Basic usage - combine different datasets horizontally</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_board.html" class="external-link">new_board</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    blocks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      iris_data <span class="op">=</span> <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_data_block.html" class="external-link">new_dataset_block</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"iris"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      mtcars_data <span class="op">=</span> <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_data_block.html" class="external-link">new_dataset_block</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"mtcars"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      head1 <span class="op">=</span> <span class="fu"><a href="new_slice_block.html">new_slice_block</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"head"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      head2 <span class="op">=</span> <span class="fu"><a href="new_slice_block.html">new_slice_block</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"head"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      combined <span class="op">=</span> <span class="fu">new_bind_cols_block</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    links <span class="op">=</span> <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_link.html" class="external-link">links</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"iris_data"</span>, <span class="st">"mtcars_data"</span>, <span class="st">"head1"</span>, <span class="st">"head2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"head1"</span>, <span class="st">"head2"</span>, <span class="st">"combined"</span>, <span class="st">"combined"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      input <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"data"</span>, <span class="st">"1"</span>, <span class="st">"2"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Combine selected columns from same dataset</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_board.html" class="external-link">new_board</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    blocks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      mtcars_data <span class="op">=</span> <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_data_block.html" class="external-link">new_dataset_block</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"mtcars"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      engine_cols <span class="op">=</span> <span class="fu"><a href="new_select_block.html">new_select_block</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mpg"</span>, <span class="st">"cyl"</span>, <span class="st">"hp"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      weight_cols <span class="op">=</span> <span class="fu"><a href="new_select_block.html">new_select_block</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wt"</span>, <span class="st">"qsec"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      combined <span class="op">=</span> <span class="fu">new_bind_cols_block</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    links <span class="op">=</span> <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/new_link.html" class="external-link">links</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mtcars_data"</span>, <span class="st">"mtcars_data"</span>, <span class="st">"engine_cols"</span>, <span class="st">"weight_cols"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"engine_cols"</span>, <span class="st">"weight_cols"</span>, <span class="st">"combined"</span>, <span class="st">"combined"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      input <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"data"</span>, <span class="st">"1"</span>, <span class="st">"2"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
