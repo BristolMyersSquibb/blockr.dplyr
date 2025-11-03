@@ -30,8 +30,9 @@ if (interactive()) {
   library(blockr.core)
   serve(new_mutate_block(), data = list(data = mtcars))
 
-  # With a custom datase
-  df <- tibble::tibble(x = 1:5, `2025 Sales` = letters[1:5], .name_repair = "minimal")
+  # With a custom dataset
+  df <- data.frame(x = 1:5, check.names = FALSE)
+  df$`2025 Sales` <- letters[1:5]
   serve(new_mutate_block(), data = list(data = df))
 }
 }

@@ -36,7 +36,10 @@
 #'         data = new_dataset_block(dataset = "mtcars"),
 #'         categorized = new_mutate_block(
 #'           exprs = list(
-#'             car_type = "dplyr::case_when(cyl <= 4 ~ 'Economy', cyl <= 6 ~ 'Standard', TRUE ~ 'Performance')"
+#'             car_type = paste0(
+#'               "dplyr::case_when(cyl <= 4 ~ 'Economy', ",
+#'               "cyl <= 6 ~ 'Standard', TRUE ~ 'Performance')"
+#'             )
 #'           )
 #'         ),
 #'         sorted = new_arrange_block(
