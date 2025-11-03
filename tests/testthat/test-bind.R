@@ -2,7 +2,7 @@ test_that("bind_rows block constructor", {
   block <- new_bind_rows_block()
   expect_s3_class(
     block,
-    c("bind_rows_block", "rbind_block", "transform_block", "block")
+    c("bind_rows_block", "transform_block", "block")
   )
 
   # Test with unnamed arguments
@@ -73,7 +73,7 @@ test_that("bind_rows block with id_name parameter", {
   block_with_id <- new_bind_rows_block(id_name = "source")
   expect_s3_class(
     block_with_id,
-    c("bind_rows_block", "rbind_block", "transform_block", "block")
+    c("bind_rows_block", "transform_block", "block")
   )
 
   # Test with named arguments and .id column
@@ -138,7 +138,7 @@ test_that("bind_cols block constructor", {
   block <- new_bind_cols_block()
   expect_s3_class(
     block,
-    c("bind_cols_block", "rbind_block", "transform_block", "block")
+    c("bind_cols_block", "transform_block", "block")
   )
 
   # Test with two arguments
