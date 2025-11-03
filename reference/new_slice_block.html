@@ -122,20 +122,37 @@ Features reactive UI with immediate updates and comprehensive grouping support.<
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Basic usage</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Create a slice block</span></span></span>
+<span class="r-in"><span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"head"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;slice_block&lt;transform_block&lt;block&gt;&gt;&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Name: "Slice"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data inputs: "data"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initial block state:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ type     : chr "head"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ n        : num 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ prop     : NULL</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ order_by : chr(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ with_ties: logi TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ weight_by: chr(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ replace  : logi FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ rows     : chr "1:5"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ by       : chr(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Constructor: blockr.dplyr::new_slice_block()</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Select first 5 rows</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"head"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="co"># Basic usage</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Select rows with highest mpg values</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"max"</span>, order_by <span class="op">=</span> <span class="st">"mpg"</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Select first 5 rows</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"head"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Random sampling</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"sample"</span>, n <span class="op">=</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span>  <span class="co"># Select rows with highest mpg values</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"max"</span>, order_by <span class="op">=</span> <span class="st">"mpg"</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Random sampling</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_slice_block</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"sample"</span>, n <span class="op">=</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
