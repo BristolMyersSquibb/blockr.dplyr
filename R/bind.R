@@ -185,7 +185,7 @@ new_bind_rows_block <- function(id_name = "", ...) {
       stopifnot(length(...args) >= 1L)
     },
     allow_empty_state = TRUE,
-    class = c("bind_rows_block", "rbind_block"),
+    class = c("bind_rows_block"),
     ...
   )
 }
@@ -299,7 +299,7 @@ new_bind_cols_block <- function(...) {
       stopifnot(length(...args) >= 1L)
     },
     allow_empty_state = TRUE,
-    class = c("bind_cols_block", "rbind_block"),
+    class = c("bind_cols_block"),
     ...
   )
 }
