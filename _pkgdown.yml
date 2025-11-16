@@ -27,6 +27,7 @@ reference:
   - new_mutate_block
   - new_rename_block
   - new_summarize_block
+  - new_summarize_nocode_block
   - new_join_block
   - new_bind_rows_block
   - new_bind_cols_block
