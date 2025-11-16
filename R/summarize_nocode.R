@@ -2,14 +2,35 @@
 #'
 #' Returns a named vector of common summary functions with proper namespacing.
 #' This helper function centralizes the definition of available summary functions
-#' to make them easy to extend.
+#' and allows extension via the `blockr.dplyr.summary_functions` option.
+#'
+#' @section Extending with custom functions:
+#' You can extend the available summary functions by setting the
+#' `blockr.dplyr.summary_functions` option. Custom functions should be provided
+#' as a named character vector where names are display labels (descriptions)
+#' and values are the function calls with proper namespacing.
+#'
+#' @section Example:
+#' \preformatted{
+#' # Add custom functions from blockr.topline package
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num",
+#'     "first number (first_num)" = "blockr.topline::first_num"
+#'   )
+#' )
+#' }
+#'
+#' If no description is provided (i.e., names are empty), the function name
+#' will be used as the display label.
 #'
 #' @return Named character vector where names are display names and values are
 #'   fully qualified function calls
 #' @keywords internal
 #' @noRd
 get_summary_functions <- function() {
-  c(
+  # Default summary functions
+  default_funcs <- c(
     # Center
     "mean" = "mean",
     "median" = "median",
@@ -35,6 +56,34 @@ get_summary_functions <- function() {
     "sum" = "sum",
     "product (prod)" = "prod"
   )
+
+  # Get custom functions from blockr option
+  custom_funcs <- blockr_option("dplyr.summary_functions", NULL)
+
+  # Validate custom functions
+  if (!is.null(custom_funcs)) {
+    if (!is.character(custom_funcs)) {
+      warning(
+        "blockr.dplyr.summary_functions must be a character vector. Ignoring custom functions.",
+        call. = FALSE
+      )
+      return(default_funcs)
+    }
+
+    # If names are missing or empty, use the function name as label
+    if (is.null(names(custom_funcs))) {
+      names(custom_funcs) <- custom_funcs
+    } else {
+      # Fill in missing names with function values
+      empty_names <- names(custom_funcs) == "" | is.na(names(custom_funcs))
+      names(custom_funcs)[empty_names] <- custom_funcs[empty_names]
+    }
+
+    # Merge: custom functions come first, then defaults not overridden
+    return(c(custom_funcs, default_funcs[!names(default_funcs) %in% names(custom_funcs)]))
+  }
+
+  default_funcs
 }
 
 #' Multi summarize module for no-code summary operations
@@ -496,6 +545,22 @@ multi_summarize_row_ui <- function(
 #' Instead of writing expressions, users select summary functions from dropdowns
 #' (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
 #'
+#' @section Extending available functions:
+#' The list of available summary functions can be extended using the
+#' \code{blockr.dplyr.summary_functions} option. Set this option to a named
+#' character vector where names are display labels and values are function calls:
+#'
+#' \preformatted{
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+#'   )
+#' )
+#' }
+#'
+#' If a description is not provided (empty name), the function name will be
+#' used as the display label.
+#'
 #' @param summaries Named list where each element is a list with 'func' and 'col' elements.
 #'   For example: list(avg_mpg = list(func = "mean", col = "mpg"))
 #' @param by Columns to define grouping
@@ -504,6 +569,7 @@ multi_summarize_row_ui <- function(
 #' @return A block object for no-code summarize operations
 #' @importFrom shiny req showNotification NS moduleServer reactive observeEvent
 #' @importFrom glue glue
+#' @importFrom blockr.core blockr_option
 #' @seealso [new_transform_block()], [new_summarize_block()]
 #'
 #' @examples

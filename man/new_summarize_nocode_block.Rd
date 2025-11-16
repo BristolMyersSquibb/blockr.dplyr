@@ -26,6 +26,24 @@ This block provides a no-code interface for summarizing data (see \code{\link[dp
 Instead of writing expressions, users select summary functions from dropdowns
 (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
 }
+\section{Extending available functions}{
+
+The list of available summary functions can be extended using the
+\code{blockr.dplyr.summary_functions} option. Set this option to a named
+character vector where names are display labels and values are function calls:
+
+\preformatted{
+options(
+  blockr.dplyr.summary_functions = c(
+    "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+  )
+)
+}
+
+If a description is not provided (empty name), the function name will be
+used as the display label.
+}
+
 \examples{
 # Create a summarize no-code block
 new_summarize_nocode_block()

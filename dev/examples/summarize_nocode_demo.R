@@ -19,7 +19,16 @@ pkgload::load_all()
 #     extensions = new_dag_extension()
 #   )
 # )
+#
+#
 
+# Add custom functions from blockr.topline or any other package
+options(
+  blockr.dplyr.summary_functions = c(
+    "extract parentheses (paren_num)" = "blockr.topline::paren_num",
+    "first number (first_num)" = "blockr.topline::first_num"
+  )
+)
 # works too!!
 serve(
   new_board(
