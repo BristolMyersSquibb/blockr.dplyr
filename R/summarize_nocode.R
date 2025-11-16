@@ -502,7 +502,7 @@ multi_summarize_row_ui <- function(
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for no-code summarize operations
-#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
+#' @importFrom shiny req showNotification NS moduleServer reactive observeEvent
 #' @importFrom glue glue
 #' @seealso [new_transform_block()], [new_summarize_block()]
 #'
@@ -563,6 +563,23 @@ new_summarize_nocode_block <- function(
           r_expr_validated <- reactiveVal(parse_summarize_nocode(summaries, by))
           r_summaries_validated <- reactiveVal(summaries)
 
+          # Auto-update when summaries change
+          observeEvent(
+            r_summaries(),
+            {
+              apply_summarize_nocode(
+                data(),
+                r_summaries(),
+                r_expr_validated,
+                r_summaries_validated,
+                r_by_selection(),
+                session
+              )
+            },
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE
+          )
+
           # Auto-update when grouping changes
           observeEvent(
             r_by_selection(),
@@ -582,18 +599,6 @@ new_summarize_nocode_block <- function(
             ignoreNULL = FALSE,
             ignoreInit = TRUE
           )
-
-          # Validate and update on submit
-          observeEvent(input$submit, {
-            apply_summarize_nocode(
-              data(),
-              r_summaries(),
-              r_expr_validated,
-              r_summaries_validated,
-              r_by_selection(),
-              session
-            )
-          })
 
           list(
             expr = r_expr_validated,
@@ -638,12 +643,7 @@ new_summarize_nocode_block <- function(
                   )
                 ),
                 mod_multi_summarize_ui(
-                  NS(id, "ms"),
-                  extra_button = actionButton(
-                    NS(id, "submit"),
-                    "Submit",
-                    class = "btn-primary btn-sm"
-                  )
+                  NS(id, "ms")
                 )
               )
             ),
