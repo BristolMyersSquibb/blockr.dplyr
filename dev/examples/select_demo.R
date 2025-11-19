@@ -1,13 +1,13 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow for select block with focused analysis
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
@@ -31,7 +31,10 @@ blockr.core::serve(
       new_link("data", "selected", "data"),
       new_link("data", "count_combos", "data")
     ),
-    document = c(
+  extensions = list(
+    new_dag_extension(),
+    new_md_extension(
+      content = c(
       "## Select Block Demo with Distinct\n\n",
       "This workflow demonstrates the `new_select_block()` with the `distinct` parameter.\n\n",
       "The workflow:\n\n",
@@ -53,6 +56,7 @@ blockr.core::serve(
 
       "## Count by Combination\n\n",
       "![](blockr://count_combos)\n\n"
+      )
     )
   )
 )
