@@ -24,7 +24,7 @@ as a character vector or a comma-separated string (e.g., "col1, col2, col3").
 Default is c("col1", "col2").}
 
 \item{sep}{Separator between columns. Can be a regular expression or numeric
-positions. Default is "[^\link{:alnum:}]+" (any non-alphanumeric character).}
+positions. Default is \code{"[^[:alnum:]]+"} (any non-alphanumeric character).}
 
 \item{remove}{If TRUE (default), remove input column from output data frame.}
 

@@ -10,7 +10,7 @@
 #'   as a character vector or a comma-separated string (e.g., "col1, col2, col3").
 #'   Default is c("col1", "col2").
 #' @param sep Separator between columns. Can be a regular expression or numeric
-#'   positions. Default is "[^[:alnum:]]+" (any non-alphanumeric character).
+#'   positions. Default is `"[^[:alnum:]]+"` (any non-alphanumeric character).
 #' @param remove If TRUE (default), remove input column from output data frame.
 #' @param convert If TRUE, will run type.convert() with as.is = TRUE on new
 #'   columns. Default is FALSE.
