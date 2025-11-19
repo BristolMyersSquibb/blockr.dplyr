@@ -1,13 +1,14 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow showcasing the pivot_wider block
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Load ChickWeight dataset (long format - perfect for pivot_wider!)
       data = new_dataset_block(dataset = "ChickWeight"),
 
@@ -51,7 +52,13 @@ blockr.core::serve(
       new_link("wide_format", "with_gains", "data"),
       new_link("with_gains", "sorted", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Pivot Wider Block Demo\n\n",
       "This workflow demonstrates the `new_pivot_wider_block()` for reshaping long data to wide format.\n\n",
 
@@ -100,6 +107,7 @@ blockr.core::serve(
 
       "## Weight Gains (Sorted by Total Gain)\n\n",
       "![](blockr://sorted)\n\n"
-    )
+      )
+      )
   )
 )

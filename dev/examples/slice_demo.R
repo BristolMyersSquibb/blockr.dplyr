@@ -1,13 +1,14 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow for slice block with multiple slice types
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
@@ -63,7 +64,13 @@ blockr.core::serve(
       new_link("max_mpg", "max_summary", "data"),
       new_link("min_mpg", "min_summary", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Slice Block Demo\n\n",
       "This workflow demonstrates the `new_slice_block()` with different slice types.\n\n",
       "The workflow creates three parallel slicing operations:\n\n",
@@ -106,6 +113,7 @@ blockr.core::serve(
       "- Get top-N or bottom-N results\n",
       "- Sample data for testing or visualization\n",
       "- Combine with `.by` parameter for group-wise operations\n"
-    )
+      )
+      )
   )
 )

@@ -1,14 +1,15 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 library(tidyverse)
 
 # Demo workflow for testing value filter with NAs and empty strings
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Source dataset - iris
       data = new_dataset_block(dataset = "iris"),
 
@@ -44,7 +45,13 @@ blockr.core::serve(
       # Connect filter
       new_link("mutate_test", "test_filter", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Value Filter with NAs and Empty Strings Demo\n\n",
       "This workflow tests how the value filter block handles NA values and empty strings.\n\n",
 
@@ -66,6 +73,7 @@ blockr.core::serve(
       "- Empty strings in the Species column\n",
       "- Regular values\n\n",
       "![](blockr://test_filter)\n\n"
-    )
+      )
+      )
   )
 )

@@ -15,7 +15,9 @@ register_dplyr_blocks <- function() {
       "new_rename_block",
       "new_slice_block",
       "new_pivot_longer_block",
-      "new_pivot_wider_block"
+      "new_pivot_wider_block",
+      "new_unite_block",
+      "new_separate_block"
     ),
     name = c(
       "select block",
@@ -31,7 +33,9 @@ register_dplyr_blocks <- function() {
       "rename block",
       "slice block",
       "pivot longer block",
-      "pivot wider block"
+      "pivot wider block",
+      "unite block",
+      "separate block"
     ),
     description = c(
       "Subset columns in a data.frame (supports distinct rows)",
@@ -47,9 +51,13 @@ register_dplyr_blocks <- function() {
       "Rename columns in a data.frame",
       "Select rows by position, value, or sampling with optional grouping",
       "Reshape data from wide to long format",
-      "Reshape data from long to wide format"
+      "Reshape data from long to wide format",
+      "Combine multiple columns into one by pasting values together",
+      "Split one column into multiple columns using a separator"
     ),
     category = c(
+      "transform",
+      "transform",
       "transform",
       "transform",
       "transform",
@@ -79,7 +87,9 @@ register_dplyr_blocks <- function() {
       "tags", # rename block
       "scissors", # slice block
       "arrow-down-up", # pivot_longer block
-      "arrow-left-right" # pivot_wider block
+      "arrow-left-right", # pivot_wider block
+      "link", # unite block
+      "distribute-horizontal" # separate block
     ),
     package = utils::packageName(),
     overwrite = TRUE

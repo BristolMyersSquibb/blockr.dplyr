@@ -1,5 +1,6 @@
 # Demo script for the new summarize no-code block
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 # library(blockr.dplyr)
 
 
@@ -61,7 +62,8 @@ serve(
 
 # library(blockr.dag)
 # library(blockr.dock)
-# library(blockr.core)
+# library(blockr)
+library(blockr.dag)
 
 # serve(
 #   new_dock_board(
