@@ -1,0 +1,53 @@
+# _pkgdown.yml structure AFTER renaming
+# This shows how the reference section will look with new names
+
+reference:
+- title: Data Wrangling Blocks
+  desc: Transform blocks for data manipulation
+  contents:
+  - subtitle: Column Selection & Renaming
+  - new_select_block
+  - new_rename_block
+
+  - subtitle: Filtering Rows
+    desc: Filter rows with simple value selection or advanced expressions
+  - new_filter_block              # ← Simple (was new_value_filter_block)
+  - new_filter_expr_block         # ← Advanced (unchanged)
+
+  - subtitle: Sorting & Slicing
+  - new_arrange_block
+  - new_slice_block
+
+  - subtitle: Creating Columns
+    desc: Create new columns with advanced expressions
+  - new_mutate_expr_block         # ← Advanced (was new_mutate_block)
+  # Note: new_mutate_block (simple) could be added in future
+
+  - subtitle: Summarizing Data
+    desc: Aggregate data with simple dropdowns or advanced expressions
+  - new_summarize_block           # ← Simple (was new_summarize_nocode_block)
+  - new_summarize_expr_block      # ← Advanced (was new_summarize_block)
+
+  - subtitle: Combining Data
+  - new_join_block
+  - new_bind_rows_block
+  - new_bind_cols_block
+
+  - subtitle: Reshaping Data
+  - new_pivot_longer_block
+  - new_pivot_wider_block
+  - new_unite_block
+  - new_separate_block
+
+- title: Helper Functions
+  desc: Exported helper functions for building filter expressions
+  contents:
+  - parse_value_filter
+
+# Benefits of this structure:
+# 1. Users looking for "filter" see both options together
+# 2. Simple variant listed first (most users start here)
+# 3. Expression variant immediately below (natural progression)
+# 4. Clear descriptions help users choose
+# 5. Logical grouping by operation type
+# 6. Room to add simple variants later (e.g., new_mutate_block)

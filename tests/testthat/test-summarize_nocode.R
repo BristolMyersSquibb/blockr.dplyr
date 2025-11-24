@@ -6,7 +6,7 @@
 test_that("summarize_nocode_block creates successfully", {
   # Test default creation
   block1 <- new_summarize_nocode_block()
-  expect_s3_class(block1, "summarize_nocode_block")
+  expect_s3_class(block1, "summarize_block")
   expect_s3_class(block1, "transform_block")
   expect_s3_class(block1, "block")
 
@@ -14,14 +14,14 @@ test_that("summarize_nocode_block creates successfully", {
   block2 <- new_summarize_nocode_block(
     summaries = list(avg_mpg = list(func = "mean", col = "mpg"))
   )
-  expect_s3_class(block2, "summarize_nocode_block")
+  expect_s3_class(block2, "summarize_block")
 
   # Test with grouping
   block3 <- new_summarize_nocode_block(
     summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
     by = "cyl"
   )
-  expect_s3_class(block3, "summarize_nocode_block")
+  expect_s3_class(block3, "summarize_block")
 })
 
 # Restorability tests - Custom labels ----

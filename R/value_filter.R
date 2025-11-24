@@ -1,9 +1,11 @@
-#' Value Filter block constructor
+#' Filter block constructor
 #'
 #' This block allows filtering rows in a data frame by selecting specific values
 #' from columns (see [dplyr::filter()]). Provides a visual interface where users
 #' can select columns and choose which values to include or exclude without
 #' writing R expressions. Supports multiple conditions with AND/OR logic.
+#'
+#' For expression-based filtering, see [new_filter_expr_block()].
 #'
 #' @param conditions List of filter conditions. Each condition should be a list
 #'   with elements: column (character), values (vector), mode ("include" or "exclude"),
@@ -18,16 +20,16 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' # Create a value filter block
-#' new_value_filter_block()
+#' # Create a filter block
+#' new_filter_block()
 #'
 #' if (interactive()) {
 #'   # Basic usage with mtcars dataset
 #'   library(blockr.core)
-#'   serve(new_value_filter_block(), list(data = mtcars))
+#'   serve(new_filter_block(), list(data = mtcars))
 #'
 #'   # With initial condition
-#'   serve(new_value_filter_block(
+#'   serve(new_filter_block(
 #'     conditions = list(
 #'       list(column = "cyl", values = c(4, 6), mode = "include")
 #'     )
@@ -38,7 +40,7 @@
 #'     new_board(
 #'       blocks = list(
 #'         a = new_dataset_block(),
-#'         b = new_value_filter_block()
+#'         b = new_filter_block()
 #'       ),
 #'       links = links(
 #'         from = c("a"),
@@ -48,7 +50,7 @@
 #'   )
 #' }
 #' @export
-new_value_filter_block <- function(
+new_filter_block <- function(
   conditions = list(),
   preserve_order = FALSE,
   ...
@@ -137,7 +139,26 @@ new_value_filter_block <- function(
         )
       )
     },
-    class = "value_filter_block",
+    class = "filter_block",
+    ...
+  )
+}
+
+#' @rdname new_filter_block
+#' @export
+#' @usage NULL
+new_value_filter_block <- function(
+  conditions = list(),
+  preserve_order = FALSE,
+  ...
+) {
+  show_block_deprecation(
+    "new_value_filter_block()",
+    "new_filter_block()"
+  )
+  new_filter_block(
+    conditions = conditions,
+    preserve_order = preserve_order,
     ...
   )
 }

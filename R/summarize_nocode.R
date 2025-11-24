@@ -539,11 +539,13 @@ multi_summarize_row_ui <- function(
   )
 }
 
-#' Summarize no-code block constructor
+#' Summarize block constructor
 #'
 #' This block provides a no-code interface for summarizing data (see [dplyr::summarize()]).
 #' Instead of writing expressions, users select summary functions from dropdowns
 #' (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
+#'
+#' For expression-based summarization, see [new_summarize_expr_block()].
 #'
 #' @section Extending available functions:
 #' The list of available summary functions can be extended using the
@@ -570,20 +572,20 @@ multi_summarize_row_ui <- function(
 #' @importFrom shiny req showNotification NS moduleServer reactive observeEvent
 #' @importFrom glue glue
 #' @importFrom blockr.core blockr_option
-#' @seealso [new_transform_block()], [new_summarize_block()]
+#' @seealso [new_transform_block()], [new_summarize_expr_block()]
 #'
 #' @examples
-#' # Create a summarize no-code block
-#' new_summarize_nocode_block()
+#' # Create a summarize block
+#' new_summarize_block()
 #'
 #' if (interactive()) {
 #'   # Basic usage with mtcars dataset
 #'   library(blockr.core)
-#'   serve(new_summarize_nocode_block(), data = list(data = mtcars))
+#'   serve(new_summarize_block(), data = list(data = mtcars))
 #'
 #'   # With predefined summaries
 #'   serve(
-#'     new_summarize_nocode_block(
+#'     new_summarize_block(
 #'       summaries = list(
 #'         avg_mpg = list(func = "mean", col = "mpg"),
 #'         max_hp = list(func = "max", col = "hp")
@@ -594,7 +596,7 @@ multi_summarize_row_ui <- function(
 #'
 #'   # With grouping
 #'   serve(
-#'     new_summarize_nocode_block(
+#'     new_summarize_block(
 #'       summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
 #'       by = "cyl"
 #'     ),
@@ -602,7 +604,7 @@ multi_summarize_row_ui <- function(
 #'   )
 #' }
 #' @export
-new_summarize_nocode_block <- function(
+new_summarize_block <- function(
   summaries = list(count = list(func = "dplyr::n", col = "")),
   by = character(),
   ...
@@ -737,8 +739,27 @@ new_summarize_nocode_block <- function(
         )
       )
     },
-    class = "summarize_nocode_block",
+    class = "summarize_block",
     allow_empty_state = c("by"),
+    ...
+  )
+}
+
+#' @rdname new_summarize_block
+#' @export
+#' @usage NULL
+new_summarize_nocode_block <- function(
+  summaries = list(count = list(func = "dplyr::n", col = "")),
+  by = character(),
+  ...
+) {
+  show_block_deprecation(
+    "new_summarize_nocode_block()",
+    "new_summarize_block()"
+  )
+  new_summarize_block(
+    summaries = summaries,
+    by = by,
     ...
   )
 }

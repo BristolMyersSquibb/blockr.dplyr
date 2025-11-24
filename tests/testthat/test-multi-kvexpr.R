@@ -28,14 +28,14 @@ test_that("multi_kvexpr handles multiple expressions", {
 
 test_that("mutate block creates successfully", {
   # Test block creation
-  block1 <- new_mutate_block()
-  expect_s3_class(block1, "mutate_block")
+  block1 <- new_mutate_expr_block()
+  expect_s3_class(block1, "mutate_expr_block")
   expect_s3_class(block1, "transform_block")
   expect_s3_class(block1, "block")
 
   # Test with custom expressions
-  block2 <- new_mutate_block(exprs = list(test_col = "1 + 1"))
-  expect_s3_class(block2, "mutate_block")
+  block2 <- new_mutate_expr_block(exprs = list(test_col = "1 + 1"))
+  expect_s3_class(block2, "mutate_expr_block")
 })
 
 test_that("mutate block handles execution", {
