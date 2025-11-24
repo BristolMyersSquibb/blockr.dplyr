@@ -25,7 +25,7 @@ reference:
 
   - subtitle: Filtering Rows
     desc: Filter rows with simple value selection or advanced expressions
-  - new_value_filter_block
+  - new_filter_block
   - new_filter_expr_block
 
   - subtitle: Sorting & Slicing
@@ -34,12 +34,12 @@ reference:
 
   - subtitle: Creating Columns
     desc: Create new columns with advanced expressions
-  - new_mutate_block
+  - new_mutate_expr_block
 
   - subtitle: Summarizing Data
     desc: Aggregate data with simple dropdowns or advanced expressions
-  - new_summarize_nocode_block
   - new_summarize_block
+  - new_summarize_expr_block
 
   - subtitle: Combining Data
   - new_join_block

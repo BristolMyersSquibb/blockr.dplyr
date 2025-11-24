@@ -1,6 +1,6 @@
-#' Mutate block constructor
+#' Mutate expression block constructor
 #'
-#' This block allows to add new variables and preserve existing ones
+#' This block allows to add new variables and preserve existing ones using R expressions
 #' (see [dplyr::mutate()]). Changes are applied after clicking the submit button.
 #'
 #' @param exprs Reactive expression returning character vector of
@@ -13,21 +13,21 @@
 #' @importFrom glue glue
 #' @seealso [new_transform_block()]
 #' @examples
-#' # Create a mutate block
-#' new_mutate_block(exprs = list(mpg_squared = "mpg^2"))
+#' # Create a mutate expression block
+#' new_mutate_expr_block(exprs = list(mpg_squared = "mpg^2"))
 #'
 #' if (interactive()) {
 #'   # Basic usage with mtcars datase
 #'   library(blockr.core)
-#'   serve(new_mutate_block(), data = list(data = mtcars))
+#'   serve(new_mutate_expr_block(), data = list(data = mtcars))
 #'
 #'   # With a custom dataset
 #'   df <- data.frame(x = 1:5, check.names = FALSE)
 #'   df$`2025 Sales` <- letters[1:5]
-#'   serve(new_mutate_block(), data = list(data = df))
+#'   serve(new_mutate_expr_block(), data = list(data = df))
 #' }
 #' @export
-new_mutate_block <- function(
+new_mutate_expr_block <- function(
   exprs = list(new_col = "1"),
   by = character(),
   ...
@@ -179,12 +179,30 @@ new_mutate_block <- function(
         )
       )
     },
-    class = "mutate_block",
+    class = "mutate_expr_block",
     allow_empty_state = c("by"),
     ...
   )
 }
-# serve(new_mutate_block(), list(data = mtcars))
+
+#' @rdname new_mutate_expr_block
+#' @export
+#' @usage NULL
+new_mutate_block <- function(
+  exprs = list(new_col = "1"),
+  by = character(),
+  ...
+) {
+  show_block_deprecation(
+    "new_mutate_block()",
+    "new_mutate_expr_block()"
+  )
+  new_mutate_expr_block(
+    exprs = exprs,
+    by = by,
+    ...
+  )
+}
 
 parse_mutate <- function(mutate_string = "", by_selection = character()) {
   # Handle empty string case

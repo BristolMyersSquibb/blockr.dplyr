@@ -1,7 +1,9 @@
-#' Summarize block constructor
+#' Summarize expression block constructor
 #'
-#' This block allows to add new variables by summarizing over groups
+#' This block allows to add new variables by summarizing over groups using R expressions
 #' (see [dplyr::summarize()]). Changes are applied after clicking the submit button.
+#'
+#' For no-code summarization using dropdowns, see [new_summarize_block()].
 #'
 #' @param exprs Reactive expression returning character vector of
 #'   expressions
@@ -24,14 +26,14 @@
 #'
 #' ```r
 #' # Without unpacking (default)
-#' new_summarize_block(
+#' new_summarize_expr_block(
 #'   exprs = list(stats = "helper_func(...)"),
 #'   unpack = FALSE
 #' )
 #' # Result: Creates nested list-column "stats" containing the data frame
 #'
 #' # With unpacking
-#' new_summarize_block(
+#' new_summarize_expr_block(
 #'   exprs = list(stats = "helper_func(...)"),
 #'   unpack = TRUE
 #' )
@@ -39,17 +41,17 @@
 #' ```
 #'
 #' @examples
-#' # Create a summarize block
-#' new_summarize_block()
+#' # Create a summarize expression block
+#' new_summarize_expr_block()
 #'
 #' if (interactive()) {
 #'   # Basic usage with mtcars dataset
 #'   library(blockr.core)
-#'   serve(new_summarize_block(), list(data = mtcars))
+#'   serve(new_summarize_expr_block(), list(data = mtcars))
 #'
 #'   # With a custom dataset
 #'   df <- data.frame(x = 1:5, y = letters[1:5])
-#'   serve(new_summarize_block(), list(data = df))
+#'   serve(new_summarize_expr_block(), list(data = df))
 #'
 #'   # Using unpack to expand helper function results
 #'   # Define the helper in your environment first
@@ -64,7 +66,7 @@
 #'
 #'   # With unpacking enabled
 #'   serve(
-#'     new_summarize_block(
+#'     new_summarize_expr_block(
 #'       exprs = list(stats = "calc_stats(pick(everything()))"),
 #'       by = "group",
 #'       unpack = TRUE
@@ -74,7 +76,7 @@
 #'   # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
 #' }
 #' @export
-new_summarize_block <- function(
+new_summarize_expr_block <- function(
   exprs = list(count = "dplyr::n()"),
   by = character(),
   unpack = FALSE,
@@ -309,7 +311,7 @@ new_summarize_block <- function(
         )
       )
     },
-    class = "summarize_block",
+    class = "summarize_expr_block",
     allow_empty_state = c("by"),
     ...
   )
