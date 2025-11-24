@@ -37,9 +37,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="data-wrangling-blocks">Data Wrangling Blocks<a class="anchor" aria-label="anchor" href="#data-wrangling-blocks"></a></h2>
+      <h2 id="column-selection-renaming">Column Selection &amp; Renaming<a class="anchor" aria-label="anchor" href="#column-selection-renaming"></a></h2>
 
-      <div class="section-desc"><p>Transform blocks for data manipulation</p></div>
+
 
       <dl></dl></div><div class="section level2">
 
@@ -55,19 +55,44 @@
 
         <dt>
 
+          <code><a href="new_rename_block.html">new_rename_block()</a></code>
+
+        </dt>
+        <dd>Rename block constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="filtering-rows">Filtering Rows<a class="anchor" aria-label="anchor" href="#filtering-rows"></a></h2>
+
+      <div class="section-desc"><p>Filter rows with simple value selection or advanced expressions</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="new_filter_block.html">new_filter_block()</a></code>
+
+        </dt>
+        <dd>Filter block constructor</dd>
+
+        <dt>
+
           <code><a href="new_filter_expr_block.html">new_filter_expr_block()</a></code>
 
         </dt>
         <dd>Expression filter block constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="sorting-slicing">Sorting &amp; Slicing<a class="anchor" aria-label="anchor" href="#sorting-slicing"></a></h2>
 
-        <dt>
 
-          <code><a href="new_value_filter_block.html">new_value_filter_block()</a></code>
 
-        </dt>
-        <dd>Value Filter block constructor</dd>
+      <dl></dl></div><div class="section level2">
 
-        <dt>
+
+
+
+      <dl><dt>
 
           <code><a href="new_arrange_block.html">new_arrange_block()</a></code>
 
@@ -80,22 +105,33 @@
 
         </dt>
         <dd>Slice block constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="creating-columns">Creating Columns<a class="anchor" aria-label="anchor" href="#creating-columns"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Create new columns with advanced expressions</p></div>
 
-          <code><a href="new_mutate_block.html">new_mutate_block()</a></code>
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="new_mutate_expr_block.html">new_mutate_expr_block()</a></code>
 
         </dt>
-        <dd>Mutate block constructor</dd>
+        <dd>Mutate expression block constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="summarizing-data">Summarizing Data<a class="anchor" aria-label="anchor" href="#summarizing-data"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Aggregate data with simple dropdowns or advanced expressions</p></div>
 
-          <code><a href="new_rename_block.html">new_rename_block()</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Rename block constructor</dd>
 
-        <dt>
+
+
+      <dl><dt>
 
           <code><a href="new_summarize_block.html">new_summarize_block()</a></code>
 
@@ -104,12 +140,21 @@
 
         <dt>
 
-          <code><a href="new_summarize_nocode_block.html">new_summarize_nocode_block()</a></code>
+          <code><a href="new_summarize_expr_block.html">new_summarize_expr_block()</a></code>
 
         </dt>
-        <dd>Summarize no-code block constructor</dd>
+        <dd>Summarize expression block constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="combining-data">Combining Data<a class="anchor" aria-label="anchor" href="#combining-data"></a></h2>
 
-        <dt>
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="new_join_block.html">new_join_block()</a></code>
 
@@ -129,8 +174,17 @@
 
         </dt>
         <dd>Bind Columns Block Constructor</dd>
+      </dl></div><div class="section level2">
+      <h2 id="reshaping-data">Reshaping Data<a class="anchor" aria-label="anchor" href="#reshaping-data"></a></h2>
 
-        <dt>
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="new_pivot_longer_block.html">new_pivot_longer_block()</a></code>
 
@@ -143,6 +197,20 @@
 
         </dt>
         <dd>Pivot Wider block constructor</dd>
+
+        <dt>
+
+          <code><a href="new_unite_block.html">new_unite_block()</a></code>
+
+        </dt>
+        <dd>Unite block constructor</dd>
+
+        <dt>
+
+          <code><a href="new_separate_block.html">new_separate_block()</a></code>
+
+        </dt>
+        <dd>Separate block constructor</dd>
       </dl></div><div class="section level2">
       <h2 id="helper-functions">Helper Functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h2>
 

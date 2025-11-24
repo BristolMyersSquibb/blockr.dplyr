@@ -89,36 +89,76 @@
 <div class="section level2">
 <h2 id="available-blocks">Available Blocks<a class="anchor" aria-label="anchor" href="#available-blocks"></a>
 </h2>
-<p>blockr.dplyr provides 13 data transformation blocks:</p>
+<p>blockr.dplyr provides 16 data transformation blocks:</p>
+<div class="section level3">
+<h3 id="core-operations">Core Operations<a class="anchor" aria-label="anchor" href="#core-operations"></a>
+</h3>
 <ul>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#select-block">select</a>: choose which columns to keep</li>
 <li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#expression-filter-block">expression_filter</a>: keep rows that meet conditions</li>
-<li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#value-filter-block">value_filter</a>: filter by selecting values from dropdowns</li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block">rename</a>: change column names</li>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block">arrange</a>: sort rows by column values</li>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#slice-block">slice</a>: select specific rows by position or value</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="filtering">Filtering<a class="anchor" aria-label="anchor" href="#filtering"></a>
+</h3>
+<ul>
 <li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-block">mutate</a>: create or modify columns</li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#filter-block">filter</a>: filter by selecting values from dropdowns (simple, no-code)</li>
 <li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block">rename</a>: change column names</li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#filter-expression-block">filter expression</a>: keep rows that meet conditions (advanced, R expressions)</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="creating--modifying-columns">Creating &amp; Modifying Columns<a class="anchor" aria-label="anchor" href="#creating--modifying-columns"></a>
+</h3>
+<ul>
 <li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block">summarize</a>: calculate statistics, optionally by groups</li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#mutate-expression-block">mutate expression</a>: create or modify columns using R expressions</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="summarizing">Summarizing<a class="anchor" aria-label="anchor" href="#summarizing"></a>
+</h3>
+<ul>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block">summarize</a>: calculate statistics using dropdown selections (simple, no-code)</li>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-expression-block">summarize expression</a>: calculate statistics using R expressions (advanced)</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="combining-data">Combining Data<a class="anchor" aria-label="anchor" href="#combining-data"></a>
+</h3>
+<ul>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block">join</a>: combine two datasets based on common columns</li>
-<li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-longer-block">pivot_longer</a>: reshape data from wide to long format</li>
-<li>
-<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-wider-block">pivot_wider</a>: reshape data from long to wide format</li>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-rows-block">bind_rows</a>: stack datasets vertically</li>
 <li>
 <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#bind-cols-block">bind_cols</a>: combine datasets side-by-side</li>
 </ul>
+</div>
+<div class="section level3">
+<h3 id="reshaping">Reshaping<a class="anchor" aria-label="anchor" href="#reshaping"></a>
+</h3>
+<ul>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-longer-block">pivot_longer</a>: reshape data from wide to long format</li>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-wider-block">pivot_wider</a>: reshape data from long to wide format</li>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#unite-block">unite</a>: combine multiple columns into one</li>
+<li>
+<a href="https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#separate-block">separate</a>: split one column into multiple columns</li>
+</ul>
 <p>See <code><a href="articles/blockr-dplyr-showcase.html">vignette("blockr-dplyr-showcase")</a></code> for a complete showcase with screenshots and detailed explanations of each block.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>

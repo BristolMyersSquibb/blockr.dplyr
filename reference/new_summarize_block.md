@@ -1,36 +1,32 @@
 # Summarize block constructor
 
-This block allows to add new variables by summarizing over groups (see
+This block provides a no-code interface for summarizing data (see
 [`dplyr::summarize()`](https://dplyr.tidyverse.org/reference/summarise.html)).
-Changes are applied after clicking the submit button.
+Instead of writing expressions, users select summary functions from
+dropdowns (mean, median, sum, etc.), choose columns to summarize, and
+specify new column names.
 
 ## Usage
 
 ``` r
 new_summarize_block(
-  exprs = list(count = "dplyr::n()"),
+  summaries = list(count = list(func = "dplyr::n", col = "")),
   by = character(),
-  unpack = FALSE,
   ...
 )
 ```
 
 ## Arguments
 
-- exprs:
+- summaries:
 
-  Reactive expression returning character vector of expressions
+  Named list where each element is a list with 'func' and 'col'
+  elements. For example: list(avg_mpg = list(func = "mean", col =
+  "mpg"))
 
 - by:
 
   Columns to define grouping
-
-- unpack:
-
-  Logical flag to unpack data frame columns from helper functions. When
-  `TRUE`, expressions that return data frames will have their columns
-  unpacked into separate columns. When `FALSE`, data frames are kept as
-  nested list-columns. Default is `FALSE`.
 
 - ...:
 
@@ -39,32 +35,33 @@ new_summarize_block(
 
 ## Value
 
-A block object for summarize operations
+A block object for no-code summarize operations
 
-## Unpacking Helper Function Results
+## Details
 
-When `unpack = TRUE`, helper functions that return data frames will have
-their columns unpacked into separate columns in the result. This is
-useful for helper functions like `stat_label()` that return multiple
-statistics as columns.
+For expression-based summarization, see
+[`new_summarize_expr_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_summarize_expr_block.md).
 
-    # Without unpacking (default)
-    new_summarize_block(
-      exprs = list(stats = "helper_func(...)"),
-      unpack = FALSE
+## Extending available functions
+
+The list of available summary functions can be extended using the
+`blockr.dplyr.summary_functions` option. Set this option to a named
+character vector where names are display labels and values are function
+calls:
+
+    options(
+      blockr.dplyr.summary_functions = c(
+        "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+      )
     )
-    # Result: Creates nested list-column "stats" containing the data frame
 
-    # With unpacking
-    new_summarize_block(
-      exprs = list(stats = "helper_func(...)"),
-      unpack = TRUE
-    )
-    # Result: Columns from helper_func() are unpacked into separate columns
+If a description is not provided (empty name), the function name will be
+used as the display label.
 
 ## See also
 
-[`blockr.core::new_transform_block()`](https://bristolmyerssquibb.github.io/blockr.core/reference/new_transform_block.html)
+[`blockr.core::new_transform_block()`](https://bristolmyerssquibb.github.io/blockr.core/reference/new_transform_block.html),
+[`new_summarize_expr_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_summarize_expr_block.md)
 
 ## Examples
 
@@ -75,41 +72,36 @@ new_summarize_block()
 #> Name: "Summarize"
 #> Data inputs: "data"
 #> Initial block state:
-#>  $ exprs :List of 1
-#>   ..$ count: chr "dplyr::n()"
-#>  $ by    : chr(0)
-#>  $ unpack: logi FALSE
+#>  $ summaries:List of 1
+#>   ..$ count:List of 2
+#>   .. ..$ func: chr "dplyr::n"
+#>   .. ..$ col : chr ""
+#>  $ by       : chr(0)
 #> Constructor: blockr.dplyr::new_summarize_block()
 
 if (interactive()) {
   # Basic usage with mtcars dataset
   library(blockr.core)
-  serve(new_summarize_block(), list(data = mtcars))
+  serve(new_summarize_block(), data = list(data = mtcars))
 
-  # With a custom dataset
-  df <- data.frame(x = 1:5, y = letters[1:5])
-  serve(new_summarize_block(), list(data = df))
-
-  # Using unpack to expand helper function results
-  # Define the helper in your environment first
-  calc_stats <- function(df) {
-    data.frame(
-      mean_x = mean(df$x),
-      mean_y = mean(df$y),
-      sum_x = sum(df$x),
-      sum_y = sum(df$y)
-    )
-  }
-
-  # With unpacking enabled
+  # With predefined summaries
   serve(
     new_summarize_block(
-      exprs = list(stats = "calc_stats(pick(everything()))"),
-      by = "group",
-      unpack = TRUE
+      summaries = list(
+        avg_mpg = list(func = "mean", col = "mpg"),
+        max_hp = list(func = "max", col = "hp")
+      )
     ),
-    list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
+    data = list(data = mtcars)
   )
-  # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
+
+  # With grouping
+  serve(
+    new_summarize_block(
+      summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
+      by = "cyl"
+    ),
+    data = list(data = mtcars)
+  )
 }
 ```

@@ -18,7 +18,7 @@ Initial CRAN release.
   Sort rows by multiple columns with ascending/descending options
 - [`new_slice_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_slice_block.md):
   Select rows by position or value criteria
-- [`new_mutate_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_mutate_block.md):
+- [`new_mutate_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_mutate_expr_block.md):
   Create or modify columns using expressions
 - [`new_rename_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_rename_block.md):
   Rename columns interactively
