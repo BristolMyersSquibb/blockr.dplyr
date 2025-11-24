@@ -266,7 +266,7 @@ test_that("mutate block restorability - single expression", {
   skip_if_not_installed("dplyr")
 
   # Create block with exprs parameter - this is what users would call
-  blk <- new_mutate_block(exprs = list(mpg2 = "mpg * 2"))
+  blk <- new_mutate_expr_block(exprs = list(mpg2 = "mpg * 2"))
 
   # Verify the block works via testServer
   shiny::testServer(
@@ -295,7 +295,7 @@ test_that("mutate block restorability - multiple expressions", {
   skip_if_not_installed("dplyr")
 
   # Create block with multiple expressions
-  blk <- new_mutate_block(
+  blk <- new_mutate_expr_block(
     exprs = list(
       mpg2 = "mpg * 2",
       hp_per_cyl = "hp / cyl"
@@ -321,7 +321,7 @@ test_that("mutate block restorability - multiple expressions", {
 
 # Data transformation tests using block_server
 test_that("mutate block adds new column - testServer", {
-  block <- new_mutate_block(exprs = list(mpg_squared = "mpg * mpg"))
+  block <- new_mutate_expr_block(exprs = list(mpg_squared = "mpg * mpg"))
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
@@ -338,7 +338,7 @@ test_that("mutate block adds new column - testServer", {
 })
 
 test_that("mutate block with grouping - testServer", {
-  block <- new_mutate_block(exprs = list(mean_mpg = "mean(mpg)"), by = "cyl")
+  block <- new_mutate_expr_block(exprs = list(mean_mpg = "mean(mpg)"), by = "cyl")
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),

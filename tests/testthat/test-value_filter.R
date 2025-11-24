@@ -1,6 +1,6 @@
 test_that("value_filter block constructor", {
   # Test basic constructor
-  blk <- new_value_filter_block()
+  blk <- new_filter_block()
   expect_s3_class(blk, c("value_filter_block", "transform_block", "block"))
 
   # Test constructor with initial conditions
@@ -11,7 +11,7 @@ test_that("value_filter block constructor", {
       mode = "include"
     )
   )
-  blk <- new_value_filter_block(conditions = conditions)
+  blk <- new_filter_block(conditions = conditions)
   expect_s3_class(blk, c("value_filter_block", "transform_block", "block"))
 
   # Test constructor with multiple conditions
@@ -19,7 +19,7 @@ test_that("value_filter block constructor", {
     list(column = "Species", values = c("setosa"), mode = "include"),
     list(column = "Sepal.Length", values = c(5.1, 5.4), mode = "exclude")
   )
-  blk <- new_value_filter_block(conditions = conditions)
+  blk <- new_filter_block(conditions = conditions)
   expect_s3_class(blk, c("value_filter_block", "transform_block", "block"))
 })
 
@@ -459,7 +459,7 @@ test_that("helper functions convert values correctly", {
 
 # Data transformation tests using block_server
 test_that("value_filter block filters by selected values - testServer", {
-  block <- new_value_filter_block(
+  block <- new_filter_block(
     conditions = list(list(column = "cyl", values = c(4, 6), mode = "include"))
   )
 
@@ -484,7 +484,7 @@ test_that("value_filter block with preserve_order=TRUE - testServer", {
   test_data <- mtcars
   test_data$cyl <- factor(test_data$cyl, levels = c(8, 6, 4))
 
-  block <- new_value_filter_block(
+  block <- new_filter_block(
     conditions = list(list(column = "cyl", values = c(4, 6), mode = "include")),
     preserve_order = TRUE
   )
@@ -505,7 +505,7 @@ test_that("value_filter block with preserve_order=TRUE - testServer", {
 })
 
 test_that("value_filter block with exclude mode - testServer", {
-  block <- new_value_filter_block(
+  block <- new_filter_block(
     conditions = list(list(column = "cyl", values = c(8), mode = "exclude"))
   )
 
@@ -526,7 +526,7 @@ test_that("value_filter block with exclude mode - testServer", {
 })
 
 test_that("value_filter block with multiple conditions AND operator - testServer", {
-  block <- new_value_filter_block(
+  block <- new_filter_block(
     conditions = list(
       list(column = "cyl", values = c(4, 6), mode = "include"),
       list(column = "gear", values = c(4), mode = "include", operator = "&")
@@ -550,7 +550,7 @@ test_that("value_filter block with multiple conditions AND operator - testServer
 })
 
 test_that("value_filter block with multiple conditions OR operator - testServer", {
-  block <- new_value_filter_block(
+  block <- new_filter_block(
     conditions = list(
       list(column = "cyl", values = c(4), mode = "include"),
       list(column = "cyl", values = c(8), mode = "include", operator = "|")

@@ -38,17 +38,17 @@ test_that("parse_summarize handles grouping", {
 
 test_that("summarize block creates successfully", {
   # Test block creation
-  block1 <- new_summarize_block()
-  expect_s3_class(block1, "summarize_block")
+  block1 <- new_summarize_expr_block()
+  expect_s3_class(block1, "summarize_expr_block")
   expect_s3_class(block1, "transform_block")
   expect_s3_class(block1, "block")
 
   # Test with custom expressions
-  block2 <- new_summarize_block(
+  block2 <- new_summarize_expr_block(
     exprs = list(mean_val = "mean(x)"),
     by = c("group")
   )
-  expect_s3_class(block2, "summarize_block")
+  expect_s3_class(block2, "summarize_expr_block")
 })
 
 test_that("summarize block handles execution", {
@@ -277,7 +277,7 @@ test_that("summarize block restorability - simple expression", {
   skip_if_not_installed("dplyr")
 
   # Create block with exprs parameter - this is what users would call
-  blk <- new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"))
+  blk <- new_summarize_expr_block(exprs = list(mean_mpg = "mean(mpg)"))
 
   # Verify the block works via testServer
   shiny::testServer(
@@ -301,7 +301,7 @@ test_that("summarize block restorability - simple expression", {
 
 # Data transformation tests using block_server
 test_that("summarize block simple aggregation - testServer", {
-  block <- new_summarize_block(exprs = list(mean_mpg = "mean(mpg)"))
+  block <- new_summarize_expr_block(exprs = list(mean_mpg = "mean(mpg)"))
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
@@ -318,7 +318,7 @@ test_that("summarize block simple aggregation - testServer", {
 })
 
 test_that("summarize block with grouping - testServer", {
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(mean_mpg = "mean(mpg)", count = "n()"),
     by = "cyl"
   )
@@ -353,7 +353,7 @@ test_that("summarize block with unpack parameter - testServer", {
   # With unpack=FALSE, it should create a nested data frame column
 
   # Test with unpack=TRUE - columns should be unpacked
-  block_unpacked <- new_summarize_block(
+  block_unpacked <- new_summarize_expr_block(
     exprs = list(stats = "across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = TRUE
@@ -381,7 +381,7 @@ test_that("summarize block with unpack parameter - testServer", {
   )
 
   # Test with unpack=FALSE - should create nested list-column
-  block_nested <- new_summarize_block(
+  block_nested <- new_summarize_expr_block(
     exprs = list(stats = "across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = FALSE
@@ -468,7 +468,7 @@ test_that("parse_summarize validates expressions", {
 
 test_that("summarize block handles empty expressions", {
   # Test block with empty/invalid expressions
-  block <- new_summarize_block(exprs = list(a = ""))
+  block <- new_summarize_expr_block(exprs = list(a = ""))
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
@@ -484,7 +484,7 @@ test_that("summarize block handles empty expressions", {
 
 test_that("summarize block handles NULL by parameter", {
   # Test with NULL grouping (no grouping)
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(mean_mpg = "mean(mpg)"),
     by = NULL
   )
@@ -505,7 +505,7 @@ test_that("summarize block handles NULL by parameter", {
 
 test_that("summarize block handles empty by parameter", {
   # Test with empty grouping character vector
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(mean_mpg = "mean(mpg)"),
     by = character(0)
   )
@@ -527,7 +527,7 @@ test_that("summarize block handles empty by parameter", {
 # Tests for reactive observeEvent blocks (lines 109-157)
 test_that("summarize block unpack checkbox reactivity - testServer", {
   # Test that changing unpack checkbox triggers observeEvent (lines 109-125)
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(stats = "across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = FALSE
@@ -563,7 +563,7 @@ test_that("summarize block unpack checkbox reactivity - testServer", {
 
 test_that("summarize block by_selection reactivity - testServer", {
   # Test that changing grouping triggers observeEvent (lines 128-145)
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(mean_mpg = "mean(mpg)", count = "dplyr::n()"),
     by = "cyl"
   )
@@ -592,7 +592,7 @@ test_that("summarize block by_selection reactivity - testServer", {
 
 test_that("summarize block submit button reactivity - testServer", {
   # Test that clicking submit triggers observeEvent (lines 148-157)
-  block <- new_summarize_block(
+  block <- new_summarize_expr_block(
     exprs = list(mean_mpg = "mean(mpg)"),
     by = "cyl"
   )
