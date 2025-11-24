@@ -16,37 +16,41 @@ navbar:
         href: articles/expression-helpers.html
 
 reference:
-- title: Data Wrangling Blocks
-  desc: Transform blocks for data manipulation
+- title: Column Selection & Renaming
   contents:
-  - subtitle: Column Selection & Renaming
   - new_select_block
   - new_rename_block
 
-  - subtitle: Filtering Rows
-    desc: Filter rows with simple value selection or advanced expressions
+- title: Filtering Rows
+  desc: Filter rows with simple value selection or advanced expressions
+  contents:
   - new_filter_block
   - new_filter_expr_block
 
-  - subtitle: Sorting & Slicing
+- title: Sorting & Slicing
+  contents:
   - new_arrange_block
   - new_slice_block
 
-  - subtitle: Creating Columns
-    desc: Create new columns with advanced expressions
+- title: Creating Columns
+  desc: Create new columns with advanced expressions
+  contents:
   - new_mutate_expr_block
 
-  - subtitle: Summarizing Data
-    desc: Aggregate data with simple dropdowns or advanced expressions
+- title: Summarizing Data
+  desc: Aggregate data with simple dropdowns or advanced expressions
+  contents:
   - new_summarize_block
   - new_summarize_expr_block
 
-  - subtitle: Combining Data
+- title: Combining Data
+  contents:
   - new_join_block
   - new_bind_rows_block
   - new_bind_cols_block
 
-  - subtitle: Reshaping Data
+- title: Reshaping Data
+  contents:
   - new_pivot_longer_block
   - new_pivot_wider_block
   - new_unite_block
