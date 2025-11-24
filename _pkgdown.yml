@@ -12,8 +12,6 @@ navbar:
       menu:
       - text: Showcase
         href: articles/blockr-dplyr-showcase.html
-      - text: Expression Helpers
-        href: articles/expression-helpers.html
 
 reference:
 - title: Column Selection & Renaming
@@ -22,26 +20,19 @@ reference:
   - new_rename_block
 
 - title: Filtering Rows
-  desc: Filter rows with simple value selection or advanced expressions
+  desc: Filter rows by selecting values from columns
   contents:
   - new_filter_block
-  - new_filter_expr_block
 
 - title: Sorting & Slicing
   contents:
   - new_arrange_block
   - new_slice_block
 
-- title: Creating Columns
-  desc: Create new columns with advanced expressions
-  contents:
-  - new_mutate_expr_block
-
 - title: Summarizing Data
-  desc: Aggregate data with simple dropdowns or advanced expressions
+  desc: Aggregate data with dropdown selections
   contents:
   - new_summarize_block
-  - new_summarize_expr_block
 
 - title: Combining Data
   contents:
@@ -66,4 +57,3 @@ articles:
   navbar: ~
   contents:
   - blockr-dplyr-showcase
-  - expression-helpers

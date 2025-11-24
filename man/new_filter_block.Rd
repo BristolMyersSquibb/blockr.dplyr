@@ -27,9 +27,6 @@ from columns (see \code{\link[dplyr:filter]{dplyr::filter()}}). Provides a visua
 can select columns and choose which values to include or exclude without
 writing R expressions. Supports multiple conditions with AND/OR logic.
 }
-\details{
-For expression-based filtering, see \code{\link[=new_filter_expr_block]{new_filter_expr_block()}}.
-}
 \examples{
 # Create a filter block
 new_filter_block()

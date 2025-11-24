@@ -40,8 +40,8 @@ dot_args_names <- function(x) {
 #'     new_board(
 #'       blocks = list(
 #'         iris_data = new_dataset_block(dataset = "iris"),
-#'         setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
-#'         versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+#'         setosa = new_filter_block(),
+#'         versicolor = new_filter_block(),
 #'         combined = new_bind_rows_block()
 #'       ),
 #'       links = links(
@@ -57,8 +57,8 @@ dot_args_names <- function(x) {
 #'     new_board(
 #'       blocks = list(
 #'         iris_data = new_dataset_block(dataset = "iris"),
-#'         setosa = new_filter_expr_block(exprs = list("Species == 'setosa'")),
-#'         versicolor = new_filter_expr_block(exprs = list("Species == 'versicolor'")),
+#'         setosa = new_filter_block(),
+#'         versicolor = new_filter_block(),
 #'         combined = new_bind_rows_block(id_name = "source")
 #'       ),
 #'       links = links(

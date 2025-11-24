@@ -5,11 +5,8 @@ register_dplyr_blocks <- function() {
       "new_select_block",
       "new_join_block",
       "new_arrange_block",
-      "new_mutate_expr_block",
       "new_summarize_block",
-      "new_summarize_expr_block",
       "new_filter_block",
-      "new_filter_expr_block",
       "new_bind_rows_block",
       "new_bind_cols_block",
       "new_rename_block",
@@ -23,11 +20,8 @@ register_dplyr_blocks <- function() {
       "select block",
       "join block",
       "arrange block",
-      "mutate expression block",
       "summarize block",
-      "summarize expression block",
       "filter block",
-      "filter expression block",
       "bind rows block",
       "bind columns block",
       "rename block",
@@ -41,11 +35,8 @@ register_dplyr_blocks <- function() {
       "Subset columns in a data.frame (supports distinct rows)",
       "Join together two data.frames",
       "Order to the rows of a data.frame",
-      "Add or modify columns using R expressions",
       "Summarize data using dropdown selections (no coding required)",
-      "Summarize row groups using R expressions",
       "Filter rows by selecting values from columns",
-      "Filter rows using R expressions with AND/OR logic",
       "Stack data.frames vertically by matching column names",
       "Combine data.frames side-by-side (requires same row count)",
       "Rename columns in a data.frame",
@@ -68,20 +59,14 @@ register_dplyr_blocks <- function() {
       "transform",
       "transform",
       "transform",
-      "transform",
-      "transform",
-      "transform",
       "transform"
     ),
     icon = c(
       "layout-sidebar-inset-reverse", # select block
       "bezier2", # join block
       "sort-down-alt", # arrange block
-      "pencil-square", # mutate_expr block
       "sliders", # summarize block (simple)
-      "calculator", # summarize_expr block
       "filter", # filter block (simple)
-      "code-slash", # filter_expr block
       "arrows-collapse-vertical", # bind_rows block
       "arrows-collapse", # bind_cols block
       "tags", # rename block

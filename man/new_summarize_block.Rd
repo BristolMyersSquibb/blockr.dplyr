@@ -28,7 +28,7 @@ Instead of writing expressions, users select summary functions from dropdowns
 (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
 }
 \details{
-For expression-based summarization, see \code{\link[=new_summarize_expr_block]{new_summarize_expr_block()}}.
+This block provides a no-code alternative for data summarization.
 }
 \section{Extending available functions}{
 
@@ -79,5 +79,5 @@ if (interactive()) {
 }
 }
 \seealso{
-\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}, \code{\link[=new_summarize_expr_block]{new_summarize_expr_block()}}
+\code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}
 }

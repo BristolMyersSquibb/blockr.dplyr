@@ -5,8 +5,6 @@
 #' can select columns and choose which values to include or exclude without
 #' writing R expressions. Supports multiple conditions with AND/OR logic.
 #'
-#' For expression-based filtering, see [new_filter_expr_block()].
-#'
 #' @param conditions List of filter conditions. Each condition should be a list
 #'   with elements: column (character), values (vector), mode ("include" or "exclude"),
 #'   and optionally operator ("&" or "|") specifying how this condition connects to

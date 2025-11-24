@@ -545,7 +545,7 @@ multi_summarize_row_ui <- function(
 #' Instead of writing expressions, users select summary functions from dropdowns
 #' (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
 #'
-#' For expression-based summarization, see [new_summarize_expr_block()].
+#' This block provides a no-code alternative for data summarization.
 #'
 #' @section Extending available functions:
 #' The list of available summary functions can be extended using the
@@ -572,7 +572,7 @@ multi_summarize_row_ui <- function(
 #' @importFrom shiny req showNotification NS moduleServer reactive observeEvent
 #' @importFrom glue glue
 #' @importFrom blockr.core blockr_option
-#' @seealso [new_transform_block()], [new_summarize_expr_block()]
+#' @seealso [new_transform_block()]
 #'
 #' @examples
 #' # Create a summarize block
