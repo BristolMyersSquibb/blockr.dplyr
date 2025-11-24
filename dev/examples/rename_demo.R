@@ -1,13 +1,14 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow for rename block with visualization
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
@@ -45,7 +46,13 @@ blockr.core::serve(
       new_link("renamed", "prep", "data"),
       new_link("prep", "summary", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Rename & Summarize Block Demo\n\n",
       "This workflow demonstrates the `new_rename_block()` and `new_summarize_block()` side by side.\n\n",
       "The workflow:\n\n",
@@ -60,6 +67,7 @@ blockr.core::serve(
 
       "## Summary Statistics\n\n",
       "![](blockr://summary)\n\n"
-    )
+      )
+      )
   )
 )

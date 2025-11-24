@@ -1,13 +1,14 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow showcasing the mutate block with documentation links
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Source dataset
       data = new_dataset_block(dataset = "mtcars"),
 
@@ -51,7 +52,13 @@ blockr.core::serve(
       new_link("enhanced", "results", "data"),
       new_link("results", "sorted", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Mutate Block Demo\n\n",
       "This workflow demonstrates the `new_mutate_block()` with documentation links.\n\n",
 
@@ -78,6 +85,7 @@ blockr.core::serve(
 
       "## Results\n\n",
       "![](blockr://sorted)\n\n"
-    )
+      )
+      )
   )
 )

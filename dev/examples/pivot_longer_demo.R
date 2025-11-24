@@ -1,13 +1,14 @@
 # Load required libraries
-library(blockr.core)
+library(blockr)
+library(blockr.dag)
 library(blockr.md)
 library(blockr.dplyr)
 pkgload::load_all()
 
 # Demo workflow showcasing the pivot_longer block
-blockr.core::serve(
-  blockr.md::new_md_board(
-    blocks = c(
+run_app(
+  blocks = c(
+  
       # Use mtcars - a classic wide format dataset
       data = new_dataset_block(dataset = "mtcars"),
 
@@ -44,7 +45,13 @@ blockr.core::serve(
       new_link("long_format", "metric_summary", "data"),
       new_link("metric_summary", "sorted", "data")
     ),
-    document = c(
+  extensions = list(
+
+    new_dag_extension(),
+
+    new_md_extension(
+
+      content = c(
       "## Pivot Longer Block Demo\n\n",
       "This workflow demonstrates the `new_pivot_longer_block()` for reshaping wide data to long format.\n\n",
 
@@ -90,6 +97,7 @@ blockr.core::serve(
 
       "## Summary Statistics by Metric\n\n",
       "![](blockr://sorted)\n\n"
-    )
+      )
+      )
   )
 )
