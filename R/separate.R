@@ -278,7 +278,8 @@ new_separate_block <- function(
                     NS(id, "col"),
                     label = "Column to separate",
                     choices = col,
-                    selected = col
+                    selected = col,
+                    width = "100%"
                   )
                 ),
 
@@ -289,7 +290,8 @@ new_separate_block <- function(
                     NS(id, "into"),
                     label = "New column names (comma-separated)",
                     value = paste(into, collapse = ", "),
-                    placeholder = "col1, col2"
+                    placeholder = "col1, col2",
+                    width = "100%"
                   )
                 ),
 
@@ -300,7 +302,8 @@ new_separate_block <- function(
                     NS(id, "sep"),
                     label = "Separator (regex or character)",
                     value = sep,
-                    placeholder = "[^[:alnum:]]+"
+                    placeholder = "[^[:alnum:]]+",
+                    width = "100%"
                   )
                 )
               )
@@ -359,7 +362,8 @@ new_separate_block <- function(
                       NS(id, "extra"),
                       label = "Handle extra pieces",
                       choices = c("warn", "drop", "merge"),
-                      selected = extra
+                      selected = extra,
+                      width = "100%"
                     )
                   ),
 
@@ -370,7 +374,8 @@ new_separate_block <- function(
                       NS(id, "fill"),
                       label = "Handle missing pieces",
                       choices = c("warn", "right", "left"),
-                      selected = fill
+                      selected = fill,
+                      width = "100%"
                     )
                   )
                 )
