@@ -22,8 +22,8 @@ install.packages("blockr.dplyr")
 Or install the development version from GitHub:
 
 ```r
-# install.packages("devtools")
-devtools::install_github("BristolMyersSquibb/blockr.dplyr")
+# install.packages("pak")
+pak::pak("BristolMyersSquibb/blockr.dplyr")
 ```
 
 ## Getting Started
