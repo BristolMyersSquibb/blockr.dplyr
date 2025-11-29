@@ -343,7 +343,7 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
       class = "multi-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "multi-filter-actions",
+        class = "multi-filter-actions mt-2 mb-1",
         actionButton(
           ns("add_condition"),
           label = "Add Condition",

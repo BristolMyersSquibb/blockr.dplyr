@@ -172,6 +172,7 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  expand_advanced = TRUE,
   verbose = FALSE
 )
 
@@ -194,6 +195,7 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  expand_advanced = TRUE,
   dataset = "ChickWeight",
   dataset_package = "datasets",
   verbose = FALSE
@@ -252,6 +254,7 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  expand_advanced = TRUE,
   dataset = "esoph",
   dataset_package = "datasets",
   verbose = FALSE
@@ -312,6 +315,7 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  expand_advanced = TRUE,
   verbose = FALSE
 )
 
@@ -332,6 +336,7 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  expand_advanced = TRUE,
   verbose = FALSE
 )
 

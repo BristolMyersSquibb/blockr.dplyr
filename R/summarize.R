@@ -594,7 +594,7 @@ new_summarize_block <- function(
         id,
         function(input, output, session) {
           # Group by selector using unified component
-          r_by_selection <- mod_by_selector_server(
+          r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() colnames(data()),
             initial_value = by
@@ -690,7 +690,7 @@ new_summarize_block <- function(
                 class = "block-section-grid",
                 div(
                   style = "grid-column: 1 / -1;",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "by_selector"),
                     label = tags$span(
                       "Columns to group by (optional)",

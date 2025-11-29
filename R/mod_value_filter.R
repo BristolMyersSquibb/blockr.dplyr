@@ -437,7 +437,7 @@ mod_value_filter_ui <- function(id) {
     div(
       uiOutput(ns("conditions_ui")),
       div(
-        class = "d-flex align-items-center gap-3 mt-2",
+        class = "d-flex align-items-center gap-3 mt-2 mb-1",
         actionButton(
           ns("add_condition"),
           label = "Add Condition",

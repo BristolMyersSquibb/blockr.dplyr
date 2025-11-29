@@ -210,7 +210,6 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
     tags$style(
       "
       .multi-rename-container {
-        margin-top: -8px;
       }
 
       .multi-rename-pair {

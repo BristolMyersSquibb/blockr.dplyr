@@ -70,7 +70,7 @@ new_slice_block <- function(
           r_value_mode <- reactiveVal(if (is.null(prop)) "count" else "prop")
 
           # Group by selector using unified componen
-          r_by_selection <- mod_by_selector_server(
+          r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() {
               req(data())
@@ -111,12 +111,13 @@ new_slice_block <- function(
             r_type(input$type)
           })
 
+          # Unified input handles both n and prop based on mode
           observeEvent(input$n, {
-            r_n(input$n)
-          })
-
-          observeEvent(input$prop, {
-            r_prop(input$prop)
+            if (r_value_mode() == "count") {
+              r_n(input$n)
+            } else {
+              r_prop(input$n)
+            }
           })
 
           observeEvent(input$order_by, {
@@ -355,6 +356,74 @@ new_slice_block <- function(
         css_responsive_grid(),
         css_inline_checkbox(),
 
+        # JavaScript for Shiny input binding and proportion toggle
+        tags$script(HTML(sprintf(
+          "
+          $(document).ready(function() {
+            // Bind custom inputs to Shiny
+            var nInput = $('#%s');
+            var modeInput = $('#%s');
+
+            // Update Shiny when n value changes
+            nInput.on('change input', function() {
+              Shiny.setInputValue('%s', parseFloat($(this).val()));
+            });
+
+            // Update Shiny when mode changes
+            modeInput.on('change', function() {
+              Shiny.setInputValue('%s', $(this).val());
+            });
+
+            // Initialize values
+            Shiny.setInputValue('%s', parseFloat(nInput.val()));
+            Shiny.setInputValue('%s', modeInput.val());
+          });
+
+          // Proportion toggle checkbox handler
+          $(document).on('change', '#%s', function() {
+            var checkbox = $(this);
+            var modeInput = $('#%s');
+            var label = $('#%s');
+            var valueInput = $('#%s');
+            var currentValue = parseFloat(valueInput.val());
+            var isChecked = checkbox.is(':checked');
+
+            if (isChecked) {
+              // Switch to proportion mode
+              modeInput.val('prop').trigger('change');
+              label.text('Proportion');
+              valueInput.attr('step', '0.01');
+              // If value > 1, set sensible default
+              if (currentValue > 1) {
+                valueInput.val(0.1).trigger('change');
+              }
+            } else {
+              // Switch to count mode
+              modeInput.val('count').trigger('change');
+              label.text('Number of rows');
+              valueInput.attr('step', '1');
+              // If value < 1, set sensible default
+              if (currentValue < 1) {
+                valueInput.val(5).trigger('change');
+              }
+            }
+            // Trigger Shiny update
+            Shiny.setInputValue('%s', modeInput.val());
+          });
+          ",
+          ns("n"),
+          ns("value_mode"),
+          ns("n"),
+          ns("value_mode"),
+          ns("n"),
+          ns("value_mode"),
+          ns("value_mode_toggle"),
+          ns("value_mode"),
+          ns("value_label"),
+          ns("n"),
+          ns("value_mode")
+        ))),
+
         # Block-specific CSS
         tags$style(HTML(
           "
@@ -388,6 +457,18 @@ new_slice_block <- function(
             margin-top: 0;
             margin-right: 4px;
           }
+
+          /* Integrated value input with checkbox */
+          .slice-value-input {
+            width: 100%;
+          }
+          .slice-value-input .input-group-text {
+            padding: 0.375rem 0.5rem;
+          }
+          .slice-value-input .proportion-label {
+            font-weight: 500;
+            color: #6c757d;
+          }
           "
         )),
 
@@ -417,96 +498,57 @@ new_slice_block <- function(
                       "Random sample" = "sample",
                       "Custom positions" = "custom"
                     ),
-                    selected = type
+                    selected = type,
+                    width = "100%"
                   )
                 ),
 
-                # Value mode selector (Count vs Proportion)
+                # Number/Proportion input with integrated checkbox
                 div(
                   class = "block-input-wrapper",
                   conditionalPanel(
                     condition = sprintf("input['%s'] != 'custom'", ns("type")),
-                    radioButtons(
-                      ns("value_mode"),
-                      label = NULL,
-                      choices = c("Count" = "count", "Proportion" = "prop"),
-                      selected = if (is.null(prop)) "count" else "prop",
-                      inline = TRUE
+                    div(
+                      class = "slice-value-input",
+                      tags$label(
+                        id = ns("value_label"),
+                        class = "control-label",
+                        `for` = ns("n"),
+                        if (is.null(prop)) "Number of rows" else "Proportion"
+                      ),
+                      div(
+                        class = "input-group",
+                        tags$input(
+                          id = ns("n"),
+                          type = "number",
+                          class = "form-control shiny-bound-input",
+                          value = if (is.null(prop)) n else prop,
+                          `aria-label` = "Number of rows or proportion"
+                        ),
+                        div(
+                          class = "input-group-text",
+                          tags$input(
+                            id = ns("value_mode_toggle"),
+                            type = "checkbox",
+                            class = "form-check-input mt-0",
+                            checked = if (!is.null(prop)) "checked" else NULL,
+                            `aria-label` = "Toggle proportion mode"
+                          ),
+                          tags$span(class = "proportion-label ms-1", "%")
+                        ),
+                        # Hidden input to track mode
+                        tags$input(
+                          id = ns("value_mode"),
+                          type = "hidden",
+                          class = "shiny-bound-input",
+                          value = if (is.null(prop)) "count" else "prop"
+                        )
+                      )
                     )
                   )
                 ),
 
-                # Number/Proportion input
-                div(
-                  class = "block-input-wrapper",
-                  conditionalPanel(
-                    condition = sprintf("input['%s'] != 'custom'", ns("type")),
-                    # Number of rows input
-                    conditionalPanel(
-                      condition = sprintf("input['%s'] == 'count'", ns("value_mode")),
-                      numericInput(
-                        ns("n"),
-                        label = "Number of rows",
-                        value = n,
-                        min = 1,
-                        step = 1
-                      )
-                    ),
-                    # Proportion input
-                    conditionalPanel(
-                      condition = sprintf("input['%s'] == 'prop'", ns("value_mode")),
-                      numericInput(
-                        ns("prop"),
-                        label = "Proportion (0 to 1)",
-                        value = if (is.null(prop)) 0.1 else prop,
-                        min = 0,
-                        max = 1,
-                        step = 0.01
-                      )
-                    )
-                  )
-                )
-              )
-            ),
-
-            # Group by columns section
-            div(
-              class = "block-section",
-              # Hack to avoid that the section participates in grid above
-              tags$h4(""),
-              div(
-                class = "block-section-grid",
-                div(
-                  class = "block-input-wrapper",
-                  style = "margin-top: -20px; padding-top: 0px;",
-                  mod_by_selector_ui(
-                    ns("by_selector"),
-                    label = "Columns to group by (optional)",
-                    initial_choices = by,
-                    initial_selected = by
-                  )
-                )
-              )
-            ),
-
-            # Type-specific options section
-            div(
-              class = "block-section",
-              # Section header - only shown when there are type-specific options
-              conditionalPanel(
-                condition = sprintf(
-                  "input['%s'] == 'min' || input['%s'] == 'max' || input['%s'] == 'sample' || input['%s'] == 'custom'",
-                  ns("type"),
-                  ns("type"),
-                  ns("type"),
-                  ns("type")
-                ),
-                tags$h4("Type-specific options")
-              ),
-              div(
-                class = "block-section-grid",
-
-                # Order by column (for min/max)
+                # Order by column (for min/max) - shown right after slice type
                 conditionalPanel(
                   condition = sprintf(
                     "input['%s'] == 'min' || input['%s'] == 'max'",
@@ -515,24 +557,21 @@ new_slice_block <- function(
                   ),
                   div(
                     class = "block-input-wrapper",
-                    div(
-                      class = "block-inline-checkbox-wrapper",
-                      div(
-                        selectInput(
-                          ns("order_by"),
-                          label = "Order by column",
-                          choices = character(),
-                          selected = order_by
-                        )
-                      ),
-                      div(
-                        class = "block-inline-checkbox",
-                        checkboxInput(
-                          ns("with_ties"),
-                          label = "Include ties",
-                          value = with_ties
-                        )
-                      )
+                    selectInput(
+                      ns("order_by"),
+                      label = "Order by column",
+                      choices = character(),
+                      selected = order_by,
+                      width = "100%"
+                    )
+                  ),
+                  div(
+                    class = "block-input-wrapper",
+                    style = "align-self: end;",
+                    checkboxInput(
+                      ns("with_ties"),
+                      label = "Include ties",
+                      value = with_ties
                     )
                   )
                 ),
@@ -542,24 +581,21 @@ new_slice_block <- function(
                   condition = sprintf("input['%s'] == 'sample'", ns("type")),
                   div(
                     class = "block-input-wrapper",
-                    div(
-                      class = "block-inline-checkbox-wrapper",
-                      div(
-                        selectInput(
-                          ns("weight_by"),
-                          label = "Weight by column (optional)",
-                          choices = character(),
-                          selected = weight_by
-                        )
-                      ),
-                      div(
-                        class = "block-inline-checkbox",
-                        checkboxInput(
-                          ns("replace"),
-                          label = "Sample with replacement",
-                          value = replace
-                        )
-                      )
+                    selectInput(
+                      ns("weight_by"),
+                      label = "Weight by column (optional)",
+                      choices = character(),
+                      selected = weight_by,
+                      width = "100%"
+                    )
+                  ),
+                  div(
+                    class = "block-input-wrapper",
+                    style = "align-self: end;",
+                    checkboxInput(
+                      ns("replace"),
+                      label = "Sample with replacement",
+                      value = replace
                     )
                   )
                 ),
@@ -574,8 +610,21 @@ new_slice_block <- function(
                       ns("rows"),
                       label = "Row positions (e.g., 1:5, c(1,3,5), -c(2,4))",
                       value = rows,
-                      placeholder = "1:5"
+                      placeholder = "1:5",
+                      width = "100%"
                     )
+                  )
+                ),
+
+                # Group by columns - at the bottom (fixed width like mutate/summarize)
+                div(
+                  class = "block-input-wrapper",
+                  style = "grid-column: 1 / -1;",
+                  mod_column_selector_ui(
+                    ns("by_selector"),
+                    label = "Columns to group by (optional)",
+                    initial_choices = by,
+                    initial_selected = by
                   )
                 )
               )

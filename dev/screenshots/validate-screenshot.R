@@ -312,30 +312,17 @@ blockr.core::serve(
       if (expand_advanced) {
         tryCatch(
           {
-            # Try to find and click the advanced toggle
-            # The selector may vary, try common patterns
-            advanced_selectors <- c(
-              ".advanced-toggle",
-              "[id$='advanced-toggle']",
-              "[onclick*='advanced']"
+            # Click all advanced toggles on the page
+            app$run_js(
+              "
+              var toggles = document.querySelectorAll('.block-advanced-toggle');
+              toggles.forEach(function(toggle) {
+                toggle.click();
+              });
+              "
             )
-
-            for (selector in advanced_selectors) {
-              tryCatch(
-                {
-                  app$run_js(sprintf(
-                    "document.querySelector('%s')?.click();",
-                    selector
-                  ))
-                  # Wait for animation/expansion
-                  Sys.sleep(0.5)
-                  break
-                },
-                error = function(e) {
-                  # Try next selector
-                }
-              )
-            }
+            # Wait for animation/expansion
+            Sys.sleep(0.5)
           },
           error = function(e) {
             # Block doesn't have advanced options - that's fine

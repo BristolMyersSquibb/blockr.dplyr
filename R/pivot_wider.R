@@ -77,20 +77,20 @@ new_pivot_wider_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Column selectors
-          r_names_from <- mod_by_selector_server(
+          # Column selectors using generic column selector (not group-by specific)
+          r_names_from <- mod_column_selector_server(
             id = "names_from_selector",
             get_cols = \() colnames(data()),
             initial_value = names_from
           )
 
-          r_values_from <- mod_by_selector_server(
+          r_values_from <- mod_column_selector_server(
             id = "values_from_selector",
             get_cols = \() colnames(data()),
             initial_value = values_from
           )
 
-          r_id_cols <- mod_by_selector_server(
+          r_id_cols <- mod_column_selector_server(
             id = "id_cols_selector",
             get_cols = \() colnames(data()),
             initial_value = id_cols
@@ -244,33 +244,36 @@ new_pivot_wider_block <- function(
                 # Names from
                 div(
                   class = "block-input-wrapper",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "names_from_selector"),
                     label = "Get new column names from",
                     initial_choices = names_from,
-                    initial_selected = names_from
+                    initial_selected = names_from,
+                    width = "100%"
                   )
                 ),
 
                 # Values from
                 div(
                   class = "block-input-wrapper",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "values_from_selector"),
                     label = "Get values from",
                     initial_choices = values_from,
-                    initial_selected = values_from
+                    initial_selected = values_from,
+                    width = "100%"
                   )
                 ),
 
                 # ID columns
                 div(
                   class = "block-input-wrapper",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "id_cols_selector"),
                     label = "ID columns (optional)",
                     initial_choices = id_cols,
-                    initial_selected = id_cols
+                    initial_selected = id_cols,
+                    width = "100%"
                   )
                 )
               )
@@ -309,7 +312,8 @@ new_pivot_wider_block <- function(
                       NS(id, "values_fill"),
                       label = "Fill missing values with",
                       value = values_fill,
-                      placeholder = "e.g., 0 or NA"
+                      placeholder = "e.g., 0 or NA",
+                      width = "100%"
                     )
                   ),
 
@@ -320,7 +324,8 @@ new_pivot_wider_block <- function(
                       NS(id, "names_prefix"),
                       label = "Add prefix to column names",
                       value = names_prefix,
-                      placeholder = "e.g., 'col_'"
+                      placeholder = "e.g., 'col_'",
+                      width = "100%"
                     )
                   ),
 
@@ -331,7 +336,8 @@ new_pivot_wider_block <- function(
                       NS(id, "names_sep"),
                       label = "Separator for multiple names",
                       value = names_sep,
-                      placeholder = "_"
+                      placeholder = "_",
+                      width = "100%"
                     )
                   )
                 )
