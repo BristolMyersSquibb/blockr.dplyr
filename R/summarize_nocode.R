@@ -698,18 +698,6 @@ new_summarize_block <- function(
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Select functions and columns to create summaries. No coding required. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  )
-                ),
                 mod_multi_summarize_ui(
                   NS(id, "ms")
                 )

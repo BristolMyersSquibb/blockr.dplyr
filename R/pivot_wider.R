@@ -219,18 +219,9 @@ new_pivot_wider_block <- function(
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options"), use_subgrid = TRUE),
 
-        # Block-specific CSS
+        # Block-specific CSS (layout only)
         tags$style(HTML(
           "
-          .pivot_wider-block-container .block-help-text p {
-            margin-bottom: 0;
-          }
-          .pivot_wider-block-container .control-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-          }
           /* Advanced toggle spans full width */
           .pivot_wider-block-container .block-advanced-toggle {
             grid-column: 1 / -1;
@@ -243,20 +234,6 @@ new_pivot_wider_block <- function(
 
           div(
             class = "block-form-grid",
-
-            # Help text
-            div(
-              class = "block-help-text",
-              p(
-                "Reshape data from long to wide format. Select columns that define new column names and values. ",
-                tags$a(
-                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-wider-block",
-                  target = "_blank",
-                  style = "text-decoration: none; font-size: 0.9em;",
-                  "\u2197"
-                )
-              )
-            ),
 
             # Main Section
             div(

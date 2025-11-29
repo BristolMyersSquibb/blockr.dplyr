@@ -60,9 +60,7 @@ css_responsive_grid <- function() {
     "
     .block-container {
       width: 100%;
-      margin: 0px;
-      padding: 0px;
-      padding-bottom: 15px;
+      padding-bottom: 0;
     }
 
     /* One shared grid across the whole form */
@@ -70,6 +68,7 @@ css_responsive_grid <- function() {
       display: grid;
       gap: 15px;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      padding-top: 5px;
     }
 
     /* Flatten wrappers so all controls share the same tracks */
@@ -78,18 +77,10 @@ css_responsive_grid <- function() {
       display: contents;
     }
 
-    /* Headings/help span full width */
+    /* Headings/help span full width in grid */
     .block-section h4,
     .block-help-text {
       grid-column: 1 / -1;
-    }
-
-    .block-section h4 {
-      margin-top: 5px;
-      margin-bottom: 0px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #333;
     }
 
     .block-section:not(:first-child) {
@@ -102,13 +93,6 @@ css_responsive_grid <- function() {
 
     .block-input-wrapper .form-group {
       margin-bottom: 10px;
-    }
-
-    .block-help-text {
-      margin-top: 0px;
-      padding-top: 0px;
-      font-size: 0.875rem;
-      color: #666;
     }
     "
   ))
@@ -207,12 +191,11 @@ css_advanced_toggle <- function(id, use_subgrid = FALSE) {
       cursor: pointer;
       user-select: none;
       padding: 8px 0;
-      margin-bottom: 8px;
+      margin-bottom: 0;
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #6c757d;
-      font-size: 0.875rem;
+      font-size: 0.8125rem; /* sm size */
     }
     .block-chevron {
       transition: transform 0.2s;
@@ -349,6 +332,55 @@ css_doc_links <- function() {
       margin-top: 0.25rem;
       margin-bottom: 0.5rem;
       display: block;
+    }
+    "
+  ))
+}
+
+#' CSS grid layout for value filter conditions
+#'
+#' Provides the grid structure for value filter condition rows.
+#' Layout only - no colors, typography, or button styling.
+#' Those are handled by Bootstrap classes.
+#'
+#' Grid structure:
+#' - Row 1: column selector | values selector | delete button
+#' - Row 2: mode checkbox (spans full width)
+#'
+#' Used by: filter block (value_filter)
+#'
+#' @return HTML style tag with value filter grid CSS
+#' @noRd
+css_value_filter_grid <- function() {
+  tags$style(HTML(
+    "
+    /* Grid layout for condition rows */
+    .value-filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 0 15px; /* row-gap: 0, column-gap: 15px */
+      align-items: end;
+    }
+
+    .value-filter-grid .vf-column { grid-column: 1; grid-row: 1; }
+    .value-filter-grid .vf-values { grid-column: 2; grid-row: 1; }
+    .value-filter-grid .vf-delete {
+      grid-column: 3;
+      grid-row: 1;
+      height: 38px; /* Match input height */
+      display: flex;
+      align-items: center;
+    }
+    .value-filter-grid .vf-mode   { grid-column: 1 / -1; grid-row: 2; }
+
+    /* Remove Shiny's default input margins within value filter */
+    .value-filter-condition .shiny-input-container {
+      margin-bottom: 0 !important;
+    }
+
+    /* Consistent height for form controls */
+    .value-filter-condition .selectize-input {
+      min-height: 38px;
     }
     "
   ))

@@ -208,16 +208,13 @@ new_select_block <- function(
         # Block-specific CSS
         tags$style(HTML(
           "
-          .select-block-container .block-help-text {
+          /* Remove default form-group margin for tighter layout */
+          .select-block-container .select-distinct-checkbox .form-group {
             margin-bottom: 0;
           }
-          .select-block-container .block-help-text p {
+          .select-block-container .select-distinct-checkbox .checkbox {
+            margin-top: 0;
             margin-bottom: 0;
-          }
-
-          /* Distinct checkbox - keep as full-width option below */
-          .select-block-container .select-distinct-checkbox {
-            margin-top: 8px;
           }
           "
         )),
@@ -233,18 +230,6 @@ new_select_block <- function(
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Select and reorder columns. Drag to change order in output. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#select-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  )
-                ),
                 div(
                   class = "block-input-wrapper",
                   style = "grid-column: 1 / -1;",
