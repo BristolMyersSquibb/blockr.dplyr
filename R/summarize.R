@@ -1,90 +1,614 @@
-#' Summarize expression block constructor
+#' Get available summary functions for no-code summarize
 #'
-#' This block allows to add new variables by summarizing over groups using R expressions
-#' (see [dplyr::summarize()]). Changes are applied after clicking the submit button.
+#' Returns a named vector of common summary functions with proper namespacing.
+#' This helper function centralizes the definition of available summary functions
+#' and allows extension via the `blockr.dplyr.summary_functions` option.
 #'
-#' For no-code summarization using dropdowns, see [new_summarize_block()].
+#' @section Extending with custom functions:
+#' You can extend the available summary functions by setting the
+#' `blockr.dplyr.summary_functions` option. Custom functions should be provided
+#' as a named character vector where names are display labels (descriptions)
+#' and values are the function calls with proper namespacing.
 #'
-#' @param exprs Reactive expression returning character vector of
-#'   expressions
+#' @section Example:
+#' \preformatted{
+#' # Add custom functions from blockr.topline package
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num",
+#'     "first number (first_num)" = "blockr.topline::first_num"
+#'   )
+#' )
+#' }
+#'
+#' If no description is provided (i.e., names are empty), the function name
+#' will be used as the display label.
+#'
+#' @return Named character vector where names are display names and values are
+#'   fully qualified function calls
+#' @keywords internal
+#' @noRd
+get_summary_functions <- function() {
+  # Default summary functions
+  default_funcs <- c(
+    # Center
+    "mean" = "mean",
+    "median" = "median",
+
+    # Spread
+    "standard deviation (sd)" = "sd",
+    "IQR" = "IQR",
+    "median absolute deviation (mad)" = "mad",
+
+    # Range
+    "minimum (min)" = "min",
+    "maximum (max)" = "max",
+
+    # Position
+    "first" = "dplyr::first",
+    "last" = "dplyr::last",
+
+    # Count
+    "count rows (n)" = "dplyr::n",
+    "count distinct (n_distinct)" = "dplyr::n_distinct",
+
+    # Sums and products
+    "sum" = "sum",
+    "product (prod)" = "prod"
+  )
+
+  # Get custom functions from blockr option
+  custom_funcs <- blockr_option("dplyr.summary_functions", NULL)
+
+  # Validate custom functions
+  if (!is.null(custom_funcs)) {
+    if (!is.character(custom_funcs)) {
+      warning(
+        "blockr.dplyr.summary_functions must be a character vector. Ignoring custom functions.",
+        call. = FALSE
+      )
+      return(default_funcs)
+    }
+
+    # If names are missing or empty, use the function name as label
+    if (is.null(names(custom_funcs))) {
+      names(custom_funcs) <- custom_funcs
+    } else {
+      # Fill in missing names with function values
+      empty_names <- names(custom_funcs) == "" | is.na(names(custom_funcs))
+      names(custom_funcs)[empty_names] <- custom_funcs[empty_names]
+    }
+
+    # Merge: custom functions come first, then defaults not overridden
+    return(c(custom_funcs, default_funcs[!names(default_funcs) %in% names(custom_funcs)]))
+  }
+
+  default_funcs
+}
+
+#' Multi summarize module for no-code summary operations
+#'
+#' A Shiny module that manages multiple new_name ~ function(column) mappings
+#' for no-code summarization. Supports adding and removing summary pairs dynamically.
+#'
+#' @param id The module ID
+#' @param get_value Function that returns initial values as a named list
+#' @param get_cols Function that returns column names for dropdown selection
+#'
+#' @return A reactive expression containing the current summary specifications
+#' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput textInput
+#' @importFrom shinyjs useShinyjs
+#' @importFrom htmltools tags
+#' @keywords internal
+#' @noRd
+mod_multi_summarize_server <- function(id, get_value, get_cols) {
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+
+    # Initialize with values from get_value
+    # Structure: list(new_col = list(func = "mean", col = "mpg"))
+    initial_values <- get_value()
+
+    if (length(initial_values) == 0 || is.null(initial_values)) {
+      available_cols <- get_cols()
+      default_col <- if (length(available_cols) > 0) {
+        available_cols[1]
+      } else {
+        ""
+      }
+      initial_values <- list(
+        count = list(func = "dplyr::n", col = "")
+      )
+    } else {
+      # Normalize initial values - ensure col and func are valid
+      initial_values <- lapply(initial_values, function(spec) {
+        if (is.null(spec$col) || length(spec$col) == 0) {
+          spec$col <- ""
+        }
+        if (is.null(spec$func) || length(spec$func) == 0) {
+          spec$func <- "dplyr::n"
+        }
+        spec
+      })
+    }
+
+    # Store summaries as reactive value
+    r_summaries <- reactiveVal(initial_values)
+    r_cols <- reactive(get_cols())
+
+    # Track which summary indices exist
+    r_summary_indices <- reactiveVal(seq_along(initial_values))
+    r_next_index <- reactiveVal(length(initial_values) + 1)
+
+    # Collect current values from all inputs
+    get_current_summaries <- function() {
+      indices <- r_summary_indices()
+      if (length(indices) == 0) {
+        return(list())
+      }
+
+      result <- list()
+      for (i in indices) {
+        new_name_id <- paste0("summary_", i, "_new")
+        func_id <- paste0("summary_", i, "_func")
+        col_id <- paste0("summary_", i, "_col")
+
+        new_name <- input[[new_name_id]]
+        func <- input[[func_id]]
+        col <- input[[col_id]]
+
+        if (
+          !is.null(new_name) &&
+            !is.null(func) &&
+            !is.null(col) &&
+            new_name != "" &&
+            func != "" &&
+            (col != "" || func == "dplyr::n")
+        ) {
+          result[[new_name]] <- list(func = func, col = col)
+        }
+      }
+
+      if (length(result) == 0) {
+        available_cols <- r_cols()
+        default_col <- if (length(available_cols) > 0) {
+          available_cols[1]
+        } else {
+          "col"
+        }
+        result <- list(
+          summary_col = list(func = "mean", col = default_col)
+        )
+      }
+
+      result
+    }
+
+    # Add new summary pair
+    observeEvent(input$add_summary, {
+      current_indices <- r_summary_indices()
+      new_index <- r_next_index()
+
+      # Add new index
+      r_summary_indices(c(current_indices, new_index))
+      r_next_index(new_index + 1)
+
+      # Get current summaries and add new one
+      current <- get_current_summaries()
+
+      # Generate unique new name
+      available_cols <- r_cols()
+      new_name <- "summary_col"
+      i <- 1
+      while (new_name %in% names(current)) {
+        new_name <- paste0("summary_col_", i)
+        i <- i + 1
+      }
+
+      # Choose first available column not already used
+      used_cols <- sapply(current, function(x) x$col)
+      available_remaining <- setdiff(available_cols, used_cols)
+      col_name <- if (length(available_remaining) > 0) {
+        available_remaining[1]
+      } else {
+        available_cols[1]
+      }
+
+      current[[new_name]] <- list(func = "mean", col = col_name)
+      r_summaries(current)
+    })
+
+    # Remove summary handlers - create them dynamically
+    observe({
+      indices <- r_summary_indices()
+
+      lapply(indices, function(i) {
+        observeEvent(input[[paste0("summary_", i, "_remove")]], {
+          current_indices <- r_summary_indices()
+
+          if (length(current_indices) > 1) {
+            # Remove this index
+            new_indices <- setdiff(current_indices, i)
+            r_summary_indices(new_indices)
+
+            # Update summaries
+            current <- get_current_summaries()
+            r_summaries(current)
+          }
+        })
+      })
+    })
+
+    # Render UI dynamically
+    output$summaries_ui <- renderUI({
+      indices <- r_summary_indices()
+      summaries <- r_summaries()
+      available_cols <- r_cols()
+      available_funcs <- get_summary_functions()
+
+      # Require data to be available before rendering
+      req(length(available_cols) > 0)
+
+      if (length(indices) == 0) {
+        return(NULL)
+      }
+
+      summary_names <- names(summaries)
+
+      # Create UI for each summary pair
+      tagList(
+        lapply(seq_along(indices), function(j) {
+          i <- indices[j]
+          new_name <- if (j <= length(summary_names)) {
+            summary_names[j]
+          } else {
+            "summary_col"
+          }
+
+          spec <- if (j <= length(summaries)) {
+            summaries[[j]]
+          } else {
+            list(func = "mean", col = available_cols[1])
+          }
+
+          # Ensure col is a valid string for UI
+          col_value <- spec$col
+          if (is.null(col_value) || length(col_value) == 0 || col_value == "") {
+            col_value <- if (length(available_cols) > 0) available_cols[1] else ""
+          }
+
+          # Ensure func is valid
+          func_value <- spec$func
+          if (is.null(func_value) || length(func_value) == 0 || func_value == "") {
+            func_value <- "mean"
+          }
+
+          multi_summarize_row_ui(
+            ns(paste0("summary_", i)),
+            new_name = new_name,
+            func = func_value,
+            col = col_value,
+            available_funcs = available_funcs,
+            available_cols = available_cols,
+            show_remove = (length(indices) > 1)
+          )
+        })
+      )
+    })
+
+    # Return the reactive summaries
+    reactive({
+      # Check if any inputs exist yet - if not, use stored summaries
+      indices <- r_summary_indices()
+      has_inputs <- any(sapply(indices, function(i) {
+        paste0("summary_", i, "_new") %in%
+          names(input) &&
+          paste0("summary_", i, "_func") %in% names(input) &&
+          paste0("summary_", i, "_col") %in% names(input)
+      }))
+
+      if (has_inputs) {
+        # Use current input values
+        get_current_summaries()
+      } else {
+        # Use stored summaries (for initialization)
+        r_summaries()
+      }
+    })
+  })
+}
+
+#' Create multi summarize UI module
+#'
+#' @param id The module ID
+#' @param extra_button Optional UI element (e.g., submit button) to display on the right side
+#' @return A div containing the UI elements
+#' @keywords internal
+#' @noRd
+mod_multi_summarize_ui <- function(id, extra_button = NULL) {
+  ns <- NS(id)
+
+  tagList(
+    shinyjs::useShinyjs(),
+    tags$style(
+      "
+      .multi-summarize-container {
+        margin-top: -8px;
+      }
+
+      .multi-summarize-pair {
+        display: flex;
+        width: 100%;
+        align-items: stretch;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .multi-summarize-pair .summarize-new {
+        flex: 0 0 25%;
+      }
+
+      .multi-summarize-pair .summarize-equals {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-gray-400);
+        font-size: 0.9em;
+        width: 25px;
+      }
+
+      .multi-summarize-pair .summarize-func {
+        flex: 0 0 30%;
+      }
+
+      .multi-summarize-pair .summarize-paren-open {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-gray-400);
+        font-size: 1.1em;
+        width: 20px;
+      }
+
+      .multi-summarize-pair .summarize-col {
+        flex: 1;
+      }
+
+      .multi-summarize-pair .summarize-paren-close {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-gray-400);
+        font-size: 1.1em;
+        width: 20px;
+      }
+
+      .multi-summarize-pair .summarize-delete {
+        flex: 0 0 auto;
+        height: 38px;
+        width: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        border: none;
+        background: transparent;
+        padding: 0;
+      }
+
+      .multi-summarize-pair .summarize-delete:hover {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
+      }
+
+      /* Remove default margins from Shiny inputs */
+      .multi-summarize-pair .shiny-input-container {
+        margin-bottom: 0 !important;
+      }
+
+      /* Ensure inputs and selects fill their containers and align properly */
+      .multi-summarize-pair .form-control,
+      .multi-summarize-pair .selectize-control,
+      .multi-summarize-pair .selectize-input {
+        width: 100% !important;
+        height: 38px !important;
+        margin-bottom: 0 !important;
+      }
+
+      .multi-summarize-pair .selectize-input {
+        min-height: 38px;
+        line-height: 24px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        display: flex;
+        align-items: center;
+      }
+
+      .multi-summarize-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+
+      .multi-summarize-actions .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
+
+      .multi-summarize-actions .btn-outline-secondary:hover {
+        border-color: #adb5bd;
+        background-color: #f8f9fa;
+        color: #495057;
+      }
+    "
+    ),
+    div(
+      class = "multi-summarize-container",
+      uiOutput(ns("summaries_ui")),
+      div(
+        class = "multi-summarize-actions",
+        actionButton(
+          ns("add_summary"),
+          label = "Add Summary",
+          icon = icon("plus"),
+          class = "btn btn-outline-secondary btn-sm"
+        ),
+        extra_button
+      )
+    )
+  )
+}
+
+#' Create UI for a single summary row
+#'
+#' @param id Row identifier
+#' @param new_name New column name
+#' @param func Summary function
+#' @param col Column to summarize
+#' @param available_funcs Available summary functions
+#' @param available_cols Available column names for dropdown
+#' @param show_remove Whether to show remove button
+#' @return A div containing the row UI
+#' @keywords internal
+#' @noRd
+multi_summarize_row_ui <- function(
+  id,
+  new_name = "summary_col",
+  func = "mean",
+  col = "",
+  available_funcs = get_summary_functions(),
+  available_cols = character(),
+  show_remove = TRUE
+) {
+  div(
+    class = "multi-summarize-pair",
+    div(
+      class = "summarize-new",
+      textInput(
+        paste0(id, "_new"),
+        label = NULL,
+        value = new_name,
+        placeholder = "New column"
+      )
+    ),
+    div(
+      class = "summarize-equals",
+      "="
+    ),
+    div(
+      class = "summarize-func",
+      selectInput(
+        paste0(id, "_func"),
+        label = NULL,
+        choices = available_funcs,
+        selected = func,
+        width = "100%"
+      )
+    ),
+    div(
+      class = "summarize-paren-open",
+      "("
+    ),
+    div(
+      class = "summarize-col",
+      selectInput(
+        paste0(id, "_col"),
+        label = NULL,
+        choices = available_cols,
+        selected = col,
+        width = "100%"
+      )
+    ),
+    div(
+      class = "summarize-paren-close",
+      ")"
+    ),
+    if (show_remove) {
+      actionButton(
+        paste0(id, "_remove"),
+        label = NULL,
+        icon = icon("xmark"),
+        class = "btn btn-sm summarize-delete",
+        title = "Remove summary"
+      )
+    }
+  )
+}
+
+#' Summarize block constructor
+#'
+#' This block provides a no-code interface for summarizing data (see [dplyr::summarize()]).
+#' Instead of writing expressions, users select summary functions from dropdowns
+#' (mean, median, sum, etc.), choose columns to summarize, and specify new column names.
+#'
+#' For expression-based summarization, see [new_summarize_expr_block()].
+#'
+#' @section Extending available functions:
+#' The list of available summary functions can be extended using the
+#' \code{blockr.dplyr.summary_functions} option. Set this option to a named
+#' character vector where names are display labels and values are function calls:
+#'
+#' \preformatted{
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+#'   )
+#' )
+#' }
+#'
+#' If a description is not provided (empty name), the function name will be
+#' used as the display label.
+#'
+#' @param summaries Named list where each element is a list with 'func' and 'col' elements.
+#'   For example: list(avg_mpg = list(func = "mean", col = "mpg"))
 #' @param by Columns to define grouping
-#' @param unpack Logical flag to unpack data frame columns from helper functions.
-#'   When `TRUE`, expressions that return data frames will have their columns
-#'   unpacked into separate columns. When `FALSE`, data frames are kept as nested
-#'   list-columns. Default is `FALSE`.
 #' @param ... Additional arguments forwarded to [new_block()]
-#
-#' @return A block object for summarize operations
-#' @importFrom shiny req showNotification NS moduleServer reactive actionButton observeEvent icon
+#'
+#' @return A block object for no-code summarize operations
+#' @importFrom shiny req showNotification NS moduleServer reactive observeEvent
 #' @importFrom glue glue
-#' @seealso [new_transform_block()]
-#'
-#' @section Unpacking Helper Function Results:
-#' When `unpack = TRUE`, helper functions that return data frames will have their
-#' columns unpacked into separate columns in the result. This is useful for helper
-#' functions like `stat_label()` that return multiple statistics as columns.
-#'
-#' ```r
-#' # Without unpacking (default)
-#' new_summarize_expr_block(
-#'   exprs = list(stats = "helper_func(...)"),
-#'   unpack = FALSE
-#' )
-#' # Result: Creates nested list-column "stats" containing the data frame
-#'
-#' # With unpacking
-#' new_summarize_expr_block(
-#'   exprs = list(stats = "helper_func(...)"),
-#'   unpack = TRUE
-#' )
-#' # Result: Columns from helper_func() are unpacked into separate columns
-#' ```
+#' @importFrom blockr.core blockr_option
+#' @seealso [new_transform_block()], [new_summarize_expr_block()]
 #'
 #' @examples
-#' # Create a summarize expression block
-#' new_summarize_expr_block()
+#' # Create a summarize block
+#' new_summarize_block()
 #'
 #' if (interactive()) {
 #'   # Basic usage with mtcars dataset
 #'   library(blockr.core)
-#'   serve(new_summarize_expr_block(), list(data = mtcars))
+#'   serve(new_summarize_block(), data = list(data = mtcars))
 #'
-#'   # With a custom dataset
-#'   df <- data.frame(x = 1:5, y = letters[1:5])
-#'   serve(new_summarize_expr_block(), list(data = df))
-#'
-#'   # Using unpack to expand helper function results
-#'   # Define the helper in your environment first
-#'   calc_stats <- function(df) {
-#'     data.frame(
-#'       mean_x = mean(df$x),
-#'       mean_y = mean(df$y),
-#'       sum_x = sum(df$x),
-#'       sum_y = sum(df$y)
-#'     )
-#'   }
-#'
-#'   # With unpacking enabled
+#'   # With predefined summaries
 #'   serve(
-#'     new_summarize_expr_block(
-#'       exprs = list(stats = "calc_stats(pick(everything()))"),
-#'       by = "group",
-#'       unpack = TRUE
+#'     new_summarize_block(
+#'       summaries = list(
+#'         avg_mpg = list(func = "mean", col = "mpg"),
+#'         max_hp = list(func = "max", col = "hp")
+#'       )
 #'     ),
-#'     list(data = data.frame(x = 1:6, y = 10:15, group = rep(c("A", "B"), 3)))
+#'     data = list(data = mtcars)
 #'   )
-#'   # Result: group, mean_x, mean_y, sum_x, sum_y (columns unpacked)
+#'
+#'   # With grouping
+#'   serve(
+#'     new_summarize_block(
+#'       summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
+#'       by = "cyl"
+#'     ),
+#'     data = list(data = mtcars)
+#'   )
 #' }
 #' @export
-new_summarize_expr_block <- function(
-  exprs = list(count = "dplyr::n()"),
+new_summarize_block <- function(
+  summaries = list(count = list(func = "dplyr::n", col = "")),
   by = character(),
-  unpack = FALSE,
   ...
 ) {
-  # as discussed in https://github.com/cynkra/blockr.dplyr/issues/16
-  # the state must be a list with named elements, rather than a named vector.
-  # internally, we still work with named vectors.
   new_transform_block(
     function(id, data) {
       moduleServer(
@@ -97,32 +621,27 @@ new_summarize_expr_block <- function(
             initial_value = by
           )
 
-          r_exprs <- mod_multi_kvexpr_server(
-            id = "mkv",
-            get_value = \() exprs,
+          r_summaries <- mod_multi_summarize_server(
+            id = "ms",
+            get_value = \() summaries,
             get_cols = \() colnames(data())
           )
 
-          # Unpack reactive value
-          r_unpack <- reactiveVal(unpack)
+          # Store the validated expression
+          r_expr_validated <- reactiveVal(parse_summarize_nocode(summaries, by))
+          r_summaries_validated <- reactiveVal(summaries)
 
-          # Store the validated expression (must be initialized before observeEvents that use them)
-          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
-          r_exprs_validated <- reactiveVal(exprs)
-
-          # Observe unpack checkbox changes and update reactively
+          # Auto-update when summaries change
           observeEvent(
-            input$unpack,
+            r_summaries(),
             {
-              r_unpack(input$unpack %||% FALSE)
-              # Auto-update when unpack changes
-              apply_summarize(
+              apply_summarize_nocode(
                 data(),
-                r_exprs_validated(),
+                r_summaries(),
                 r_expr_validated,
-                r_exprs_validated,
+                r_summaries_validated,
                 r_by_selection(),
-                r_unpack()
+                session
               )
             },
             ignoreNULL = FALSE,
@@ -133,15 +652,15 @@ new_summarize_expr_block <- function(
           observeEvent(
             r_by_selection(),
             {
-              # Only update if we have validated expressions
-              if (length(r_exprs_validated()) > 0) {
-                apply_summarize(
+              # Only update if we have validated summaries
+              if (length(r_summaries_validated()) > 0) {
+                apply_summarize_nocode(
                   data(),
-                  r_exprs_validated(),
+                  r_summaries_validated(),
                   r_expr_validated,
-                  r_exprs_validated,
+                  r_summaries_validated,
                   r_by_selection(),
-                  r_unpack()
+                  session
                 )
               }
             },
@@ -149,24 +668,11 @@ new_summarize_expr_block <- function(
             ignoreInit = TRUE
           )
 
-          # Validate and update on submit (for expression changes)
-          observeEvent(input$submit, {
-            apply_summarize(
-              data(),
-              r_exprs(),
-              r_expr_validated,
-              r_exprs_validated,
-              r_by_selection(),
-              r_unpack()
-            )
-          })
-
           list(
             expr = r_expr_validated,
             state = list(
-              exprs = reactive(as.list(r_exprs_validated())),
-              by = r_by_selection,
-              unpack = r_unpack
+              summaries = reactive(r_summaries_validated()),
+              by = r_by_selection
             )
           )
         }
@@ -178,61 +684,22 @@ new_summarize_expr_block <- function(
 
         # Add CSS
         css_responsive_grid(),
-        css_single_column("summarize"),
-        css_advanced_toggle(
-          paste0(id, "-advanced-options"),
-          use_subgrid = TRUE
-        ),
+        css_single_column("summarize-nocode"),
         css_doc_links(),
 
-        # Block-specific CSS
-        tags$style(HTML(
-          "
-          .summarize-block-container .checkbox {
-            font-size: 0.875rem;
-          }
-          "
-        )),
-
         div(
-          class = "block-container summarize-block-container",
+          class = "block-container summarize-nocode-block-container",
 
           div(
             class = "block-form-grid",
 
-            # Summary Expressions Section
+            # Summary Specifications Section
             div(
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Create summary columns with R expressions. Use Ctrl+Space for autocomplete. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#summarize-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  ),
-                  div(
-                    class = "expression-help-link",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/expression-helpers.html#useful-functions-for-summarize",
-                      target = "_blank",
-                      title = "Learn about summary functions: mean(), median(), sum(), n(), and more",
-                      "Expression helpers guide \u2197"
-                    )
-                  )
-                ),
-                mod_multi_kvexpr_ui(
-                  NS(id, "mkv"),
-                  extra_button = actionButton(
-                    NS(id, "submit"),
-                    "Submit",
-                    class = "btn-primary btn-sm"
-                  )
+                mod_multi_summarize_ui(
+                  NS(id, "ms")
                 )
               )
             ),
@@ -255,158 +722,203 @@ new_summarize_expr_block <- function(
                   )
                 )
               )
-            ),
-
-            # Advanced Options Toggle
-            div(
-              class = "block-section",
-              div(
-                class = "block-advanced-toggle text-muted",
-                id = NS(id, "advanced-toggle"),
-                onclick = sprintf(
-                  "
-                  const section = document.getElementById('%s');
-                  const chevron = document.querySelector('#%s .block-chevron');
-                  section.classList.toggle('expanded');
-                  chevron.classList.toggle('rotated');
-                  ",
-                  NS(id, "advanced-options"),
-                  NS(id, "advanced-toggle")
-                ),
-                tags$span(class = "block-chevron", "\u203A"),
-                "Show advanced options"
-              )
-            ),
-
-            # Advanced Options Section (Collapsible)
-            div(
-              id = NS(id, "advanced-options"),
-              div(
-                class = "block-section",
-                div(
-                  class = "block-section-grid",
-                  div(
-                    class = "block-input-wrapper",
-                    checkboxInput(
-                      NS(id, "unpack"),
-                      "Unpack columns from data frame results",
-                      value = unpack
-                    ),
-                    div(
-                      class = "block-help-text",
-                      style = "margin-top: 5px; font-size: 0.8rem;",
-                      p(
-                        "Useful with ",
-                        tags$code("across()"),
-                        " to apply functions across columns, e.g., ",
-                        tags$code("across(where(is.numeric), mean)"),
-                        " computes means for all numeric columns."
-                      )
-                    )
-                  )
-                )
-              )
             )
           )
         )
       )
     },
-    class = "summarize_expr_block",
+    class = "summarize_block",
     allow_empty_state = c("by"),
     ...
   )
 }
 
-parse_summarize <- function(
-  summarize_string = "",
-  by_selection = character(),
-  unpack = FALSE
+#' @rdname new_summarize_block
+#' @export
+#' @usage NULL
+new_summarize_nocode_block <- function(
+  summaries = list(count = list(func = "dplyr::n", col = "")),
+  by = character(),
+  ...
 ) {
-  text <- if (identical(unname(summarize_string), "")) {
-    "dplyr::summarize(data)"
-  } else {
-    # Build each expression part
-    expr_parts <- character(length(summarize_string))
-    expr_names <- names(summarize_string)
+  show_block_deprecation(
+    "new_summarize_nocode_block()",
+    "new_summarize_block()"
+  )
+  new_summarize_block(
+    summaries = summaries,
+    by = by,
+    ...
+  )
+}
 
-    # Handle NULL names (can happen with unnamed lists/vectors)
-    if (is.null(expr_names)) {
-      expr_names <- rep("", length(summarize_string))
+#' Parse summary specifications into dplyr expression
+#'
+#' @param summaries Named list of summary specifications
+#' @param by_selection Character vector of grouping columns
+#' @return Parsed expression for dplyr::summarize()
+#' @noRd
+parse_summarize_nocode <- function(
+  summaries = list(),
+  by_selection = character()
+) {
+  if (length(summaries) == 0) {
+    return(parse(text = "dplyr::summarize(data)")[[1]])
+  }
+
+  # Build each summary expression
+  expr_parts <- character()
+  summary_names <- names(summaries)
+
+  for (i in seq_along(summaries)) {
+    spec <- summaries[[i]]
+    new_name <- summary_names[i]
+    func <- spec$func
+    col <- spec$col
+
+    # Skip entries with empty or NA names
+    if (is.null(new_name) || is.na(new_name) || new_name == "") {
+      next
     }
 
-    for (i in seq_along(summarize_string)) {
-      if (unpack) {
-        # When unpacking: bare expression without name (unpacks data frame columns)
-        expr_parts[i] <- unname(summarize_string)[i]
-      } else {
-        # Normal mode: use name = expression format
-        # Only add name if it's not empty/NA
-        if (!is.na(expr_names[i]) && expr_names[i] != "") {
-          expr_parts[i] <- glue::glue(
-            "{backtick_if_needed(expr_names[i])} = {unname(summarize_string)[i]}"
-          )
-        } else {
-          expr_parts[i] <- unname(summarize_string)[i]
-        }
+    # Skip entries with empty or NA functions
+    if (is.null(func) || is.na(func) || func == "") {
+      next
+    }
+
+    # Handle special cases for functions that don't take a column argument
+    if (func == "dplyr::n") {
+      expr_parts <- c(expr_parts, glue::glue(
+        "{backtick_if_needed(new_name)} = {func}()"
+      ))
+    } else if (func == "dplyr::n_distinct") {
+      # n_distinct needs a column - skip if column is empty
+      if (is.null(col) || length(col) == 0 || col == "") {
+        next
       }
-    }
-
-    # Combine all parts
-    summarize_string <- glue::glue_collapse(expr_parts, sep = ", ")
-
-    if (length(by_selection) > 0 && !all(by_selection == "")) {
-      by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
-      glue::glue(
-        "dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))"
-      )
+      expr_parts <- c(expr_parts, glue::glue(
+        "{backtick_if_needed(new_name)} = {func}({backtick_if_needed(col)})"
+      ))
     } else {
-      glue::glue("dplyr::summarize(data, {summarize_string})")
+      # Regular functions with column argument - skip if column is empty
+      if (is.null(col) || length(col) == 0 || col == "") {
+        next
+      }
+      expr_parts <- c(expr_parts, glue::glue(
+        "{backtick_if_needed(new_name)} = {func}({backtick_if_needed(col)})"
+      ))
     }
   }
+
+  # If no valid expressions after filtering, return empty summarize
+  if (length(expr_parts) == 0) {
+    return(parse(text = "dplyr::summarize(data)")[[1]])
+  }
+
+  # Combine all parts
+  summarize_string <- glue::glue_collapse(expr_parts, sep = ", ")
+
+  if (length(by_selection) > 0 && !all(by_selection == "")) {
+    by_selection <- paste0("\"", by_selection, "\"", collapse = ", ")
+    text <- glue::glue(
+      "dplyr::summarize(data, {summarize_string}, .by = c({by_selection}))"
+    )
+  } else {
+    text <- glue::glue("dplyr::summarize(data, {summarize_string})")
+  }
+
   parse(text = text)[[1]]
 }
 
-apply_summarize <- function(
+#' Apply summarize no-code operation with validation
+#'
+#' @param data Input data frame
+#' @param summaries Summary specifications to apply
+#' @param r_expr_validated Reactive value for validated expression
+#' @param r_summaries_validated Reactive value for validated summaries
+#' @param by_selection Grouping columns
+#' @param session Shiny session object (optional, for showing notifications)
+#' @noRd
+apply_summarize_nocode <- function(
   data,
-  exprs,
+  summaries,
   r_expr_validated,
-  r_exprs_validated,
-  by_selection,
-  unpack = FALSE
+  r_summaries_validated,
+  by_selection = character(),
+  session = NULL
 ) {
-  # Convert list to character vector if needed (for compatibility with multi_kvexpr)
-  if (is.list(exprs)) {
-    exprs <- unlist(exprs)
-  }
-
-  # If empty or only whitespace, return simple summarize
-  if (all(trimws(unname(exprs)) == "")) {
-    expr <- parse_summarize(exprs, character(), unpack)
+  if (length(summaries) == 0) {
+    expr <- parse_summarize_nocode(list(), character())
     r_expr_validated(expr)
+    r_summaries_validated(summaries)
     return()
   }
 
-  req(exprs)
-  stopifnot(is.character(exprs), !is.null(names(exprs)))
-  expr <- try(parse_summarize(exprs, by_selection, unpack))
+  # Validation: check if columns exist
+  cols_to_check <- sapply(summaries, function(x) x$col)
+  # Filter out empty columns and functions that don't need columns
+  funcs <- sapply(summaries, function(x) x$func)
+  cols_to_check <- cols_to_check[funcs != "dplyr::n"]
+
+  if (length(cols_to_check) > 0) {
+    data_cols <- colnames(data)
+    missing_cols <- setdiff(cols_to_check, data_cols)
+
+    if (length(missing_cols) > 0) {
+      if (!is.null(session)) {
+        showNotification(
+          sprintf(
+            "Column(s) not found in data: %s",
+            paste(missing_cols, collapse = ", ")
+          ),
+          type = "error",
+          duration = 5
+        )
+      }
+      return()
+    }
+  }
+
+  # Check for empty new names
+  new_names <- names(summaries)
+  if (any(new_names == "" | is.na(new_names))) {
+    if (!is.null(session)) {
+      showNotification(
+        "All new column names must be provided",
+        type = "error",
+        duration = 5
+      )
+    }
+    return()
+  }
+
+  expr <- try(parse_summarize_nocode(summaries, by_selection))
+
   # Validation
   if (inherits(expr, "try-error")) {
-    showNotification(
-      expr,
-      type = "error",
-      duration = 5
-    )
+    if (!is.null(session)) {
+      showNotification(
+        paste("Parse error:", expr),
+        type = "error",
+        duration = 5
+      )
+    }
     return()
   }
-  ans <- try(eval(expr))
+
+  # Test the expression - provide data in evaluation environment
+  ans <- try(eval(expr, envir = list(data = data)))
   if (inherits(ans, "try-error")) {
-    showNotification(
-      ans,
-      type = "error",
-      duration = 5
-    )
+    if (!is.null(session)) {
+      showNotification(
+        paste("Evaluation error:", ans),
+        type = "error",
+        duration = 5
+      )
+    }
     return()
   }
+
   r_expr_validated(expr)
-  r_exprs_validated(exprs)
+  r_summaries_validated(summaries)
 }
