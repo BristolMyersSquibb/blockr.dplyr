@@ -472,6 +472,7 @@ new_slice_block <- function(
           }
           .slice-value-group .input-group-text .checkbox input[type='checkbox'] {
             margin: 0;
+            margin-top: 1px; /* Slight adjustment for vertical centering */
           }
           "
         )),
