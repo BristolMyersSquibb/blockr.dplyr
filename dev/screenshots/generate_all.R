@@ -194,6 +194,8 @@ validate_block_screenshot(
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
+  dataset = "ChickWeight",
+  dataset_package = "datasets",
   verbose = FALSE
 )
 
