@@ -20,90 +20,187 @@ source("dev/screenshots/validate-screenshot.R")
 cat("Generating screenshots for all blockr.dplyr blocks...\n")
 cat("Output directory: man/figures/\n\n")
 
-# =============================================================================
-# FILTER BLOCK - Filter high-performance cars
-# =============================================================================
-cat("1/13 - Filter block\n")
-validate_block_screenshot(
-  block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
-  data = mtcars,
-  filename = "filter-expr-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
+# Common screenshot settings
+SCREENSHOT_WIDTH <- 1400
+SCREENSHOT_HEIGHT <- 700
+SCREENSHOT_DELAY <- 3
 
 # =============================================================================
-# SELECT BLOCK - Choose key performance metrics
+# 1. ARRANGE BLOCK - Sort by horsepower descending
 # =============================================================================
-cat("2/13 - Select block\n")
-validate_block_screenshot(
-  block = new_select_block(columns = c("mpg", "cyl", "hp", "wt", "qsec")),
-  data = mtcars,
-  filename = "select-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
-
-# =============================================================================
-# ARRANGE BLOCK - Sort by horsepower descending
-# =============================================================================
-cat("3/13 - Arrange block\n")
+cat("1/16 - Arrange block\n")
 validate_block_screenshot(
   block = new_arrange_block(columns = "hp", desc = TRUE),
   data = mtcars,
   filename = "arrange-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
   verbose = FALSE
 )
 
 # =============================================================================
-# SLICE BLOCK - Top 5 most fuel-efficient cars
+# 2. BIND COLS BLOCK - Combine datasets side-by-side
+# Uses iris twice to show columns being combined
 # =============================================================================
-cat("4/13 - Slice block\n")
+cat("2/16 - Bind cols block\n")
 validate_block_screenshot(
-  block = new_slice_block(type = "max", n = 5, by_column = "mpg"),
-  data = mtcars,
-  filename = "slice-block.png",
+  block = new_bind_cols_block(),
+  data = datasets::iris,
+  filename = "bind-cols-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  dataset = "iris",
+  dataset_package = "datasets",
+  dataset_y = "iris",
+  dataset_y_package = "datasets",
+  input_names = c("1", "2"),
   verbose = FALSE
 )
 
 # =============================================================================
-# MUTATE BLOCK - Calculate power-to-weight ratio
+# 3. BIND ROWS BLOCK - Stack datasets vertically
+# Uses iris twice to show rows being stacked
 # =============================================================================
-cat("5/13 - Mutate block\n")
+cat("3/16 - Bind rows block\n")
 validate_block_screenshot(
-  block = new_mutate_block(
+  block = new_bind_rows_block(id_name = "source"),
+  data = datasets::iris,
+  filename = "bind-rows-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  dataset = "iris",
+  dataset_package = "datasets",
+  dataset_y = "iris",
+  dataset_y_package = "datasets",
+  input_names = c("1", "2"),
+  verbose = FALSE
+)
+
+# =============================================================================
+# 4. FILTER BLOCK - Interactive value selection (formerly value_filter)
+# =============================================================================
+cat("4/16 - Filter block\n")
+validate_block_screenshot(
+  block = new_filter_block(
+    conditions = list(
+      list(column = "cyl", values = c(4, 6), mode = "include")
+    )
+  ),
+  data = mtcars,
+  filename = "filter-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 5. FILTER EXPR BLOCK - Filter with R expressions
+# =============================================================================
+cat("5/16 - Filter expr block\n")
+validate_block_screenshot(
+  block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
+  data = mtcars,
+  filename = "filter-expr-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 6. JOIN BLOCK - Join two datasets
+# Uses BOD dataset for both x and y (joined on Time column)
+# =============================================================================
+cat("6/16 - Join block\n")
+validate_block_screenshot(
+  block = new_join_block(type = "left_join", by = "Time"),
+  data = datasets::BOD,
+  filename = "join-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  dataset = "BOD",
+  dataset_package = "datasets",
+  dataset_y = "BOD",
+  dataset_y_package = "datasets",
+  verbose = FALSE
+)
+
+# =============================================================================
+# 7. MUTATE EXPR BLOCK - Create new columns with expressions
+# =============================================================================
+cat("7/16 - Mutate expr block\n")
+validate_block_screenshot(
+  block = new_mutate_expr_block(
     exprs = list(
       power_to_weight = "hp / wt",
       kmpg = "mpg * 1.60934"
     )
   ),
   data = mtcars,
-  filename = "mutate-block.png",
+  filename = "mutate-expr-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
   verbose = FALSE
 )
 
 # =============================================================================
-# RENAME BLOCK - Make column names more descriptive
+# 8. PIVOT LONGER BLOCK - Reshape wide to long format
 # =============================================================================
-cat("6/13 - Rename block\n")
+cat("8/16 - Pivot longer block\n")
+validate_block_screenshot(
+  block = new_pivot_longer_block(
+    cols = c("mpg", "hp", "wt", "qsec"),
+    names_to = "metric",
+    values_to = "value"
+  ),
+  data = mtcars,
+  filename = "pivot-longer-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 9. PIVOT WIDER BLOCK - Reshape long to wide format
+# =============================================================================
+cat("9/16 - Pivot wider block\n")
+validate_block_screenshot(
+  block = new_pivot_wider_block(
+    names_from = "Time",
+    values_from = "weight",
+    names_prefix = "day_"
+  ),
+  data = datasets::ChickWeight[
+    datasets::ChickWeight$Time %in% c(0, 10, 20) &
+      datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5),
+  ],
+  filename = "pivot-wider-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 10. RENAME BLOCK - Rename columns
+# =============================================================================
+cat("10/16 - Rename block\n")
 validate_block_screenshot(
   block = new_rename_block(
     renames = list(
@@ -115,18 +212,91 @@ validate_block_screenshot(
   data = mtcars,
   filename = "rename-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
   verbose = FALSE
 )
 
 # =============================================================================
-# SUMMARIZE BLOCK - Statistics by cylinder count (with advanced options)
+# 11. SELECT BLOCK - Choose columns
 # =============================================================================
-cat("7/13 - Summarize block\n")
+cat("11/16 - Select block\n")
+validate_block_screenshot(
+  block = new_select_block(columns = c("mpg", "cyl", "hp", "wt", "qsec")),
+  data = mtcars,
+  filename = "select-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 12. SEPARATE BLOCK - Split column into multiple columns
+# =============================================================================
+cat("12/16 - Separate block\n")
+# Use esoph dataset which has agegp column like "25-34" that can be separated
+validate_block_screenshot(
+  block = new_separate_block(
+    col = "agegp",
+    into = c("age_min", "age_max"),
+    sep = "-"
+  ),
+  data = datasets::esoph,
+  filename = "separate-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  dataset = "esoph",
+  dataset_package = "datasets",
+  verbose = FALSE
+)
+
+# =============================================================================
+# 13. SLICE BLOCK - Select rows by position
+# =============================================================================
+cat("13/16 - Slice block\n")
+validate_block_screenshot(
+  block = new_slice_block(type = "max", n = 5, by_column = "mpg"),
+  data = mtcars,
+  filename = "slice-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 14. SUMMARIZE BLOCK - No-code summarization
+# =============================================================================
+cat("14/16 - Summarize block\n")
 validate_block_screenshot(
   block = new_summarize_block(
+    summaries = list(
+      avg_mpg = list(func = "mean", col = "mpg"),
+      max_hp = list(func = "max", col = "hp")
+    ),
+    by = "cyl"
+  ),
+  data = mtcars,
+  filename = "summarize-block.png",
+  output_dir = "man/figures",
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
+  verbose = FALSE
+)
+
+# =============================================================================
+# 15. SUMMARIZE EXPR BLOCK - Summarize with expressions
+# =============================================================================
+cat("15/16 - Summarize expr block\n")
+validate_block_screenshot(
+  block = new_summarize_expr_block(
     exprs = list(
       avg_mpg = "mean(mpg)",
       avg_hp = "mean(hp)",
@@ -135,127 +305,35 @@ validate_block_screenshot(
     by = "cyl"
   ),
   data = mtcars,
-  filename = "summarize-block.png",
+  filename = "summarize-expr-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  expand_advanced = TRUE,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
   verbose = FALSE
 )
 
 # =============================================================================
-# JOIN BLOCK - Join performance and efficiency data
+# 16. UNITE BLOCK - Combine multiple columns into one
 # =============================================================================
-cat("8/13 - Join block\n")
+cat("16/16 - Unite block\n")
+# Unite cyl and gear columns from mtcars
 validate_block_screenshot(
-  block = new_join_block(type = "left_join", by = c("mpg", "cyl")),
-  data = list(
-    x = mtcars[1:15, c("mpg", "cyl", "hp", "disp")],
-    y = mtcars[10:25, c("mpg", "cyl", "wt", "qsec")]
-  ),
-  filename = "join-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
-
-# =============================================================================
-# BIND ROWS BLOCK - Stack datasets vertically (with advanced options)
-# =============================================================================
-cat("9/13 - Bind rows block\n")
-validate_block_screenshot(
-  block = new_bind_rows_block(id_name = "source"),
-  data = mtcars,
-  filename = "bind-rows-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  expand_advanced = TRUE,
-  verbose = FALSE
-)
-
-# =============================================================================
-# BIND COLS BLOCK - Combine datasets side-by-side
-# =============================================================================
-cat("10/13 - Bind cols block\n")
-validate_block_screenshot(
-  block = new_bind_cols_block(),
-  data = mtcars,
-  filename = "bind-cols-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
-
-# =============================================================================
-# VALUE FILTER BLOCK - Interactive value selection
-# =============================================================================
-cat("11/13 - Value filter block\n")
-validate_block_screenshot(
-  block = new_value_filter_block(
-    conditions = list(
-      list(column = "cyl", values = c(4, 6), mode = "include")
-    )
+  block = new_unite_block(
+    col = "cyl_gear",
+    cols = c("cyl", "gear"),
+    sep = "_"
   ),
   data = mtcars,
-  filename = "value-filter-block.png",
+  filename = "unite-block.png",
   output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
+  width = SCREENSHOT_WIDTH,
+  height = SCREENSHOT_HEIGHT,
+  delay = SCREENSHOT_DELAY,
   verbose = FALSE
 )
 
-# =============================================================================
-# PIVOT LONGER BLOCK - Reshape wide data to long format (tidyr)
-# =============================================================================
-cat("12/13 - Pivot longer block\n")
-validate_block_screenshot(
-  block = new_pivot_longer_block(
-    cols = c("mpg", "hp", "wt", "qsec"),
-    names_to = "metric",
-    values_to = "value"
-  ),
-  data = mtcars,
-  filename = "pivot-longer-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
-
-# =============================================================================
-# PIVOT WIDER BLOCK - Reshape long data to wide format (tidyr)
-# =============================================================================
-cat("13/13 - Pivot wider block\n")
-# Use ChickWeight dataset - already in long format
-validate_block_screenshot(
-  block = new_pivot_wider_block(
-    names_from = "Time",
-    values_from = "weight",
-    names_prefix = "day_"
-  ),
-  data = datasets::ChickWeight[
-    datasets::ChickWeight$Time %in%
-      c(0, 10, 20) &
-      datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5),
-  ],
-  filename = "pivot-wider-block.png",
-  output_dir = "man/figures",
-  width = 800,
-  height = 600,
-  delay = 1,
-  verbose = FALSE
-)
-
-cat("\n✓ All screenshots generated successfully!\n")
+cat("\n✓ All screenshots generated!\n")
 cat("Screenshots saved to: man/figures/\n\n")
 
 # =============================================================================
