@@ -217,3 +217,84 @@ test_that("bind blocks handle empty data gracefully", {
   expect_equal(nrow(result2), 3)
   expect_equal(ncol(result2), 1)
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# Note: bind_rows uses debounce(800ms) for id_name input which doesn't work
+# in testServer context. We test initial values instead.
+# =============================================================================
+
+test_that("bind_rows - id_name parameter adds ID column - testServer", {
+  # Test without id_name
+  block_no_id <- new_bind_rows_block(id_name = "")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_no_id),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # No ID column should be present
+      expect_false("source" %in% names(result))
+      expect_equal(nrow(result), 6)
+    },
+    args = list(
+      x = block_no_id,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+
+  # Test with id_name
+  block_with_id <- new_bind_rows_block(id_name = "source")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_with_id),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # ID column should be present
+      expect_true("source" %in% names(result))
+      expect_equal(nrow(result), 6)
+      expect_equal(result$source, c(rep("a", 3), rep("b", 3)))
+    },
+    args = list(
+      x = block_with_id,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+
+  # Test with different id_name value
+  block_custom_id <- new_bind_rows_block(id_name = "dataset")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_custom_id),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      # Custom ID column name should be used
+      expect_true("dataset" %in% names(result))
+      expect_false("source" %in% names(result))
+    },
+    args = list(
+      x = block_custom_id,
+      data = list(
+        ...args = reactiveValues(
+          a = iris[1:3, ],
+          b = iris[4:6, ]
+        )
+      )
+    )
+  )
+})

@@ -225,3 +225,113 @@ test_that("pivot_wider with empty names_from - testServer", {
     args = list(x = block, data = list(data = function() long_data))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# =============================================================================
+
+test_that("pivot_wider - input values_fill changes missing value handling - testServer", {
+  # Data with missing combinations
+  long_data <- data.frame(
+    id = c(1, 1, 2),
+    type = c("a", "b", "a"),
+    value = c(10, 15, 20)
+  )
+
+  block <- new_pivot_wider_block(
+    names_from = "type",
+    values_from = "value",
+    values_fill = ""
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - NA for missing (id=2, type=b)
+      result <- session$returned$result()
+      expect_true(is.data.frame(result))
+      expect_true(is.na(result$b[result$id == 2]))
+
+      # Change values_fill to 0
+      expr$setInputs(values_fill = "0")
+      session$flushReact()
+      result <- session$returned$result()
+      # Missing should now be 0
+      expect_equal(result$b[result$id == 2], 0)
+    },
+    args = list(x = block, data = list(data = function() long_data))
+  )
+})
+
+test_that("pivot_wider - input names_prefix changes column names - testServer", {
+  long_data <- data.frame(
+    id = rep(1:2, each = 2),
+    type = rep(c("a", "b"), 2),
+    value = c(10, 15, 20, 25)
+  )
+
+  block <- new_pivot_wider_block(
+    names_from = "type",
+    values_from = "value",
+    names_prefix = ""
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - no prefix
+      result <- session$returned$result()
+      expect_true(all(c("id", "a", "b") %in% names(result)))
+
+      # Add names_prefix
+      expr$setInputs(names_prefix = "col_")
+      session$flushReact()
+      result <- session$returned$result()
+      # Columns should have prefix
+      expect_true(all(c("id", "col_a", "col_b") %in% names(result)))
+      expect_false("a" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() long_data))
+  )
+})
+
+test_that("pivot_wider - input names_sep changes column name separator - testServer", {
+  long_data <- data.frame(
+    id = rep(1:2, each = 4),
+    category = rep(c("A", "A", "B", "B"), 2),
+    type = rep(c("x", "y"), 4),
+    value = 1:8
+  )
+
+  block <- new_pivot_wider_block(
+    names_from = c("category", "type"),
+    values_from = "value",
+    names_sep = "_"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result with "_" separator
+      result <- session$returned$result()
+      expect_true(all(c("A_x", "A_y", "B_x", "B_y") %in% names(result)))
+
+      # Change separator to "."
+      expr$setInputs(names_sep = ".")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true(all(c("A.x", "A.y", "B.x", "B.y") %in% names(result)))
+      expect_false("A_x" %in% names(result))
+    },
+    args = list(x = block, data = list(data = function() long_data))
+  )
+})

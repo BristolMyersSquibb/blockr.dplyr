@@ -1,313 +1,219 @@
-# Tests for summarize_nocode_block
-# This file tests the no-code interface for summarization
-
-# Basic block creation tests ----
-
-test_that("summarize_nocode_block creates successfully", {
-  # Test default creation
-  block1 <- new_summarize_nocode_block()
-  expect_s3_class(block1, "summarize_block")
-  expect_s3_class(block1, "transform_block")
-  expect_s3_class(block1, "block")
-
-  # Test with custom summaries
-  block2 <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg"))
-  )
-  expect_s3_class(block2, "summarize_block")
-
-  # Test with grouping
-  block3 <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by = "cyl"
-  )
-  expect_s3_class(block3, "summarize_block")
+# Basic construction tests
+test_that("summarize block constructor", {
+  blk <- new_summarize_block()
+  expect_s3_class(blk, c("summarize_block", "transform_block", "block"))
 })
 
-# Restorability tests - Custom labels ----
-
-test_that("summarize_nocode_block restores single custom label", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Create block with custom label
-  blk <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg"))
-  )
-
-  # Verify the block works and preserves the label
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      expect_true(is.reactive(result$expr))
-      expect_true(is.list(result$state))
-      expect_true(is.reactive(result$state$summaries))
-
-      # Verify the label is preserved in state
-      summaries <- result$state$summaries()
-      expect_true("avg_mpg" %in% names(summaries))
-      expect_equal(summaries$avg_mpg$func, "mean")
-      expect_equal(summaries$avg_mpg$col, "mpg")
-    }
-  )
-})
-
-test_that("summarize_nocode_block restores multiple custom labels", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Create block with multiple custom labels (like in the bug report)
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      avg_mpg = list(func = "mean", col = "mpg"),
-      max_hp = list(func = "max", col = "hp"),
-      min_wt = list(func = "min", col = "wt")
-    )
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "hp", "wt", "cyl")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      summaries <- result$state$summaries()
-
-      # Verify all three labels are preserved in the correct order
-      expect_equal(names(summaries), c("avg_mpg", "max_hp", "min_wt"))
-
-      # Verify each summary specification
-      expect_equal(summaries$avg_mpg$func, "mean")
-      expect_equal(summaries$avg_mpg$col, "mpg")
-
-      expect_equal(summaries$max_hp$func, "max")
-      expect_equal(summaries$max_hp$col, "hp")
-
-      expect_equal(summaries$min_wt$func, "min")
-      expect_equal(summaries$min_wt$col, "wt")
-    }
-  )
-})
-
-test_that("summarize_nocode_block restores labels with special characters", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test labels with spaces, dots, and parentheses (common in clinical data)
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      ".variable_2" = list(func = "mean", col = "mpg"),
-      "DEUC 6 mg N = 336" = list(func = "max", col = "hp"),
-      "PBO N = 334" = list(func = "min", col = "wt")
-    )
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "hp", "wt")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      summaries <- result$state$summaries()
-
-      # Verify labels with special characters are preserved exactly
-      expect_equal(
-        names(summaries),
-        c(".variable_2", "DEUC 6 mg N = 336", "PBO N = 334")
-      )
-
-      # Verify the specifications are correct
-      expect_equal(summaries[[".variable_2"]]$func, "mean")
-      expect_equal(summaries[["DEUC 6 mg N = 336"]]$func, "max")
-      expect_equal(summaries[["PBO N = 334"]]$func, "min")
-    }
-  )
-})
-
-# Custom function tests ----
-
-test_that("summarize_nocode_block works with namespaced functions", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test with dplyr namespaced functions
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      first_val = list(func = "dplyr::first", col = "mpg"),
-      last_val = list(func = "dplyr::last", col = "hp")
-    )
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "hp")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      summaries <- result$state$summaries()
-
-      # Verify namespaced functions are preserved
-      expect_equal(summaries$first_val$func, "dplyr::first")
-      expect_equal(summaries$last_val$func, "dplyr::last")
-    }
-  )
-})
-
-test_that("summarize_nocode_block works with custom package functions", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test with custom namespaced functions (like blockr.topline::paste_paren)
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      custom_stat = list(func = "blockr.topline::paste_paren", col = "mpg")
-    )
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "hp")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      summaries <- result$state$summaries()
-
-      # Verify custom function is preserved with full namespace
-      expect_equal(summaries$custom_stat$func, "blockr.topline::paste_paren")
-      expect_equal(summaries$custom_stat$col, "mpg")
-    }
-  )
-})
-
-test_that("summarize_nocode_block works with dplyr::n function", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test with dplyr::n which doesn't need a column
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      count = list(func = "dplyr::n", col = "")
-    )
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "hp")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      summaries <- result$state$summaries()
-
-      # Verify n() function works with empty column
-      expect_equal(summaries$count$func, "dplyr::n")
-      expect_equal(summaries$count$col, "")
-    }
-  )
-})
-
-# Grouping tests ----
-
-test_that("summarize_nocode_block restores grouping with custom labels", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test with both custom labels and grouping
-  blk <- new_summarize_nocode_block(
-    summaries = list(
-      avg_mpg = list(func = "mean", col = "mpg"),
-      count = list(func = "dplyr::n", col = "")
-    ),
-    by = "cyl"
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-
-      # Verify summaries are preserved
-      summaries <- result$state$summaries()
-      expect_equal(names(summaries), c("avg_mpg", "count"))
-
-      # Verify grouping is preserved
-      by_selection <- result$state$by()
-      expect_equal(by_selection, "cyl")
-    }
-  )
-})
-
-test_that("summarize_nocode_block restores multiple grouping columns", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Test with multiple grouping columns
-  blk <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by = c("cyl", "gear")
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg", "cyl", "gear")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      by_selection <- result$state$by()
-
-      # Verify multiple grouping columns are preserved
-      expect_equal(by_selection, c("cyl", "gear"))
-    }
-  )
-})
-
-# Data transformation tests ----
-
-test_that("summarize_nocode_block produces correct output with custom labels", {
-  skip_if_not_installed("dplyr")
-
-  block <- new_summarize_nocode_block(
+test_that("summarize block with parameters", {
+  blk <- new_summarize_block(
     summaries = list(
       avg_mpg = list(func = "mean", col = "mpg"),
       max_hp = list(func = "max", col = "hp")
-    )
+    ),
+    by = "cyl"
   )
+  expect_s3_class(blk, c("summarize_block", "transform_block", "block"))
+})
 
-  shiny::testServer(
+# testServer tests for data transformation
+test_that("summarize block default count - testServer", {
+  # Default is count = n()
+  block <- new_summarize_block()
+
+  testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
       session$flushReact()
       result <- session$returned$result()
 
-      # Verify output has custom column names
+      expect_true(is.data.frame(result))
       expect_equal(nrow(result), 1)
-      expect_true("avg_mpg" %in% names(result))
-      expect_true("max_hp" %in% names(result))
-
-      # Verify calculations are correct
-      expect_equal(result$avg_mpg, mean(mtcars$mpg), tolerance = 0.0001)
-      expect_equal(result$max_hp, max(mtcars$hp))
+      expect_true("count" %in% names(result))
+      expect_equal(result$count, nrow(mtcars))
     },
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
 
-test_that("summarize_nocode_block produces correct grouped output", {
-  skip_if_not_installed("dplyr")
+test_that("summarize block mean function - testServer", {
+  block <- new_summarize_block(
+    summaries = list(avg_mpg = list(func = "mean", col = "mpg"))
+  )
 
-  block <- new_summarize_nocode_block(
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("avg_mpg" %in% names(result))
+      expect_equal(result$avg_mpg, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block median function - testServer", {
+  block <- new_summarize_block(
+    summaries = list(med_mpg = list(func = "median", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("med_mpg" %in% names(result))
+      expect_equal(result$med_mpg, median(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block sum function - testServer", {
+  block <- new_summarize_block(
+    summaries = list(total_hp = list(func = "sum", col = "hp"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("total_hp" %in% names(result))
+      expect_equal(result$total_hp, sum(mtcars$hp))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block min/max functions - testServer", {
+  block <- new_summarize_block(
+    summaries = list(
+      min_mpg = list(func = "min", col = "mpg"),
+      max_mpg = list(func = "max", col = "mpg")
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("min_mpg" %in% names(result))
+      expect_true("max_mpg" %in% names(result))
+      expect_equal(result$min_mpg, min(mtcars$mpg))
+      expect_equal(result$max_mpg, max(mtcars$mpg))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block sd function - testServer", {
+  block <- new_summarize_block(
+    summaries = list(sd_mpg = list(func = "sd", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("sd_mpg" %in% names(result))
+      expect_equal(result$sd_mpg, sd(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block n_distinct function - testServer", {
+  block <- new_summarize_block(
+    summaries = list(unique_cyl = list(func = "dplyr::n_distinct", col = "cyl"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("unique_cyl" %in% names(result))
+      expect_equal(result$unique_cyl, dplyr::n_distinct(mtcars$cyl))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block first/last functions - testServer", {
+  block <- new_summarize_block(
+    summaries = list(
+      first_mpg = list(func = "dplyr::first", col = "mpg"),
+      last_mpg = list(func = "dplyr::last", col = "mpg")
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_true("first_mpg" %in% names(result))
+      expect_true("last_mpg" %in% names(result))
+      expect_equal(result$first_mpg, dplyr::first(mtcars$mpg))
+      expect_equal(result$last_mpg, dplyr::last(mtcars$mpg))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block multiple summaries - testServer", {
+  block <- new_summarize_block(
+    summaries = list(
+      avg_mpg = list(func = "mean", col = "mpg"),
+      total_hp = list(func = "sum", col = "hp"),
+      count = list(func = "dplyr::n", col = "")
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      expect_equal(nrow(result), 1)
+      expect_equal(ncol(result), 3)
+      expect_true(all(c("avg_mpg", "total_hp", "count") %in% names(result)))
+      expect_equal(result$avg_mpg, mean(mtcars$mpg), tolerance = 0.0001)
+      expect_equal(result$total_hp, sum(mtcars$hp))
+      expect_equal(result$count, nrow(mtcars))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize block with single grouping column - testServer", {
+  block <- new_summarize_block(
     summaries = list(
       avg_mpg = list(func = "mean", col = "mpg"),
       count = list(func = "dplyr::n", col = "")
@@ -315,170 +221,398 @@ test_that("summarize_nocode_block produces correct grouped output", {
     by = "cyl"
   )
 
-  shiny::testServer(
+  testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
       session$flushReact()
       result <- session$returned$result()
 
-      # Verify grouped output
+      expect_true(is.data.frame(result))
+      # Should have one row per unique cyl value
       expect_equal(nrow(result), length(unique(mtcars$cyl)))
       expect_true("cyl" %in% names(result))
       expect_true("avg_mpg" %in% names(result))
       expect_true("count" %in% names(result))
 
-      # Verify one group's calculation
-      cyl_6_data <- mtcars[mtcars$cyl == 6, ]
-      cyl_6_result <- result[result$cyl == 6, ]
-      if (nrow(cyl_6_result) > 0) {
-        expect_equal(
-          cyl_6_result$avg_mpg,
-          mean(cyl_6_data$mpg),
-          tolerance = 0.0001
-        )
-        expect_equal(cyl_6_result$count, nrow(cyl_6_data))
-      }
+      # Verify calculations for one group
+      cyl_4_data <- mtcars[mtcars$cyl == 4, ]
+      cyl_4_result <- result[result$cyl == 4, ]
+      expect_equal(cyl_4_result$avg_mpg, mean(cyl_4_data$mpg), tolerance = 0.0001)
+      expect_equal(cyl_4_result$count, nrow(cyl_4_data))
     },
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
 
-# Edge case tests ----
-
-test_that("summarize_nocode_block handles empty summaries", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  # Default empty summaries should use count
-  blk <- new_summarize_nocode_block(
-    summaries = list()
+test_that("summarize block with multiple grouping columns - testServer", {
+  block <- new_summarize_block(
+    summaries = list(
+      avg_mpg = list(func = "mean", col = "mpg"),
+      count = list(func = "dplyr::n", col = "")
+    ),
+    by = c("cyl", "am")
   )
 
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg")])),
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
     {
       session$flushReact()
+      result <- session$returned$result()
 
-      # Should not error
-      expect_true(is.reactive(session$returned$expr))
-    }
+      expect_true(is.data.frame(result))
+      # Should have one row per unique cyl+am combination
+      expected_groups <- nrow(unique(mtcars[, c("cyl", "am")]))
+      expect_equal(nrow(result), expected_groups)
+      expect_true(all(c("cyl", "am", "avg_mpg", "count") %in% names(result)))
+    },
+    args = list(x = block, data = list(data = function() mtcars))
   )
 })
 
-test_that("summarize_nocode_block handles NULL grouping", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
+# Parse function tests
+test_that("parse_summarize_nocode handles single summary", {
+  summaries <- list(avg_mpg = list(func = "mean", col = "mpg"))
+  result <- parse_summarize_nocode(summaries)
 
-  blk <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by = NULL
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      by_selection <- result$state$by()
-
-      # NULL should be handled (likely converted to character(0))
-      expect_true(is.null(by_selection) || length(by_selection) == 0)
-    }
-  )
-})
-
-test_that("summarize_nocode_block handles empty grouping", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("dplyr")
-
-  blk <- new_summarize_nocode_block(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by = character(0)
-  )
-
-  shiny::testServer(
-    blk$expr_server,
-    args = list(data = reactive(mtcars[1:10, c("mpg")])),
-    {
-      session$flushReact()
-
-      result <- session$returned
-      by_selection <- result$state$by()
-
-      # Empty character vector should be preserved
-      expect_equal(length(by_selection), 0)
-    }
-  )
-})
-
-# Parse function tests ----
-
-test_that("parse_summarize_nocode generates correct expression", {
-  # Test basic summary
-  expr <- parse_summarize_nocode(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by_selection = character()
-  )
-
-  expect_type(expr, "language")
-  code <- deparse(expr)
-  expect_true(any(grepl("avg_mpg", code)))
-  expect_true(any(grepl("mean\\(mpg\\)", code)))
-})
-
-test_that("parse_summarize_nocode handles grouping", {
-  expr <- parse_summarize_nocode(
-    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
-    by_selection = "cyl"
-  )
-
-  expect_type(expr, "language")
-  code <- paste(deparse(expr), collapse = " ")
-  expect_true(grepl('\\.by', code))
+  expect_type(result, "language")
+  code <- deparse(result)
+  expect_true(grepl("dplyr::summarize", code))
+  expect_true(grepl("avg_mpg = mean\\(mpg\\)", code))
 })
 
 test_that("parse_summarize_nocode handles multiple summaries", {
-  expr <- parse_summarize_nocode(
-    summaries = list(
-      avg_mpg = list(func = "mean", col = "mpg"),
-      max_hp = list(func = "max", col = "hp"),
-      count = list(func = "dplyr::n", col = "")
-    ),
-    by_selection = character()
+  summaries <- list(
+    avg_mpg = list(func = "mean", col = "mpg"),
+    total_hp = list(func = "sum", col = "hp")
   )
+  result <- parse_summarize_nocode(summaries)
 
-  expect_type(expr, "language")
-  code <- paste(deparse(expr), collapse = " ")
-  expect_true(grepl("avg_mpg", code))
-  expect_true(grepl("max_hp", code))
-  expect_true(grepl("count", code))
+  expect_type(result, "language")
+  code <- paste(deparse(result), collapse = " ")
+  expect_true(grepl("dplyr::summarize", code))
+  expect_true(grepl("avg_mpg = mean\\(mpg\\)", code))
+  expect_true(grepl("total_hp = sum\\(hp\\)", code))
 })
 
-test_that("parse_summarize_nocode handles backticks in names", {
-  # Test with names that need backticks
-  expr <- parse_summarize_nocode(
-    summaries = list(
-      "DEUC 6 mg N = 336" = list(func = "mean", col = "mpg")
-    ),
-    by_selection = character()
-  )
+test_that("parse_summarize_nocode handles n() function without column", {
+  summaries <- list(count = list(func = "dplyr::n", col = ""))
+  result <- parse_summarize_nocode(summaries)
 
-  expect_type(expr, "language")
-  code <- paste(deparse(expr), collapse = " ")
-  # Should contain the name (possibly with backticks if needed)
-  expect_true(grepl("DEUC", code))
+  expect_type(result, "language")
+  code <- deparse(result)
+  expect_true(grepl("count = dplyr::n\\(\\)", code))
+})
+
+test_that("parse_summarize_nocode handles grouping", {
+  summaries <- list(avg_mpg = list(func = "mean", col = "mpg"))
+  result <- parse_summarize_nocode(summaries, by_selection = c("cyl", "am"))
+
+  expect_type(result, "language")
+  code <- paste(deparse(result), collapse = " ")
+  expect_true(grepl('\\.by = c\\("cyl", "am"\\)', code))
 })
 
 test_that("parse_summarize_nocode handles empty summaries", {
-  expr <- parse_summarize_nocode(
-    summaries = list(),
-    by_selection = character()
+  result <- parse_summarize_nocode(list())
+
+  expect_type(result, "language")
+  code <- deparse(result)
+  expect_true(grepl("dplyr::summarize\\(data\\)", code))
+})
+
+test_that("parse_summarize_nocode handles non-syntactic column names", {
+  summaries <- list(`avg 2024` = list(func = "mean", col = "2024 Sales"))
+  result <- parse_summarize_nocode(summaries)
+
+  expect_type(result, "language")
+  code <- deparse(result)
+  # Non-syntactic names should be backticked
+  expect_true(grepl("`avg 2024`", code))
+  expect_true(grepl("`2024 Sales`", code))
+})
+
+# apply_summarize_nocode validation tests
+test_that("apply_summarize_nocode validates column existence", {
+  summaries <- list(avg_nonexistent = list(func = "mean", col = "nonexistent_col"))
+
+  # Should return early without crashing (column doesn't exist)
+  # We can't easily check if reactiveVal was set outside reactive context,
+  # but we can verify the function handles missing columns gracefully
+  shiny::testServer(
+    function(input, output, session) {
+      r_expr_validated <- reactiveVal()
+      r_summaries_validated <- reactiveVal()
+
+      apply_summarize_nocode(
+        mtcars,
+        summaries,
+        r_expr_validated,
+        r_summaries_validated,
+        by_selection = character(),
+        session = session
+      )
+
+      # Should not have been set (column doesn't exist)
+      expect_null(r_expr_validated())
+    },
+    {}
+  )
+})
+
+test_that("apply_summarize_nocode handles empty summaries", {
+  shiny::testServer(
+    function(input, output, session) {
+      r_expr_validated <- reactiveVal()
+      r_summaries_validated <- reactiveVal()
+
+      apply_summarize_nocode(
+        mtcars,
+        list(),
+        r_expr_validated,
+        r_summaries_validated,
+        by_selection = character(),
+        session = NULL
+      )
+
+      # Should set empty summarize expression
+      expect_type(r_expr_validated(), "language")
+    },
+    {}
+  )
+})
+
+test_that("apply_summarize_nocode validates new names exist", {
+  shiny::testServer(
+    function(input, output, session) {
+      r_expr_validated <- reactiveVal()
+      r_summaries_validated <- reactiveVal()
+
+      # Summary with empty name
+      summaries <- list()
+      summaries[[""]] <- list(func = "mean", col = "mpg")
+
+      apply_summarize_nocode(
+        mtcars,
+        summaries,
+        r_expr_validated,
+        r_summaries_validated,
+        by_selection = character(),
+        session = session
+      )
+
+      # Should return early without updating (empty name)
+      expect_null(r_expr_validated())
+    },
+    {}
+  )
+})
+
+# =============================================================================
+# setInputs tests - verify different parameter values produce expected output
+# Note: summarize block uses renderUI for dynamic summary rows, which makes
+# setInputs testing complex. We test different initial parameter values instead.
+# =============================================================================
+
+test_that("summarize - different by parameter values produce different groupings - testServer", {
+  # Test without grouping
+  block_no_group <- new_summarize_block(
+    summaries = list(avg_mpg = list(func = "mean", col = "mpg"))
   )
 
-  expect_type(expr, "language")
-  code <- paste(deparse(expr), collapse = " ")
-  expect_true(grepl("dplyr::summarize", code))
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_no_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # Without grouping, should have 1 row (global summary)
+      expect_equal(nrow(result), 1)
+      expect_equal(result$avg_mpg, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block_no_group, data = list(data = function() mtcars))
+  )
+
+  # Test with single grouping column
+  block_single_group <- new_summarize_block(
+    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
+    by = "cyl"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_single_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # With grouping by cyl, should have one row per cylinder
+      expect_equal(nrow(result), length(unique(mtcars$cyl)))
+      expect_true("cyl" %in% names(result))
+    },
+    args = list(x = block_single_group, data = list(data = function() mtcars))
+  )
+
+  # Test with multiple grouping columns
+  block_multi_group <- new_summarize_block(
+    summaries = list(avg_mpg = list(func = "mean", col = "mpg")),
+    by = c("cyl", "am")
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_multi_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true(is.data.frame(result))
+      # With multiple grouping, should have more groups
+      expected_groups <- nrow(unique(mtcars[, c("cyl", "am")]))
+      expect_equal(nrow(result), expected_groups)
+      expect_true(all(c("cyl", "am") %in% names(result)))
+    },
+    args = list(x = block_multi_group, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize - different summary functions produce different results - testServer", {
+  # Test mean
+  block_mean <- new_summarize_block(
+    summaries = list(result = list(func = "mean", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_mean),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$result, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block_mean, data = list(data = function() mtcars))
+  )
+
+  # Test median (different from mean)
+  block_median <- new_summarize_block(
+    summaries = list(result = list(func = "median", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_median),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$result, median(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block_median, data = list(data = function() mtcars))
+  )
+
+  # Test sum (very different from mean/median)
+  block_sum <- new_summarize_block(
+    summaries = list(result = list(func = "sum", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_sum),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$result, sum(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block_sum, data = list(data = function() mtcars))
+  )
+})
+
+test_that("summarize - different columns produce different results - testServer", {
+  # Test mpg column
+  block_mpg <- new_summarize_block(
+    summaries = list(avg = list(func = "mean", col = "mpg"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_mpg),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$avg, mean(mtcars$mpg), tolerance = 0.0001)
+    },
+    args = list(x = block_mpg, data = list(data = function() mtcars))
+  )
+
+  # Test hp column (different values)
+  block_hp <- new_summarize_block(
+    summaries = list(avg = list(func = "mean", col = "hp"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_hp),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$avg, mean(mtcars$hp), tolerance = 0.0001)
+      # hp mean should be different from mpg mean
+      expect_false(abs(result$avg - mean(mtcars$mpg)) < 0.01)
+    },
+    args = list(x = block_hp, data = list(data = function() mtcars))
+  )
+
+  # Test wt column
+  block_wt <- new_summarize_block(
+    summaries = list(avg = list(func = "mean", col = "wt"))
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_wt),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$avg, mean(mtcars$wt), tolerance = 0.0001)
+    },
+    args = list(x = block_wt, data = list(data = function() mtcars))
+  )
+})
+
+# get_summary_functions tests
+test_that("get_summary_functions returns expected functions", {
+  funcs <- get_summary_functions()
+
+  expect_type(funcs, "character")
+  expect_true(length(funcs) > 0)
+
+  # Check some expected functions are present
+  expect_true("mean" %in% funcs)
+  expect_true("median" %in% funcs)
+  expect_true("sum" %in% funcs)
+  expect_true("min" %in% funcs)
+  expect_true("max" %in% funcs)
+  expect_true("sd" %in% funcs)
+  expect_true("dplyr::n" %in% funcs)
+  expect_true("dplyr::n_distinct" %in% funcs)
+  expect_true("dplyr::first" %in% funcs)
+  expect_true("dplyr::last" %in% funcs)
+})
+
+test_that("get_summary_functions can be extended via option", {
+  # Set custom functions
+  old_opt <- getOption("blockr.dplyr.summary_functions")
+  on.exit(options(blockr.dplyr.summary_functions = old_opt))
+
+  options(blockr.dplyr.summary_functions = c(
+    "custom function" = "custom::func"
+  ))
+
+  funcs <- get_summary_functions()
+
+  # Custom function should be present
+  expect_true("custom::func" %in% funcs)
+  # Default functions should still be present
+  expect_true("mean" %in% funcs)
+})
+
+# Deprecated function test
+test_that("new_summarize_nocode_block is deprecated", {
+  expect_warning(
+    blk <- new_summarize_nocode_block(),
+    "deprecated"
+  )
+  expect_s3_class(blk, c("summarize_block", "transform_block", "block"))
 })
