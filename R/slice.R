@@ -269,7 +269,7 @@ new_slice_block <- function(
               } else {
                 paste0("n = ", n_val)
               }
-              if (!is.null(weight_by_val) && weight_by_val != "") {
+              if (length(weight_by_val) > 0 && !is.na(weight_by_val) && nzchar(weight_by_val)) {
                 # Apply backticks to non-syntactic column names
                 args <- paste0(
                   args,
@@ -280,7 +280,7 @@ new_slice_block <- function(
               args <- paste0(
                 args,
                 ", replace = ",
-                if (replace_val) "TRUE" else "FALSE"
+                if (isTRUE(replace_val)) "TRUE" else "FALSE"
               )
               by_arg <- format_by(use_dot = FALSE)
               if (!is.null(by_arg)) {
