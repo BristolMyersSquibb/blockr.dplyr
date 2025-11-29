@@ -446,10 +446,10 @@ mod_value_filter_ui <- function(id) {
         )
       ),
       div(
-        class = "mt-4",
+        class = "mt-4 filter-preserve-order",
         checkboxInput(
           ns("preserve_order"),
-          label = "Preserve selection order",
+          label = "Preserve selection order (drag to reorder)",
           value = FALSE
         )
       )
@@ -502,7 +502,7 @@ value_filter_condition_ui <- function(
         )
       ),
       div(
-        class = "vf-values",
+        class = if (show_remove) "vf-values" else "vf-values vf-values-full",
         selectizeInput(
           paste0(id, "_values"),
           label = "Values",

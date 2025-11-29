@@ -192,92 +192,33 @@ mod_multi_arrange_ui <- function(id) {
     shinyjs::useShinyjs(),
     tags$style(
       "
-      .multi-arrange-row {
-        display: flex;
-        width: 100%;
-        align-items: stretch;
-        gap: 8px;
-        margin-bottom: 8px;
+      /* Grid layout for arrange rows - matches filter block pattern */
+      .arrange-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0 15px;
+        align-items: end;
       }
 
-      .multi-arrange-row .arrange-column {
-        flex: 1;
-      }
-
-      .multi-arrange-row .arrange-direction {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        margin-left: 8px;
-      }
-
-      .multi-arrange-row .arrange-direction .shiny-input-container {
-        width: auto !important;
-        max-width: none !important;
-      }
-
-      .multi-arrange-row .arrange-direction .checkbox {
-        margin-bottom: 0;
-        margin-top: 0;
-      }
-
-      .multi-arrange-row .arrange-direction label {
-        font-size: 0.75rem;
-        color: #6c757d;
-        font-weight: normal;
-        margin-bottom: 0;
-        padding-left: 4px;
-      }
-
-      .multi-arrange-row .arrange-direction input[type='checkbox'] {
-        margin-top: 0;
-        margin-right: 4px;
-      }
-
-      .multi-arrange-row .arrange-controls {
-        flex: 0 0 auto;
-        display: flex;
-        gap: 4px;
-      }
-
-      .multi-arrange-row .arrange-delete {
+      .arrange-grid .arrange-column { grid-column: 1; grid-row: 1; }
+      .arrange-grid .arrange-column-full { grid-column: 1 / -1; }
+      .arrange-grid .arrange-delete-cell {
+        grid-column: 2;
+        grid-row: 1;
         height: 38px;
-        width: 35px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
       }
+      .arrange-grid .arrange-direction { grid-column: 1 / -1; grid-row: 2; }
 
-      .multi-arrange-row .arrange-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
-      /* Remove default margins from Shiny inputs */
-      .multi-arrange-row .shiny-input-container {
+      /* Remove Shiny's default input margins */
+      .arrange-condition .shiny-input-container {
         margin-bottom: 0 !important;
       }
 
-      /* Ensure inputs and selects align properly */
-      .multi-arrange-row .form-control,
-      .multi-arrange-row .selectize-control,
-      .multi-arrange-row .selectize-input {
-        width: 100% !important;
-        height: 38px !important;
-        margin-bottom: 0 !important;
-      }
-
-      .multi-arrange-row .selectize-input {
+      /* Consistent height for form controls */
+      .arrange-condition .selectize-input {
         min-height: 38px;
-        line-height: 24px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-        display: flex;
-        align-items: center;
       }
 
       .multi-arrange-container .btn-outline-secondary {
@@ -296,7 +237,7 @@ mod_multi_arrange_ui <- function(id) {
       class = "multi-arrange-container",
       uiOutput(ns("arranges_ui")),
       div(
-        class = "d-flex justify-content-start mt-2",
+        class = "d-flex justify-content-start mt-2 mb-1",
         actionButton(
           ns("add_arrange"),
           label = "Add Sort Column",
@@ -328,36 +269,39 @@ multi_arrange_row_ui <- function(
   show_remove = TRUE
 ) {
   div(
-    class = "multi-arrange-row",
+    class = "arrange-condition mb-1",
     div(
-      class = "arrange-column",
-      selectInput(
-        paste0(id, "_column"),
-        label = NULL,
-        choices = available_cols,
-        selected = column,
-        width = "100%"
-      )
-    ),
-    div(
-      class = "arrange-direction",
-      checkboxInput(
-        paste0(id, "_direction"),
-        label = "Desc",
-        value = (direction == "desc")
-      )
-    ),
-    div(
-      class = "arrange-controls",
-      if (show_remove) {
-        actionButton(
-          paste0(id, "_remove"),
-          label = NULL,
-          icon = icon("xmark"),
-          class = "btn btn-sm arrange-delete",
-          title = "Remove"
+      class = "arrange-grid",
+      div(
+        class = if (show_remove) "arrange-column" else "arrange-column arrange-column-full",
+        selectInput(
+          paste0(id, "_column"),
+          label = "Column",
+          choices = available_cols,
+          selected = column,
+          width = "100%"
         )
-      }
+      ),
+      if (show_remove) {
+        div(
+          class = "arrange-delete-cell d-flex align-items-center",
+          actionButton(
+            paste0(id, "_remove"),
+            label = NULL,
+            icon = icon("xmark"),
+            class = "btn btn-link text-muted p-0",
+            title = "Remove"
+          )
+        )
+      },
+      div(
+        class = "arrange-direction d-flex align-items-center mt-1",
+        checkboxInput(
+          paste0(id, "_direction"),
+          label = "Descending",
+          value = (direction == "desc")
+        )
+      )
     )
   )
 }

@@ -121,42 +121,14 @@ new_bind_rows_block <- function(id_name = "", ...) {
     },
     ui = function(id) {
       tagList(
-        # Add CSS
         css_responsive_grid(),
-        css_advanced_toggle(NS(id, "advanced-options")),
-
-        # Toggle button
         div(
-          class = "block-advanced-toggle text-muted",
-          id = NS(id, "advanced-toggle"),
-          onclick = sprintf(
-            "
-            const section = document.getElementById('%s');
-            const chevron = document.querySelector('#%s .block-chevron');
-            section.classList.toggle('expanded');
-            chevron.classList.toggle('rotated');
-          ",
-            NS(id, "advanced-options"),
-            NS(id, "advanced-toggle")
-          ),
-          tags$span(class = "block-chevron", "\u203A"),
-          "Show advanced options"
-        ),
-
-        # Advanced Options Section (Collapsible)
-        div(
-          id = NS(id, "advanced-options"),
-          div(
-            class = "mb-3",
-            textInput(
-              NS(id, "id_name"),
-              label = tags$small(
-                class = "text-muted",
-                "ID column name (leave empty to disable):"
-              ),
-              value = id_name,
-              placeholder = "e.g., .id or source"
-            )
+          class = "block-container",
+          textInput(
+            NS(id, "id_name"),
+            label = "ID column name (optional)",
+            value = id_name,
+            placeholder = "e.g., source"
           )
         )
       )
@@ -251,7 +223,14 @@ new_bind_cols_block <- function(...) {
     },
     ui = function(id) {
       tagList(
-        css_responsive_grid()
+        css_responsive_grid(),
+        div(
+          class = "block-container",
+          tags$p(
+            class = "text-muted mb-0",
+            "Combines inputs column-wise. No configuration needed."
+          )
+        )
       )
     },
     dat_valid = function(...args) {

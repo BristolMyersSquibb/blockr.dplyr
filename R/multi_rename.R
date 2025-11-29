@@ -216,7 +216,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
       .multi-rename-pair {
         display: flex;
         width: 100%;
-        align-items: stretch;
+        align-items: end;
         gap: 4px;
         margin-bottom: 8px;
       }
@@ -233,6 +233,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         color: var(--bs-gray-400);
         font-size: 0.9em;
         width: 30px;
+        height: 38px; /* Match input height */
       }
 
       .multi-rename-pair .rename-old {
@@ -303,7 +304,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
       class = "multi-rename-container",
       uiOutput(ns("renames_ui")),
       div(
-        class = "multi-rename-actions",
+        class = "multi-rename-actions mt-2 mb-1",
         actionButton(
           ns("add_rename"),
           label = "Add Rename",
@@ -339,7 +340,7 @@ multi_rename_row_ui <- function(
       class = "rename-new",
       textInput(
         paste0(id, "_new"),
-        label = NULL,
+        label = "New name",
         value = new_name,
         placeholder = "New column name"
       )
@@ -352,7 +353,7 @@ multi_rename_row_ui <- function(
       class = "rename-old",
       selectInput(
         paste0(id, "_old"),
-        label = NULL,
+        label = "Original column",
         choices = available_cols,
         selected = old_name,
         width = "100%"

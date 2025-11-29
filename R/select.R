@@ -203,16 +203,15 @@ new_select_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_single_column("select"),
-        css_inline_checkbox(),
 
         # Block-specific CSS
         tags$style(HTML(
           "
           /* Remove default form-group margin for tighter layout */
-          .select-block-container .select-distinct-checkbox .form-group {
+          .select-block-container .select-checkbox .form-group {
             margin-bottom: 0;
           }
-          .select-block-container .select-distinct-checkbox .checkbox {
+          .select-block-container .select-checkbox .checkbox {
             margin-top: 0;
             margin-bottom: 0;
           }
@@ -233,39 +232,35 @@ new_select_block <- function(
                 div(
                   class = "block-input-wrapper",
                   style = "grid-column: 1 / -1;",
-                  div(
-                    class = "block-inline-checkbox-wrapper",
-                    div(
-                      selectizeInput(
-                        NS(id, "columns"),
-                        label = NULL, # No label
-                        choices = columns, # Initialize with constructor parameter
-                        selected = columns, # Pre-select constructor parameter
-                        multiple = TRUE,
-                        width = "100%",
-                        options = list(
-                          plugins = list("drag_drop", "remove_button"),
-                          persist = FALSE,
-                          placeholder = "Select columns..."
-                        )
-                      )
-                    ),
-                    div(
-                      class = "block-inline-checkbox",
-                      checkboxInput(
-                        NS(id, "exclude"),
-                        label = "Exclude",
-                        value = exclude
-                      )
+                  selectizeInput(
+                    NS(id, "columns"),
+                    label = "Columns to select (drag to reorder)",
+                    choices = columns,
+                    selected = columns,
+                    multiple = TRUE,
+                    width = "100%",
+                    options = list(
+                      plugins = list("drag_drop", "remove_button"),
+                      persist = FALSE,
+                      placeholder = "Select columns..."
                     )
-                  )
-                ),
-                div(
-                  class = "block-input-wrapper select-distinct-checkbox",
-                  checkboxInput(
-                    NS(id, "distinct"),
-                    label = "Keep distinct rows only",
-                    value = distinct
+                  ),
+                  # Checkboxes directly after input (no grid gap)
+                  div(
+                    class = "select-checkbox",
+                    checkboxInput(
+                      NS(id, "exclude"),
+                      label = "Exclude selected columns",
+                      value = exclude
+                    )
+                  ),
+                  div(
+                    class = "select-checkbox",
+                    checkboxInput(
+                      NS(id, "distinct"),
+                      label = "Keep distinct rows only",
+                      value = distinct
+                    )
                   )
                 )
               )

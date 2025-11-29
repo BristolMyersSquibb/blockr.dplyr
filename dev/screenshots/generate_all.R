@@ -122,7 +122,7 @@ validate_block_screenshot(
 # =============================================================================
 cat("6/16 - Join block\n")
 validate_block_screenshot(
-  block = new_join_block(type = "left_join", by = "Time"),
+  block = new_join_block(type = "left_join", natural_join = TRUE),
   data = datasets::BOD,
   filename = "join-block.png",
   output_dir = "man/figures",

@@ -333,19 +333,19 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
     tags$style(
       "
       .multi-summarize-container {
-        margin-top: -8px;
       }
 
       .multi-summarize-pair {
         display: flex;
         width: 100%;
-        align-items: stretch;
-        gap: 4px;
+        align-items: end;
+        gap: 15px;
         margin-bottom: 8px;
       }
 
       .multi-summarize-pair .summarize-new {
-        flex: 0 0 25%;
+        flex: 1 1 0;
+        min-width: 0;
       }
 
       .multi-summarize-pair .summarize-equals {
@@ -355,41 +355,27 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         justify-content: center;
         color: var(--bs-gray-400);
         font-size: 0.9em;
-        width: 25px;
+        width: 20px;
+        height: 38px;
+        margin-left: -10px;
+        margin-right: -10px;
       }
 
       .multi-summarize-pair .summarize-func {
-        flex: 0 0 30%;
-      }
-
-      .multi-summarize-pair .summarize-paren-open {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--bs-gray-400);
-        font-size: 1.1em;
-        width: 20px;
+        flex: 1 1 0;
+        min-width: 0;
       }
 
       .multi-summarize-pair .summarize-col {
-        flex: 1;
-      }
-
-      .multi-summarize-pair .summarize-paren-close {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--bs-gray-400);
-        font-size: 1.1em;
-        width: 20px;
+        flex: 1 1 0;
+        min-width: 0;
       }
 
       .multi-summarize-pair .summarize-delete {
         flex: 0 0 auto;
         height: 38px;
-        width: 35px;
+        width: 24px;
+        margin-left: -10px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -432,6 +418,7 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         justify-content: space-between;
         align-items: center;
         margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
       }
 
       .multi-summarize-actions .btn-outline-secondary {
@@ -490,7 +477,7 @@ multi_summarize_row_ui <- function(
       class = "summarize-new",
       textInput(
         paste0(id, "_new"),
-        label = NULL,
+        label = "Output name",
         value = new_name,
         placeholder = "New column"
       )
@@ -503,29 +490,21 @@ multi_summarize_row_ui <- function(
       class = "summarize-func",
       selectInput(
         paste0(id, "_func"),
-        label = NULL,
+        label = "Function",
         choices = available_funcs,
         selected = func,
         width = "100%"
       )
     ),
     div(
-      class = "summarize-paren-open",
-      "("
-    ),
-    div(
       class = "summarize-col",
       selectInput(
         paste0(id, "_col"),
-        label = NULL,
+        label = "Column",
         choices = available_cols,
         selected = col,
         width = "100%"
       )
-    ),
-    div(
-      class = "summarize-paren-close",
-      ")"
     ),
     if (show_remove) {
       actionButton(

@@ -60,7 +60,7 @@ css_responsive_grid <- function() {
     "
     .block-container {
       width: 100%;
-      padding-bottom: 0;
+      padding-bottom: 10px;
     }
 
     /* One shared grid across the whole form */
@@ -68,7 +68,6 @@ css_responsive_grid <- function() {
       display: grid;
       gap: 15px;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      padding-top: 5px;
     }
 
     /* Flatten wrappers so all controls share the same tracks */
@@ -364,6 +363,7 @@ css_value_filter_grid <- function() {
 
     .value-filter-grid .vf-column { grid-column: 1; grid-row: 1; }
     .value-filter-grid .vf-values { grid-column: 2; grid-row: 1; }
+    .value-filter-grid .vf-values-full { grid-column: 2 / -1; }
     .value-filter-grid .vf-delete {
       grid-column: 3;
       grid-row: 1;
@@ -381,6 +381,12 @@ css_value_filter_grid <- function() {
     /* Consistent height for form controls */
     .value-filter-condition .selectize-input {
       min-height: 38px;
+    }
+
+    /* Remove bottom margin from preserve order checkbox */
+    .filter-preserve-order .form-group,
+    .filter-preserve-order .checkbox {
+      margin-bottom: 0;
     }
     "
   ))
