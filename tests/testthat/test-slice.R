@@ -521,7 +521,7 @@ test_that("slice block with_ties=TRUE - testServer", {
 # })
 
 # =============================================================================
-# Comprehensive testServer tests using session$setInputs()
+# Comprehensive testServer tests using expr$setInputs()
 # These tests verify that UI input changes produce expected output
 # =============================================================================
 
@@ -531,20 +531,21 @@ test_that("slice type=head - input n changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
-      # Initial state
+      # Initial result
       result <- session$returned$result()
       expect_equal(nrow(result), 5)
 
       # Change n input
-      session$setInputs(n = 10)
+      expr$setInputs(n = 10)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 10)
 
       # Change n input again
-      session$setInputs(n = 3)
+      expr$setInputs(n = 3)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 3)
@@ -553,20 +554,21 @@ test_that("slice type=head - input n changes output - testServer", {
   )
 })
 
-test_that("slice type=head - input value_mode switches to prop - testServer", {
+test_that("slice type=head - input use_prop switches to prop - testServer", {
   block <- new_slice_block(type = "head", n = 5)
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
-      # Initial state - count mode
+      # Initial result - count mode, 5 rows
       result <- session$returned$result()
       expect_equal(nrow(result), 5)
 
-      # Switch to proportion mode and set value
-      session$setInputs(value_mode = "prop", n = 0.25)
+      # Switch to proportion mode and set value to 25%
+      expr$setInputs(use_prop = TRUE, n = 0.25)
       session$flushReact()
       result <- session$returned$result()
       # 25% of 32 rows = 8 rows
@@ -582,15 +584,16 @@ test_that("slice type=tail - input n changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
-      # Initial state
+      # Initial result
       result <- session$returned$result()
       expect_equal(nrow(result), 5)
       expect_equal(result, tail(mtcars, 5))
 
       # Change n input
-      session$setInputs(n = 7)
+      expr$setInputs(n = 7)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 7)
@@ -600,16 +603,21 @@ test_that("slice type=tail - input n changes output - testServer", {
   )
 })
 
-test_that("slice type=tail - input value_mode switches to prop - testServer", {
+test_that("slice type=tail - input use_prop switches to prop - testServer", {
   block <- new_slice_block(type = "tail", n = 5)
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
-      # Switch to proportion mode
-      session$setInputs(value_mode = "prop", n = 0.1)
+      # Initial result
+      result <- session$returned$result()
+      expect_equal(nrow(result), 5)
+
+      # Switch to proportion mode - 10%
+      expr$setInputs(use_prop = TRUE, n = 0.1)
       session$flushReact()
       result <- session$returned$result()
       # 10% of 32 rows = 3 rows
@@ -625,6 +633,7 @@ test_that("slice type=min - input order_by changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - sorted by mpg
@@ -634,14 +643,14 @@ test_that("slice type=min - input order_by changes output - testServer", {
       expect_equal(result$mpg, expected$mpg)
 
       # Change order_by to hp
-      session$setInputs(order_by = "hp")
+      expr$setInputs(order_by = "hp")
       session$flushReact()
       result <- session$returned$result()
       expected <- dplyr::slice_min(mtcars, hp, n = 3, with_ties = FALSE)
       expect_equal(result$hp, expected$hp)
 
       # Change order_by to wt
-      session$setInputs(order_by = "wt")
+      expr$setInputs(order_by = "wt")
       session$flushReact()
       result <- session$returned$result()
       expected <- dplyr::slice_min(mtcars, wt, n = 3, with_ties = FALSE)
@@ -657,6 +666,7 @@ test_that("slice type=min - input with_ties changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - with_ties = FALSE
@@ -664,7 +674,7 @@ test_that("slice type=min - input with_ties changes output - testServer", {
       expect_equal(nrow(result), 3)
 
       # Change with_ties to TRUE
-      session$setInputs(with_ties = TRUE)
+      expr$setInputs(with_ties = TRUE)
       session$flushReact()
       result <- session$returned$result()
       # cyl has many ties at 4, so should return all cars with cyl=4
@@ -682,17 +692,18 @@ test_that("slice type=min - input n changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       result <- session$returned$result()
       expect_equal(nrow(result), 3)
 
-      session$setInputs(n = 5)
+      expr$setInputs(n = 5)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 5)
 
-      session$setInputs(n = 1)
+      expr$setInputs(n = 1)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 1)
@@ -707,6 +718,7 @@ test_that("slice type=max - input order_by changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - sorted by mpg (descending)
@@ -716,7 +728,7 @@ test_that("slice type=max - input order_by changes output - testServer", {
       expect_equal(result$mpg, expected$mpg)
 
       # Change order_by to hp
-      session$setInputs(order_by = "hp")
+      expr$setInputs(order_by = "hp")
       session$flushReact()
       result <- session$returned$result()
       expected <- dplyr::slice_max(mtcars, hp, n = 3, with_ties = FALSE)
@@ -732,6 +744,7 @@ test_that("slice type=max - input with_ties changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - with_ties = FALSE
@@ -739,7 +752,7 @@ test_that("slice type=max - input with_ties changes output - testServer", {
       expect_equal(nrow(result), 3)
 
       # Change with_ties to TRUE
-      session$setInputs(with_ties = TRUE)
+      expr$setInputs(with_ties = TRUE)
       session$flushReact()
       result <- session$returned$result()
       expected <- dplyr::slice_max(mtcars, gear, n = 3, with_ties = TRUE)
@@ -755,12 +768,13 @@ test_that("slice type=max - input n changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       result <- session$returned$result()
       expect_equal(nrow(result), 3)
 
-      session$setInputs(n = 7)
+      expr$setInputs(n = 7)
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 7)
@@ -769,12 +783,13 @@ test_that("slice type=max - input n changes output - testServer", {
   )
 })
 
-test_that("slice type=max - input value_mode switches to prop - testServer", {
+test_that("slice type=max - input use_prop switches to prop - testServer", {
   block <- new_slice_block(type = "max", order_by = "mpg", n = 5, with_ties = FALSE)
 
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - count mode
@@ -782,7 +797,7 @@ test_that("slice type=max - input value_mode switches to prop - testServer", {
       expect_equal(nrow(result), 5)
 
       # Switch to proportion mode
-      session$setInputs(value_mode = "prop", n = 0.2)
+      expr$setInputs(use_prop = TRUE, n = 0.2)
       session$flushReact()
       result <- session$returned$result()
       # 20% of 32 rows = 6 rows
@@ -798,6 +813,7 @@ test_that("slice - input type changes output - testServer", {
   testServer(
     blockr.core:::get_s3_method("block_server", block),
     {
+      expr <- session$makeScope("expr")
       session$flushReact()
 
       # Initial state - head
@@ -806,7 +822,7 @@ test_that("slice - input type changes output - testServer", {
       expect_equal(result, head(mtcars, 5))
 
       # Change type to tail
-      session$setInputs(type = "tail")
+      expr$setInputs(type = "tail")
       session$flushReact()
       result <- session$returned$result()
       expect_equal(nrow(result), 5)

@@ -17,7 +17,7 @@
 #' @param ... Additional arguments forwarded to [new_block()]
 #'
 #' @return A block object for slice operations
-#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInput
+#' @importFrom shiny NS moduleServer reactive req div conditionalPanel radioButtons numericInput selectInput checkboxInput textInput observeEvent updateSelectInput updateNumericInput
 #' @importFrom dplyr slice slice_head slice_tail slice_min slice_max slice_sample
 #' @seealso [new_transform_block()]
 #' @examples
@@ -67,7 +67,8 @@ new_slice_block <- function(
           r_rows <- reactiveVal(rows)
 
           # Determine initial mode based on constructor params
-          r_value_mode <- reactiveVal(if (is.null(prop)) "count" else "prop")
+          # Use checkbox state: TRUE = proportion mode, FALSE = count mode
+          r_use_prop <- reactiveVal(!is.null(prop))
 
           # Group by selector using unified componen
           r_by_selection <- mod_column_selector_server(
@@ -113,10 +114,31 @@ new_slice_block <- function(
 
           # Unified input handles both n and prop based on mode
           observeEvent(input$n, {
-            if (r_value_mode() == "count") {
+            if (!r_use_prop()) {
               r_n(input$n)
             } else {
               r_prop(input$n)
+            }
+          })
+
+          # Handle proportion checkbox toggle
+          observeEvent(input$use_prop, {
+            r_use_prop(input$use_prop)
+            # Update numericInput constraints and label based on mode
+            if (isTRUE(input$use_prop)) {
+              # Switching to proportion mode: 0 to 1, step 0.1
+              # Clamp current value to valid range
+              new_val <- min(1, max(0, input$n %||% 0.1))
+              updateNumericInput(session, "n", min = 0, max = 1, step = 0.1, value = new_val)
+              shinyjs::html("n_label", "Proportion (0 to 1)")
+              r_prop(new_val)
+            } else {
+              # Switching to count mode: 1 to Inf, step 1
+              # If current value < 1, set to 1
+              new_val <- max(1, ceiling(input$n %||% 5))
+              updateNumericInput(session, "n", min = 1, max = NA, step = 1, value = new_val)
+              shinyjs::html("n_label", "Number of rows")
+              r_n(new_val)
             }
           })
 
@@ -138,10 +160,6 @@ new_slice_block <- function(
 
           observeEvent(input$rows, {
             r_rows(input$rows)
-          })
-
-          observeEvent(input$value_mode, {
-            r_value_mode(input$value_mode)
           })
 
           # Restore type selector on initialization
@@ -302,7 +320,7 @@ new_slice_block <- function(
             by_val <- r_by_selection()
 
             # Set prop_val to NULL if in count mode, n_val to NULL if in prop mode
-            if (r_value_mode() == "count") {
+            if (!r_use_prop()) {
               prop_val <- NULL
             } else {
               n_val <- NULL
@@ -328,7 +346,7 @@ new_slice_block <- function(
               type = r_type,
               n = r_n,
               prop = r_prop,
-              value_mode = r_value_mode,
+              use_prop = r_use_prop,
               order_by = r_order_by,
               with_ties = r_with_ties,
               weight_by = r_weight_by,
@@ -355,74 +373,6 @@ new_slice_block <- function(
         # Add CSS
         css_responsive_grid(),
         css_inline_checkbox(),
-
-        # JavaScript for Shiny input binding and proportion toggle
-        tags$script(HTML(sprintf(
-          "
-          $(document).ready(function() {
-            // Bind custom inputs to Shiny
-            var nInput = $('#%s');
-            var modeInput = $('#%s');
-
-            // Update Shiny when n value changes
-            nInput.on('change input', function() {
-              Shiny.setInputValue('%s', parseFloat($(this).val()));
-            });
-
-            // Update Shiny when mode changes
-            modeInput.on('change', function() {
-              Shiny.setInputValue('%s', $(this).val());
-            });
-
-            // Initialize values
-            Shiny.setInputValue('%s', parseFloat(nInput.val()));
-            Shiny.setInputValue('%s', modeInput.val());
-          });
-
-          // Proportion toggle checkbox handler
-          $(document).on('change', '#%s', function() {
-            var checkbox = $(this);
-            var modeInput = $('#%s');
-            var label = $('#%s');
-            var valueInput = $('#%s');
-            var currentValue = parseFloat(valueInput.val());
-            var isChecked = checkbox.is(':checked');
-
-            if (isChecked) {
-              // Switch to proportion mode
-              modeInput.val('prop').trigger('change');
-              label.text('Proportion');
-              valueInput.attr('step', '0.01');
-              // If value > 1, set sensible default
-              if (currentValue > 1) {
-                valueInput.val(0.1).trigger('change');
-              }
-            } else {
-              // Switch to count mode
-              modeInput.val('count').trigger('change');
-              label.text('Number of rows');
-              valueInput.attr('step', '1');
-              // If value < 1, set sensible default
-              if (currentValue < 1) {
-                valueInput.val(5).trigger('change');
-              }
-            }
-            // Trigger Shiny update
-            Shiny.setInputValue('%s', modeInput.val());
-          });
-          ",
-          ns("n"),
-          ns("value_mode"),
-          ns("n"),
-          ns("value_mode"),
-          ns("n"),
-          ns("value_mode"),
-          ns("value_mode_toggle"),
-          ns("value_mode"),
-          ns("value_label"),
-          ns("n"),
-          ns("value_mode")
-        ))),
 
         # Block-specific CSS
         tags$style(HTML(
@@ -458,16 +408,70 @@ new_slice_block <- function(
             margin-right: 4px;
           }
 
-          /* Integrated value input with checkbox */
-          .slice-value-input {
+          /* Integrated value input group - numericInput + checkbox together */
+          .slice-value-group {
             width: 100%;
           }
-          .slice-value-input .input-group-text {
-            padding: 0.375rem 0.5rem;
+          .slice-value-group .slice-value-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: normal;
+            display: block;
           }
-          .slice-value-input .proportion-label {
+          .slice-value-group .input-group {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            height: 38px; /* Match selectize input height */
+          }
+          /* The numericInput wrapper - hide its label, make input fill space */
+          .slice-value-group .numeric-input-wrapper {
+            flex: 1;
+            min-width: 0;
+          }
+          .slice-value-group .numeric-input-wrapper .shiny-input-container {
+            width: 100% !important;
+            margin-bottom: 0;
+            height: 100%;
+          }
+          .slice-value-group .numeric-input-wrapper .shiny-input-container > label {
+            display: none;
+          }
+          .slice-value-group .numeric-input-wrapper input.form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+            height: 38px; /* Match selectize input height */
+          }
+          /* The checkbox container - styled as input-group-text */
+          .slice-value-group .input-group-text {
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem; /* Reduced padding */
+            background-color: #e9ecef;
+            border: 1px solid rgb(141, 149, 158); /* Match input border */
+            border-top-right-radius: 3px; /* Match Bootstrap form-control */
+            border-bottom-right-radius: 3px; /* Match Bootstrap form-control */
+            height: 38px; /* Match input height */
+          }
+          .slice-value-group .input-group-text .shiny-input-container {
+            margin-bottom: 0;
+            width: auto !important;
+          }
+          .slice-value-group .input-group-text .checkbox {
+            margin: 0;
+            display: flex;
+            align-items: center;
+          }
+          .slice-value-group .input-group-text .checkbox label {
+            margin-bottom: 0;
             font-weight: 500;
             color: #6c757d;
+            padding-left: 2px; /* Reduced padding */
+          }
+          .slice-value-group .input-group-text .checkbox input[type='checkbox'] {
+            margin: 0;
           }
           "
         )),
@@ -509,39 +513,32 @@ new_slice_block <- function(
                   conditionalPanel(
                     condition = sprintf("input['%s'] != 'custom'", ns("type")),
                     div(
-                      class = "slice-value-input",
+                      class = "slice-value-group",
                       tags$label(
-                        id = ns("value_label"),
-                        class = "control-label",
-                        `for` = ns("n"),
-                        if (is.null(prop)) "Number of rows" else "Proportion"
+                        id = ns("n_label"),
+                        class = "slice-value-label",
+                        if (is.null(prop)) "Number of rows" else "Proportion (0 to 1)"
                       ),
                       div(
                         class = "input-group",
-                        tags$input(
-                          id = ns("n"),
-                          type = "number",
-                          class = "form-control shiny-bound-input",
-                          value = if (is.null(prop)) n else prop,
-                          `aria-label` = "Number of rows or proportion"
+                        div(
+                          class = "numeric-input-wrapper",
+                          numericInput(
+                            ns("n"),
+                            label = "",
+                            value = if (is.null(prop)) n else prop,
+                            min = 0,
+                            step = if (is.null(prop)) 1 else 0.1,
+                            width = "100%"
+                          )
                         ),
                         div(
                           class = "input-group-text",
-                          tags$input(
-                            id = ns("value_mode_toggle"),
-                            type = "checkbox",
-                            class = "form-check-input mt-0",
-                            checked = if (!is.null(prop)) "checked" else NULL,
-                            `aria-label` = "Toggle proportion mode"
-                          ),
-                          tags$span(class = "proportion-label ms-1", "%")
-                        ),
-                        # Hidden input to track mode
-                        tags$input(
-                          id = ns("value_mode"),
-                          type = "hidden",
-                          class = "shiny-bound-input",
-                          value = if (is.null(prop)) "count" else "prop"
+                          checkboxInput(
+                            ns("use_prop"),
+                            label = "%",
+                            value = !is.null(prop)
+                          )
                         )
                       )
                     )
