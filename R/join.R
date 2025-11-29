@@ -233,20 +233,6 @@ new_join_block <- function(
           div(
             class = "block-form-grid",
 
-            # Help text
-            div(
-              class = "block-help-text",
-              p(
-                "Combine two datasets by matching rows on join keys. ",
-                tags$a(
-                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#join-block",
-                  target = "_blank",
-                  style = "text-decoration: none; font-size: 0.9em;",
-                  "\u2197"
-                )
-              )
-            ),
-
             # Join Type Section
             div(
               class = "block-section",

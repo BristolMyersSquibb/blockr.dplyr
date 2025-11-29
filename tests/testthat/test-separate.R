@@ -412,3 +412,236 @@ test_that("separate with comma-separated string for into parameter - testServer"
     args = list(x = block, data = list(data = function() test_data))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# =============================================================================
+
+test_that("separate - input col changes which column is separated - testServer", {
+  test_data <- data.frame(
+    name = c("John Doe", "Jane Smith"),
+    email = c("john@example.com", "jane@example.com")
+  )
+
+  block <- new_separate_block(
+    col = "name",
+    into = c("first", "second"),
+    sep = " "
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - separating name
+      result <- session$returned$result()
+      expect_equal(result$first[1], "John")
+      expect_equal(result$second[1], "Doe")
+
+      # Change to separate email column
+      expr$setInputs(col = "email", sep = "@")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$first[1], "john")
+      expect_equal(result$second[1], "example.com")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input sep changes separator - testServer", {
+  test_data <- data.frame(
+    data_col = c("2024-01-15", "2024-02-20")
+  )
+
+  block <- new_separate_block(
+    col = "data_col",
+    into = c("year", "month", "day"),
+    sep = "-"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result with "-"
+      result <- session$returned$result()
+      expect_equal(result$year[1], "2024")
+      expect_equal(result$month[1], "01")
+      expect_equal(result$day[1], "15")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input into changes output column names - testServer", {
+  test_data <- data.frame(
+    full_name = c("John Doe", "Jane Smith")
+  )
+
+  block <- new_separate_block(
+    col = "full_name",
+    into = c("first", "last"),
+    sep = " "
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result
+      result <- session$returned$result()
+      expect_true(all(c("first", "last") %in% names(result)))
+      expect_equal(result$first[1], "John")
+
+      # Change column names
+      expr$setInputs(into = "given_name, family_name")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true(all(c("given_name", "family_name") %in% names(result)))
+      expect_false("first" %in% names(result))
+      expect_equal(result$given_name[1], "John")
+      expect_equal(result$family_name[1], "Doe")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input remove changes column retention - testServer", {
+  test_data <- data.frame(
+    full_name = c("John Doe", "Jane Smith"),
+    age = c(30, 25)
+  )
+
+  block <- new_separate_block(
+    col = "full_name",
+    into = c("first", "last"),
+    sep = " ",
+    remove = TRUE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - original column removed
+      result <- session$returned$result()
+      expect_false("full_name" %in% names(result))
+      expect_true(all(c("first", "last", "age") %in% names(result)))
+
+      # Change remove to FALSE
+      expr$setInputs(remove = FALSE)
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true("full_name" %in% names(result))
+      expect_true(all(c("first", "last") %in% names(result)))
+      expect_equal(result$full_name[1], "John Doe")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input convert changes type conversion - testServer", {
+  test_data <- data.frame(
+    data_string = c("10-20", "30-40")
+  )
+
+  block <- new_separate_block(
+    col = "data_string",
+    into = c("min_val", "max_val"),
+    sep = "-",
+    convert = FALSE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - no conversion
+      result <- session$returned$result()
+      expect_true(is.character(result$min_val))
+
+      # Change convert to TRUE
+      expr$setInputs(convert = TRUE)
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true(is.numeric(result$min_val))
+      expect_equal(result$min_val[1], 10)
+      expect_equal(result$max_val[1], 20)
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input extra changes handling of extra pieces - testServer", {
+  test_data <- data.frame(
+    address = c("123 Main St Apt 4", "456 Oak Ave")
+  )
+
+  block <- new_separate_block(
+    col = "address",
+    into = c("number", "street"),
+    sep = " ",
+    extra = "drop"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result with extra="drop"
+      result <- session$returned$result()
+      expect_equal(result$number[1], "123")
+      expect_equal(result$street[1], "Main")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("separate - input fill changes handling of missing pieces - testServer", {
+  test_data <- data.frame(
+    name = c("John Doe Smith", "Jane")
+  )
+
+  block <- new_separate_block(
+    col = "name",
+    into = c("first", "middle", "last"),
+    sep = " ",
+    fill = "right"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result with fill="right"
+      result <- session$returned$result()
+      expect_equal(result$first[2], "Jane")
+      expect_true(is.na(result$middle[2]))
+      expect_true(is.na(result$last[2]))
+
+      # Change fill to "left"
+      expr$setInputs(fill = "left")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true(is.na(result$first[2]))
+      expect_true(is.na(result$middle[2]))
+      expect_equal(result$last[2], "Jane")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})

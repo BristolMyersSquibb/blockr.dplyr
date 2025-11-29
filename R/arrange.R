@@ -156,18 +156,6 @@ new_arrange_block <- function(columns = character(), ...) {
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Sort rows by columns. First row has highest priority. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#arrange-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  )
-                ),
                 mod_multi_arrange_ui(NS(id, "multi_arrange"))
               )
             )

@@ -265,12 +265,6 @@ new_separate_block <- function(
           div(
             class = "block-form-grid",
 
-            # Help text
-            div(
-              class = "block-help-text",
-              p("Separate a column into multiple columns by splitting on a separator pattern.")
-            ),
-
             # Main Section
             div(
               class = "block-section",

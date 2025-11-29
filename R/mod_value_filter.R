@@ -427,148 +427,17 @@ mod_value_filter_server <- function(
 #' @keywords internal
 #' @noRd
 mod_value_filter_ui <- function(id) {
+
   ns <- NS(id)
 
   tagList(
     shinyjs::useShinyjs(),
-    tags$style(
-      "
-      .value-filter-container {
-        margin-top: -8px;
-      }
-
-      .value-filter-condition {
-        margin-bottom: 5px;
-        background: none;
-      }
-
-      .value-filter-condition .condition-controls {
-        display: grid;
-        grid-template-columns: 1fr 1fr auto;
-        gap: 4px;
-        align-items: end;
-      }
-
-      .value-filter-condition .column-selector {
-        grid-column: 1;
-        grid-row: 1;
-      }
-
-      .value-filter-condition .values-selector {
-        grid-column: 2;
-        grid-row: 1;
-      }
-
-      .value-filter-condition .delete-selector {
-        grid-column: 3;
-        grid-row: 1;
-        display: flex;
-        align-items: center;
-      }
-
-      .value-filter-condition .mode-checkbox {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        display: flex;
-        align-items: center;
-        margin-top: 5px;
-      }
-
-      .value-filter-condition label {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-bottom: 2px;
-      }
-
-      /* Remove default margins from Shiny inputs */
-      .value-filter-condition .shiny-input-container {
-        margin-bottom: 0 !important;
-      }
-
-      /* Only apply height to form controls, but not selectize which needs to grow */
-      .value-filter-condition .form-control:not(.selectize-control):not(.selectize-dropdown) {
-        height: 38px !important;
-        margin-bottom: 0 !important;
-      }
-
-      .value-filter-condition .selectize-control {
-        margin-bottom: 0 !important;
-      }
-
-      .value-filter-condition .selectize-input {
-        min-height: 38px;
-        margin-bottom: 0 !important;
-      }
-
-      .condition-remove {
-        background: transparent;
-        border: none;
-        color: #6c757d;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 38px;
-        width: 35px;
-      }
-
-      .condition-remove:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
-      .value-filter-actions {
-        margin-top: 8px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        gap: 15px;
-      }
-
-      .value-filter-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .value-filter-actions .btn-outline-secondary:hover {
-        background-color: #f8f9fa;
-        border-color: #adb5bd;
-        color: #495057;
-      }
-
-      .value-filter-container .my-2 {
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
-      }
-
-      .value-filter-container .my-2 .selectize-control.single .selectize-input {
-        border-color: #dee2e6;
-        color: #6c757d;
-        font-size: 0.875rem;
-        padding: 0.25rem 0.5rem;
-        min-height: calc(1.5em + 0.5rem + 2px);
-      }
-
-      .condition-count {
-        font-size: 0.875rem;
-        color: #6c757d;
-        font-style: italic;
-      }
-
-      .value-filter-preserve-order {
-        margin-top: 20px;
-      }
-
-      .value-filter-preserve-order .checkbox {
-        font-size: 0.875rem;
-      }
-      "
-    ),
+    # Minimal layout CSS - only grid structure for condition rows
+    css_value_filter_grid(),
     div(
-      class = "value-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "value-filter-actions",
+        class = "d-flex align-items-center gap-3 mt-2 mb-1",
         actionButton(
           ns("add_condition"),
           label = "Add Condition",
@@ -577,10 +446,10 @@ mod_value_filter_ui <- function(id) {
         )
       ),
       div(
-        class = "value-filter-preserve-order",
+        class = "mt-4 filter-preserve-order",
         checkboxInput(
           ns("preserve_order"),
-          label = "Preserve selection order",
+          label = "Preserve selection order (drag to reorder)",
           value = FALSE
         )
       )
@@ -619,11 +488,11 @@ value_filter_condition_ui <- function(
   }
 
   div(
-    class = "value-filter-condition",
+    class = "value-filter-condition mb-1",
     div(
-      class = "condition-controls",
+      class = "value-filter-grid",
       div(
-        class = "column-selector",
+        class = "vf-column",
         selectInput(
           paste0(id, "_column"),
           label = "Column",
@@ -633,7 +502,7 @@ value_filter_condition_ui <- function(
         )
       ),
       div(
-        class = "values-selector",
+        class = if (show_remove) "vf-values" else "vf-values vf-values-full",
         selectizeInput(
           paste0(id, "_values"),
           label = "Values",
@@ -649,18 +518,18 @@ value_filter_condition_ui <- function(
       ),
       if (show_remove) {
         div(
-          class = "delete-selector",
+          class = "vf-delete d-flex align-items-center",
           actionButton(
             paste0(id, "_remove"),
             label = NULL,
             icon = icon("xmark"),
-            class = "condition-remove",
+            class = "btn btn-link text-muted p-0",
             title = "Remove this condition"
           )
         )
       },
       div(
-        class = "mode-checkbox",
+        class = "vf-mode d-flex align-items-center mt-1",
         checkboxInput(
           paste0(id, "_mode"),
           label = "Exclude",

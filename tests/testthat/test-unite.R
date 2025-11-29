@@ -277,3 +277,158 @@ test_that("unite with underscore separator (default) - testServer", {
     args = list(x = block, data = list(data = function() test_data))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# =============================================================================
+
+test_that("unite - input col changes output column name - testServer", {
+  test_data <- data.frame(
+    first = c("John", "Jane"),
+    last = c("Doe", "Smith")
+  )
+
+  block <- new_unite_block(
+    col = "full_name",
+    cols = c("first", "last"),
+    sep = " "
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result
+      result <- session$returned$result()
+      expect_true("full_name" %in% names(result))
+      expect_equal(result$full_name[1], "John Doe")
+
+      # Change column name
+      expr$setInputs(col = "combined_name")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true("combined_name" %in% names(result))
+      expect_false("full_name" %in% names(result))
+      expect_equal(result$combined_name[1], "John Doe")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("unite - input sep changes output separator - testServer", {
+  test_data <- data.frame(
+    year = c("2024", "2024"),
+    month = c("01", "02"),
+    day = c("15", "20")
+  )
+
+  block <- new_unite_block(
+    col = "date",
+    cols = c("year", "month", "day"),
+    sep = "-"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result with "-"
+      result <- session$returned$result()
+      expect_equal(result$date[1], "2024-01-15")
+
+      # Change separator to "/"
+      expr$setInputs(sep = "/")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$date[1], "2024/01/15")
+      expect_equal(result$date[2], "2024/02/20")
+
+      # Change separator to space
+      expr$setInputs(sep = " ")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(result$date[1], "2024 01 15")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("unite - input remove changes column retention - testServer", {
+  test_data <- data.frame(
+    first = c("John", "Jane"),
+    last = c("Doe", "Smith"),
+    age = c(30, 25)
+  )
+
+  block <- new_unite_block(
+    col = "full_name",
+    cols = c("first", "last"),
+    sep = " ",
+    remove = TRUE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - columns removed
+      result <- session$returned$result()
+      expect_true("full_name" %in% names(result))
+      expect_false("first" %in% names(result))
+      expect_false("last" %in% names(result))
+
+      # Change remove to FALSE
+      expr$setInputs(remove = FALSE)
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true("full_name" %in% names(result))
+      expect_true("first" %in% names(result))
+      expect_true("last" %in% names(result))
+      expect_equal(result$full_name[1], "John Doe")
+      expect_equal(result$first[1], "John")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})
+
+test_that("unite - input na_rm changes NA handling - testServer", {
+  test_data <- data.frame(
+    prefix = c("Dr.", NA, "Prof."),
+    name = c("John", "Jane", "Bob")
+  )
+
+  block <- new_unite_block(
+    col = "full",
+    cols = c("prefix", "name"),
+    sep = " ",
+    na.rm = FALSE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - NA included as "NA"
+      result <- session$returned$result()
+      expect_true(grepl("NA", result$full[2]))
+
+      # Change na_rm to TRUE
+      expr$setInputs(na_rm = TRUE)
+      session$flushReact()
+      result <- session$returned$result()
+      # NA should be omitted
+      expect_equal(result$full[1], "Dr. John")
+      expect_equal(result$full[2], "Jane")  # No "NA" prefix
+      expect_equal(result$full[3], "Prof. Bob")
+    },
+    args = list(x = block, data = list(data = function() test_data))
+  )
+})

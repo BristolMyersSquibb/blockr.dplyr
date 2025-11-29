@@ -69,8 +69,8 @@ new_pivot_longer_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Column selector using unified component
-          r_cols_selection <- mod_by_selector_server(
+          # Column selector using generic column selector (not group-by specific)
+          r_cols_selection <- mod_column_selector_server(
             id = "cols_selector",
             get_cols = \() colnames(data()),
             initial_value = cols
@@ -168,22 +168,6 @@ new_pivot_longer_block <- function(
           .pivot_longer-block-container .block-help-text p {
             margin-bottom: 0;
           }
-          .pivot_longer-block-container .control-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-          }
-          /* Checkbox styling - smaller font and bottom alignment */
-          .pivot_longer-block-container .block-input-wrapper:has(input[type='checkbox']) {
-            align-self: flex-end;
-          }
-          .pivot_longer-block-container input[type='checkbox'] + span {
-            font-size: 0.8rem;
-          }
-          .pivot_longer-block-container .checkbox label {
-            font-size: 0.8rem;
-          }
           /* Advanced toggle spans full width */
           .pivot_longer-block-container .block-advanced-toggle {
             grid-column: 1 / -1;
@@ -197,20 +181,6 @@ new_pivot_longer_block <- function(
           div(
             class = "block-form-grid",
 
-            # Help text
-            div(
-              class = "block-help-text",
-              p(
-                "Reshape data from wide to long format. Select columns to pivot into rows. ",
-                tags$a(
-                  href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#pivot-longer-block",
-                  target = "_blank",
-                  style = "text-decoration: none; font-size: 0.9em;",
-                  "\u2197"
-                )
-              )
-            ),
-
             # Main Section
             div(
               class = "block-section",
@@ -220,11 +190,12 @@ new_pivot_longer_block <- function(
                 # Columns to pivot
                 div(
                   class = "block-input-wrapper",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "cols_selector"),
                     label = "Columns to pivot",
                     initial_choices = cols,
-                    initial_selected = cols
+                    initial_selected = cols,
+                    width = "100%"
                   )
                 ),
 
@@ -233,9 +204,10 @@ new_pivot_longer_block <- function(
                   class = "block-input-wrapper",
                   textInput(
                     NS(id, "names_to"),
-                    label = "New name column",
+                    label = "New column for names",
                     value = names_to,
-                    placeholder = "name"
+                    placeholder = "name",
+                    width = "100%"
                   )
                 ),
 
@@ -244,9 +216,10 @@ new_pivot_longer_block <- function(
                   class = "block-input-wrapper",
                   textInput(
                     NS(id, "values_to"),
-                    label = "New value column",
+                    label = "New column for values",
                     value = values_to,
-                    placeholder = "value"
+                    placeholder = "value",
+                    width = "100%"
                   )
                 )
               )
@@ -285,7 +258,8 @@ new_pivot_longer_block <- function(
                       NS(id, "names_prefix"),
                       label = "Remove prefix from names",
                       value = names_prefix,
-                      placeholder = "e.g., 'col_'"
+                      placeholder = "e.g., 'col_'",
+                      width = "100%"
                     )
                   ),
 

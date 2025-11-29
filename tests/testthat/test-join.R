@@ -321,3 +321,50 @@ test_that("join block inner join - testServer", {
     args = list(x = block, data = list(x = function() data_x, y = function() data_y))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# =============================================================================
+
+test_that("join block - input type changes join behavior - testServer", {
+  data_x <- data.frame(id = c(1, 2, 3), name = c("Alice", "Bob", "Charlie"))
+  data_y <- data.frame(id = c(2, 3, 4), age = c(25, 30, 35))
+
+  block <- new_join_block(type = "left_join", by = c("id"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - left_join keeps all rows from left (3 rows)
+      result <- session$returned$result()
+      expect_equal(nrow(result), 3)
+      expect_true(is.na(result$age[result$id == 1]))  # No match for id=1
+
+      # Change to inner_join - only matching rows (2 rows)
+      expr$setInputs(type = "inner_join")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(nrow(result), 2)
+      expect_false(1 %in% result$id)  # id=1 excluded
+
+      # Change to right_join - keeps all rows from right (3 rows)
+      expr$setInputs(type = "right_join")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(nrow(result), 3)
+      expect_true(4 %in% result$id)  # id=4 included from right
+
+      # Change to anti_join - rows in left without matches in right
+      expr$setInputs(type = "anti_join")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(nrow(result), 1)
+      expect_equal(result$id, 1)  # Only id=1 has no match
+      expect_false("age" %in% names(result))  # anti_join doesn't add columns
+    },
+    args = list(x = block, data = list(x = function() data_x, y = function() data_y))
+  )
+})

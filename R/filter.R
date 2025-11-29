@@ -120,18 +120,6 @@ new_filter_block <- function(
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Filter rows by selecting specific values. Choose to include or exclude. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#value-filter-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  )
-                ),
                 mod_value_filter_ui(NS(id, "vf"))
               )
             )

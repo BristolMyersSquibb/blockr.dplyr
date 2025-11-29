@@ -215,3 +215,151 @@ test_that("pivot_longer full parameter combination - testServer", {
     args = list(x = block, data = list(data = function() wide_data))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# =============================================================================
+
+test_that("pivot_longer - input names_to changes output column name - testServer", {
+  wide_data <- data.frame(
+    id = 1:2,
+    col_a = c(10, 20),
+    col_b = c(15, 25)
+  )
+
+  block <- new_pivot_longer_block(
+    cols = c("col_a", "col_b"),
+    names_to = "measurement",
+    values_to = "value"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result
+      result <- session$returned$result()
+      expect_true("measurement" %in% names(result))
+      expect_true(all(result$measurement %in% c("col_a", "col_b")))
+
+      # Change names_to
+      expr$setInputs(names_to = "type")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true("type" %in% names(result))
+      expect_false("measurement" %in% names(result))
+      expect_true(all(result$type %in% c("col_a", "col_b")))
+    },
+    args = list(x = block, data = list(data = function() wide_data))
+  )
+})
+
+test_that("pivot_longer - input values_to changes output column name - testServer", {
+  wide_data <- data.frame(
+    id = 1:2,
+    col_a = c(10, 20),
+    col_b = c(15, 25)
+  )
+
+  block <- new_pivot_longer_block(
+    cols = c("col_a", "col_b"),
+    names_to = "name",
+    values_to = "value"
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result
+      result <- session$returned$result()
+      expect_true("value" %in% names(result))
+      expect_equal(result$value[result$name == "col_a" & result$id == 1], 10)
+
+      # Change values_to
+      expr$setInputs(values_to = "amount")
+      session$flushReact()
+      result <- session$returned$result()
+      expect_true("amount" %in% names(result))
+      expect_false("value" %in% names(result))
+      expect_equal(result$amount[result$name == "col_a" & result$id == 1], 10)
+    },
+    args = list(x = block, data = list(data = function() wide_data))
+  )
+})
+
+test_that("pivot_longer - input values_drop_na changes NA handling - testServer", {
+  wide_data <- data.frame(
+    id = 1:2,
+    col_a = c(10, NA),
+    col_b = c(NA, 25)
+  )
+
+  block <- new_pivot_longer_block(
+    cols = c("col_a", "col_b"),
+    names_to = "name",
+    values_to = "value",
+    values_drop_na = FALSE
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - NAs kept
+      result <- session$returned$result()
+      expect_equal(nrow(result), 4)  # 2 ids * 2 cols = 4 rows including NAs
+      expect_true(any(is.na(result$value)))
+
+      # Change values_drop_na to TRUE
+      expr$setInputs(values_drop_na = TRUE)
+      session$flushReact()
+      result <- session$returned$result()
+      expect_equal(nrow(result), 2)  # Only 2 non-NA values
+      expect_false(any(is.na(result$value)))
+    },
+    args = list(x = block, data = list(data = function() wide_data))
+  )
+})
+
+test_that("pivot_longer - input names_prefix changes name processing - testServer", {
+  wide_data <- data.frame(
+    id = 1:2,
+    metric_temp = c(98.6, 99.1),
+    metric_pressure = c(120, 115)
+  )
+
+  block <- new_pivot_longer_block(
+    cols = c("metric_temp", "metric_pressure"),
+    names_to = "metric",
+    values_to = "value",
+    names_prefix = ""
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block),
+    {
+      expr <- session$makeScope("expr")
+      session$flushReact()
+
+      # Initial result - no prefix removal
+      result <- session$returned$result()
+      expect_true(all(result$metric %in% c("metric_temp", "metric_pressure")))
+
+      # Add names_prefix
+      expr$setInputs(names_prefix = "metric_")
+      session$flushReact()
+      result <- session$returned$result()
+      # After prefix removal, should have "temp" and "pressure"
+      expect_true(all(result$metric %in% c("temp", "pressure")))
+      expect_false(any(grepl("metric_", result$metric)))
+    },
+    args = list(x = block, data = list(data = function() wide_data))
+  )
+})

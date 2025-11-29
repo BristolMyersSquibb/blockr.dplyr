@@ -81,7 +81,7 @@ new_unite_block <- function(
         id,
         function(input, output, session) {
           # Column selector for columns to unite
-          r_cols_selection <- mod_by_selector_server(
+          r_cols_selection <- mod_column_selector_server(
             id = "cols_selector",
             get_cols = \() colnames(data()),
             initial_value = cols
@@ -180,15 +180,6 @@ new_unite_block <- function(
         # Block-specific CSS
         tags$style(HTML(
           "
-          .unite-block-container .block-help-text p {
-            margin-bottom: 0;
-          }
-          .unite-block-container .control-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-          }
           /* Checkbox styling - smaller font and bottom alignment */
           .unite-block-container .block-input-wrapper:has(input[type='checkbox']) {
             align-self: flex-end;
@@ -212,12 +203,6 @@ new_unite_block <- function(
           div(
             class = "block-form-grid",
 
-            # Help text
-            div(
-              class = "block-help-text",
-              p("Combine multiple columns into one by pasting their values together.")
-            ),
-
             # Main Section
             div(
               class = "block-section",
@@ -227,11 +212,12 @@ new_unite_block <- function(
                 # Columns to unite
                 div(
                   class = "block-input-wrapper",
-                  mod_by_selector_ui(
+                  mod_column_selector_ui(
                     NS(id, "cols_selector"),
                     label = "Columns to unite (select 2+)",
                     initial_choices = cols,
-                    initial_selected = cols
+                    initial_selected = cols,
+                    width = "100%"
                   )
                 ),
 
@@ -242,7 +228,8 @@ new_unite_block <- function(
                     NS(id, "col"),
                     label = "New column name",
                     value = col,
-                    placeholder = "united"
+                    placeholder = "united",
+                    width = "100%"
                   )
                 ),
 
@@ -253,7 +240,8 @@ new_unite_block <- function(
                     NS(id, "sep"),
                     label = "Separator",
                     value = sep,
-                    placeholder = "_"
+                    placeholder = "_",
+                    width = "100%"
                   )
                 )
               )

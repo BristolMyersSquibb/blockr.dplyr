@@ -357,3 +357,119 @@ test_that("mutate block with grouping - testServer", {
     args = list(x = block, data = list(data = function() mtcars))
   )
 })
+
+# =============================================================================
+# setInputs tests - verify UI input changes produce expected output
+# Note: mutate_expr uses a submit button for expression changes, so we test
+# the `by` parameter which auto-updates, and test different initial expressions.
+# =============================================================================
+
+test_that("mutate_expr - different by parameter values produce different groupings - testServer", {
+  # Test without grouping
+  block_no_group <- new_mutate_expr_block(exprs = list(mean_mpg = "mean(mpg)"), by = character())
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_no_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mean_mpg" %in% names(result))
+      # Without grouping, mean_mpg should be the same for all rows (global mean)
+      expect_true(all(result$mean_mpg == result$mean_mpg[1]))
+      expect_equal(result$mean_mpg[1], mean(mtcars$mpg))
+    },
+    args = list(x = block_no_group, data = list(data = function() mtcars))
+  )
+
+  # Test with single grouping column
+  block_single_group <- new_mutate_expr_block(exprs = list(mean_mpg = "mean(mpg)"), by = "cyl")
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_single_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mean_mpg" %in% names(result))
+      # With grouping, mean_mpg should vary by cylinder
+      cyl_means <- unique(result[, c("cyl", "mean_mpg")])
+      expect_equal(nrow(cyl_means), length(unique(mtcars$cyl)))
+      # Values should be different for different cylinders
+      expect_true(length(unique(cyl_means$mean_mpg)) > 1)
+    },
+    args = list(x = block_single_group, data = list(data = function() mtcars))
+  )
+
+  # Test with multiple grouping columns
+  block_multi_group <- new_mutate_expr_block(exprs = list(mean_mpg = "mean(mpg)"), by = c("cyl", "am"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_multi_group),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mean_mpg" %in% names(result))
+      # With multiple grouping, should have more distinct group means
+      group_means <- unique(result[, c("cyl", "am", "mean_mpg")])
+      # Should have at least as many groups as unique cyl values
+      expect_true(nrow(group_means) >= length(unique(mtcars$cyl)))
+    },
+    args = list(x = block_multi_group, data = list(data = function() mtcars))
+  )
+})
+
+test_that("mutate_expr - different initial expressions produce different results - testServer", {
+  # Test simple expression
+  block_simple <- new_mutate_expr_block(exprs = list(mpg_double = "mpg * 2"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_simple),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("mpg_double" %in% names(result))
+      expect_equal(result$mpg_double, mtcars$mpg * 2)
+    },
+    args = list(x = block_simple, data = list(data = function() mtcars))
+  )
+
+  # Test with different expression
+  block_complex <- new_mutate_expr_block(exprs = list(hp_per_wt = "hp / wt"))
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_complex),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("hp_per_wt" %in% names(result))
+      expect_equal(result$hp_per_wt, mtcars$hp / mtcars$wt)
+    },
+    args = list(x = block_complex, data = list(data = function() mtcars))
+  )
+
+  # Test with multiple expressions
+  block_multi <- new_mutate_expr_block(
+    exprs = list(
+      col_a = "mpg + 10",
+      col_b = "hp - 50"
+    )
+  )
+
+  testServer(
+    blockr.core:::get_s3_method("block_server", block_multi),
+    {
+      session$flushReact()
+      result <- session$returned$result()
+
+      expect_true("col_a" %in% names(result))
+      expect_true("col_b" %in% names(result))
+      expect_equal(result$col_a, mtcars$mpg + 10)
+      expect_equal(result$col_b, mtcars$hp - 50)
+    },
+    args = list(x = block_multi, data = list(data = function() mtcars))
+  )
+})

@@ -90,15 +90,6 @@ new_rename_block <- function(
         css_responsive_grid(),
         css_single_column("rename"),
 
-        # Block-specific CSS
-        tags$style(HTML(
-          "
-          .rename-block-container .block-help-text p {
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-          }
-          "
-        )),
 
         div(
           class = "block-container rename-block-container",
@@ -111,18 +102,6 @@ new_rename_block <- function(
               class = "block-section",
               div(
                 class = "block-section-grid",
-                div(
-                  class = "block-help-text",
-                  p(
-                    "Rename columns. Enter new name on the left, select column on the right. ",
-                    tags$a(
-                      href = "https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#rename-block",
-                      target = "_blank",
-                      style = "text-decoration: none; font-size: 0.9em;",
-                      "\u2197"
-                    )
-                  )
-                ),
                 mod_multi_rename_ui(
                   NS(id, "mr"),
                   extra_button = actionButton(

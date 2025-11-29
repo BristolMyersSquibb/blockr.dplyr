@@ -1,35 +1,38 @@
-#' Unified Group By Column Selector Module (Internal)
+#' Generic Multi-Column Selector Module (Internal)
 #'
-#' A reusable Shiny module for selecting group by columns across all blocks
-#' that support the .by parameter in dplyr operations.
+#' A reusable Shiny module for selecting multiple columns from a dataset.
+#' This is the base module used by more specialized selectors.
 #'
 #' @param id Character string. Module ID.
-#' @param label Character string. Label for the selector. Default: "Group by columns (optional)"
+#' @param label Label for the selector (character or tag).
 #' @param initial_choices Character vector. Initial choices for the selector.
 #' @param initial_selected Character vector. Initial selected values.
+#' @param width Width of the input (e.g., "100%", "300px", NULL for default).
 #'
 #' @return For UI function, returns a shiny tag. For server function, returns a reactive
 #'   containing selected column names.
 #'
 #' @keywords internal
 #' @noRd
-mod_by_selector_ui <- function(
+mod_column_selector_ui <- function(
   id,
-  label = "Group by columns (optional)",
+  label,
   initial_choices = character(),
-  initial_selected = character()
+  initial_selected = character(),
+  width = NULL
 ) {
   ns <- NS(id)
   selectInput(
-    inputId = ns("by_columns"),
+    inputId = ns("columns"),
     label = label,
     choices = initial_choices,
     selected = initial_selected,
-    multiple = TRUE
+    multiple = TRUE,
+    width = width
   )
 }
 
-#' Group By Column Selector Server Module (Internal)
+#' Generic Multi-Column Selector Server Module (Internal)
 #'
 #' @param id Character string. Module ID.
 #' @param get_cols Reactive function that returns available column names.
@@ -37,18 +40,16 @@ mod_by_selector_ui <- function(
 #'
 #' @keywords internal
 #' @noRd
-mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
+mod_column_selector_server <- function(id, get_cols, initial_value = character()) {
   moduleServer(id, function(input, output, session) {
     # Reactive to store current selection
-    r_by_selection <- reactiveVal(initial_value)
+    r_selection <- reactiveVal(initial_value)
 
     # Update reactive value when selection changes
-    # Note: ignoreNULL = FALSE removed to prevent overwriting initial values
-    # in testServer context where inputs may not be initialized
     observeEvent(
-      input$by_columns,
+      input$columns,
       {
-        r_by_selection(input$by_columns %||% character())
+        r_selection(input$columns %||% character())
       }
     )
 
@@ -58,15 +59,15 @@ mod_by_selector_server <- function(id, get_cols, initial_value = character()) {
       if (length(current_cols) > 0) {
         updateSelectInput(
           session,
-          inputId = "by_columns",
+          inputId = "columns",
           choices = current_cols,
-          selected = r_by_selection()
+          selected = r_selection()
         )
       }
     })
 
     # Return the reactive selection
-    r_by_selection
+    r_selection
   })
 }
 

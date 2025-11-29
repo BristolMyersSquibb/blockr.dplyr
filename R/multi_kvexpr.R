@@ -268,7 +268,7 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
       class = "multi-kvexpr-container",
       uiOutput(ns("expressions_ui")),
       div(
-        class = "multi-kvexpr-actions",
+        class = "multi-kvexpr-actions mt-2 mb-1",
         actionButton(
           ns("add_expr"),
           label = "Add Expression",
