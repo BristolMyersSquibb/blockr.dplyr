@@ -9,11 +9,9 @@ blockr.dplyr provides interactive blocks for data transformation. Filter, sort, 
 
 ## Overview
 
-blockr.dplyr is part of the blockr ecosystem. blockr.core provides the workflow engine, blockr.ui provides the visual interface, and blockr.dplyr provides the data transformation blocks. These three packages work together to create interactive data workflows.
+blockr.dplyr is part of the blockr ecosystem and provides data transformation blocks.
 
 ## Installation
-
-You can install blockr.dplyr from CRAN:
 
 ```r
 install.packages("blockr.dplyr")
@@ -31,10 +29,8 @@ pak::pak("BristolMyersSquibb/blockr.dplyr")
 Create and launch an empty dashboard:
 
 ```r
-library(blockr.core)
-library(blockr.ui)
 library(blockr.dplyr)
-serve(new_dag_board())
+serve(new_board())
 ```
 
 This opens a visual interface in your web browser. Add blocks using the "+" button, connect them by dragging, and configure each block through its settings. Data transformations update in real-time as you build your workflow.
@@ -75,4 +71,4 @@ See `vignette("blockr-dplyr-showcase")` for a complete showcase with screenshots
 
 ## Learn More
 
-The [blockr.dplyr website](https://bristolmyerssquibb.github.io/blockr.dplyr/) includes full documentation and the showcase vignette. For information on the broader blockr ecosystem, see [blockr.core](https://bristolmyerssquibb.github.io/blockr.core/) and [blockr.ui](https://bristolmyerssquibb.github.io/blockr.ui/).
+The [blockr.dplyr website](https://bristolmyerssquibb.github.io/blockr.dplyr/) includes full documentation and the showcase vignette. For information on the workflow engine, see [blockr.core](https://bristolmyerssquibb.github.io/blockr.core/).
