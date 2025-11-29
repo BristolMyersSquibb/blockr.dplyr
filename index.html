@@ -62,28 +62,25 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>blockr.dplyr is part of the blockr ecosystem. blockr.core provides the workflow engine, blockr.ui provides the visual interface, and blockr.dplyr provides the data transformation blocks. These three packages work together to create interactive data workflows.</p>
+<p>blockr.dplyr is part of the blockr ecosystem and provides data transformation blocks.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install blockr.dplyr from CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"blockr.dplyr"</span><span class="op">)</span></span></code></pre></div>
 <p>Or install the development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"BristolMyersSquibb/blockr.dplyr"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"BristolMyersSquibb/blockr.dplyr"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
 <p>Create and launch an empty dashboard:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">blockr.ui</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.dplyr/">blockr.dplyr</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://bristolmyerssquibb.github.io/blockr.core/reference/serve.html" class="external-link">serve</a></span><span class="op">(</span><span class="fu">new_dag_board</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristolmyerssquibb.github.io/blockr.dplyr/">blockr.dplyr</a></span><span class="op">)</span></span>
+<span><span class="fu">serve</span><span class="op">(</span><span class="fu">new_board</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This opens a visual interface in your web browser. Add blocks using the “+” button, connect them by dragging, and configure each block through its settings. Data transformations update in real-time as you build your workflow.</p>
 </div>
 <div class="section level2">
@@ -163,7 +160,7 @@
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<p>The <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/">blockr.dplyr website</a> includes full documentation and the showcase vignette. For information on the broader blockr ecosystem, see <a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a> and <a href="https://bristolmyerssquibb.github.io/blockr.ui/" class="external-link">blockr.ui</a>.</p>
+<p>The <a href="https://bristolmyerssquibb.github.io/blockr.dplyr/">blockr.dplyr website</a> includes full documentation and the showcase vignette. For information on the workflow engine, see <a href="https://bristolmyerssquibb.github.io/blockr.core/" class="external-link">blockr.core</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

@@ -1,14 +1,18 @@
 # blockr.dplyr Showcase: Data Wrangling Blocks
 
-## Introduction
+### Introduction
 
 blockr.dplyr provides interactive blocks for data wrangling. Each block
 offers a user interface for a specific data transformation task. Blocks
 can be connected together to create data transformation pipelines.
 
+This package includes blocks for common dplyr operations (select,
+filter, arrange, mutate, summarize, join, bind) and tidyr operations
+(pivot, separate, unite).
+
 ------------------------------------------------------------------------
 
-## Select Block
+### Select Block
 
 The select block chooses which columns to keep in your dataset.
 
@@ -26,12 +30,39 @@ Select block interface
 
 ------------------------------------------------------------------------
 
-## Expression Filter Block
+### Filter Block
 
-The expression filter block keeps only rows that meet specific
-conditions. Enter logical expressions using column names and comparison
-operators. This block is designed for users who want to write filter
-conditions as expressions.
+The filter block filters rows by selecting values from dropdown lists.
+This provides a point-and-click interface that does not require writing
+expressions. Use this block when you want to visually select which
+values to include or exclude, especially for categorical columns.
+
+For each filter condition, select a column from the dropdown. The
+interface displays all unique values in that column. Select one or more
+values to filter by. Choose between “include” mode (keep only rows with
+selected values) or “exclude” mode (remove rows with selected values).
+
+Add multiple conditions using the “+ Add Condition” button. Each
+condition can be combined with the previous one using AND (all
+conditions must be true) or OR (at least one condition must be true)
+logic. The “Preserve selection order” option maintains the order of
+selected values in the output.
+
+For more elaborate filter conditions using comparisons or calculations,
+use the filter expression block instead.
+
+![Filter block interface](../reference/figures/filter-block.png)
+
+Filter block interface
+
+------------------------------------------------------------------------
+
+### Filter Expression Block
+
+The filter expression block keeps only rows that meet specific
+conditions using R expressions. Use this block for more elaborate
+filtering that cannot be achieved with simple value selection, such as
+numeric comparisons, calculations, or complex logical conditions.
 
 Supported operators include `>`, `<`, `==`, `!=`, `>=`, `<=` for
 comparisons, and `%in%` for checking membership in a set of values.
@@ -41,49 +72,14 @@ expression editor provides syntax highlighting and validates your
 expressions. Examples: `mpg > 20`, `cyl == 4 | cyl == 6`,
 `hp > 100 & wt < 3`.
 
-If you prefer to filter by selecting values from dropdowns rather than
-writing expressions, use the value filter block instead. The value
-filter block is particularly useful for categorical data where you want
-to pick specific values visually.
+![Filter expression block
+interface](../reference/figures/filter-expr-block.png)
 
-![Filter block interface](../reference/figures/filter-expr-block.png)
-
-Filter block interface
+Filter expression block interface
 
 ------------------------------------------------------------------------
 
-## Value Filter Block
-
-The value filter block filters rows by selecting values from dropdown
-lists. This provides a point-and-click interface that does not require
-writing expressions. Use this block when you want to visually select
-which values to include or exclude, especially for categorical columns.
-
-For each filter condition, select a column from the dropdown. The
-interface displays all unique values in that column. Select one or more
-values to filter by. Choose between “include” mode (keep only rows with
-selected values) or “exclude” mode (remove rows with selected values).
-This is particularly useful when you want to see what values exist in a
-column before deciding which to filter.
-
-Add multiple conditions using the “+” button. Each condition can be
-combined with the previous one using AND (all conditions must be true)
-or OR (at least one condition must be true) logic. The “preserve order”
-option maintains the order of selected values in the output.
-
-For more complex filter conditions using comparisons or calculations,
-use the expression filter block instead. The expression filter block
-allows you to write expressions like `mpg > 20` or `hp / wt > 50` which
-cannot be expressed through value selection.
-
-![Value filter block
-interface](../reference/figures/value-filter-block.png)
-
-Value filter block interface
-
-------------------------------------------------------------------------
-
-## Arrange Block
+### Arrange Block
 
 The arrange block sorts rows by column values. Select one or more
 columns to sort by, with each column having its own ascending or
@@ -94,7 +90,7 @@ the primary sort key. Rows with the same value in the first column are
 then sorted by the second column, and so on. Use the drag handles to
 reorder the sort columns.
 
-Add columns using the “+” button and remove them using the “-” button.
+Add columns using the “+” button and remove them using the “×” button.
 Toggle between ascending and descending order for each column
 independently.
 
@@ -104,7 +100,7 @@ Arrange block interface
 
 ------------------------------------------------------------------------
 
-## Slice Block
+### Slice Block
 
 The slice block selects specific rows based on different criteria.
 Choose from six slice types: head (first rows), tail (last rows), min
@@ -127,12 +123,12 @@ Slice block interface
 
 ------------------------------------------------------------------------
 
-## Mutate Block
+### Mutate Expression Block
 
-The mutate block creates new columns or modifies existing ones. Add
-multiple expressions, each creating or updating a column. Each
-expression consists of a column name and an expression that calculates
-its value.
+The mutate expression block creates new columns or modifies existing
+ones using R expressions. Add multiple expressions, each creating or
+updating a column. Each expression consists of a column name and an R
+expression that calculates its value.
 
 Use mathematical operators (`+`, `-`, `*`, `/`, `^`) and functions
 ([`sqrt()`](https://rdrr.io/r/base/MathFun.html),
@@ -146,16 +142,17 @@ or
 Expression order matters: later expressions can reference columns
 created by earlier expressions in the same mutate block. The by
 parameter allows grouping, making column references operate within each
-group. Add expressions with the “+” button and remove them with the “-”
-button.
+group. Add expressions with the “+ Add Expression” button and remove
+them with the “×” button.
 
-![Mutate block interface](../reference/figures/mutate-block.png)
+![Mutate expression block
+interface](../reference/figures/mutate-expr-block.png)
 
-Mutate block interface
+Mutate expression block interface
 
 ------------------------------------------------------------------------
 
-## Rename Block
+### Rename Block
 
 The rename block changes column names. Each rename operation maps a new
 name to an existing column. The interface shows the mapping as “new_name
@@ -164,7 +161,7 @@ name to an existing column. The interface shows the mapping as “new_name
 Select the existing column from a dropdown to ensure valid column names.
 Type the new name in the text field. Add multiple renames using the “+”
 button to rename several columns at once. Remove a rename operation with
-the “-” button.
+the “×” button.
 
 The block validates that you don’t rename the same column twice and
 ensures column names don’t conflict with existing names.
@@ -175,32 +172,23 @@ Rename block interface
 
 ------------------------------------------------------------------------
 
-## Summarize Block
+### Summarize Block
 
-The summarize block calculates summary statistics. Add multiple summary
-expressions, each creating a new column in the output. Each expression
-consists of a column name and an aggregation expression.
+The summarize block calculates summary statistics using a
+point-and-click interface. Each summary consists of three parts: a name
+for the new column, an aggregation function selected from a dropdown,
+and the column to aggregate.
 
-Common aggregation functions include
-[`mean()`](https://rdrr.io/r/base/mean.html),
-[`sum()`](https://rdrr.io/r/base/sum.html),
-[`min()`](https://rdrr.io/r/base/Extremes.html),
-[`max()`](https://rdrr.io/r/base/Extremes.html), `n()` (count rows),
-`n_distinct()` (count unique values),
-[`median()`](https://rdrr.io/r/stats/median.html), and
-[`sd()`](https://rdrr.io/r/stats/sd.html). Use the by parameter to group
-data before summarizing. When grouping is enabled, statistics are
-calculated separately for each group.
+Available aggregation functions include mean, sum, minimum, maximum,
+count, count distinct, median, standard deviation, and more. Select the
+function from the dropdown and the column to apply it to.
 
-The unpack option controls how functions that return data frames are
-handled. When enabled, data frame results are unpacked into separate
-columns. This is useful with helpers like `across()` which can apply
-functions to multiple columns at once. For example,
-`across(c(hp, wt), mean)` with unpacking creates separate columns for
-each mean.
+Use the “Columns to group by” selector to group data before summarizing.
+When grouping is enabled, statistics are calculated separately for each
+group. Add multiple summaries using the “+ Add Summary” button.
 
-Add expressions with the “+” button. The interface validates expressions
-and shows errors if the aggregation is invalid.
+For more complex aggregations using custom R expressions, use the
+summarize expression block instead.
 
 ![Summarize block interface](../reference/figures/summarize-block.png)
 
@@ -208,7 +196,31 @@ Summarize block interface
 
 ------------------------------------------------------------------------
 
-## Join Block
+### Summarize Expression Block
+
+The summarize expression block calculates summary statistics using R
+expressions. Use this block for more elaborate aggregations that require
+custom expressions, such as weighted means, ratios, or functions with
+specific parameters.
+
+Enter expressions like `mean(mpg)`, `sum(hp)`,
+[`dplyr::n()`](https://dplyr.tidyverse.org/reference/context.html), or
+more complex calculations like `mean(mpg, na.rm = TRUE)` or
+`sum(hp) / dplyr::n()`. The expression editor provides syntax
+highlighting and autocomplete (Ctrl+Space).
+
+Use the “Columns to group by” selector to group data before summarizing.
+The “Show advanced options” section provides additional settings like
+the unpack option for handling functions that return data frames.
+
+![Summarize expression block
+interface](../reference/figures/summarize-expr-block.png)
+
+Summarize expression block interface
+
+------------------------------------------------------------------------
+
+### Join Block
 
 The join block combines two datasets based on matching values in
 specified columns. Select from six join types that determine which rows
@@ -222,12 +234,11 @@ filters the left dataset to rows that have a match in the right;
 anti_join filters the left dataset to rows that do not have a match in
 the right.
 
-The join key interface supports both same-name joins (when columns have
-identical names) and different-name joins (when the matching columns
-have different names in each dataset). Add multiple join keys to match
-on multiple columns simultaneously. For different-name joins, specify
-which column from the left dataset matches which column from the right
-dataset.
+The “Custom Column Mappings” interface supports both same-name joins
+(when columns have identical names) and different-name joins (when the
+matching columns have different names in each dataset). Add multiple
+join keys to match on multiple columns simultaneously. Enable “Use
+natural join” to automatically join on all common columns.
 
 ![Join block interface](../reference/figures/join-block.png)
 
@@ -235,7 +246,7 @@ Join block interface
 
 ------------------------------------------------------------------------
 
-## Bind Rows Block
+### Bind Rows Block
 
 The bind rows block stacks datasets vertically by matching column names.
 Rows from each input dataset are combined into a single output dataset.
@@ -245,10 +256,10 @@ result includes all columns from all datasets. Missing columns are
 filled with NA values. The order of columns in the output follows the
 order they appear across all input datasets.
 
-The id_name option adds an identifier column that tracks which source
-dataset each row came from. This is useful when combining data from
-multiple sources and you need to maintain provenance. Enable this option
-and specify a column name to store the source identifier.
+The “Show advanced options” section provides the id_name option which
+adds an identifier column that tracks which source dataset each row came
+from. This is useful when combining data from multiple sources and you
+need to maintain provenance.
 
 ![Bind rows block interface](../reference/figures/bind-rows-block.png)
 
@@ -256,7 +267,7 @@ Bind rows block interface
 
 ------------------------------------------------------------------------
 
-## Bind Columns Block
+### Bind Columns Block
 
 The bind columns block combines datasets side-by-side horizontally.
 Columns from each input dataset are placed next to each other in the
@@ -267,10 +278,9 @@ are combined by position: the first row from each dataset forms the
 first row of the output, the second rows form the second row of the
 output, and so on.
 
-If datasets have columns with the same name, the suffix option controls
-how to handle the duplicates. Specify suffixes to add to duplicate
-column names from each dataset. For example, suffixes `c("_x", "_y")`
-would rename duplicate column “id” to “id_x” and “id_y”.
+If datasets have columns with the same name, they are automatically
+renamed with numeric suffixes (e.g., “Sepal.Length…1”, “Sepal.Length…6”)
+to avoid conflicts.
 
 ![Bind columns block
 interface](../reference/figures/bind-cols-block.png)
@@ -279,7 +289,14 @@ Bind columns block interface
 
 ------------------------------------------------------------------------
 
-## Pivot Longer Block
+## tidyr Blocks
+
+The following blocks provide reshaping operations from the tidyr
+package.
+
+------------------------------------------------------------------------
+
+### Pivot Longer Block
 
 The pivot longer block reshapes data from wide to long format using
 [tidyr::pivot_longer()](https://tidyr.tidyverse.org/reference/pivot_longer.html).
@@ -291,10 +308,10 @@ new columns: one containing the original column names (names_to
 parameter, default “name”) and another containing the values (values_to
 parameter, default “value”). Unselected columns remain as identifiers.
 
-The names_prefix option removes common prefixes from column names. The
-values_drop_na option removes rows where the value is NA. This is useful
-for reshaping time series data, survey responses, or preparing data for
-visualization.
+The “Show advanced options” section provides names_prefix (removes
+common prefixes from column names) and values_drop_na (removes rows
+where the value is NA). This is useful for reshaping time series data,
+survey responses, or preparing data for visualization.
 
 ![Pivot longer block
 interface](../reference/figures/pivot-longer-block.png)
@@ -303,7 +320,7 @@ Pivot longer block interface
 
 ------------------------------------------------------------------------
 
-## Pivot Wider Block
+### Pivot Wider Block
 
 The pivot wider block reshapes data from long to wide format using
 [tidyr::pivot_wider()](https://tidyr.tidyverse.org/reference/pivot_wider.html).
@@ -315,10 +332,10 @@ and which column contains cell values (values_from). The id_cols
 parameter specifies which columns identify each row. If empty, all
 columns not in names_from or values_from are used as identifiers.
 
-The names_prefix option adds a prefix to new column names. The
-values_fill parameter provides a value for missing combinations (e.g.,
-“0” or leave as NA). This is useful for creating crosstabs, pivot
-tables, or comparing values across categories.
+The “Show advanced options” section provides names_prefix (adds a prefix
+to new column names) and values_fill (provides a value for missing
+combinations). This is useful for creating crosstabs, pivot tables, or
+comparing values across categories.
 
 ![Pivot wider block
 interface](../reference/figures/pivot-wider-block.png)
@@ -327,7 +344,49 @@ Pivot wider block interface
 
 ------------------------------------------------------------------------
 
-## Building Data Pipelines
+### Separate Block
+
+The separate block splits a single column into multiple columns using
+[tidyr::separate()](https://tidyr.tidyverse.org/reference/separate.html).
+Use this when a column contains combined values that should be in
+separate columns.
+
+Select the column to separate and specify the names for the new columns
+(comma-separated). Enter the separator character or regular expression
+that divides the values.
+
+The “Show advanced options” section provides remove (whether to remove
+the input column), convert (whether to convert new columns to
+appropriate types), and extra/fill options for handling rows with too
+many or too few pieces.
+
+![Separate block interface](../reference/figures/separate-block.png)
+
+Separate block interface
+
+------------------------------------------------------------------------
+
+### Unite Block
+
+The unite block combines multiple columns into a single column using
+[tidyr::unite()](https://tidyr.tidyverse.org/reference/unite.html). This
+is the inverse of separate, joining values with a separator.
+
+Select the columns to unite and specify the name for the new combined
+column. Enter the separator character to place between values (default
+is “\_“).
+
+The “Show advanced options” section provides the remove option (whether
+to remove the input columns after uniting) and na.rm (whether to remove
+NA values before uniting).
+
+![Unite block interface](../reference/figures/unite-block.png)
+
+Unite block interface
+
+------------------------------------------------------------------------
+
+### Building Data Pipelines
 
 Blocks work together in pipelines. The output from one block becomes the
 input to the next. Each block shows a preview of the data at that stage.
