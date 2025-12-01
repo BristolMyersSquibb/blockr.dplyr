@@ -10,20 +10,23 @@ Initial CRAN release.
 
 - [`new_select_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_select_block.md):
   Select columns with distinct option and drag-to-reorder
+- [`new_filter_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_filter_block.md):
+  Filter rows by selecting values from dropdowns
 - [`new_filter_expr_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_filter_expr_block.md):
   Filter rows using R expressions
-- `new_filter_value_block()`: Filter rows by selecting values from
-  dropdowns
 - [`new_arrange_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_arrange_block.md):
   Sort rows by multiple columns with ascending/descending options
 - [`new_slice_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_slice_block.md):
   Select rows by position or value criteria
-- [`new_mutate_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_mutate_expr_block.md):
+- [`new_mutate_expr_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_mutate_expr_block.md):
   Create or modify columns using expressions
 - [`new_rename_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_rename_block.md):
   Rename columns interactively
 - [`new_summarize_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_summarize_block.md):
-  Calculate summary statistics with optional grouping
+  Calculate summary statistics with optional grouping (no-code
+  interface)
+- [`new_summarize_expr_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_summarize_expr_block.md):
+  Calculate summary statistics using R expressions
 
 #### Data Combination Blocks
 
@@ -40,6 +43,10 @@ Initial CRAN release.
   Transform wide data to long format
 - [`new_pivot_wider_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_pivot_wider_block.md):
   Transform long data to wide format
+- [`new_separate_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_separate_block.md):
+  Split a column into multiple columns
+- [`new_unite_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_unite_block.md):
+  Combine multiple columns into one
 
 ### Documentation
 

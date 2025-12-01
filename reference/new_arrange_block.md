@@ -22,6 +22,10 @@ new_arrange_block(columns = character(), ...)
   Forwarded to
   [`blockr.core::new_block()`](https://bristolmyerssquibb.github.io/blockr.core/reference/new_block.html)
 
+## Value
+
+A transform block object of class `arrange_block`.
+
 ## Examples
 
 ``` r

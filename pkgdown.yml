@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   blockr-dplyr-showcase: blockr-dplyr-showcase.html
   expression-helpers: expression-helpers.html
-last_built: 2025-12-01T14:15Z
+last_built: 2025-12-01T17:24Z
 urls:
   reference: https://bristolmyerssquibb.github.io/blockr.dplyr/reference
   article: https://bristolmyerssquibb.github.io/blockr.dplyr/articles

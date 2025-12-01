@@ -29,6 +29,10 @@ new_join_block(type = character(), by = character(), ...)
   Forwarded to
   [`blockr.core::new_block()`](https://bristolmyerssquibb.github.io/blockr.core/reference/new_block.html)
 
+## Value
+
+A transform block object of class `join_block`.
+
 ## Examples
 
 ``` r

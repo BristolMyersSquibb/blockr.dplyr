@@ -36,6 +36,10 @@ new_select_block(columns = character(), exclude = FALSE, distinct = FALSE, ...)
   Forwarded to
   [`blockr.core::new_transform_block()`](https://bristolmyerssquibb.github.io/blockr.core/reference/new_transform_block.html)
 
+## Value
+
+A transform block object of class `select_block`.
+
 ## Details
 
 **Note**: This block replaces the deprecated `new_distinct_block()`. Use
