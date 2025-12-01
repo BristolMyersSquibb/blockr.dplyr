@@ -12,6 +12,9 @@ or a list of specifications with column and direction.}
 
 \item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
+\value{
+A transform block object of class \code{arrange_block}.
+}
 \description{
 This block allows allows you to order the rows of a data frame by the values
 of selected columns (see \code{\link[dplyr:arrange]{dplyr::arrange()}}).

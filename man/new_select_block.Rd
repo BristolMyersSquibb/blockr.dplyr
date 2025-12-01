@@ -17,6 +17,9 @@ If FALSE (default), returns all rows. This replaces the old \code{new_distinct_b
 
 \item{...}{Forwarded to \code{\link[blockr.core:new_transform_block]{blockr.core::new_transform_block()}}}
 }
+\value{
+A transform block object of class \code{select_block}.
+}
 \description{
 This block allows performing column subsetting on \code{data.frame} objects (see
 \code{\link[dplyr:select]{dplyr::select()}}). Columns can be selected and reordered by dragging, and

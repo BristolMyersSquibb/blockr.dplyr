@@ -14,6 +14,9 @@ or named list for different-name joins}
 
 \item{...}{Forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
+\value{
+A transform block object of class \code{join_block}.
+}
 \description{
 This block allows for joining of two \code{data.frame} objects with advanced
 multi-column support including same-name and different-name joins (see
