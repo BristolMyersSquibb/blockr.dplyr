@@ -35,6 +35,8 @@
 #' - Equivalent to piping `select()` output to `distinct()`
 #' - Useful for finding unique combinations of selected columns
 #'
+#' @return A transform block object of class `select_block`.
+#'
 #' @examples
 #' # Create a select block
 #' new_select_block(columns = c("mpg", "cyl", "hp"))

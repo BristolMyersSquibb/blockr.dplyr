@@ -7,6 +7,8 @@
 #'   or a list of specifications with column and direction.
 #' @param ... Forwarded to [new_block()]
 #'
+#' @return A transform block object of class `arrange_block`.
+#'
 #' @examples
 #' # Create an arrange block
 #' new_arrange_block(columns = "mpg")

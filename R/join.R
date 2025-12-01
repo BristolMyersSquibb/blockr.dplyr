@@ -9,6 +9,8 @@
 #'   or named list for different-name joins
 #' @param ... Forwarded to [new_block()]
 #'
+#' @return A transform block object of class `join_block`.
+#'
 #' @examples
 #' # Create a join block
 #' new_join_block(type = "left_join")
