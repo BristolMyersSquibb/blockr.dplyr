@@ -13,7 +13,6 @@ run_ace_example()
 
 ``` r
 if (FALSE) { # \dontrun{
-pkgload::load_all()
 run_ace_example()
 } # }
 ```

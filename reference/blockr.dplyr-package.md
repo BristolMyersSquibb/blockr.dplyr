@@ -28,3 +28,7 @@ Authors:
 - David Granjon <david@cynkra.com>
 
 - Mike Page <mike@cynkra.com>
+
+Other contributors:
+
+- Bristol Myers Squibb \[funder\]
