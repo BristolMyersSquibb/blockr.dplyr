@@ -57,7 +57,7 @@ test_that("summarize block mean function - testServer", {
 
 test_that("summarize block median function - testServer", {
   block <- new_summarize_block(
-    summaries = list(med_mpg = list(func = "median", col = "mpg"))
+    summaries = list(med_mpg = list(func = "stats::median", col = "mpg"))
   )
 
   testServer(
@@ -122,7 +122,7 @@ test_that("summarize block min/max functions - testServer", {
 
 test_that("summarize block sd function - testServer", {
   block <- new_summarize_block(
-    summaries = list(sd_mpg = list(func = "sd", col = "mpg"))
+    summaries = list(sd_mpg = list(func = "stats::sd", col = "mpg"))
   )
 
   testServer(
@@ -493,7 +493,7 @@ test_that("summarize - different summary functions produce different results - t
 
   # Test median (different from mean)
   block_median <- new_summarize_block(
-    summaries = list(result = list(func = "median", col = "mpg"))
+    summaries = list(result = list(func = "stats::median", col = "mpg"))
   )
 
   testServer(
@@ -578,13 +578,13 @@ test_that("get_summary_functions returns expected functions", {
   expect_type(funcs, "character")
   expect_true(length(funcs) > 0)
 
-  # Check some expected functions are present
+  # Check some expected functions are present (stats:: namespace for stats functions)
   expect_true("mean" %in% funcs)
-  expect_true("median" %in% funcs)
+  expect_true("stats::median" %in% funcs)
   expect_true("sum" %in% funcs)
   expect_true("min" %in% funcs)
   expect_true("max" %in% funcs)
-  expect_true("sd" %in% funcs)
+  expect_true("stats::sd" %in% funcs)
   expect_true("dplyr::n" %in% funcs)
   expect_true("dplyr::n_distinct" %in% funcs)
   expect_true("dplyr::first" %in% funcs)
@@ -594,6 +594,7 @@ test_that("get_summary_functions returns expected functions", {
 test_that("get_summary_functions can be extended via option", {
   # Set custom functions
   old_opt <- getOption("blockr.dplyr.summary_functions")
+
   on.exit(options(blockr.dplyr.summary_functions = old_opt))
 
   options(blockr.dplyr.summary_functions = c(

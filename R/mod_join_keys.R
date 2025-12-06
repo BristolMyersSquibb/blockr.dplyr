@@ -476,7 +476,7 @@ create_mapping_row <- function(
 
 
 #' Keep function for filtering lists
-#' @keywords internal
+#' @noRd
 keep <- function(x, .p) {
   if (length(x) == 0) {
     return(x)
@@ -497,7 +497,7 @@ keep <- function(x, .p) {
 }
 
 #' Map function for applying functions to lists
-#' @keywords internal
+#' @noRd
 map <- function(x, .f) {
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.f, "formula")) {
@@ -512,7 +512,7 @@ map <- function(x, .f) {
 }
 
 #' Map character function
-#' @keywords internal
+#' @noRd
 map_chr <- function(x, .f) {
   # Handle lambda syntax (~expression) by converting to function
   if (inherits(.f, "formula")) {

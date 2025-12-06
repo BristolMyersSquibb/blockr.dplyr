@@ -319,7 +319,7 @@ test_that("summarize block simple aggregation - testServer", {
 
 test_that("summarize block with grouping - testServer", {
   block <- new_summarize_expr_block(
-    exprs = list(mean_mpg = "mean(mpg)", count = "n()"),
+    exprs = list(mean_mpg = "mean(mpg)", count = "dplyr::n()"),
     by = "cyl"
   )
 
@@ -349,12 +349,12 @@ test_that("summarize block with unpack parameter - testServer", {
   )
 
   # NOTE: Testing unpack with across() which returns a data frame
-  # With unpack=TRUE, across(c(mpg, hp), mean) should unpack to separate mpg and hp columns
+  # With unpack=TRUE, dplyr::across(c(mpg, hp), mean) should unpack to separate mpg and hp columns
   # With unpack=FALSE, it should create a nested data frame column
 
   # Test with unpack=TRUE - columns should be unpacked
   block_unpacked <- new_summarize_expr_block(
-    exprs = list(stats = "across(c(mpg, hp), mean)"),
+    exprs = list(stats = "dplyr::across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = TRUE
   )
@@ -382,7 +382,7 @@ test_that("summarize block with unpack parameter - testServer", {
 
   # Test with unpack=FALSE - should create nested list-column
   block_nested <- new_summarize_expr_block(
-    exprs = list(stats = "across(c(mpg, hp), mean)"),
+    exprs = list(stats = "dplyr::across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = FALSE
   )
@@ -433,7 +433,7 @@ test_that("parse_summarize handles whitespace expressions", {
 
 test_that("parse_summarize handles unpack mode", {
   # Test unpack = TRUE generates bare expression (lines 333-346)
-  exprs <- list(stats = "across(c(mpg, hp), mean)")
+  exprs <- list(stats = "dplyr::across(c(mpg, hp), mean)")
 
   result_unpacked <- parse_summarize(exprs, by = NULL, unpack = TRUE)
   result_packed <- parse_summarize(exprs, by = NULL, unpack = FALSE)
@@ -528,7 +528,7 @@ test_that("summarize block handles empty by parameter", {
 test_that("summarize block unpack checkbox reactivity - testServer", {
   # Test that changing unpack checkbox triggers observeEvent (lines 109-125)
   block <- new_summarize_expr_block(
-    exprs = list(stats = "across(c(mpg, hp), mean)"),
+    exprs = list(stats = "dplyr::across(c(mpg, hp), mean)"),
     by = "cyl",
     unpack = FALSE
   )

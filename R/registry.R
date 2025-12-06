@@ -82,8 +82,8 @@ register_dplyr_blocks <- function() {
       "calculator", # summarize_expr block
       "filter", # filter block (simple)
       "code-slash", # filter_expr block
-      "arrows-collapse-vertical", # bind_rows block
-      "arrows-collapse", # bind_cols block
+      "arrows-collapse", # bind_rows block (vertical arrows = rows stacking)
+      "arrows-collapse-vertical", # bind_cols block (horizontal arrows = columns joining)
       "tags", # rename block
       "scissors", # slice block
       "arrow-down-up", # pivot_longer block
