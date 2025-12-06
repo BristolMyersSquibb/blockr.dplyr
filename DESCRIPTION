@@ -18,9 +18,10 @@ Authors@R:
       person(given = "Mike",
              family = "Page",
              role = "aut",
-             email = "mike@cynkra.com")
+             email = "mike@cynkra.com"),
+      person(family = "Bristol Myers Squibb",
+             role = "fnd")
     )
-Maintainer: Christoph Sax <christoph@cynkra.com>
 Description: Extends 'blockr.core' with interactive blocks for visual data
     wrangling using 'dplyr' and 'tidyr' operations. Users can build data
     transformation pipelines through a graphical interface without writing code
@@ -30,6 +31,8 @@ Description: Extends 'blockr.core' with interactive blocks for visual data
 URL: https://bristolmyerssquibb.github.io/blockr.dplyr/
 BugReports: https://github.com/BristolMyersSquibb/blockr.dplyr/issues
 License: GPL (>= 3)
+Depends:
+    R (>= 4.1.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
