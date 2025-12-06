@@ -179,7 +179,6 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
 #'
 #' @examples
 #' \dontrun{
-#' pkgload::load_all()
 #' run_ace_example()
 #' }
 #' @importFrom shiny NS

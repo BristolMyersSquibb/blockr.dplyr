@@ -29,8 +29,7 @@
 #' directly in the block file, not added here. Only add CSS here if it's
 #' reused by 2+ blocks.
 #'
-#' @name css-utilities
-#' @keywords internal
+#' @noRd
 NULL
 
 #' Responsive grid layout CSS for blocks

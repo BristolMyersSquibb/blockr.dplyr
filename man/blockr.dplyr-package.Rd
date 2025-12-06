@@ -26,5 +26,10 @@ Authors:
   \item Mike Page \email{mike@cynkra.com}
 }
 
+Other contributors:
+\itemize{
+  \item  Bristol Myers Squibb [funder]
+}
+
 }
 \keyword{internal}
