@@ -29,16 +29,16 @@
 #' @keywords internal
 #' @noRd
 get_summary_functions <- function() {
-  # Default summary functions
+  # Default summary functions (stats:: namespace needed for R CMD check)
   default_funcs <- c(
     # Center
     "mean" = "mean",
-    "median" = "median",
+    "median" = "stats::median",
 
     # Spread
-    "standard deviation (sd)" = "sd",
-    "IQR" = "IQR",
-    "median absolute deviation (mad)" = "mad",
+    "standard deviation (sd)" = "stats::sd",
+    "IQR" = "stats::IQR",
+    "median absolute deviation (mad)" = "stats::mad",
 
     # Range
     "minimum (min)" = "min",
