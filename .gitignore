@@ -2,3 +2,6 @@ README.html
 ..Rcheck/
 *.Rcheck/
 docs/
+/doc/
+/Meta/
+vignettes/*.html
