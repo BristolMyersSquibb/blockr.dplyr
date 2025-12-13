@@ -58,10 +58,3 @@ Aggregate data with simple dropdowns or advanced expressions
   : Unite block constructor
 - [`new_separate_block()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/new_separate_block.md)
   : Separate block constructor
-
-## Helper Functions
-
-Exported helper functions for building filter expressions
-
-- [`parse_value_filter()`](https://bristolmyerssquibb.github.io/blockr.dplyr/reference/parse_value_filter.md)
-  : Parse value filter conditions into dplyr expression
