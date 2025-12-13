@@ -387,10 +387,6 @@ multi_filter_condition_ui <- function(id, value = "TRUE", show_remove = TRUE) {
 
 #' Run example app demonstrating multi filter functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_multi_filter_example()
-#' }
 #' @noRd
 run_multi_filter_example <- function() {
   shinyApp(

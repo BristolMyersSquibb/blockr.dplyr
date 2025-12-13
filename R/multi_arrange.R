@@ -308,10 +308,6 @@ multi_arrange_row_ui <- function(
 
 #' Run example app demonstrating multi arrange functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_multi_arrange_example()
-#' }
 #' @noRd
 run_multi_arrange_example <- function() {
   shinyApp(

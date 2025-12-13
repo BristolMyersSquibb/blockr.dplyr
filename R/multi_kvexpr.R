@@ -341,10 +341,6 @@ multi_kvexpr_row_ui <- function(
 
 #' Run example app demonstrating multi key-value functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_multi_kvexpr_example()
-#' }
 #' @noRd
 run_multi_kvexpr_example <- function() {
   shinyApp(

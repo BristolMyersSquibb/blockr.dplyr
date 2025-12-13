@@ -372,10 +372,6 @@ multi_rename_row_ui <- function(
 
 #' Run example app demonstrating multi rename functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_multi_rename_example()
-#' }
 #' @noRd
 run_multi_rename_example <- function() {
   shinyApp(

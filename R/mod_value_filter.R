@@ -542,10 +542,6 @@ value_filter_condition_ui <- function(
 
 #' Run example app demonstrating value filter functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_value_filter_example()
-#' }
 #' @noRd
 run_value_filter_example <- function() {
   shinyApp(

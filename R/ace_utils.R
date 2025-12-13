@@ -177,10 +177,6 @@ initialize_ace_editor <- function(session, editor_id, column_names) {
 #' This function launches a minimal Shiny app that demonstrates the custom
 #' autocompletion functionality with a simple example.
 #'
-#' @examples
-#' \dontrun{
-#' run_ace_example()
-#' }
 #' @importFrom shiny NS
 #' @noRd
 run_ace_example <- function() {
