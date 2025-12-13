@@ -56,11 +56,6 @@ reference:
   - new_unite_block
   - new_separate_block
 
-- title: Helper Functions
-  desc: Exported helper functions for building filter expressions
-  contents:
-  - parse_value_filter
-
 articles:
 - title: Getting Started
   navbar: ~

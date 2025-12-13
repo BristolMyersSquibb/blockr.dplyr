@@ -156,6 +156,7 @@ new_value_filter_block <- function(
 #' @param conditions List of filter conditions
 #' @param preserve_order Logical. If TRUE, preserves order of selected values
 #' @return A parsed expression object
+#' @noRd
 parse_value_filter <- function(conditions = list(), preserve_order = FALSE) {
   if (length(conditions) == 0) {
     # No conditions - return identity filter

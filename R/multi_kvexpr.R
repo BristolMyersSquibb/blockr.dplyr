@@ -12,7 +12,7 @@
 #' @importFrom shinyAce aceEditor updateAceEditor
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
@@ -178,7 +178,7 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
 #' @param id The module ID
 #' @param extra_button Optional UI element (e.g., submit button) to display on the right side
 #' @return A div containing the UI elements
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
@@ -288,7 +288,7 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
 #' @param value Expression value
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-#' @keywords internal
+#' @noRd
 #' @noRd
 multi_kvexpr_row_ui <- function(
   id,
@@ -341,11 +341,7 @@ multi_kvexpr_row_ui <- function(
 
 #' Run example app demonstrating multi key-value functionality
 #'
-#' @examples
-#' \dontrun{
-#' run_multi_kvexpr_example()
-#' }
-#' @keywords internal
+#' @noRd
 run_multi_kvexpr_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

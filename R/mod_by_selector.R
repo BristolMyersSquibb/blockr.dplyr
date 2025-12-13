@@ -12,7 +12,7 @@
 #' @return For UI function, returns a shiny tag. For server function, returns a reactive
 #'   containing selected column names.
 #'
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_column_selector_ui <- function(
   id,
@@ -38,7 +38,7 @@ mod_column_selector_ui <- function(
 #' @param get_cols Reactive function that returns available column names.
 #' @param initial_value Character vector. Initial selected columns.
 #'
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_column_selector_server <- function(id, get_cols, initial_value = character()) {
   moduleServer(id, function(input, output, session) {
