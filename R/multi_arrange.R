@@ -11,7 +11,7 @@
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_arrange_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
@@ -183,7 +183,7 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_arrange_ui <- function(id) {
   ns <- NS(id)
@@ -258,7 +258,7 @@ mod_multi_arrange_ui <- function(id) {
 #' @param position Position in sort order (1, 2, 3, ...)
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-#' @keywords internal
+#' @noRd
 #' @noRd
 multi_arrange_row_ui <- function(
   id,
@@ -312,7 +312,7 @@ multi_arrange_row_ui <- function(
 #' \dontrun{
 #' run_multi_arrange_example()
 #' }
-#' @keywords internal
+#' @noRd
 run_multi_arrange_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

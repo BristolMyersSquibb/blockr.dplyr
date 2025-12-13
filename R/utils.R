@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Internal utility functions used across multiple blocks in blockr.dplyr
-#' @keywords internal
+#' @noRd
 #' @name utils
 
 #' Check if names need backticks for dplyr operations (vectorized)

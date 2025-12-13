@@ -5,7 +5,7 @@
 #' @param value Character display value
 #' @param original_type The original data type ("numeric" or "character")
 #' @return The actual value (may be NA or empty string)
-#' @keywords internal
+#' @noRd
 #' @noRd
 display_to_actual <- function(value, original_type = "character") {
   if (value == "<NA>") {
@@ -25,7 +25,7 @@ display_to_actual <- function(value, original_type = "character") {
 #'
 #' @param value The actual value
 #' @return Character display string
-#' @keywords internal
+#' @noRd
 #' @noRd
 actual_to_display <- function(value) {
   if (is.na(value)) {
@@ -54,7 +54,7 @@ actual_to_display <- function(value) {
 #' @importFrom utils str
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags tagList
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_value_filter_server <- function(
   id,
@@ -424,7 +424,7 @@ mod_value_filter_server <- function(
 #'
 #' @param id The module ID
 #' @return A div containing the UI elements
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_value_filter_ui <- function(id) {
 
@@ -468,7 +468,7 @@ mod_value_filter_ui <- function(id) {
 #' @param show_remove Whether to show remove button
 #' @param ns Namespace function (unused, kept for compatibility)
 #' @return A div containing the row UI
-#' @keywords internal
+#' @noRd
 #' @noRd
 value_filter_condition_ui <- function(
   id,
@@ -546,7 +546,7 @@ value_filter_condition_ui <- function(
 #' \dontrun{
 #' run_value_filter_example()
 #' }
-#' @keywords internal
+#' @noRd
 run_value_filter_example <- function() {
   shinyApp(
     ui = bslib::page_fluid(

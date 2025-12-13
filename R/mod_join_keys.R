@@ -10,7 +10,7 @@
 #' @return For UI function, returns a shiny tag. For server function, returns a reactive
 #'   containing join key specifications.
 #'
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_join_keys_ui <- function(id, label = "Join Keys") {
   ns <- NS(id)
@@ -184,7 +184,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
 #' @param get_y_cols Reactive function that returns column names from the second dataset.
 #' @param initial_keys List or character vector. Initial join keys.
 #'
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_join_keys_server <- function(
   id,

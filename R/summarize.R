@@ -26,7 +26,7 @@
 #'
 #' @return Named character vector where names are display names and values are
 #'   fully qualified function calls
-#' @keywords internal
+#' @noRd
 #' @noRd
 get_summary_functions <- function() {
   # Default summary functions (stats:: namespace needed for R CMD check)
@@ -99,7 +99,7 @@ get_summary_functions <- function() {
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput textInput
 #' @importFrom shinyjs useShinyjs
 #' @importFrom htmltools tags
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_summarize_server <- function(id, get_value, get_cols) {
   moduleServer(id, function(input, output, session) {
@@ -323,7 +323,7 @@ mod_multi_summarize_server <- function(id, get_value, get_cols) {
 #' @param id The module ID
 #' @param extra_button Optional UI element (e.g., submit button) to display on the right side
 #' @return A div containing the UI elements
-#' @keywords internal
+#' @noRd
 #' @noRd
 mod_multi_summarize_ui <- function(id, extra_button = NULL) {
   ns <- NS(id)
@@ -460,7 +460,7 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
 #' @param available_cols Available column names for dropdown
 #' @param show_remove Whether to show remove button
 #' @return A div containing the row UI
-#' @keywords internal
+#' @noRd
 #' @noRd
 multi_summarize_row_ui <- function(
   id,

@@ -9,7 +9,7 @@
 #' @param version Character, version when deprecated (optional)
 #'
 #' @return Invisible NULL
-#' @keywords internal
+#' @noRd
 #' @noRd
 show_block_deprecation <- function(old_name, new_name, version = NULL) {
   # Build message
