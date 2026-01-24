@@ -522,8 +522,8 @@ value_filter_condition_ui <- function(
           actionButton(
             paste0(id, "_remove"),
             label = NULL,
-            icon = icon("xmark"),
-            class = "btn btn-link text-muted p-0",
+            icon = bsicons::bs_icon("x-lg"),
+            class = "blockr-btn-icon",
             title = "Remove this condition"
           )
         )

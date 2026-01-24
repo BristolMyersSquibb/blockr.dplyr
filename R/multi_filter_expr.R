@@ -271,12 +271,42 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
     shinyjs::useShinyjs(),
     tags$style(
       "
-      .multi-filter-container {
-        margin-top: -8px;
+      /* Style input-group to match modern form controls */
+      .input-group.multi-filter-condition {
+        background-color: var(--blockr-color-bg-input, #f9fafb);
+        border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      }
+
+      .input-group.multi-filter-condition:focus-within {
+        background-color: #ffffff;
+        border-color: var(--blockr-color-primary, #2563eb) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Remove border from nested mutate-expression created by setup_ace_editor */
+      .multi-filter-condition .mutate-expression {
+        border: none !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .multi-filter-condition .shiny-ace,
+      .multi-filter-condition .ace_editor,
+      .multi-filter-condition .ace-tomorrow,
+      .multi-filter-condition .ace_scroller,
+      .multi-filter-condition .ace_content,
+      .multi-filter-condition .ace_gutter {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        outline: none !important;
       }
 
       .multi-filter-condition .shiny-ace {
-        border: none;
         margin: 7px;
         margin-bottom: 7.5px;
       }
@@ -285,31 +315,9 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         flex: 1;
       }
 
-      .multi-filter-condition .condition-delete {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        height: 38px;
-        width: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      .multi-filter-condition .condition-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
-      .multi-filter-condition .input-group {
-        border: none !important;
-      }
-
-      .input-group.multi-filter-condition {
-        height: 38px !important;
+      .multi-filter-condition .blockr-btn-icon {
+        margin-top: 2px;
+        margin-right: 2px;
       }
 
       .multi-filter-actions {
@@ -319,24 +327,6 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         align-items: center;
       }
 
-      .multi-filter-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-filter-actions .btn-outline-secondary:hover {
-        background-color: #f8f9fa;
-        border-color: #adb5bd;
-        color: #495057;
-      }
-
-      .multi-filter-container .selectize-control.single .selectize-input {
-        border-color: #dee2e6;
-        color: #6c757d;
-        font-size: 0.875rem;
-        padding: 0.25rem 0.5rem;
-        min-height: calc(1.5em + 0.5rem + 2px);
-      }
     "
     ),
     div(
@@ -378,8 +368,8 @@ multi_filter_condition_ui <- function(id, value = "TRUE", show_remove = TRUE) {
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn condition-delete"
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon"
       )
     }
   )

@@ -220,17 +220,6 @@ mod_multi_arrange_ui <- function(id) {
       .arrange-condition .selectize-input {
         min-height: 38px;
       }
-
-      .multi-arrange-container .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-arrange-container .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
-      }
     "
     ),
     div(
@@ -288,8 +277,8 @@ multi_arrange_row_ui <- function(
           actionButton(
             paste0(id, "_remove"),
             label = NULL,
-            icon = icon("xmark"),
-            class = "btn btn-link text-muted p-0",
+            icon = bsicons::bs_icon("x-lg"),
+            class = "blockr-btn-icon",
             title = "Remove"
           )
         )

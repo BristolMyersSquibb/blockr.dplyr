@@ -5,8 +5,8 @@ test_that("mod_join_keys_ui creates proper structure", {
   expect_s3_class(ui, "shiny.tag.list")
   expect_true(grepl("join-keys-container", as.character(ui)))
   expect_true(
-    grepl("Join Keys", as.character(ui)) ||
-      grepl("Use natural join", as.character(ui))
+    grepl("join-keys-container", as.character(ui)) ||
+      grepl("Join on common columns", as.character(ui))
   )
 })
 

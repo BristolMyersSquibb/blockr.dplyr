@@ -187,8 +187,42 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
     shinyjs::useShinyjs(),
     tags$style(
       "
+      /* Style input-group to match modern form controls */
+      .input-group.multi-kvexpr-expression {
+        background-color: var(--blockr-color-bg-input, #f9fafb);
+        border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      }
+
+      .input-group.multi-kvexpr-expression:focus-within {
+        background-color: #ffffff;
+        border-color: var(--blockr-color-primary, #2563eb) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Remove border from nested mutate-expression created by setup_ace_editor */
+      .multi-kvexpr-expression .mutate-expression {
+        border: none !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .multi-kvexpr-expression .shiny-ace,
+      .multi-kvexpr-expression .ace_editor,
+      .multi-kvexpr-expression .ace-tomorrow,
+      .multi-kvexpr-expression .ace_scroller,
+      .multi-kvexpr-expression .ace_content,
+      .multi-kvexpr-expression .ace_gutter {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        outline: none !important;
+      }
+
       .multi-kvexpr-expression .shiny-ace {
-        border: none;
         margin: 7px;
         margin-bottom: 7.5px;
       }
@@ -202,47 +236,22 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
       }
 
       .multi-kvexpr-expression .expr-equal {
-        background-color: #e9ecef;
-        border-color: #dee2e6;
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-      }
-
-      .multi-kvexpr-expression .expr-delete {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        height: 38px;
-        width: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
+        background-color: transparent;
         border: none;
-        background: transparent;
-        padding: 0;
+        color: var(--blockr-grey-400, #9ca3af);
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
       }
 
-      .multi-kvexpr-expression .expr-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
-      .multi-kvexpr-expression .input-group {
-        border: none !important;
-      }
-
-      .input-group.multi-kvexpr-expression {
-        height: 38px !important;
+      .multi-kvexpr-expression .blockr-btn-icon {
+        margin-top: 2px;
+        margin-right: 2px;
       }
 
       .input-group .input-group-text {
         padding-top: 0;
         padding-bottom: 0;
         height: 36px;
-      }
-
-      .multi-kvexpr-container {
-        margin-top: -20px;
       }
 
       .multi-kvexpr-actions {
@@ -252,16 +261,6 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         margin-top: 0.5rem;
       }
 
-      .multi-kvexpr-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-kvexpr-actions .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
-      }
     "
     ),
     div(
@@ -331,8 +330,8 @@ multi_kvexpr_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn btn-sm expr-delete",
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon",
         title = "Remove expression"
       )
     }

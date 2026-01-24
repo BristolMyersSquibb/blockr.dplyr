@@ -39,6 +39,7 @@ RoxygenNote: 7.3.3
 Imports:
     shiny,
     blockr.core (>= 0.1.1),
+    bsicons,
     dplyr,
     tidyr,
     shinyAce,

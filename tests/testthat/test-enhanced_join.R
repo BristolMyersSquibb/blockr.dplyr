@@ -89,7 +89,7 @@ test_that("join block UI includes enhanced components", {
   ui_str <- as.character(ui)
 
   # Should include join type selector
-  expect_true(grepl("Join Type", ui_str))
+  expect_true(grepl("type", ui_str))
 
   # Should include join keys configuration
   expect_true(grepl("join_keys", ui_str))

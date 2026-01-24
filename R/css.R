@@ -99,6 +99,7 @@ css_responsive_grid <- function() {
 #' @return HTML style tag with single-column grid CSS
 #' @noRd
 css_single_column <- function(block_name) {
+
   tags$style(HTML(sprintf(
     "
     .%s-block-container .block-form-grid {
@@ -107,6 +108,42 @@ css_single_column <- function(block_name) {
     ",
     block_name
   )))
+}
+
+#' CSS for ACE editor styling
+#'
+#' Styles ACE editors to match blockr.dock form controls with rounded corners,
+#' grey background, and blue focus ring.
+#'
+#' Used by: mutate_expr, filter_expr, summarize_expr
+#'
+#' @return HTML style tag with ACE editor CSS
+#' @noRd
+css_ace_editor <- function() {
+  tags$style(HTML(
+    "
+    .shiny-ace {
+      background-color: var(--blockr-color-bg-input, #f9fafb);
+      border: 1px solid var(--blockr-color-border, #e5e7eb);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .shiny-ace:focus-within {
+      background-color: #ffffff;
+      border-color: var(--blockr-color-primary, #2563eb);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .shiny-ace .ace_editor {
+      background-color: transparent !important;
+    }
+
+    .shiny-ace .ace_gutter {
+      background-color: transparent !important;
+    }
+    "
+  ))
 }
 
 #' CSS for collapsible advanced options section

@@ -371,25 +371,6 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         min-width: 0;
       }
 
-      .multi-summarize-pair .summarize-delete {
-        flex: 0 0 auto;
-        height: 38px;
-        width: 24px;
-        margin-left: -10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      .multi-summarize-pair .summarize-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
       /* Remove default margins from Shiny inputs */
       .multi-summarize-pair .shiny-input-container {
         margin-bottom: 0 !important;
@@ -510,8 +491,8 @@ multi_summarize_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn btn-sm summarize-delete",
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon",
         title = "Remove summary"
       )
     }

@@ -1,59 +1,19 @@
-# Load required libraries
-library(blockr)
-library(blockr.dag)
-library(blockr.md)
-library(blockr.dplyr)
-library(blockr.ggplot)
+# Summarize block demo (no-code style with dropdown functions)
 pkgload::load_all()
 
-# Demo workflow for summarize block with visualization
 run_app(
   blocks = c(
-  
-      # Source dataset
-      data = new_dataset_block(dataset = "mtcars"),
-
-      # Add a categorical grouping variable (cylinder count)
-      prep = new_mutate_block(
-        exprs = list(
-          cyl_group = "as.factor(cyl)"
-        )
+    data = new_dataset_block(dataset = "mtcars"),
+    summary = new_summarize_block(
+      summaries = list(
+        avg_mpg = list(func = "mean", col = "mpg"),
+        avg_hp = list(func = "mean", col = "hp"),
+        count = list(func = "dplyr::n", col = "")
       ),
-
-      # Summarize by cylinder groups
-      summary = new_summarize_block(
-        exprs = list(
-          avg_mpg = "mean(mpg)",
-          avg_hp = "mean(hp)",
-          avg_wt = "mean(wt)",
-          count = "n()"
-        ),
-        by = "cyl_group",
-        unpack = FALSE
-      )
-    ),
-    links = c(
-      # Connect data flow
-      new_link("data", "prep", "data"),
-      new_link("prep", "summary", "data")
-    ),
-  extensions = list(
-
-    new_dag_extension(),
-
-    new_md_extension(
-
-      content = c(
-      "## Summarize Block Demo\n\n",
-      "This workflow demonstrates the `new_summarize_block()`.\n\n",
-      "The workflow:\n\n",
-      "1. Loads the mtcars dataset\n",
-      "2. Creates a categorical grouping variable (cylinder count)\n",
-      "3. Summarizes data by groups (average MPG, HP, weight, and count)\n\n",
-
-      "## Summary Statistics\n\n",
-      "![](blockr://summary)\n\n"
-      )
-      )
+      by = "cyl"
+    )
+  ),
+  links = c(
+    new_link("data", "summary", "data")
   )
 )

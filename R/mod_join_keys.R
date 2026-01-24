@@ -59,24 +59,6 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         flex: 1;
       }
 
-      .join-mapping-pair .join-delete {
-        flex: 0 0 auto;
-        height: 38px;
-        width: 35px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      .join-mapping-pair .join-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
       /* Remove default margins from Shiny inputs */
       .join-mapping-pair .shiny-input-container {
         margin-bottom: 0 !important;
@@ -113,16 +95,6 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         margin-top: 0.5rem;
       }
 
-      .join-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .join-actions .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
-      }
       "
     ),
 
@@ -134,7 +106,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         class = "form-group",
         checkboxInput(
           ns("use_natural_join"),
-          label = "Use natural join (automatically join on all common columns)",
+          label = "Join on common columns",
           value = FALSE
         )
       ),
@@ -157,16 +129,12 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         condition = sprintf("!input['%s']", ns("use_natural_join")),
         div(
           id = ns("custom_mappings"),
-          h6(
-            "Custom Column Mappings",
-            style = "margin-top: 15px; margin-bottom: 10px;"
-          ),
           uiOutput(ns("join_mappings_ui")),
           div(
-            class = "join-actions",
+            class = "join-actions mt-3 mb-1",
             actionButton(
               ns("add_mapping"),
-              label = "Add Join Key",
+              label = "Add Key",
               icon = icon("plus"),
               class = "btn btn-outline-secondary btn-sm"
             )
@@ -436,7 +404,7 @@ create_mapping_row <- function(
       class = "join-left",
       selectInput(
         ns(paste0("x_col_", index)),
-        label = if (index == 1) "Left Dataset" else NULL,
+        label = if (index == 1) "Left (x)" else NULL,
         choices = c("Select column..." = "", x_cols),
         selected = mapping$x_col,
         width = "100%"
@@ -454,7 +422,7 @@ create_mapping_row <- function(
       class = "join-right",
       selectInput(
         ns(paste0("y_col_", index)),
-        label = if (index == 1) "Right Dataset" else NULL,
+        label = if (index == 1) "Right (y)" else NULL,
         choices = c("Select column..." = "", y_cols),
         selected = mapping$y_col,
         width = "100%"
@@ -466,8 +434,8 @@ create_mapping_row <- function(
       actionButton(
         ns(paste0("delete_", index)),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn btn-sm join-delete",
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon",
         title = "Remove join key"
       )
     }
