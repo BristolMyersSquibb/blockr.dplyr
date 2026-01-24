@@ -480,6 +480,11 @@ value_filter_condition_ui <- function(
   show_remove = TRUE,
   ns = function(x) x # Kept for compatibility
 ) {
+  # Default to first column if none selected
+  if ((is.null(column) || column == "") && length(available_columns) > 0) {
+    column <- available_columns[1]
+  }
+
   # Initialize choices - populate with actual values if we have a column
   unique_values <- if (!is.null(column) && column != "") {
     get_unique_values(column)
