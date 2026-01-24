@@ -1,5 +1,13 @@
 # Changelog
 
+## blockr.dplyr 0.1.0.9001
+
+### UI Improvements
+
+- Cleaner delete buttons with Bootstrap Icons
+- Modernized ACE editor styling
+- Filter block auto-selects first column on startup
+
 ## blockr.dplyr 0.1.0
 
 CRAN release: 2025-12-18
