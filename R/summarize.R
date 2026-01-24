@@ -398,19 +398,8 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 0.5rem;
+        margin-top: 1.5rem;
         margin-bottom: 0.25rem;
-      }
-
-      .multi-summarize-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-summarize-actions .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
       }
     "
     ),

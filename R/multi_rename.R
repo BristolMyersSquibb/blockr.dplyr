@@ -266,7 +266,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 0.5rem;
+        margin-top: 1.5rem;
       }
 
     "
@@ -275,7 +275,7 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
       class = "multi-rename-container",
       uiOutput(ns("renames_ui")),
       div(
-        class = "multi-rename-actions mt-2 mb-1",
+        class = "multi-rename-actions mt-4 mb-1",
         actionButton(
           ns("add_rename"),
           label = "Add Rename",
