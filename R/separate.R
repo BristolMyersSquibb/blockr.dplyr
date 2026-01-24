@@ -230,28 +230,9 @@ new_separate_block <- function(
         css_responsive_grid(),
         css_advanced_toggle(NS(id, "advanced-options"), use_subgrid = TRUE),
 
-        # Block-specific CSS
+        # Block-specific CSS (layout only)
         tags$style(HTML(
           "
-          .separate-block-container .block-help-text p {
-            margin-bottom: 0;
-          }
-          .separate-block-container .control-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-          }
-          /* Checkbox styling - smaller font and bottom alignment */
-          .separate-block-container .block-input-wrapper:has(input[type='checkbox']) {
-            align-self: flex-end;
-          }
-          .separate-block-container input[type='checkbox'] + span {
-            font-size: 0.8rem;
-          }
-          .separate-block-container .checkbox label {
-            font-size: 0.8rem;
-          }
           /* Advanced toggle spans full width */
           .separate-block-container .block-advanced-toggle {
             grid-column: 1 / -1;

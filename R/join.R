@@ -213,22 +213,6 @@ new_join_block <- function(
         css_single_column("join"),
         css_inline_checkbox(),
 
-        # Block-specific CSS
-        tags$style(HTML(
-          "
-          .join-block-container .block-help-text {
-            margin-bottom: 0.5rem;
-          }
-          .join-block-container .block-help-text p {
-            margin-top: 0;
-            margin-bottom: 0;
-          }
-          .join-block-container select {
-            max-width: 500px;
-          }
-          "
-        )),
-
         div(
           class = "block-container join-block-container",
 
@@ -246,14 +230,14 @@ new_join_block <- function(
                   class = "block-input-wrapper",
                   selectInput(
                     inputId = NS(id, "type"),
-                    label = "Join Type",
+                    label = "Type",
                     choices = c(
-                      "Left Join - Keep all rows from left dataset" = "left_join",
-                      "Inner Join - Keep only matching rows from both datasets" = "inner_join",
-                      "Right Join - Keep all rows from right dataset" = "right_join",
-                      "Full Join - Keep all rows from both datasets" = "full_join",
-                      "Semi Join - Keep left rows that have matches in right" = "semi_join",
-                      "Anti Join - Keep left rows that have no matches in right" = "anti_join"
+                      "Left Join" = "left_join",
+                      "Inner Join" = "inner_join",
+                      "Right Join" = "right_join",
+                      "Full Join" = "full_join",
+                      "Semi Join" = "semi_join",
+                      "Anti Join" = "anti_join"
                     ),
                     selected = type,
                     width = "100%"

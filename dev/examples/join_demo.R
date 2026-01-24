@@ -1,8 +1,10 @@
 # Join block demo
 pkgload::load_all()
+pkgload::load_all("../blockr.dock")
+library(blockr)
 
-serve(
-  new_board(
+run_app(
+  blocks = c(
     bod_data1 = new_dataset_block(dataset = "BOD"),
     bod_data2 = new_dataset_block(dataset = "BOD"),
     join_result = new_join_block(type = "left_join")

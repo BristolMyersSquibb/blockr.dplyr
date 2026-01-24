@@ -208,25 +208,6 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         padding-right: 0.75rem;
       }
 
-      .multi-kvexpr-expression .expr-delete {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        height: 38px;
-        width: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      .multi-kvexpr-expression .expr-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
       .multi-kvexpr-expression .input-group {
         border: none !important;
       }
@@ -235,14 +216,15 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         height: 38px !important;
       }
 
+      .multi-kvexpr-expression .blockr-btn-icon {
+        margin-top: 2px;
+        margin-right: 2px;
+      }
+
       .input-group .input-group-text {
         padding-top: 0;
         padding-bottom: 0;
         height: 36px;
-      }
-
-      .multi-kvexpr-container {
-        margin-top: -20px;
       }
 
       .multi-kvexpr-actions {
@@ -252,16 +234,6 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         margin-top: 0.5rem;
       }
 
-      .multi-kvexpr-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-kvexpr-actions .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
-      }
     "
     ),
     div(
@@ -331,8 +303,8 @@ multi_kvexpr_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn btn-sm expr-delete",
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon",
         title = "Remove expression"
       )
     }

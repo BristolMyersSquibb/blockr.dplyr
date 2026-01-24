@@ -104,15 +104,6 @@ new_mutate_expr_block <- function(
         css_single_column("mutate"),
         css_doc_links(),
 
-        # Block-specific CSS
-        tags$style(HTML(
-          "
-          .mutate-block-container .checkbox {
-            font-size: 0.875rem;
-          }
-          "
-        )),
-
         div(
           class = "block-container mutate-block-container",
 

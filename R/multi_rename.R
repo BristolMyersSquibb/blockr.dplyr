@@ -239,24 +239,6 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         flex: 1;
       }
 
-      .multi-rename-pair .rename-delete {
-        flex: 0 0 auto;
-        height: 38px;
-        width: 35px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      .multi-rename-pair .rename-delete:hover {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-      }
-
       /* Remove default margins from Shiny inputs */
       .multi-rename-pair .shiny-input-container {
         margin-bottom: 0 !important;
@@ -287,16 +269,6 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         margin-top: 0.5rem;
       }
 
-      .multi-rename-actions .btn-outline-secondary {
-        border-color: #dee2e6;
-        color: #6c757d;
-      }
-
-      .multi-rename-actions .btn-outline-secondary:hover {
-        border-color: #adb5bd;
-        background-color: #f8f9fa;
-        color: #495057;
-      }
     "
     ),
     div(
@@ -362,8 +334,8 @@ multi_rename_row_ui <- function(
       actionButton(
         paste0(id, "_remove"),
         label = NULL,
-        icon = icon("xmark"),
-        class = "btn btn-sm rename-delete",
+        icon = bsicons::bs_icon("x-lg"),
+        class = "blockr-btn-icon",
         title = "Remove rename"
       )
     }

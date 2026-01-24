@@ -374,58 +374,19 @@ new_slice_block <- function(
         css_responsive_grid(),
         css_inline_checkbox(),
 
-        # Block-specific CSS
+        # Block-specific CSS (layout for integrated input group)
         tags$style(HTML(
           "
-          /* Slice block uses responsive grid layout - all inputs participate via block-input-wrapper */
-
-          /* Control label styling */
-          .slice-block-container .control-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-          }
-
-          /* Type-specific checkboxes (Include ties, With replacement) */
-          .block-section-grid .block-input-wrapper .checkbox {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-            margin-top: auto;
-          }
-
-          .block-section-grid .block-input-wrapper .checkbox label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            font-weight: normal;
-            margin-bottom: 0;
-            padding-left: 4px;
-          }
-
-          .block-section-grid .block-input-wrapper .checkbox input[type='checkbox'] {
-            margin-top: 0;
-            margin-right: 4px;
-          }
-
           /* Integrated value input group - numericInput + checkbox together */
           .slice-value-group {
             width: 100%;
-          }
-          .slice-value-group .slice-value-label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: normal;
-            display: block;
           }
           .slice-value-group .input-group {
             display: flex;
             flex-wrap: nowrap;
             align-items: stretch;
-            height: 38px; /* Match selectize input height */
+            height: 38px;
           }
-          /* The numericInput wrapper - hide its label, make input fill space */
           .slice-value-group .numeric-input-wrapper {
             flex: 1;
             min-width: 0;
@@ -442,18 +403,18 @@ new_slice_block <- function(
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
             border-right: none;
-            height: 38px; /* Match selectize input height */
+            height: 38px;
           }
-          /* The checkbox container - styled as input-group-text */
+          /* Checkbox container styled as input-group addon */
           .slice-value-group .input-group-text {
             display: flex;
             align-items: center;
-            padding: 0 0.5rem; /* Reduced padding */
+            padding: 0 0.5rem;
             background-color: #e9ecef;
-            border: 1px solid rgb(141, 149, 158); /* Match input border */
-            border-top-right-radius: 3px; /* Match Bootstrap form-control */
-            border-bottom-right-radius: 3px; /* Match Bootstrap form-control */
-            height: 38px; /* Match input height */
+            border: 1px solid #ced4da;
+            border-top-right-radius: 0.25rem;
+            border-bottom-right-radius: 0.25rem;
+            height: 38px;
           }
           .slice-value-group .input-group-text .shiny-input-container {
             margin-bottom: 0;
@@ -466,13 +427,11 @@ new_slice_block <- function(
           }
           .slice-value-group .input-group-text .checkbox label {
             margin-bottom: 0;
-            font-weight: 500;
-            color: #6c757d;
-            padding-left: 2px; /* Reduced padding */
+            padding-left: 2px;
           }
           .slice-value-group .input-group-text .checkbox input[type='checkbox'] {
             margin: 0;
-            margin-top: 1px; /* Slight adjustment for vertical centering */
+            margin-top: 1px;
           }
           "
         )),
