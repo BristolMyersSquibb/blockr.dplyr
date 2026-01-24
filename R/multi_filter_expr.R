@@ -271,22 +271,48 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
     shinyjs::useShinyjs(),
     tags$style(
       "
+      /* Style input-group to match modern form controls */
+      .input-group.multi-filter-condition {
+        background-color: var(--blockr-color-bg-input, #f9fafb);
+        border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      }
+
+      .input-group.multi-filter-condition:focus-within {
+        background-color: #ffffff;
+        border-color: var(--blockr-color-primary, #2563eb) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Remove border from nested mutate-expression created by setup_ace_editor */
+      .multi-filter-condition .mutate-expression {
+        border: none !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .multi-filter-condition .shiny-ace,
+      .multi-filter-condition .ace_editor,
+      .multi-filter-condition .ace-tomorrow,
+      .multi-filter-condition .ace_scroller,
+      .multi-filter-condition .ace_content,
+      .multi-filter-condition .ace_gutter {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        outline: none !important;
+      }
+
       .multi-filter-condition .shiny-ace {
-        border: none;
         margin: 7px;
         margin-bottom: 7.5px;
       }
 
       .multi-filter-condition .condition-code {
         flex: 1;
-      }
-
-      .multi-filter-condition .input-group {
-        border: none !important;
-      }
-
-      .input-group.multi-filter-condition {
-        height: 38px !important;
       }
 
       .multi-filter-condition .blockr-btn-icon {
