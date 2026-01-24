@@ -183,11 +183,10 @@ validate_block_screenshot <- function(
         is_join_block <- !is.null(dataset_y)
 
         if (is_join_block) {
-          # Use blockr.dock with two dataset sources for join blocks
+          # Use blockr::run_app() with two dataset sources for join blocks
           app_content <- sprintf(
             '
-library(blockr.core)
-library(blockr.dock)
+library(blockr)
 
 # Load the blockr.dplyr package
 # Try to load from development first, fall back to installed version
@@ -201,19 +200,17 @@ tryCatch(
 # Load block
 block <- readRDS("block.rds")
 
-# Run the app using dock board with two data sources for join
-blockr.core::serve(
-  blockr.dock::new_dock_board(
-    blocks = c(
-      x_data = blockr.core::new_dataset_block("%s", package = "%s"),
-      y_data = blockr.core::new_dataset_block("%s", package = "%s"),
-      result = block
-    ),
-    links = list(
-      from = c("x_data", "y_data"),
-      to = c("result", "result"),
-      input = c("%s", "%s")
-    )
+# Run the app with two data sources for join
+blockr::run_app(
+  blocks = c(
+    x_data = blockr.core::new_dataset_block("%s", package = "%s"),
+    y_data = blockr.core::new_dataset_block("%s", package = "%s"),
+    result = block
+  ),
+  links = list(
+    from = c("x_data", "y_data"),
+    to = c("result", "result"),
+    input = c("%s", "%s")
   )
 )
             ',
@@ -226,11 +223,10 @@ blockr.core::serve(
             input_names[2]
           )
         } else {
-          # Use blockr.dock for improved styling (single dataset)
+          # Use blockr::run_app() for proper dock styling
           app_content <- sprintf(
             '
-library(blockr.core)
-library(blockr.dock)
+library(blockr)
 
 # Load the blockr.dplyr package
 # Try to load from development first, fall back to installed version
@@ -241,22 +237,16 @@ tryCatch(
   }
 )
 
-# Load data and block
-data <- readRDS("data.rds")
+# Load block
 block <- readRDS("block.rds")
 
-# Run the app using dock board with default layout
-# serve() is from blockr.core, dock_board is from blockr.dock
-# Default layout: extensions on left, blocks on right
-# We will crop to the right panel (blocks) after taking screenshot
-blockr.core::serve(
-  blockr.dock::new_dock_board(
-    blocks = c(
-      a = blockr.core::new_dataset_block("%s", package = "%s"),
-      b = block
-    ),
-    links = list(from = "a", to = "b", input = "data")
-  )
+# Run the app using blockr::run_app()
+blockr::run_app(
+  blocks = c(
+    a = blockr.core::new_dataset_block("%s", package = "%s"),
+    b = block
+  ),
+  links = list(from = "a", to = "b", input = "data")
 )
             ',
             normalizePath("."),
@@ -341,56 +331,35 @@ blockr.core::serve(
       # Take screenshot
       app$get_screenshot(output_path)
 
-      # If using dock mode, crop to just the panel content
+      # If using dock mode, crop to just the blocks panel (right side)
       if (use_dock && file.exists(output_path)) {
-        # Get the bounding box of the panel using JavaScript
-        # Try multiple selectors in order of preference
-        # Note: use get_js instead of run_js to get the return value
+        # Get the bounding box of the blocks panel (contains block tabs)
         panel_bounds <- tryCatch(
           {
             app$get_js(
               "
               (function() {
-                // Find the panel that contains actual block content (the right panel)
-                // In default dock layout: left = extensions (empty), right = blocks
+                // Find the blocks panel (not Workflow panel)
+                // Blocks panel contains 'Dataset' tab but not 'Workflow'
                 var groupViews = document.querySelectorAll('.dv-groupview');
 
-                // Find the groupview that contains block content
-                // Look for the one with actual shiny content inside
                 for (var i = 0; i < groupViews.length; i++) {
                   var panel = groupViews[i];
-                  // Check if this panel has actual content (not just empty toolbar)
-                  var hasContent = panel.querySelector('.shiny-html-output') ||
-                                   panel.querySelector('.block-container') ||
-                                   panel.querySelector('[class*=\"blockr\"]') ||
-                                   panel.querySelector('.form-group') ||
-                                   panel.querySelector('.selectize-control');
+                  var html = panel.innerHTML;
+                  // Look for panel with Dataset/Filter tabs but not Workflow
+                  var hasBlocks = html.indexOf('Dataset') > -1 || html.indexOf('Filter') > -1;
+                  var hasWorkflow = html.indexOf('Workflow') > -1;
 
-                  if (hasContent && panel.offsetWidth > 100) {
+                  if (hasBlocks && !hasWorkflow && panel.offsetWidth > 200) {
                     var rect = panel.getBoundingClientRect();
                     return {
                       x: Math.round(rect.left),
                       y: Math.round(rect.top),
                       width: Math.round(rect.width),
-                      height: Math.round(rect.height),
-                      selector: '.dv-groupview (with content)'
+                      height: Math.round(rect.height)
                     };
                   }
                 }
-
-                // Fallback: get the last (rightmost) groupview
-                if (groupViews.length > 0) {
-                  var lastPanel = groupViews[groupViews.length - 1];
-                  var rect = lastPanel.getBoundingClientRect();
-                  return {
-                    x: Math.round(rect.left),
-                    y: Math.round(rect.top),
-                    width: Math.round(rect.width),
-                    height: Math.round(rect.height),
-                    selector: '.dv-groupview (last)'
-                  };
-                }
-
                 return null;
               })()
               "
@@ -401,16 +370,10 @@ blockr.core::serve(
 
         if (!is.null(panel_bounds) && !is.null(panel_bounds$width)) {
           if (verbose) {
-            selector_info <- if (!is.null(panel_bounds$selector)) {
-              paste0(" (selector: ", panel_bounds$selector, ")")
-            } else {
-              ""
-            }
             cat(sprintf(
-              "  Cropping to panel bounds: x=%d, y=%d, w=%d, h=%d%s\n",
+              "  Cropping to panel bounds: x=%d, y=%d, w=%d, h=%d\n",
               panel_bounds$x, panel_bounds$y,
-              panel_bounds$width, panel_bounds$height,
-              selector_info
+              panel_bounds$width, panel_bounds$height
             ))
           }
 

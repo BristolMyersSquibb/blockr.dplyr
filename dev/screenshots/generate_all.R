@@ -21,8 +21,10 @@ cat("Generating screenshots for all blockr.dplyr blocks...\n")
 cat("Output directory: man/figures/\n\n")
 
 # Common screenshot settings
+# Width 1400 -> crops to ~685px blocks panel
+# Height 748 -> crops to ~680px panel height (matching original screenshots)
 SCREENSHOT_WIDTH <- 1400
-SCREENSHOT_HEIGHT <- 700
+SCREENSHOT_HEIGHT <- 748
 SCREENSHOT_DELAY <- 3
 
 # =============================================================================
