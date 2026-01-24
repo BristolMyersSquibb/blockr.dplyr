@@ -18,14 +18,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/BristolMyersSquibb/blockr.dplyr/blob/main/DESCRIPTION)
 
-Sax C, Bennett N, Granjon D, Page M (2025). *blockr.dplyr: Interactive
+Sax C, Bennett N, Granjon D, Page M (2026). *blockr.dplyr: Interactive
 'dplyr' Data Transformation Blocks*. R package version 0.1.0,
 <https://bristolmyerssquibb.github.io/blockr.dplyr/>.
 
     @Manual{,
       title = {blockr.dplyr: Interactive 'dplyr' Data Transformation Blocks},
       author = {Christoph Sax and Nicolas Bennett and David Granjon and Mike Page},
-      year = {2025},
+      year = {2026},
       note = {R package version 0.1.0},
       url = {https://bristolmyerssquibb.github.io/blockr.dplyr/},
     }
