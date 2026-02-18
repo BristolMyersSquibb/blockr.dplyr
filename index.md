@@ -93,10 +93,8 @@ blockr.dplyr provides 16 data transformation blocks:
 - [separate](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.html#separate-block):
   split one column into multiple columns
 
-See
-[`vignette("blockr-dplyr-showcase")`](https://bristolmyerssquibb.github.io/blockr.dplyr/articles/blockr-dplyr-showcase.md)
-for a complete showcase with screenshots and detailed explanations of
-each block.
+See `vignette("blockr-dplyr-showcase")` for a complete showcase with
+screenshots and detailed explanations of each block.
 
 ## Learn More
 
