@@ -13,7 +13,8 @@
 #' @importFrom htmltools tags
 #' @noRd
 #' @noRd
-mod_multi_arrange_server <- function(id, get_value, get_cols) {
+mod_multi_arrange_server <- function(id, get_value, get_cols,
+                                     external_value = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -37,6 +38,29 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
     # Track which arrange indices exist
     r_arrange_indices <- reactiveVal(seq_along(initial_arranges))
     r_next_index <- reactiveVal(length(initial_arranges) + 1)
+
+    # Track external updates so r_output reads r_arranges (not stale
+    # form inputs) until the UI has re-rendered.
+    r_external_pending <- reactiveVal(FALSE)
+
+    # Watch for external updates (from external_ctrl / AI)
+    if (!is.null(external_value)) {
+      observeEvent(external_value(), {
+        new_val <- external_value()
+        # Convert character vector to list of arrange specs
+        if (is.character(new_val)) {
+          new_val <- lapply(new_val, function(col) {
+            list(column = col, direction = "asc")
+          })
+        }
+        if (is.list(new_val) && length(new_val) > 0) {
+          r_external_pending(TRUE)
+          r_arranges(new_val)
+          r_arrange_indices(seq_along(new_val))
+          r_next_index(length(new_val) + 1)
+        }
+      }, ignoreInit = TRUE)
+    }
 
     # Collect current values from all inputs
     get_current_arranges <- function() {
@@ -160,6 +184,13 @@ mod_multi_arrange_server <- function(id, get_value, get_cols) {
 
     # Return the reactive arranges with initialization handling
     reactive({
+      # After an external update (AI ctrl), use r_arranges() directly
+      # until the UI re-renders with new inputs.
+      if (r_external_pending()) {
+        r_external_pending(FALSE)
+        return(r_arranges())
+      }
+
       # Check if any inputs exist yet - if not, use stored arranges
       indices <- r_arrange_indices()
       has_inputs <- any(sapply(indices, function(i) {

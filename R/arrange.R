@@ -62,32 +62,32 @@
 #'
 #' @export
 new_arrange_block <- function(columns = character(), ...) {
-  # Convert inputs to arrange specifications
-  if (is.character(columns) && length(columns) > 0) {
-    # Simple character vector - default to ascending order
-    initial_arranges <- lapply(columns, function(col) {
-      list(column = col, direction = "asc")
-    })
-  } else if (is.list(columns)) {
-    # Already in list format
-    initial_arranges <- columns
-  } else {
-    # Empty or invalid input
-    initial_arranges <- list()
-  }
-
   new_transform_block(
     function(id, data) {
       moduleServer(
         id,
         function(input, output, session) {
+          r_columns <- as_rv(columns)
           cols <- reactive(colnames(data()))
+
+          # Compute initial arranges from current value
+          init_val <- r_columns()
+          initial_arranges <- if (is.character(init_val) && length(init_val) > 0) {
+            lapply(init_val, function(col) {
+              list(column = col, direction = "asc")
+            })
+          } else if (is.list(init_val)) {
+            init_val
+          } else {
+            list()
+          }
 
           # Use the multi arrange module
           r_arranges <- mod_multi_arrange_server(
             "multi_arrange",
             get_value = function() initial_arranges,
-            get_cols = cols
+            get_cols = cols,
+            external_value = if (inherits(columns, "reactiveVal")) columns else NULL
           )
 
           list(
@@ -117,14 +117,7 @@ new_arrange_block <- function(columns = character(), ...) {
             }),
             state = list(
               arranges = r_arranges,
-              columns = reactive({
-                arranges <- r_arranges()
-                if (length(arranges) > 0) {
-                  sapply(arranges, function(arr) arr$column)
-                } else {
-                  character(0)
-                }
-              })
+              columns = r_columns
             )
           )
         }
@@ -166,6 +159,8 @@ new_arrange_block <- function(columns = character(), ...) {
       )
     },
     class = "arrange_block",
+    external_ctrl = TRUE,
+    allow_empty_state = "columns",
     ...
   )
 }

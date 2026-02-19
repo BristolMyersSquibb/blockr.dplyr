@@ -52,15 +52,32 @@ new_rename_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
+          r_renames_rv <- as_rv(renames)
+
           r_renames <- mod_multi_rename_server(
             id = "mr",
-            get_value = \() renames,
-            get_cols = \() colnames(data())
+            get_value = \() r_renames_rv(),
+            get_cols = \() colnames(data()),
+            external_value = if (inherits(renames, "reactiveVal")) renames else NULL
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_rename(renames))
-          r_renames_validated <- reactiveVal(renames)
+          r_expr_validated <- reactiveVal(parse_rename(r_renames_rv()))
+          r_renames_validated <- reactiveVal(r_renames_rv())
+
+          # Auto-update when external value changes (no submit needed)
+          if (inherits(renames, "reactiveVal")) {
+            observeEvent(renames(), {
+              new_val <- renames()
+              apply_rename(
+                data(),
+                new_val,
+                r_expr_validated,
+                r_renames_validated,
+                session
+              )
+            }, ignoreInit = TRUE)
+          }
 
           # Validate and update on submit
           observeEvent(input$submit, {
@@ -71,12 +88,16 @@ new_rename_block <- function(
               r_renames_validated,
               session
             )
+            # Sync state so expr reactive recomputes
+            if (!identical(r_renames_rv(), r_renames_validated())) {
+              r_renames_rv(r_renames_validated())
+            }
           })
 
           list(
-            expr = r_expr_validated,
+            expr = reactive(parse_rename(r_renames_rv())),
             state = list(
-              renames = reactive(as.list(r_renames_validated()))
+              renames = r_renames_rv
             )
           )
         }
@@ -117,6 +138,7 @@ new_rename_block <- function(
       )
     },
     class = "rename_block",
+    external_ctrl = TRUE,
     ...
   )
 }

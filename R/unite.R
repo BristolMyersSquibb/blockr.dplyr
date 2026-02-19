@@ -87,11 +87,11 @@ new_unite_block <- function(
             initial_value = cols
           )
 
-          # Reactive values for other parameters
-          r_col <- reactiveVal(col)
-          r_sep <- reactiveVal(sep)
-          r_remove <- reactiveVal(remove)
-          r_na_rm <- reactiveVal(na.rm)
+          # Reactive values (as_rv supports external_ctrl injection)
+          r_col <- as_rv(col)
+          r_sep <- as_rv(sep)
+          r_remove <- as_rv(remove)
+          r_na_rm <- as_rv(na.rm)
 
           # Update reactive values when inputs change
           observeEvent(input$col, {
@@ -109,6 +109,31 @@ new_unite_block <- function(
           observeEvent(input$na_rm, {
             r_na_rm(input$na_rm)
           })
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_col(), {
+            if (!identical(input$col, r_col())) {
+              updateTextInput(session, "col", value = r_col())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_sep(), {
+            if (!identical(input$sep, r_sep())) {
+              updateTextInput(session, "sep", value = r_sep())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_remove(), {
+            if (!identical(input$remove, r_remove())) {
+              shiny::updateCheckboxInput(session, "remove", value = r_remove())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_na_rm(), {
+            if (!identical(input$na_rm, r_na_rm())) {
+              shiny::updateCheckboxInput(session, "na_rm", value = r_na_rm())
+            }
+          }, ignoreInit = TRUE)
 
           list(
             expr = reactive({
@@ -300,6 +325,7 @@ new_unite_block <- function(
       )
     },
     class = "unite_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("cols"),
     ...
   )

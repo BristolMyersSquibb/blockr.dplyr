@@ -1,7 +1,7 @@
 # Arrange block demo
 pkgload::load_all()
 
-run_app(
+blockr::run_app(
   blocks = c(
     data = new_dataset_block(dataset = "mtcars"),
     categorized = new_mutate_expr_block(

@@ -56,19 +56,20 @@ new_slice_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Initialize state reactives for all parameters
-          r_type <- reactiveVal(type)
-          r_n <- reactiveVal(n)
-          r_prop <- reactiveVal(prop)
-          r_order_by <- reactiveVal(order_by)
-          r_with_ties <- reactiveVal(with_ties)
-          r_weight_by <- reactiveVal(weight_by)
-          r_replace <- reactiveVal(replace)
-          r_rows <- reactiveVal(rows)
+          # Initialize state reactives (as_rv supports external_ctrl injection)
+          r_type <- as_rv(type)
+          r_n <- as_rv(n)
+          r_prop <- as_rv(prop)
+          r_order_by <- as_rv(order_by)
+          r_with_ties <- as_rv(with_ties)
+          r_weight_by <- as_rv(weight_by)
+          r_replace <- as_rv(replace)
+          r_rows <- as_rv(rows)
 
           # Determine initial mode based on constructor params
           # Use checkbox state: TRUE = proportion mode, FALSE = count mode
-          r_use_prop <- reactiveVal(!is.null(prop))
+          # Must use r_prop() (the value) not prop (which may be a reactiveVal object)
+          r_use_prop <- reactiveVal(!is.null(r_prop()))
 
           # Group by selector using unified componen
           r_by_selection <- mod_column_selector_server(
@@ -161,6 +162,41 @@ new_slice_block <- function(
           observeEvent(input$rows, {
             r_rows(input$rows)
           })
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_type(), {
+            if (!identical(input$type, r_type())) {
+              updateSelectInput(session, "type", selected = r_type())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_n(), {
+            if (!r_use_prop() && !identical(input$n, r_n())) {
+              updateNumericInput(session, "n", value = r_n())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_order_by(), {
+            if (!identical(input$order_by, r_order_by())) {
+              updateSelectInput(session, "order_by", selected = r_order_by())
+            }
+          }, ignoreInit = TRUE)
+
+          # Reverse sync for prop: when external_ctrl sets prop, switch to % mode
+          observeEvent(r_prop(), {
+            prop_val <- r_prop()
+            if (!is.null(prop_val) && !r_use_prop()) {
+              r_use_prop(TRUE)
+              updateCheckboxInput(session, "use_prop", value = TRUE)
+              updateNumericInput(session, "n",
+                min = 0, max = 1, step = 0.1, value = prop_val
+              )
+              shinyjs::html("n_label", "Proportion (0 to 1)")
+            } else if (!is.null(prop_val) && r_use_prop() &&
+                       !identical(input$n, prop_val)) {
+              updateNumericInput(session, "n", value = prop_val)
+            }
+          }, ignoreInit = TRUE)
 
           # Restore type selector on initialization
           observe({
@@ -591,6 +627,7 @@ new_slice_block <- function(
       )
     },
     class = "slice_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("order_by", "weight_by", "prop", "by"),
     ...
   )

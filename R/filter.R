@@ -60,32 +60,23 @@ new_filter_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Use value filter interface
-          filter_result <- mod_value_filter_server(
+          r_conditions <- as_rv(conditions)
+          r_preserve_order <- as_rv(preserve_order)
+
+          mod_value_filter_server(
             id = "vf",
-            get_value = \() conditions,
+            conditions = r_conditions,
             get_data = data,
-            preserve_order = preserve_order
+            preserve_order = r_preserve_order
           )
 
-          r_conditions <- filter_result$conditions
-          r_preserve_order <- filter_result$preserve_order
-
-          # Reactive expression that updates automatically when conditions change
           r_expr <- reactive({
-            current_conditions <- r_conditions()
-            current_preserve_order <- r_preserve_order()
-
-            # Always try to parse, even with empty/invalid conditions
             tryCatch(
-              {
-                parse_value_filter(
-                  current_conditions,
-                  preserve_order = current_preserve_order
-                )
-              },
+              parse_value_filter(
+                r_conditions(),
+                preserve_order = r_preserve_order()
+              ),
               error = function(e) {
-                # Fallback to identity filter if parsing fails
                 parse(text = "dplyr::filter(data, TRUE)")[[1]]
               }
             )
@@ -128,6 +119,8 @@ new_filter_block <- function(
       )
     },
     class = "filter_block",
+    external_ctrl = TRUE,
+    allow_empty_state = "conditions",
     ...
   )
 }

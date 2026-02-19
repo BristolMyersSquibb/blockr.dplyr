@@ -42,8 +42,8 @@ mod_column_selector_ui <- function(
 #' @noRd
 mod_column_selector_server <- function(id, get_cols, initial_value = character()) {
   moduleServer(id, function(input, output, session) {
-    # Reactive to store current selection
-    r_selection <- reactiveVal(initial_value)
+    # Support injected reactiveVal (from external_ctrl)
+    r_selection <- as_rv(initial_value)
 
     # Update reactive value when selection changes
     observeEvent(
@@ -52,6 +52,17 @@ mod_column_selector_server <- function(id, get_cols, initial_value = character()
         r_selection(input$columns %||% character())
       }
     )
+
+    # Watch for external updates (when initial_value is a reactiveVal)
+    if (inherits(initial_value, "reactiveVal")) {
+      observeEvent(initial_value(), {
+        if (!identical(r_selection(), initial_value())) {
+          r_selection(initial_value())
+          updateSelectInput(session, "columns",
+            choices = get_cols(), selected = initial_value())
+        }
+      }, ignoreInit = TRUE)
+    }
 
     # Update choices when data changes, preserving selection
     observeEvent(get_cols(), {

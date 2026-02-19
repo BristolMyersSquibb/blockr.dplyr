@@ -223,7 +223,7 @@ test_that("mod_value_filter_server extracts unique values correctly", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() iris
     ),
     {
@@ -268,7 +268,7 @@ test_that("mod_value_filter_server handles initial conditions", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() initial_conditions,
+      conditions =initial_conditions,
       get_data = function() iris
     ),
     {
@@ -578,7 +578,7 @@ test_that("mod_value_filter_server handles empty initial conditions", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() mtcars
     ),
     {
@@ -596,7 +596,7 @@ test_that("mod_value_filter_server handles numeric columns", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() mtcars
     ),
     {
@@ -621,7 +621,7 @@ test_that("mod_value_filter_server with preserve_order parameter", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() iris,
       preserve_order = TRUE
     ),
@@ -644,7 +644,7 @@ test_that("mod_value_filter_server handles multiple conditions", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() multi_conditions,
+      conditions =multi_conditions,
       get_data = function() mtcars
     ),
     {
@@ -665,7 +665,7 @@ test_that("mod_value_filter_server handles exclude mode", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(
+      conditions =list(
         list(column = "Species", values = c("virginica"), mode = "exclude")
       ),
       get_data = function() iris
@@ -690,7 +690,7 @@ test_that("mod_value_filter_server handles OR operator", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() or_conditions,
+      conditions =or_conditions,
       get_data = function() iris
     ),
     {
@@ -709,7 +709,7 @@ test_that("mod_value_filter_server with mixed column types", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() iris
     ),
     {
@@ -732,7 +732,7 @@ test_that("mod_value_filter_server add_condition button - testServer", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(
+      conditions =list(
         list(column = "Species", values = c("setosa"), mode = "include")
       ),
       get_data = function() iris
@@ -771,7 +771,7 @@ test_that("mod_value_filter_server preserve_order checkbox - testServer", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() iris,
       preserve_order = FALSE
     ),
@@ -808,7 +808,7 @@ test_that("mod_value_filter_server column selection updates values - testServer"
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(),
+      conditions =list(),
       get_data = function() iris
     ),
     {
@@ -840,7 +840,7 @@ test_that("mod_value_filter_server mode checkbox - testServer", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(
+      conditions =list(
         list(column = "Species", values = c("setosa"), mode = "include")
       ),
       get_data = function() iris
@@ -881,7 +881,7 @@ test_that("mod_value_filter_server values selection - testServer", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(
+      conditions =list(
         list(column = "Species", values = c("setosa"), mode = "include")
       ),
       get_data = function() iris
@@ -916,7 +916,7 @@ test_that("mod_value_filter_server operator selection - testServer", {
   testServer(
     mod_value_filter_server,
     args = list(
-      get_value = function() list(
+      conditions =list(
         list(column = "Species", values = c("setosa"), mode = "include"),
         list(column = "Sepal.Length", values = c("5.1"), mode = "include", operator = "&")
       ),

@@ -88,8 +88,8 @@ new_separate_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Single column selector for column to separate
-          r_col <- reactiveVal(col)
+          # Single column selector (as_rv supports external_ctrl injection)
+          r_col <- as_rv(col)
 
           # Update column selection
           observeEvent(input$col, {
@@ -106,13 +106,13 @@ new_separate_block <- function(
             )
           })
 
-          # Reactive values for other parameters
-          r_into <- reactiveVal(into)
-          r_sep <- reactiveVal(sep)
-          r_remove <- reactiveVal(remove)
-          r_convert <- reactiveVal(convert)
-          r_extra <- reactiveVal(extra)
-          r_fill <- reactiveVal(fill)
+          # Reactive values (as_rv supports external_ctrl injection)
+          r_into <- as_rv(into)
+          r_sep <- as_rv(sep)
+          r_remove <- as_rv(remove)
+          r_convert <- as_rv(convert)
+          r_extra <- as_rv(extra)
+          r_fill <- as_rv(fill)
 
           # Update reactive values when inputs change
           observeEvent(input$into, {
@@ -138,6 +138,54 @@ new_separate_block <- function(
           observeEvent(input$fill, {
             r_fill(input$fill)
           })
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_col(), {
+            if (!identical(input$col, r_col())) {
+              updateSelectInput(session, "col", selected = r_col())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_into(), {
+            new_val <- if (is.character(r_into())) {
+              paste(r_into(), collapse = ", ")
+            } else {
+              r_into()
+            }
+            if (!identical(input$into, new_val)) {
+              updateTextInput(session, "into", value = new_val)
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_sep(), {
+            if (!identical(input$sep, r_sep())) {
+              updateTextInput(session, "sep", value = r_sep())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_remove(), {
+            if (!identical(input$remove, r_remove())) {
+              shiny::updateCheckboxInput(session, "remove", value = r_remove())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_convert(), {
+            if (!identical(input$convert, r_convert())) {
+              shiny::updateCheckboxInput(session, "convert", value = r_convert())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_extra(), {
+            if (!identical(input$extra, r_extra())) {
+              shiny::updateSelectInput(session, "extra", selected = r_extra())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_fill(), {
+            if (!identical(input$fill, r_fill())) {
+              shiny::updateSelectInput(session, "fill", selected = r_fill())
+            }
+          }, ignoreInit = TRUE)
 
           list(
             expr = reactive({
@@ -367,6 +415,7 @@ new_separate_block <- function(
       )
     },
     class = "separate_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("col"),
     ...
   )

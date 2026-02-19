@@ -40,10 +40,14 @@ new_mutate_expr_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
+          r_exprs_rv <- as_rv(exprs)
+          r_by_rv <- as_rv(by)
+
           r_exprs <- mod_multi_kvexpr_server(
             id = "mkv",
-            get_value = \() exprs,
-            get_cols = \() colnames(data())
+            get_value = \() r_exprs_rv(),
+            get_cols = \() colnames(data()),
+            external_value = if (inherits(exprs, "reactiveVal")) exprs else NULL
           )
 
           # Group by selector
@@ -54,9 +58,9 @@ new_mutate_expr_block <- function(
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_mutate(exprs, by))
-          r_exprs_validated <- reactiveVal(exprs)
-          r_by_validated <- reactiveVal(by)
+          r_expr_validated <- reactiveVal(parse_mutate(r_exprs_rv(), r_by_rv()))
+          r_exprs_validated <- reactiveVal(r_exprs_rv())
+          r_by_validated <- reactiveVal(r_by_rv())
 
           # Auto-update when grouping changes
           observeEvent(r_by_selection(), {
@@ -73,6 +77,22 @@ new_mutate_expr_block <- function(
             }
           })
 
+          # Auto-update when external value changes (no submit needed)
+          if (inherits(exprs, "reactiveVal")) {
+            observeEvent(exprs(), {
+              new_val <- exprs()
+              if (is.list(new_val)) new_val <- unlist(new_val)
+              apply_mutate(
+                data(),
+                new_val,
+                r_by_selection(),
+                r_expr_validated,
+                r_exprs_validated,
+                r_by_validated
+              )
+            }, ignoreInit = TRUE)
+          }
+
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
             apply_mutate(
@@ -83,12 +103,16 @@ new_mutate_expr_block <- function(
               r_exprs_validated,
               r_by_validated
             )
+            # Sync state so expr reactive recomputes
+            if (!identical(r_exprs_rv(), r_exprs_validated())) {
+              r_exprs_rv(r_exprs_validated())
+            }
           })
 
           list(
-            expr = r_expr_validated,
+            expr = reactive(parse_mutate(r_exprs_rv(), r_by_validated())),
             state = list(
-              exprs = reactive(as.list(r_exprs_validated())),
+              exprs = r_exprs_rv,
               by = r_by_validated
             )
           )
@@ -171,6 +195,7 @@ new_mutate_expr_block <- function(
       )
     },
     class = "mutate_expr_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("by"),
     ...
   )

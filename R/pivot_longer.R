@@ -76,11 +76,11 @@ new_pivot_longer_block <- function(
             initial_value = cols
           )
 
-          # Text inputs for names_to and values_to
-          r_names_to <- reactiveVal(names_to)
-          r_values_to <- reactiveVal(values_to)
-          r_values_drop_na <- reactiveVal(values_drop_na)
-          r_names_prefix <- reactiveVal(names_prefix)
+          # Text inputs (as_rv supports external_ctrl injection)
+          r_names_to <- as_rv(names_to)
+          r_values_to <- as_rv(values_to)
+          r_values_drop_na <- as_rv(values_drop_na)
+          r_names_prefix <- as_rv(names_prefix)
 
           # Update reactive values when inputs change
           # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
@@ -100,6 +100,31 @@ new_pivot_longer_block <- function(
           observeEvent(input$names_prefix, {
             r_names_prefix(input$names_prefix)
           })
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_names_to(), {
+            if (!identical(input$names_to, r_names_to())) {
+              updateTextInput(session, "names_to", value = r_names_to())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_values_to(), {
+            if (!identical(input$values_to, r_values_to())) {
+              updateTextInput(session, "values_to", value = r_values_to())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_values_drop_na(), {
+            if (!identical(input$values_drop_na, r_values_drop_na())) {
+              shiny::updateCheckboxInput(session, "values_drop_na", value = r_values_drop_na())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_names_prefix(), {
+            if (!identical(input$names_prefix, r_names_prefix())) {
+              updateTextInput(session, "names_prefix", value = r_names_prefix())
+            }
+          }, ignoreInit = TRUE)
 
           list(
             expr = reactive({
@@ -280,6 +305,7 @@ new_pivot_longer_block <- function(
       )
     },
     class = "pivot_longer_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("cols", "names_prefix"),
     ...
   )
