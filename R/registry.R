@@ -179,7 +179,18 @@ register_dplyr_blocks <- function() {
           ),
           preserve_order = FALSE
         ),
-        prompt = "The values array must always contain strings, even for numeric columns (e.g. [\"4\"] not [4]). The operator field connects a condition to the previous one."
+        prompt = paste(
+          "The values array must always contain strings, even for numeric columns (e.g. [\"4\"] not [4]).",
+          "The operator field connects a condition to the previous one.",
+          "\n\nIMPORTANT — include vs exclude mode:",
+          "ALWAYS prefer mode \"include\" with the matching values.",
+          "Only use mode \"exclude\" when the user explicitly says \"exclude\", \"remove\", \"drop\", or \"not\".",
+          "For example, \"sepal width smaller than 5\" means: include all Sepal.Width values that are < 5,",
+          "NOT exclude values >= 5.",
+          "\n\nThis block uses exact value matching, not comparison operators.",
+          "For numeric comparisons (e.g. \"< 5\"), list every matching value from the data in the values array.",
+          "Use the data preview to identify which values satisfy the condition."
+        )
       ),
       # filter_expr_block:
       structure(
