@@ -93,6 +93,12 @@ mod_value_filter_server <- function(
     self_write <- new.env(parent = emptyenv())
     self_write$active <- FALSE
 
+    # Track the last conditions written by the input sync observer.
+    # Prevents the sync observer from overwriting externally-set conditions
+    # when it re-runs without actual UI changes (spurious invalidation).
+    last_ui_write <- new.env(parent = emptyenv())
+    last_ui_write$conditions <- NULL
+
     # Get available columns
     available_columns <- reactive({
       req(r_data())
@@ -201,6 +207,7 @@ mod_value_filter_server <- function(
 
     # Helper: write conditions from UI (sets self_write flag)
     write_conditions_from_ui <- function(new_conds) {
+      last_ui_write$conditions <- new_conds
       if (!identical(new_conds, isolate(r_conditions()))) {
         self_write$active <- TRUE
         r_conditions(new_conds)
@@ -394,11 +401,13 @@ mod_value_filter_server <- function(
         self_write$active <- FALSE
         return()
       }
-      # External update — rebuild UI structure
+      # External update — rebuild UI with fresh indices so renderUI always
+      # fires, even when the number of conditions hasn't changed.
       new_conditions <- r_conditions()
       if (is.list(new_conditions) && length(new_conditions) > 0) {
-        r_condition_indices(seq_along(new_conditions))
-        r_next_index(length(new_conditions) + 1)
+        start <- r_next_index()
+        r_condition_indices(seq(start, length.out = length(new_conditions)))
+        r_next_index(start + length(new_conditions))
       }
     }, ignoreInit = TRUE)
 
@@ -418,7 +427,14 @@ mod_value_filter_server <- function(
         paste0("condition_", i, "_column") %in% names(input)
       }, logical(1)))
       if (has_inputs) {
-        write_conditions_from_ui(get_current_conditions())
+        current <- get_current_conditions()
+        # Only write back if UI actually changed. This prevents overwriting
+        # externally-set conditions (e.g. from AI ctrl) when the observer
+        # re-runs due to spurious invalidation while the old UI inputs
+        # still reflect the previous state.
+        if (!identical(current, last_ui_write$conditions)) {
+          write_conditions_from_ui(current)
+        }
       }
     })
 
