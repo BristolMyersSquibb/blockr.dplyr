@@ -87,7 +87,7 @@ new_arrange_block <- function(columns = character(), ...) {
             "multi_arrange",
             get_value = function() initial_arranges,
             get_cols = cols,
-            external_value = if (inherits(columns, "reactiveVal")) columns else NULL
+            external_value = r_columns
           )
 
           list(

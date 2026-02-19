@@ -47,7 +47,7 @@ new_mutate_expr_block <- function(
             id = "mkv",
             get_value = \() r_exprs_rv(),
             get_cols = \() colnames(data()),
-            external_value = if (inherits(exprs, "reactiveVal")) exprs else NULL
+            external_value = r_exprs_rv
           )
 
           # Group by selector

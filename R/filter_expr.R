@@ -52,7 +52,7 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
             id = "mf",
             get_value = \() r_exprs_rv(),
             get_cols = \() colnames(data()),
-            external_value = if (inherits(exprs, "reactiveVal")) exprs else NULL
+            external_value = r_exprs_rv
           )
 
           # Store the validated expression

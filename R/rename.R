@@ -58,7 +58,7 @@ new_rename_block <- function(
             id = "mr",
             get_value = \() r_renames_rv(),
             get_cols = \() colnames(data()),
-            external_value = if (inherits(renames, "reactiveVal")) renames else NULL
+            external_value = r_renames_rv
           )
 
           # Store the validated expression

@@ -604,7 +604,7 @@ new_summarize_block <- function(
             id = "ms",
             get_value = \() r_summaries_rv(),
             get_cols = \() colnames(data()),
-            external_value = if (inherits(summaries, "reactiveVal")) summaries else NULL
+            external_value = r_summaries_rv
           )
 
           # Store the validated expression
