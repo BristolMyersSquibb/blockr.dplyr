@@ -189,9 +189,11 @@ new_join_block <- function(
           list(
             expr = reactive({
               keys <- r_join_keys()
-              # Only build expression if we have valid keys
-              req(length(keys) > 0)
+              # character() = natural join (proceed); list() = no custom
+              # keys yet (block). For non-empty lists, require at least one
+              # mapping with content.
               if (is.list(keys)) {
+                req(length(keys) > 0)
                 req(any(vapply(keys, function(k) length(k) > 0, logical(1))))
               }
               build_join_expr(r_join_type(), keys)

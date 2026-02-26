@@ -14,7 +14,8 @@
 #' @importFrom htmltools tags
 #' @noRd
 #' @noRd
-mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
+mod_multi_kvexpr_server <- function(id, get_value, get_cols,
+                                    external_value = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -36,6 +37,23 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
     # Track which expression indices exist
     r_expr_indices <- reactiveVal(seq_along(initial_values))
     r_next_index <- reactiveVal(length(initial_values) + 1)
+
+    # Track external updates so r_output reads r_expressions (not stale
+    # form inputs) until the UI has re-rendered.
+    r_external_pending <- reactiveVal(FALSE)
+
+    # Watch for external updates (from external_ctrl / AI)
+    if (!is.null(external_value)) {
+      observeEvent(external_value(), {
+        new_val <- external_value()
+        if (is.list(new_val) && length(new_val) > 0) {
+          r_external_pending(TRUE)
+          r_expressions(new_val)
+          r_expr_indices(seq_along(new_val))
+          r_next_index(length(new_val) + 1)
+        }
+      }, ignoreInit = TRUE)
+    }
 
     # Initialize ACE editors for existing expressions
     observe({
@@ -168,6 +186,13 @@ mod_multi_kvexpr_server <- function(id, get_value, get_cols) {
 
     # Return the reactive expressions
     reactive({
+      # After an external update (AI ctrl), use r_expressions() directly
+      # until the UI re-renders with new inputs.
+      if (r_external_pending()) {
+        r_external_pending(FALSE)
+        return(r_expressions())
+      }
+
       get_current_expressions()
     })
   })

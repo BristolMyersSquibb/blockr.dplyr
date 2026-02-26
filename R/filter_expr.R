@@ -45,16 +45,32 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
       moduleServer(
         id,
         function(input, output, session) {
+          r_exprs_rv <- as_rv(exprs)
+
           # Use multi-condition filter interface
           r_exprs <- mod_multi_filter_server(
             id = "mf",
-            get_value = \() exprs,
-            get_cols = \() colnames(data())
+            get_value = \() r_exprs_rv(),
+            get_cols = \() colnames(data()),
+            external_value = r_exprs_rv
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_filter_expr(exprs))
-          r_exprs_validated <- reactiveVal(exprs)
+          r_expr_validated <- reactiveVal(parse_filter_expr(r_exprs_rv()))
+          r_exprs_validated <- reactiveVal(r_exprs_rv())
+
+          # Auto-update when external value changes (no submit needed)
+          if (inherits(exprs, "reactiveVal")) {
+            observeEvent(exprs(), {
+              new_val <- exprs()
+              apply_filter_expr(
+                data(),
+                new_val,
+                r_expr_validated,
+                r_exprs_validated
+              )
+            }, ignoreInit = TRUE)
+          }
 
           # Validate and update on submit
           observeEvent(input$submit, {
@@ -64,12 +80,16 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
               r_expr_validated,
               r_exprs_validated
             )
+            # Sync state so expr reactive recomputes
+            if (!identical(r_exprs_rv(), r_exprs_validated())) {
+              r_exprs_rv(r_exprs_validated())
+            }
           })
 
           list(
-            expr = r_expr_validated,
+            expr = reactive(parse_filter_expr(r_exprs_rv())),
             state = list(
-              exprs = r_exprs_validated
+              exprs = r_exprs_rv
             )
           )
         }
@@ -131,6 +151,7 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
       )
     },
     class = "filter_expr_block",
+    external_ctrl = TRUE,
     ...
   )
 }

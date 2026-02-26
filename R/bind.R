@@ -73,7 +73,7 @@ dot_args_names <- function(x) {
 #' @export
 new_bind_rows_block <- function(id_name = "", ...) {
   new_transform_block(
-    function(id, ...args) {
+    function(id, ...args) { # nolint: object_name_linter.
       moduleServer(
         id,
         function(input, output, session) {
@@ -133,7 +133,7 @@ new_bind_rows_block <- function(id_name = "", ...) {
         )
       )
     },
-    dat_valid = function(...args) {
+    dat_valid = function(...args) { # nolint: object_name_linter.
       stopifnot(length(...args) >= 1L)
     },
     allow_empty_state = TRUE,
@@ -200,7 +200,7 @@ new_bind_rows_block <- function(id_name = "", ...) {
 #' @export
 new_bind_cols_block <- function(...) {
   new_transform_block(
-    function(id, ...args) {
+    function(id, ...args) { # nolint: object_name_linter.
       moduleServer(
         id,
         function(input, output, session) {
@@ -233,7 +233,7 @@ new_bind_cols_block <- function(...) {
         )
       )
     },
-    dat_valid = function(...args) {
+    dat_valid = function(...args) { # nolint: object_name_linter.
       stopifnot(length(...args) >= 1L)
     },
     allow_empty_state = TRUE,

@@ -18,6 +18,21 @@ needs_backticks <- function(names) {
   needs_bt
 }
 
+#' Ensure a value is a reactiveVal
+#'
+#' If \code{x} is already a \code{reactiveVal} (e.g., injected by
+#' \code{external_ctrl}), return it unchanged.
+#' Otherwise, create a new \code{reactiveVal} with \code{default} as its
+#' initial value.
+#'
+#' @param x Value to check.
+#' @param default Initial value for the new reactiveVal (defaults to \code{x}).
+#' @return A \code{reactiveVal}.
+#' @noRd
+as_rv <- function(x, default = x) {
+  if (inherits(x, "reactiveVal")) x else shiny::reactiveVal(default)
+}
+
 #' Wrap names in backticks if needed (vectorized)
 #'
 #' @param names Character vector of names to potentially wrap

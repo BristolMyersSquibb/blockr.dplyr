@@ -9,13 +9,13 @@
 #' @noRd
 display_to_actual <- function(value, original_type = "character") {
   if (value == "<NA>") {
-    return(NA)
+    NA
   } else if (value == "<empty>") {
-    return("")
+    ""
   } else if (original_type == "numeric") {
-    return(as.numeric(value))
+    as.numeric(value)
   } else {
-    return(value)
+    value
   }
 }
 
@@ -45,9 +45,12 @@ actual_to_display <- function(value) {
 #' inputs. Supports multiple conditions with AND/OR logic.
 #'
 #' @param id The module ID
-#' @param get_value Function that returns initial conditions as a list
-#' @param get_data Function that returns the data frame for extracting unique values
-#' @param preserve_order Logical. If TRUE, preserves the order of selected values
+#' @param conditions Initial conditions as a list, or a reactiveVal for
+#'   external control
+#' @param get_data Function that returns the data frame for extracting unique
+#'   values
+#' @param preserve_order Logical or reactiveVal. If TRUE, preserves the order
+#'   of selected values
 #'
 #' @return A list with reactive expressions for conditions and preserve_order
 #' @importFrom shiny req NS moduleServer reactive actionButton observeEvent renderUI uiOutput tagList div selectInput checkboxInput updateSelectInput shinyApp selectizeInput updateSelectizeInput updateCheckboxInput observe isolate
@@ -58,39 +61,43 @@ actual_to_display <- function(value) {
 #' @noRd
 mod_value_filter_server <- function(
   id,
-  get_value,
+  conditions,
   get_data,
   preserve_order = FALSE
 ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Initialize with values from get_value
-    initial_value <- get_value()
-
-    if (!is.list(initial_value)) {
-      initial_conditions <- list()
-    } else {
-      initial_conditions <- initial_value
-    }
-
-    # Add default condition if none provided
-    if (length(initial_conditions) == 0) {
-      initial_conditions <- list(
-        list(column = NULL, values = character(0), mode = "include")
-      )
-    }
-
-    # Store conditions as reactive value
-    r_conditions <- reactiveVal(initial_conditions)
+    # r_conditions is the outer reactiveVal — single source of truth.
+    # Both UI input changes and external writes (AI ctrl) go through it.
+    r_conditions <- as_rv(conditions)
     r_data <- get_data
 
-    # Store preserve_order as reactive value
-    r_preserve_order <- reactiveVal(preserve_order)
+    r_preserve_order <- as_rv(preserve_order)
 
-    # Track which condition indices exist
-    r_condition_indices <- reactiveVal(seq_along(initial_conditions))
-    r_next_index <- reactiveVal(length(initial_conditions) + 1)
+    # Ensure we have at least one condition slot
+    initial_conds <- isolate(r_conditions())
+    if (!is.list(initial_conds) || length(initial_conds) == 0) {
+      initial_conds <- list(
+        list(column = NULL, values = character(0), mode = "include")
+      )
+      r_conditions(initial_conds)
+    }
+
+    # Track which condition indices exist (drives renderUI)
+    r_condition_indices <- reactiveVal(seq_along(initial_conds))
+    r_next_index <- reactiveVal(length(initial_conds) + 1)
+
+    # Non-reactive flag: TRUE when WE wrote to r_conditions (from inputs).
+    # Lets the external-update observer distinguish our writes from AI writes.
+    self_write <- new.env(parent = emptyenv())
+    self_write$active <- FALSE
+
+    # Track the last conditions written by the input sync observer.
+    # Prevents the sync observer from overwriting externally-set conditions
+    # when it re-runs without actual UI changes (spurious invalidation).
+    last_ui_write <- new.env(parent = emptyenv())
+    last_ui_write$conditions <- NULL
 
     # Get available columns
     available_columns <- reactive({
@@ -198,28 +205,34 @@ mod_value_filter_server <- function(
       result
     }
 
+    # Helper: write conditions from UI (sets self_write flag)
+    write_conditions_from_ui <- function(new_conds) {
+      last_ui_write$conditions <- new_conds
+      if (!identical(new_conds, isolate(r_conditions()))) {
+        self_write$active <- TRUE
+        r_conditions(new_conds)
+      }
+    }
+
     # Add new condition
     observeEvent(input$add_condition, {
       current_indices <- r_condition_indices()
       new_index <- r_next_index()
 
-      # Add new index
       r_condition_indices(c(current_indices, new_index))
       r_next_index(new_index + 1)
 
-      # Update conditions
       current <- get_current_conditions()
       new_condition <- list(
         column = NULL,
         values = character(0),
         mode = "include"
       )
-      # Add operator if this is not the first condition
       if (length(current) > 0) {
         new_condition$operator <- "&"
       }
       current <- append(current, list(new_condition))
-      r_conditions(current)
+      write_conditions_from_ui(current)
     })
 
     # Remove condition handlers
@@ -231,22 +244,23 @@ mod_value_filter_server <- function(
           current_indices <- r_condition_indices()
 
           if (length(current_indices) > 1) {
-            # Remove this index
             new_indices <- setdiff(current_indices, i)
             r_condition_indices(new_indices)
 
-            # Update conditions
             current <- get_current_conditions()
-            r_conditions(current)
+            write_conditions_from_ui(current)
           }
         })
       })
     })
 
-    # Render UI dynamically
+    # Render UI dynamically.
+    # Only depends on r_condition_indices() and available_columns() — NOT
+    # r_conditions() directly. This prevents re-rendering when input values
+    # change (only structural changes like add/remove/external trigger it).
     output$conditions_ui <- renderUI({
       indices <- r_condition_indices()
-      conditions <- r_conditions()
+      conditions <- isolate(r_conditions())
       cols <- available_columns()
 
       if (length(indices) == 0) {
@@ -380,42 +394,53 @@ mod_value_filter_server <- function(
       r_preserve_order(input$preserve_order)
     })
 
-    # Return the reactive conditions and preserve_order
+    # Detect external writes to r_conditions (AI ctrl) and rebuild UI.
+    # self_write flag distinguishes our own input-driven writes from external.
+    observeEvent(r_conditions(), {
+      if (self_write$active) {
+        self_write$active <- FALSE
+        return()
+      }
+      # External update — rebuild UI with fresh indices so renderUI always
+      # fires, even when the number of conditions hasn't changed.
+      new_conditions <- r_conditions()
+      if (is.list(new_conditions) && length(new_conditions) > 0) {
+        start <- r_next_index()
+        r_condition_indices(seq(start, length.out = length(new_conditions)))
+        r_next_index(start + length(new_conditions))
+      }
+    }, ignoreInit = TRUE)
+
+    # Sync input-driven changes back to r_conditions (the outer reactiveVal).
+    # This is how UI changes reach filter.R's r_expr.
+    observe({
+      indices <- r_condition_indices()
+      for (i in indices) {
+        input[[paste0("condition_", i, "_column")]]
+        input[[paste0("condition_", i, "_values")]]
+        input[[paste0("condition_", i, "_mode")]]
+        if (i != indices[1]) {
+          input[[paste0("operator_", i)]]
+        }
+      }
+      has_inputs <- any(vapply(indices, function(i) {
+        paste0("condition_", i, "_column") %in% names(input)
+      }, logical(1)))
+      if (has_inputs) {
+        current <- get_current_conditions()
+        # Only write back if UI actually changed. This prevents overwriting
+        # externally-set conditions (e.g. from AI ctrl) when the observer
+        # re-runs due to spurious invalidation while the old UI inputs
+        # still reflect the previous state.
+        if (!identical(current, last_ui_write$conditions)) {
+          write_conditions_from_ui(current)
+        }
+      }
+    })
+
     list(
-      conditions = reactive({
-        # Force reactivity on all condition inputs
-        indices <- r_condition_indices()
-
-        # Touch all relevant input values to create dependencies
-        for (i in indices) {
-          input[[paste0("condition_", i, "_column")]]
-          input[[paste0("condition_", i, "_values")]]
-          input[[paste0("condition_", i, "_mode")]]
-          # Also track operator changes
-          if (i != indices[1]) {
-            input[[paste0("operator_", i)]]
-          }
-        }
-
-        # Check if any inputs exist yet
-        has_inputs <- any(sapply(indices, function(i) {
-          paste0("condition_", i, "_column") %in% names(input)
-        }))
-
-        if (has_inputs) {
-          get_current_conditions()
-        } else {
-          r_conditions()
-        }
-      }),
-      preserve_order = reactive({
-        # Return input value if it exists, otherwise use the initial value
-        if ("preserve_order" %in% names(input)) {
-          input$preserve_order
-        } else {
-          r_preserve_order()
-        }
-      })
+      conditions = reactive(r_conditions()),
+      preserve_order = reactive(r_preserve_order())
     )
   })
 }
@@ -562,20 +587,19 @@ run_value_filter_example <- function() {
       verbatimTextOutput("code")
     ),
     server = function(input, output, session) {
-      r_result <- mod_value_filter_server(
+      r_conditions <- reactiveVal(list())
+      mod_value_filter_server(
         "vf",
-        get_value = function() list(),
+        conditions = r_conditions,
         get_data = function() datasets::iris
       )
 
       output$conditions <- renderPrint({
-        conditions <- r_result()$conditions()
-        utils::str(conditions)
+        utils::str(r_conditions())
       })
 
       output$code <- renderPrint({
-        conditions <- r_result()$conditions()
-        expr <- parse_value_filter(conditions)
+        expr <- parse_value_filter(r_conditions())
         cat(deparse(expr))
       })
     }

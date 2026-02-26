@@ -43,7 +43,7 @@ create_test_app <- function(
     }
 
     # Last resort: assume we're already in package root
-    return(getwd())
+    getwd()
   }
 
   pkg_root <- find_pkg_root()
@@ -80,7 +80,7 @@ create_test_app <- function(
   app_content <- paste(app_lines, collapse = "\n")
   writeLines(app_content, file.path(app_dir, "app.R"))
 
-  return(app_dir)
+  app_dir
 }
 
 #' Extract output data from shinytest2 app values
@@ -118,7 +118,7 @@ get_output_data <- function(app) {
     paste(names(values$export$output), collapse = ", ")
   )
 
-  return(NULL)
+  NULL
 }
 
 #' Verify that output table has expected columns
@@ -236,7 +236,7 @@ wait_for_block <- function(app, block_id = "block_1", timeout = 10000) {
   tryCatch(
     {
       app$wait_for_idle(timeout = timeout)
-      return(TRUE)
+      TRUE
     },
     error = function(e) {
       warning(sprintf(
@@ -244,7 +244,7 @@ wait_for_block <- function(app, block_id = "block_1", timeout = 10000) {
         block_id,
         timeout
       ))
-      return(FALSE)
+      FALSE
     }
   )
 }

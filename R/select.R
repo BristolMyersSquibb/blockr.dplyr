@@ -84,15 +84,13 @@ new_select_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Initialize reactive values
-          r_columns <- reactiveVal(columns)
-          r_exclude <- reactiveVal(exclude)
-          r_distinct <- reactiveVal(distinct)
+          # Initialize reactive values (as_rv supports external_ctrl injection)
+          r_columns <- as_rv(columns)
+          r_exclude <- as_rv(exclude)
+          r_distinct <- as_rv(distinct)
           r_initialized <- reactiveVal(FALSE)
 
           # Update reactive values when inputs change
-          # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
-          # in testServer context where inputs may not be initialized
           observeEvent(
             input$columns,
             {
@@ -113,6 +111,26 @@ new_select_block <- function(
               r_distinct(input$distinct)
             }
           )
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_columns(), {
+            if (r_initialized()) {
+              updateSelectizeInput(session, "columns",
+                choices = colnames(data()), selected = r_columns())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_exclude(), {
+            if (!identical(input$exclude, r_exclude())) {
+              updateCheckboxInput(session, "exclude", value = r_exclude())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_distinct(), {
+            if (!identical(input$distinct, r_distinct())) {
+              updateCheckboxInput(session, "distinct", value = r_distinct())
+            }
+          }, ignoreInit = TRUE)
 
           # Restore initial selection once on startup (like slice block)
           observe({
@@ -272,6 +290,7 @@ new_select_block <- function(
       )
     },
     class = "select_block",
+    external_ctrl = TRUE,
     allow_empty_state = "columns",
     ...
   )

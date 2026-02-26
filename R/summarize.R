@@ -101,7 +101,8 @@ get_summary_functions <- function() {
 #' @importFrom htmltools tags
 #' @noRd
 #' @noRd
-mod_multi_summarize_server <- function(id, get_value, get_cols) {
+mod_multi_summarize_server <- function(id, get_value, get_cols,
+                                       external_value = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -139,6 +140,23 @@ mod_multi_summarize_server <- function(id, get_value, get_cols) {
     # Track which summary indices exist
     r_summary_indices <- reactiveVal(seq_along(initial_values))
     r_next_index <- reactiveVal(length(initial_values) + 1)
+
+    # Track external updates so r_output reads r_summaries (not stale
+    # form inputs) until the UI has re-rendered.
+    r_external_pending <- reactiveVal(FALSE)
+
+    # Watch for external updates (from external_ctrl / AI)
+    if (!is.null(external_value)) {
+      observeEvent(external_value(), {
+        new_val <- external_value()
+        if (is.list(new_val) && length(new_val) > 0 && !is.null(names(new_val))) {
+          r_external_pending(TRUE)
+          r_summaries(new_val)
+          r_summary_indices(seq_along(new_val))
+          r_next_index(length(new_val) + 1)
+        }
+      }, ignoreInit = TRUE)
+    }
 
     # Collect current values from all inputs
     get_current_summaries <- function() {
@@ -297,7 +315,14 @@ mod_multi_summarize_server <- function(id, get_value, get_cols) {
     })
 
     # Return the reactive summaries
-    reactive({
+    r_output <- reactive({
+      # After an external update (AI ctrl), use r_summaries() directly
+      # until the UI re-renders with new inputs.
+      if (r_external_pending()) {
+        r_external_pending(FALSE)
+        return(r_summaries())
+      }
+
       # Check if any inputs exist yet - if not, use stored summaries
       indices <- r_summary_indices()
       has_inputs <- any(sapply(indices, function(i) {
@@ -315,6 +340,8 @@ mod_multi_summarize_server <- function(id, get_value, get_cols) {
         r_summaries()
       }
     })
+
+    r_output
   })
 }
 
@@ -563,6 +590,9 @@ new_summarize_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
+          r_summaries_rv <- as_rv(summaries)
+          r_by_rv <- as_rv(by)
+
           # Group by selector using unified component
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
@@ -572,13 +602,16 @@ new_summarize_block <- function(
 
           r_summaries <- mod_multi_summarize_server(
             id = "ms",
-            get_value = \() summaries,
-            get_cols = \() colnames(data())
+            get_value = \() r_summaries_rv(),
+            get_cols = \() colnames(data()),
+            external_value = r_summaries_rv
           )
 
           # Store the validated expression
-          r_expr_validated <- reactiveVal(parse_summarize_nocode(summaries, by))
-          r_summaries_validated <- reactiveVal(summaries)
+          r_expr_validated <- reactiveVal(
+            parse_summarize_nocode(r_summaries_rv(), r_by_rv())
+          )
+          r_summaries_validated <- reactiveVal(r_summaries_rv())
 
           # Auto-update when summaries change
           observeEvent(
@@ -618,9 +651,11 @@ new_summarize_block <- function(
           )
 
           list(
-            expr = r_expr_validated,
+            expr = reactive({
+              parse_summarize_nocode(r_summaries_rv(), r_by_selection())
+            }),
             state = list(
-              summaries = reactive(r_summaries_validated()),
+              summaries = r_summaries_rv,
               by = r_by_selection
             )
           )
@@ -677,6 +712,7 @@ new_summarize_block <- function(
       )
     },
     class = "summarize_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("by"),
     ...
   )

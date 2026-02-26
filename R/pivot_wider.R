@@ -96,10 +96,10 @@ new_pivot_wider_block <- function(
             initial_value = id_cols
           )
 
-          # Text inputs
-          r_values_fill <- reactiveVal(values_fill)
-          r_names_sep <- reactiveVal(names_sep)
-          r_names_prefix <- reactiveVal(names_prefix)
+          # Text inputs (as_rv supports external_ctrl injection)
+          r_values_fill <- as_rv(values_fill)
+          r_names_sep <- as_rv(names_sep)
+          r_names_prefix <- as_rv(names_prefix)
 
           # Update reactive values when inputs change
           # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values
@@ -115,6 +115,25 @@ new_pivot_wider_block <- function(
           observeEvent(input$names_prefix, {
             r_names_prefix(input$names_prefix)
           })
+
+          # Reverse sync: external_ctrl -> UI
+          observeEvent(r_values_fill(), {
+            if (!identical(input$values_fill, r_values_fill())) {
+              updateTextInput(session, "values_fill", value = r_values_fill())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_names_sep(), {
+            if (!identical(input$names_sep, r_names_sep())) {
+              updateTextInput(session, "names_sep", value = r_names_sep())
+            }
+          }, ignoreInit = TRUE)
+
+          observeEvent(r_names_prefix(), {
+            if (!identical(input$names_prefix, r_names_prefix())) {
+              updateTextInput(session, "names_prefix", value = r_names_prefix())
+            }
+          }, ignoreInit = TRUE)
 
           list(
             expr = reactive({
@@ -348,6 +367,7 @@ new_pivot_wider_block <- function(
       )
     },
     class = "pivot_wider_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("names_from", "values_from", "id_cols", "values_fill", "names_prefix"),
     ...
   )

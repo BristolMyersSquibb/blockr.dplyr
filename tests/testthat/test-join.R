@@ -284,7 +284,7 @@ test_that("join block with no by parameter uses UI interaction", {
 
 # Data transformation tests using block_server
 test_that("join block left join - testServer", {
-  data_x <- data.frame(id = c(1, 2, 3), name = c('Alice', 'Bob', 'Charlie'))
+  data_x <- data.frame(id = c(1, 2, 3), name = c("Alice", "Bob", "Charlie"))
   data_y <- data.frame(id = c(1, 2, 4), age = c(25, 30, 35))
 
   block <- new_join_block(type = "left_join", by = c("id"))

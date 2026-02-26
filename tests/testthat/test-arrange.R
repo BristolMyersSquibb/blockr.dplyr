@@ -248,10 +248,12 @@ test_that("mod_multi_arrange_server column selection reactivity - testServer", {
 test_that("mod_multi_arrange_server handles unused columns selection - testServer", {
   # Test selection of unused columns when adding new arrange (lines 90-98)
   testServer(mod_multi_arrange_server, args = list(
-    get_value = function() list(
-      list(column = "mpg", direction = "asc"),
-      list(column = "cyl", direction = "desc")
-    ),
+    get_value = function() {
+      list(
+        list(column = "mpg", direction = "asc"),
+        list(column = "cyl", direction = "desc")
+      )
+    },
     get_cols = function() c("mpg", "cyl", "hp", "wt")
   ), {
     session$flushReact()

@@ -14,7 +14,8 @@
 #' @importFrom htmltools tags
 #' @noRd
 #' @noRd
-mod_multi_filter_server <- function(id, get_value, get_cols) {
+mod_multi_filter_server <- function(id, get_value, get_cols,
+                                    external_value = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -41,6 +42,24 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
     # Track which condition indices exist
     r_condition_indices <- reactiveVal(seq_along(initial_conditions))
     r_next_index <- reactiveVal(length(initial_conditions) + 1)
+
+    # Track external updates so r_output reads r_conditions (not stale
+    # form inputs) until the UI has re-rendered.
+    r_external_pending <- reactiveVal(FALSE)
+
+    # Watch for external updates (from external_ctrl / AI)
+    if (!is.null(external_value)) {
+      observeEvent(external_value(), {
+        new_val <- external_value()
+        if (is.character(new_val) && length(new_val) == 1) {
+          r_external_pending(TRUE)
+          r_conditions(list(new_val))
+          r_condition_indices(1L)
+          r_next_index(2L)
+          r_logic_operators(character(0))
+        }
+      }, ignoreInit = TRUE)
+    }
 
     # Track AND/OR logic between conditions
     r_logic_operators <- reactiveVal(rep(
@@ -224,6 +243,16 @@ mod_multi_filter_server <- function(id, get_value, get_cols) {
 
     # Return the reactive conditions as a combined string
     reactive({
+      # After an external update (AI ctrl), use r_conditions() directly
+      # until the UI re-renders with new inputs.
+      if (r_external_pending()) {
+        r_external_pending(FALSE)
+        conditions <- r_conditions()
+        if (length(conditions) == 0) return("TRUE")
+        if (length(conditions) == 1) return(conditions[[1]])
+        return(paste(conditions, collapse = " & "))
+      }
+
       # Check if any inputs exist yet - if not, use stored conditions
       indices <- r_condition_indices()
       has_inputs <- any(sapply(indices, function(i) {

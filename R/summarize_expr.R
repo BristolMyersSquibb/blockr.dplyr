@@ -90,6 +90,9 @@ new_summarize_expr_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
+          r_exprs_rv <- as_rv(exprs)
+          r_by_rv <- as_rv(by)
+
           # Group by selector using unified component
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
@@ -99,16 +102,19 @@ new_summarize_expr_block <- function(
 
           r_exprs <- mod_multi_kvexpr_server(
             id = "mkv",
-            get_value = \() exprs,
-            get_cols = \() colnames(data())
+            get_value = \() r_exprs_rv(),
+            get_cols = \() colnames(data()),
+            external_value = r_exprs_rv
           )
 
           # Unpack reactive value
-          r_unpack <- reactiveVal(unpack)
+          r_unpack <- as_rv(unpack)
 
           # Store the validated expression (must be initialized before observeEvents that use them)
-          r_expr_validated <- reactiveVal(parse_summarize(exprs, by, unpack))
-          r_exprs_validated <- reactiveVal(exprs)
+          r_expr_validated <- reactiveVal(
+            parse_summarize(r_exprs_rv(), r_by_rv(), r_unpack())
+          )
+          r_exprs_validated <- reactiveVal(r_exprs_rv())
 
           # Observe unpack checkbox changes and update reactively
           observeEvent(
@@ -128,6 +134,27 @@ new_summarize_expr_block <- function(
             ignoreNULL = FALSE,
             ignoreInit = TRUE
           )
+
+          # Auto-update when external unpack value changes (AI / ctrl_block)
+          if (inherits(unpack, "reactiveVal")) {
+            observeEvent(unpack(), {
+              # Sync UI checkbox
+              if (!identical(input$unpack %||% FALSE, unpack())) {
+                shiny::updateCheckboxInput(session, "unpack", value = unpack())
+              }
+              # Regenerate expression with new unpack value
+              if (length(r_exprs_validated()) > 0) {
+                apply_summarize(
+                  data(),
+                  r_exprs_validated(),
+                  r_expr_validated,
+                  r_exprs_validated,
+                  r_by_selection(),
+                  r_unpack()
+                )
+              }
+            }, ignoreInit = TRUE)
+          }
 
           # Auto-update when grouping changes
           observeEvent(
@@ -149,6 +176,22 @@ new_summarize_expr_block <- function(
             ignoreInit = TRUE
           )
 
+          # Auto-update when external value changes (no submit needed)
+          if (inherits(exprs, "reactiveVal")) {
+            observeEvent(exprs(), {
+              new_val <- exprs()
+              if (is.list(new_val)) new_val <- unlist(new_val)
+              apply_summarize(
+                data(),
+                new_val,
+                r_expr_validated,
+                r_exprs_validated,
+                r_by_selection(),
+                r_unpack()
+              )
+            }, ignoreInit = TRUE)
+          }
+
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
             apply_summarize(
@@ -159,12 +202,16 @@ new_summarize_expr_block <- function(
               r_by_selection(),
               r_unpack()
             )
+            # Sync state so expr reactive recomputes
+            if (!identical(r_exprs_rv(), r_exprs_validated())) {
+              r_exprs_rv(r_exprs_validated())
+            }
           })
 
           list(
-            expr = r_expr_validated,
+            expr = reactive(parse_summarize(r_exprs_rv(), r_by_selection(), r_unpack())),
             state = list(
-              exprs = reactive(as.list(r_exprs_validated())),
+              exprs = r_exprs_rv,
               by = r_by_selection,
               unpack = r_unpack
             )
@@ -312,6 +359,7 @@ new_summarize_expr_block <- function(
       )
     },
     class = "summarize_expr_block",
+    external_ctrl = TRUE,
     allow_empty_state = c("by"),
     ...
   )
@@ -335,19 +383,17 @@ parse_summarize <- function(
     }
 
     for (i in seq_along(summarize_string)) {
-      if (unpack) {
-        # When unpacking: bare expression without name (unpacks data frame columns)
-        expr_parts[i] <- unname(summarize_string)[i]
+      expr_val <- unname(summarize_string)[i]
+      has_name <- !is.na(expr_names[i]) && expr_names[i] != ""
+      if (unpack && grepl("across\\s*\\(", expr_val)) {
+        # across() with unpack: bare expression (across produces its own names)
+        expr_parts[i] <- expr_val
+      } else if (has_name) {
+        expr_parts[i] <- glue::glue(
+          "{backtick_if_needed(expr_names[i])} = {expr_val}"
+        )
       } else {
-        # Normal mode: use name = expression format
-        # Only add name if it's not empty/NA
-        if (!is.na(expr_names[i]) && expr_names[i] != "") {
-          expr_parts[i] <- glue::glue(
-            "{backtick_if_needed(expr_names[i])} = {unname(summarize_string)[i]}"
-          )
-        } else {
-          expr_parts[i] <- unname(summarize_string)[i]
-        }
+        expr_parts[i] <- expr_val
       }
     }
 
