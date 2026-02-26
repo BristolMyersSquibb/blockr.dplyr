@@ -127,7 +127,11 @@ register_dplyr_blocks <- function() {
           "Expressions are R code strings.",
           "For regex in R, use double backslashes: gsub('\\\\(', '', x) not gsub('\\(', '', x).",
           "Column names with spaces or special characters must be backtick-quoted: `PBO N = 334`.",
-          "Check option blockr.dplyr.summary_functions for domain-specific helper functions that may be available."
+          "Check option blockr.dplyr.summary_functions for domain-specific helper functions that may be available.",
+          "\n\nR coding rules: always use the base pipe |> (never %>%).",
+          "Namespace-prefix all functions except base and stats (e.g. dplyr::mutate(), stringr::str_detect()).",
+          "\n\nData exploration: explore column names and types (e.g. str(data)) to write expressions",
+          "that correctly reference available columns and handle their data types."
         )
       ),
       # summarize_block:
@@ -160,7 +164,11 @@ register_dplyr_blocks <- function() {
           by = list("cyl"),
           unpack = FALSE
         ),
-        prompt = "When applying a function across multiple columns, use across(). Set unpack = true with across() so the data frame result is unpacked into separate columns."
+        prompt = paste(
+          "When applying a function across multiple columns, use across(). Set unpack = true with across() so the data frame result is unpacked into separate columns.",
+          "\n\nR coding rules: always use the base pipe |> (never %>%).",
+          "Namespace-prefix all functions except base and stats (e.g. dplyr::summarize(), stringr::str_detect())."
+        )
       ),
       # filter_block:
       structure(
@@ -189,7 +197,9 @@ register_dplyr_blocks <- function() {
           "NOT exclude values >= 5.",
           "\n\nThis block uses exact value matching, not comparison operators.",
           "For numeric comparisons (e.g. \"< 5\"), list every matching value from the data in the values array.",
-          "Use the data preview to identify which values satisfy the condition."
+          "Use the data preview to identify which values satisfy the condition.",
+          "\n\nData exploration: this block requires exact values. For columns with many distinct values,",
+          "explore the data first to discover actual values (e.g. unique(data$column))."
         )
       ),
       # filter_expr_block:
@@ -202,7 +212,9 @@ register_dplyr_blocks <- function() {
           "The expression is an R expression string, NOT regex.",
           "For regex in R, use double backslashes: gsub('\\\\(', '', x) not gsub('\\(', '', x).",
           "Column names with spaces or special characters must be backtick-quoted: `PBO N = 334`.",
-          "Check option blockr.dplyr.summary_functions for domain-specific helper functions that may be available."
+          "Check option blockr.dplyr.summary_functions for domain-specific helper functions that may be available.",
+          "\n\nR coding rules: always use the base pipe |> (never %>%).",
+          "Namespace-prefix all functions except base and stats (e.g. dplyr::filter(), stringr::str_detect())."
         )
       ),
       # bind_rows_block:

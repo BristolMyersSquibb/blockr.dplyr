@@ -186,8 +186,10 @@ mod_join_keys_server <- function(
     }
 
     # Determine initial natural join state
-    # Natural join only when by parameter is empty/NULL
-    initial_natural <- length(initial_keys) == 0
+    # Natural join when by is empty/NULL OR a plain character vector
+    # (character by values come from serialized natural joins where the
+    # computed intersection was stored)
+    initial_natural <- length(initial_keys) == 0 || is.character(initial_keys)
 
     # Initialize reactiveVals with IMMEDIATE values (like rename block)
     r_custom_mappings <- reactiveVal(initial_mappings)
@@ -343,9 +345,12 @@ mod_join_keys_server <- function(
     # Return reactive join specification
     reactive({
       if (r_natural_join()) {
-        # Natural join - return ALL common columns automatically
-        req(get_x_cols, get_y_cols)
-        intersect(get_x_cols(), get_y_cols())
+        # Natural join - return empty character to signal "use common columns"
+        # The expression builder handles this by computing
+        # intersect(colnames(x), colnames(y)) at evaluation time.
+        # This ensures the serialized state stores character() (not the
+        # computed column names), so natural join mode is preserved on restore.
+        character()
       } else {
         # Custom join - return named list
         # Two-phase pattern: use stored values if inputs don't exist yet
