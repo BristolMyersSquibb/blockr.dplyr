@@ -138,9 +138,9 @@ register_dplyr_blocks <- function() {
       structure(
         c(
           summaries = paste0(
-            'Object where keys are output column names and values are objects with ',
-            '"func" (function name, e.g. "mean", "stats::median", "sum", "min", "max", ',
-            '"dplyr::n", "dplyr::n_distinct") and "col" (input column name, empty string for dplyr::n)'
+            "Object where keys are output column names and values are objects with ",
+            "\"func\" (function name, e.g. \"mean\", \"stats::median\", \"sum\", \"min\", \"max\", ",
+            "\"dplyr::n\", \"dplyr::n_distinct\") and \"col\" (input column name, empty string for dplyr::n)"
           ),
           by = "Array of column names for grouping (optional)"
         ),
@@ -220,7 +220,7 @@ register_dplyr_blocks <- function() {
       # bind_rows_block:
       structure(
         c(
-          id_name = 'String, optional column name to identify source table (empty for none)'
+          id_name = "String, optional column name to identify source table (empty for none)"
         ),
         examples = list(id_name = "source")
       ),

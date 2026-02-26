@@ -229,8 +229,8 @@ test_that("mutate block with grouped calculations", {
 
   # Within each cylinder group, centered values should sum to ~0
   library(dplyr)
-  group_sums <- result %>%
-    group_by(cyl) %>%
+  group_sums <- result |>
+    group_by(cyl) |>
     summarize(sum_centered = sum(mpg_centered))
 
   expect_true(all(abs(group_sums$sum_centered) < 0.01))

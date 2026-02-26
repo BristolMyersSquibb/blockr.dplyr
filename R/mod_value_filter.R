@@ -9,13 +9,13 @@
 #' @noRd
 display_to_actual <- function(value, original_type = "character") {
   if (value == "<NA>") {
-    return(NA)
+    NA
   } else if (value == "<empty>") {
-    return("")
+    ""
   } else if (original_type == "numeric") {
-    return(as.numeric(value))
+    as.numeric(value)
   } else {
-    return(value)
+    value
   }
 }
 

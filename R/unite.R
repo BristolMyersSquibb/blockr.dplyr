@@ -72,7 +72,7 @@ new_unite_block <- function(
   cols = character(),
   sep = "_",
   remove = TRUE,
-  na.rm = FALSE,
+  na.rm = FALSE, # nolint: object_name_linter.
   ...
 ) {
   new_transform_block(
