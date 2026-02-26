@@ -57,6 +57,6 @@ Suggests:
     pkgdown
 VignetteBuilder: knitr
 Remotes:
-    cynkra/blockr.core
+    BristolMyersSquibb/blockr.core
 Config/testthat/edition: 3
 Config/testthat/parallel: true
