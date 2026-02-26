@@ -190,7 +190,7 @@ register_dplyr_blocks <- function() {
         prompt = paste(
           "The values array must always contain strings, even for numeric columns (e.g. [\"4\"] not [4]).",
           "The operator field connects a condition to the previous one.",
-          "\n\nIMPORTANT — include vs exclude mode:",
+          "\n\nIMPORTANT -- include vs exclude mode:",
           "ALWAYS prefer mode \"include\" with the matching values.",
           "Only use mode \"exclude\" when the user explicitly says \"exclude\", \"remove\", \"drop\", or \"not\".",
           "For example, \"sepal width smaller than 5\" means: include all Sepal.Width values that are < 5,",
@@ -303,8 +303,8 @@ register_dplyr_blocks <- function() {
           sep = "String separator to split on",
           remove = "Boolean, if true remove input column from output (default true)",
           convert = "Boolean, if true auto-convert column types (default false)",
-          extra = '"warn", "drop", or "merge" — how to handle extra pieces (default "warn")',
-          fill = '"warn", "right", or "left" — how to handle missing pieces (default "warn")'
+          extra = '"warn", "drop", or "merge" -- how to handle extra pieces (default "warn")',
+          fill = '"warn", "right", or "left" -- how to handle missing pieces (default "warn")'
         ),
         examples = list(
           col = "full_name", into = list("first", "last"), sep = " ",
