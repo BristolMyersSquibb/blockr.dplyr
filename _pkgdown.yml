@@ -10,8 +10,6 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: Showcase
-        href: articles/blockr-dplyr-showcase.html
       - text: Expression Helpers
         href: articles/expression-helpers.html
 
@@ -60,5 +58,4 @@ articles:
 - title: Getting Started
   navbar: ~
   contents:
-  - blockr-dplyr-showcase
   - expression-helpers
