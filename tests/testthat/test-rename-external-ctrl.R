@@ -8,13 +8,13 @@ test_that("rename_block state has reactiveVal objects", {
   holder <- new.env(parent = emptyenv())
 
   test_ctrl <- blockr.core::ctrl_block(
-    server = function(id, x, vars, dat, expr) {
+    server = function(id, x, vars, data, eval) {
       moduleServer(id, function(input, output, session) {
         holder$ctrl_names <- names(Filter(
           function(v) inherits(v, "reactiveVal"), vars
         ))
         holder$vars <- vars
-        holder$expr <- expr
+        holder$expr <- eval
         reactive(TRUE)
       })
     },
@@ -47,10 +47,10 @@ test_that("setting ctrl reactiveVals updates expr", {
   holder <- new.env(parent = emptyenv())
 
   test_ctrl <- blockr.core::ctrl_block(
-    server = function(id, x, vars, dat, expr) {
+    server = function(id, x, vars, data, eval) {
       moduleServer(id, function(input, output, session) {
         holder$vars <- vars
-        holder$expr <- expr
+        holder$expr <- eval
         reactive(TRUE)
       })
     },

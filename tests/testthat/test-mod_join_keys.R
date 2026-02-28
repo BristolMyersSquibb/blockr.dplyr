@@ -32,11 +32,10 @@ test_that("mod_join_keys_server basic functionality", {
       # Test initial setup
       expect_true(is.reactive(session$returned))
 
-      # Test natural join
+      # Test natural join - returns character() to signal "use common columns"
       session$setInputs(use_natural_join = TRUE)
-      session$setInputs(natural_keys = c("id"))
       result <- session$returned()
-      expect_equal(result, c("id"))
+      expect_equal(result, character())
     }
   )
 })

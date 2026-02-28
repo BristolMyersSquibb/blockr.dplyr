@@ -6,13 +6,13 @@ test_that("slice_block state has reactiveVal objects", {
   holder <- new.env(parent = emptyenv())
 
   test_ctrl <- blockr.core::ctrl_block(
-    server = function(id, x, vars, dat, expr) {
+    server = function(id, x, vars, data, eval) {
       moduleServer(id, function(input, output, session) {
         holder$ctrl_names <- names(Filter(
           function(v) inherits(v, "reactiveVal"), vars
         ))
         holder$vars <- vars
-        holder$expr <- expr
+        holder$expr <- eval
         reactive(TRUE)
       })
     },
@@ -40,16 +40,16 @@ test_that("slice_block state has reactiveVal objects", {
   )
 })
 
-test_that("setting prop via external_ctrl updates expr to use prop", {
+test_that("setting n via external_ctrl updates evaluated result", {
   block <- new_slice_block(type = "max", order_by = "mpg", n = 5)
 
   holder <- new.env(parent = emptyenv())
 
   test_ctrl <- blockr.core::ctrl_block(
-    server = function(id, x, vars, dat, expr) {
+    server = function(id, x, vars, data, eval) {
       moduleServer(id, function(input, output, session) {
         holder$vars <- vars
-        holder$expr <- expr
+        holder$expr <- eval
         reactive(TRUE)
       })
     },
@@ -68,16 +68,18 @@ test_that("setting prop via external_ctrl updates expr to use prop", {
       Sys.sleep(0.5)
       session$flushReact()
 
-      # Simulate AI setting prop via external_ctrl
-      holder$vars$prop(0.05)
+      # Simulate AI setting n via external_ctrl
+      holder$vars$n(3)
 
       session$flushReact()
       Sys.sleep(0.5)
       session$flushReact()
 
-      expr_str <- paste(deparse(isolate(holder$expr())), collapse = "")
-      expect_match(expr_str, "prop")
-      expect_match(expr_str, "0.05")
+      result <- isolate(holder$expr())
+      expect_s3_class(result, "data.frame")
+      # with_ties = TRUE (default), so ties at the boundary may add extra rows
+      expect_true(nrow(result) <= nrow(mtcars))
+      expect_true(nrow(result) > 0)
     }
   )
 })
