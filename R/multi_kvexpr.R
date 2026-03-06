@@ -248,8 +248,15 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
       }
 
       .multi-kvexpr-expression .ace_gutter {
-        width: 0 !important;
-        min-width: 0 !important;
+        display: none !important;
+      }
+
+      /* Hide blinking cursor on unfocused editors */
+      .multi-kvexpr-expression .ace_editor .ace_cursor-layer {
+        display: none;
+      }
+      .multi-kvexpr-expression .ace_editor.ace_focus .ace_cursor-layer {
+        display: block;
       }
 
       .multi-kvexpr-expression .shiny-ace {
