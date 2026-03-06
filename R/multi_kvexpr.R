@@ -247,6 +247,11 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         outline: none !important;
       }
 
+      .multi-kvexpr-expression .ace_gutter {
+        width: 0 !important;
+        min-width: 0 !important;
+      }
+
       .multi-kvexpr-expression .shiny-ace {
         margin: 7px;
         margin-bottom: 7.5px;
@@ -266,11 +271,6 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         color: var(--blockr-grey-400, #9ca3af);
         padding-left: 0.5rem;
         padding-right: 0.5rem;
-      }
-
-      .multi-kvexpr-expression .blockr-btn-icon {
-        margin-top: 2px;
-        margin-right: 2px;
       }
 
       .input-group .input-group-text {

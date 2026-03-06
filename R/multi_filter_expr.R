@@ -344,10 +344,7 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         flex: 1;
       }
 
-      .multi-filter-condition .blockr-btn-icon {
-        margin-top: 2px;
-        margin-right: 2px;
-      }
+      /* blockr-btn-icon styling inherited from css_responsive_grid() */
 
       .multi-filter-actions {
         margin-top: 1.5rem;
