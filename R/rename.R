@@ -52,7 +52,7 @@ new_rename_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_renames_rv <- as_rv(renames)
+          r_renames_rv <- reactiveVal(renames)
 
           r_renames <- mod_multi_rename_server(
             id = "mr",
@@ -64,20 +64,6 @@ new_rename_block <- function(
           # Store the validated expression
           r_expr_validated <- reactiveVal(parse_rename(r_renames_rv()))
           r_renames_validated <- reactiveVal(r_renames_rv())
-
-          # Auto-update when external value changes (no submit needed)
-          if (inherits(renames, "reactiveVal")) {
-            observeEvent(renames(), {
-              new_val <- renames()
-              apply_rename(
-                data(),
-                new_val,
-                r_expr_validated,
-                r_renames_validated,
-                session
-              )
-            }, ignoreInit = TRUE)
-          }
 
           # Validate and update on submit
           observeEvent(input$submit, {

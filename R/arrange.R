@@ -67,7 +67,7 @@ new_arrange_block <- function(columns = character(), ...) {
       moduleServer(
         id,
         function(input, output, session) {
-          r_columns <- as_rv(columns)
+          r_columns <- reactiveVal(columns)
           cols <- reactive(colnames(data()))
 
           # Compute initial arranges from current value

@@ -88,8 +88,7 @@ new_separate_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Single column selector (as_rv supports external_ctrl injection)
-          r_col <- as_rv(col)
+          r_col <- reactiveVal(col)
 
           # Update column selection
           observeEvent(input$col, {
@@ -106,13 +105,12 @@ new_separate_block <- function(
             )
           })
 
-          # Reactive values (as_rv supports external_ctrl injection)
-          r_into <- as_rv(into)
-          r_sep <- as_rv(sep)
-          r_remove <- as_rv(remove)
-          r_convert <- as_rv(convert)
-          r_extra <- as_rv(extra)
-          r_fill <- as_rv(fill)
+          r_into <- reactiveVal(into)
+          r_sep <- reactiveVal(sep)
+          r_remove <- reactiveVal(remove)
+          r_convert <- reactiveVal(convert)
+          r_extra <- reactiveVal(extra)
+          r_fill <- reactiveVal(fill)
 
           # Update reactive values when inputs change
           observeEvent(input$into, {

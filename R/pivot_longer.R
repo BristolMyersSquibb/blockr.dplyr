@@ -76,11 +76,10 @@ new_pivot_longer_block <- function(
             initial_value = cols
           )
 
-          # Text inputs (as_rv supports external_ctrl injection)
-          r_names_to <- as_rv(names_to)
-          r_values_to <- as_rv(values_to)
-          r_values_drop_na <- as_rv(values_drop_na)
-          r_names_prefix <- as_rv(names_prefix)
+          r_names_to <- reactiveVal(names_to)
+          r_values_to <- reactiveVal(values_to)
+          r_values_drop_na <- reactiveVal(values_drop_na)
+          r_names_prefix <- reactiveVal(names_prefix)
 
           # Update reactive values when inputs change
           # Note: Removed ignoreNULL = FALSE to prevent overwriting initial values

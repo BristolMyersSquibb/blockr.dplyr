@@ -56,15 +56,14 @@ new_slice_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Initialize state reactives (as_rv supports external_ctrl injection)
-          r_type <- as_rv(type)
-          r_n <- as_rv(n)
-          r_prop <- as_rv(prop)
-          r_order_by <- as_rv(order_by)
-          r_with_ties <- as_rv(with_ties)
-          r_weight_by <- as_rv(weight_by)
-          r_replace <- as_rv(replace)
-          r_rows <- as_rv(rows)
+          r_type <- reactiveVal(type)
+          r_n <- reactiveVal(n)
+          r_prop <- reactiveVal(prop)
+          r_order_by <- reactiveVal(order_by)
+          r_with_ties <- reactiveVal(with_ties)
+          r_weight_by <- reactiveVal(weight_by)
+          r_replace <- reactiveVal(replace)
+          r_rows <- reactiveVal(rows)
 
           # Determine initial mode based on constructor params
           # Use checkbox state: TRUE = proportion mode, FALSE = count mode

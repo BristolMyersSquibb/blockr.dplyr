@@ -90,8 +90,8 @@ new_summarize_expr_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_exprs_rv <- as_rv(exprs)
-          r_by_rv <- as_rv(by)
+          r_exprs_rv <- reactiveVal(exprs)
+          r_by_rv <- reactiveVal(by)
 
           # Group by selector using unified component
           r_by_selection <- mod_column_selector_server(
@@ -107,8 +107,7 @@ new_summarize_expr_block <- function(
             external_value = r_exprs_rv
           )
 
-          # Unpack reactive value
-          r_unpack <- as_rv(unpack)
+          r_unpack <- reactiveVal(unpack)
 
           # Store the validated expression (must be initialized before observeEvents that use them)
           r_expr_validated <- reactiveVal(
@@ -135,27 +134,6 @@ new_summarize_expr_block <- function(
             ignoreInit = TRUE
           )
 
-          # Auto-update when external unpack value changes (AI / ctrl_block)
-          if (inherits(unpack, "reactiveVal")) {
-            observeEvent(unpack(), {
-              # Sync UI checkbox
-              if (!identical(input$unpack %||% FALSE, unpack())) {
-                shiny::updateCheckboxInput(session, "unpack", value = unpack())
-              }
-              # Regenerate expression with new unpack value
-              if (length(r_exprs_validated()) > 0) {
-                apply_summarize(
-                  data(),
-                  r_exprs_validated(),
-                  r_expr_validated,
-                  r_exprs_validated,
-                  r_by_selection(),
-                  r_unpack()
-                )
-              }
-            }, ignoreInit = TRUE)
-          }
-
           # Auto-update when grouping changes
           observeEvent(
             r_by_selection(),
@@ -175,22 +153,6 @@ new_summarize_expr_block <- function(
             ignoreNULL = FALSE,
             ignoreInit = TRUE
           )
-
-          # Auto-update when external value changes (no submit needed)
-          if (inherits(exprs, "reactiveVal")) {
-            observeEvent(exprs(), {
-              new_val <- exprs()
-              if (is.list(new_val)) new_val <- unlist(new_val)
-              apply_summarize(
-                data(),
-                new_val,
-                r_expr_validated,
-                r_exprs_validated,
-                r_by_selection(),
-                r_unpack()
-              )
-            }, ignoreInit = TRUE)
-          }
 
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
@@ -293,10 +255,7 @@ new_summarize_expr_block <- function(
                   style = "grid-column: 1 / -1;",
                   mod_column_selector_ui(
                     NS(id, "by_selector"),
-                    label = tags$span(
-                      "Columns to group by (optional)",
-                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
-                    ),
+                    label = "Columns to group by (optional)",
                     initial_choices = by,
                     initial_selected = by
                   )

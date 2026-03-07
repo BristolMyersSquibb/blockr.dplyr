@@ -45,7 +45,7 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
       moduleServer(
         id,
         function(input, output, session) {
-          r_exprs_rv <- as_rv(exprs)
+          r_exprs_rv <- reactiveVal(exprs)
 
           # Use multi-condition filter interface
           r_exprs <- mod_multi_filter_server(
@@ -58,19 +58,6 @@ new_filter_expr_block <- function(exprs = "TRUE", ...) {
           # Store the validated expression
           r_expr_validated <- reactiveVal(parse_filter_expr(r_exprs_rv()))
           r_exprs_validated <- reactiveVal(r_exprs_rv())
-
-          # Auto-update when external value changes (no submit needed)
-          if (inherits(exprs, "reactiveVal")) {
-            observeEvent(exprs(), {
-              new_val <- exprs()
-              apply_filter_expr(
-                data(),
-                new_val,
-                r_expr_validated,
-                r_exprs_validated
-              )
-            }, ignoreInit = TRUE)
-          }
 
           # Validate and update on submit
           observeEvent(input$submit, {

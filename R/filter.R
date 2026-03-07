@@ -60,8 +60,8 @@ new_filter_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_conditions <- as_rv(conditions)
-          r_preserve_order <- as_rv(preserve_order)
+          r_conditions <- reactiveVal(conditions)
+          r_preserve_order <- reactiveVal(preserve_order)
 
           mod_value_filter_server(
             id = "vf",

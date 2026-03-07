@@ -596,8 +596,8 @@ new_summarize_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_summaries_rv <- as_rv(summaries)
-          r_by_rv <- as_rv(by)
+          r_summaries_rv <- reactiveVal(summaries)
+          r_by_rv <- reactiveVal(by)
 
           # Group by selector using unified component
           r_by_selection <- mod_column_selector_server(
@@ -703,10 +703,7 @@ new_summarize_block <- function(
                   style = "grid-column: 1 / -1;",
                   mod_column_selector_ui(
                     NS(id, "by_selector"),
-                    label = tags$span(
-                      "Columns to group by (optional)",
-                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
-                    ),
+                    label = "Columns to group by (optional)",
                     initial_choices = by,
                     initial_selected = by
                   )

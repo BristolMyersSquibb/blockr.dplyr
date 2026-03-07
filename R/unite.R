@@ -87,11 +87,10 @@ new_unite_block <- function(
             initial_value = cols
           )
 
-          # Reactive values (as_rv supports external_ctrl injection)
-          r_col <- as_rv(col)
-          r_sep <- as_rv(sep)
-          r_remove <- as_rv(remove)
-          r_na_rm <- as_rv(na.rm)
+          r_col <- reactiveVal(col)
+          r_sep <- reactiveVal(sep)
+          r_remove <- reactiveVal(remove)
+          r_na_rm <- reactiveVal(na.rm)
 
           # Update reactive values when inputs change
           observeEvent(input$col, {

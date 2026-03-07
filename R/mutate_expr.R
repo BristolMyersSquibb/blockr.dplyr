@@ -40,8 +40,8 @@ new_mutate_expr_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_exprs_rv <- as_rv(exprs)
-          r_by_rv <- as_rv(by)
+          r_exprs_rv <- reactiveVal(exprs)
+          r_by_rv <- reactiveVal(by)
 
           r_exprs <- mod_multi_kvexpr_server(
             id = "mkv",
@@ -76,22 +76,6 @@ new_mutate_expr_block <- function(
               )
             }
           })
-
-          # Auto-update when external value changes (no submit needed)
-          if (inherits(exprs, "reactiveVal")) {
-            observeEvent(exprs(), {
-              new_val <- exprs()
-              if (is.list(new_val)) new_val <- unlist(new_val)
-              apply_mutate(
-                data(),
-                new_val,
-                r_by_selection(),
-                r_expr_validated,
-                r_exprs_validated,
-                r_by_validated
-              )
-            }, ignoreInit = TRUE)
-          }
 
           # Validate and update on submit (for expression changes)
           observeEvent(input$submit, {
@@ -180,10 +164,7 @@ new_mutate_expr_block <- function(
                   style = "grid-column: 1 / -1;",
                   mod_column_selector_ui(
                     NS(id, "by_selector"),
-                    label = tags$span(
-                      "Columns to group by (optional)",
-                      style = "font-size: 0.875rem; color: #666; font-weight: normal;"
-                    ),
+                    label = "Columns to group by (optional)",
                     initial_choices = by,
                     initial_selected = by
                   )

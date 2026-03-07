@@ -84,10 +84,9 @@ new_select_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Initialize reactive values (as_rv supports external_ctrl injection)
-          r_columns <- as_rv(columns)
-          r_exclude <- as_rv(exclude)
-          r_distinct <- as_rv(distinct)
+          r_columns <- reactiveVal(columns)
+          r_exclude <- reactiveVal(exclude)
+          r_distinct <- reactiveVal(distinct)
           r_initialized <- reactiveVal(FALSE)
 
           # Update reactive values when inputs change
