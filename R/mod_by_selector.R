@@ -70,6 +70,6 @@ mod_column_selector_server <- function(id, get_cols, initial_value = character()
   })
 }
 
-#' Null coalescing operator
+#' @importFrom rlang %||%
 #' @noRd
-`%||%` <- function(x, y) if (is.null(x)) y else x
+NULL
