@@ -358,20 +358,13 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
 
       /* blockr-btn-icon styling inherited from css_responsive_grid() */
 
-      .multi-filter-actions {
-        margin-top: 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
     "
     ),
     div(
       class = "multi-filter-container",
       uiOutput(ns("conditions_ui")),
       div(
-        class = "multi-filter-actions mt-4 mb-1",
+        class = "blockr-multi-actions",
         actionButton(
           ns("add_condition"),
           label = "Add Condition",

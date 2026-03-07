@@ -105,6 +105,14 @@ css_responsive_grid <- function() {
       background: transparent;
       box-shadow: none;
     }
+
+    /* Shared action bar for multi-row modules (Add/Submit buttons) */
+    .blockr-multi-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+    }
     "
   ))
 }

@@ -286,20 +286,13 @@ mod_multi_kvexpr_ui <- function(id, extra_button = NULL) {
         height: 36px;
       }
 
-      .multi-kvexpr-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1.5rem;
-      }
-
     "
     ),
     div(
       class = "multi-kvexpr-container",
       uiOutput(ns("expressions_ui")),
       div(
-        class = "multi-kvexpr-actions mt-4 mb-1",
+        class = "blockr-multi-actions",
         actionButton(
           ns("add_expr"),
           label = "Add Expression",

@@ -94,13 +94,6 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         line-height: 1.2;
       }
 
-      .join-actions {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        margin-top: 1.5rem;
-      }
-
       "
     ),
 
@@ -137,7 +130,7 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
           id = ns("custom_mappings"),
           uiOutput(ns("join_mappings_ui")),
           div(
-            class = "join-actions mt-4 mb-1",
+            class = "blockr-multi-actions",
             actionButton(
               ns("add_mapping"),
               label = "Add Key",

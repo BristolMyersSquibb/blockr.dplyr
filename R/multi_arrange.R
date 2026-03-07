@@ -257,7 +257,7 @@ mod_multi_arrange_ui <- function(id) {
       class = "multi-arrange-container",
       uiOutput(ns("arranges_ui")),
       div(
-        class = "d-flex justify-content-start mt-4 mb-1",
+        class = "blockr-multi-actions",
         actionButton(
           ns("add_arrange"),
           label = "Add Sort Column",

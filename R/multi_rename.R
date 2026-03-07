@@ -293,20 +293,13 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         align-items: center;
       }
 
-      .multi-rename-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1.5rem;
-      }
-
     "
     ),
     div(
       class = "multi-rename-container",
       uiOutput(ns("renames_ui")),
       div(
-        class = "multi-rename-actions mt-4 mb-1",
+        class = "blockr-multi-actions",
         actionButton(
           ns("add_rename"),
           label = "Add Rename",

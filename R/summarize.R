@@ -427,20 +427,13 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         align-items: center;
       }
 
-      .multi-summarize-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1.5rem;
-        margin-bottom: 0.25rem;
-      }
     "
     ),
     div(
       class = "multi-summarize-container",
       uiOutput(ns("summaries_ui")),
       div(
-        class = "multi-summarize-actions",
+        class = "blockr-multi-actions",
         actionButton(
           ns("add_summary"),
           label = "Add Summary",
