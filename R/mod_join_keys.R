@@ -59,6 +59,12 @@ mod_join_keys_ui <- function(id, label = "Join Keys") {
         flex: 1;
       }
 
+      /* Align remove button with the input fields, not the labels */
+      .join-mapping-pair .blockr-btn-icon {
+        align-self: flex-end;
+        height: 38px;
+      }
+
       /* Remove default margins from Shiny inputs */
       .join-mapping-pair .shiny-input-container {
         margin-bottom: 0 !important;

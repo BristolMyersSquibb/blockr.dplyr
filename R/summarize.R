@@ -398,6 +398,12 @@ mod_multi_summarize_ui <- function(id, extra_button = NULL) {
         min-width: 0;
       }
 
+      /* Align remove button with the input fields, not the labels */
+      .multi-summarize-pair .blockr-btn-icon {
+        align-self: flex-end;
+        height: 38px;
+      }
+
       /* Remove default margins from Shiny inputs */
       .multi-summarize-pair .shiny-input-container {
         margin-bottom: 0 !important;
