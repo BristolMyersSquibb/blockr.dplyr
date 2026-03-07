@@ -84,6 +84,27 @@ css_responsive_grid <- function() {
     .block-input-wrapper .form-group {
       margin-bottom: 10px;
     }
+
+    /* Ghost icon button used for remove/delete actions in multi-row blocks */
+    .blockr-btn-icon {
+      display: flex;
+      align-items: center;
+      align-self: center;
+      margin-right: 2px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 4px 8px;
+      color: var(--blockr-grey-400, #9ca3af);
+    }
+
+    .blockr-btn-icon:hover,
+    .blockr-btn-icon:focus {
+      color: var(--blockr-grey-600, #4b5563);
+      background: transparent;
+      box-shadow: none;
+    }
     "
   ))
 }

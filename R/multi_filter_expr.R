@@ -335,6 +335,18 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         outline: none !important;
       }
 
+      .multi-filter-condition .ace_gutter {
+        display: none !important;
+      }
+
+      /* Hide blinking cursor on unfocused editors */
+      .multi-filter-condition .ace_editor .ace_cursor-layer {
+        display: none;
+      }
+      .multi-filter-condition .ace_editor.ace_focus .ace_cursor-layer {
+        display: block;
+      }
+
       .multi-filter-condition .shiny-ace {
         margin: 7px;
         margin-bottom: 7.5px;
@@ -344,10 +356,7 @@ mod_multi_filter_ui <- function(id, extra_button = NULL) {
         flex: 1;
       }
 
-      .multi-filter-condition .blockr-btn-icon {
-        margin-top: 2px;
-        margin-right: 2px;
-      }
+      /* blockr-btn-icon styling inherited from css_responsive_grid() */
 
       .multi-filter-actions {
         margin-top: 1.5rem;
