@@ -8,7 +8,7 @@
 #
 # To run: source("inst/screenshots/validate_registry.R")
 
-library(blockr.dplyr)
+pkgload::load_all("blockr.dplyr")
 
 cat("Validating screenshots against registry...\n\n")
 
@@ -36,7 +36,7 @@ expected_files <- paste0(expected_files, ".png") # Add .png extension
 
 # Get all PNG files in man/figures/
 actual_files <- list.files(
-  "man/figures",
+  "blockr.dplyr/man/figures",
   pattern = "\\.png$",
   full.names = FALSE
 )

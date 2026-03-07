@@ -152,16 +152,9 @@ validate_block_screenshot <- function(
   }
 
   # Check for magick package if using dock mode (needed for cropping)
-  if (use_dock && !requireNamespace("magick", quietly = TRUE)) {
-    return(list(
-      success = FALSE,
-      path = NULL,
-      error = paste(
-        "magick package is required for dock mode cropping.",
-        "Install with: install.packages('magick')"
-      ),
-      filename = filename
-    ))
+  has_magick <- requireNamespace("magick", quietly = TRUE)
+  if (use_dock && !has_magick && verbose) {
+    cat("  Note: magick package not available, screenshots will not be cropped\n")
   }
 
   # Try to create the screenshot
@@ -182,26 +175,21 @@ validate_block_screenshot <- function(
         # Check if this is a join block (needs two datasets)
         is_join_block <- !is.null(dataset_y)
 
+        # Resolve monorepo root for pkgload::load_all paths
+        monorepo <- normalizePath(".")
+
         if (is_join_block) {
-          # Use blockr::run_app() with two dataset sources for join blocks
+          # Use run_app() with two dataset sources for join blocks
           app_content <- sprintf(
             '
-library(blockr)
-
-# Load the blockr.dplyr package
-# Try to load from development first, fall back to installed version
-tryCatch(
-  devtools::load_all("%s"),
-  error = function(e) {
-    library(blockr.dplyr)
-  }
-)
+pkgload::load_all("%s/blockr.dplyr")
+pkgload::load_all("%s/blockr")
 
 # Load block
 block <- readRDS("block.rds")
 
 # Run the app with two data sources for join
-blockr::run_app(
+run_app(
   blocks = c(
     x_data = blockr.core::new_dataset_block("%s", package = "%s"),
     y_data = blockr.core::new_dataset_block("%s", package = "%s"),
@@ -214,7 +202,7 @@ blockr::run_app(
   )
 )
             ',
-            normalizePath("."),
+            monorepo, monorepo,
             dataset,
             dataset_package,
             dataset_y,
@@ -223,25 +211,17 @@ blockr::run_app(
             input_names[2]
           )
         } else {
-          # Use blockr::run_app() for proper dock styling
+          # Use run_app() for proper dock styling
           app_content <- sprintf(
             '
-library(blockr)
-
-# Load the blockr.dplyr package
-# Try to load from development first, fall back to installed version
-tryCatch(
-  devtools::load_all("%s"),
-  error = function(e) {
-    library(blockr.dplyr)
-  }
-)
+pkgload::load_all("%s/blockr.dplyr")
+pkgload::load_all("%s/blockr")
 
 # Load block
 block <- readRDS("block.rds")
 
-# Run the app using blockr::run_app()
-blockr::run_app(
+# Run the app using run_app()
+run_app(
   blocks = c(
     a = blockr.core::new_dataset_block("%s", package = "%s"),
     b = block
@@ -249,25 +229,18 @@ blockr::run_app(
   links = list(from = "a", to = "b", input = "data")
 )
             ',
-            normalizePath("."),
+            monorepo, monorepo,
             dataset,
             dataset_package
           )
         }
       } else {
         # Use blockr.core directly (original behavior)
+        monorepo <- normalizePath(".")
         app_content <- sprintf(
           '
-library(blockr.core)
-
-# Load the blockr.dplyr package
-# Try to load from development first, fall back to installed version
-tryCatch(
-  devtools::load_all("%s"),
-  error = function(e) {
-    library(blockr.dplyr)
-  }
-)
+pkgload::load_all("%s/blockr.dplyr")
+pkgload::load_all("%s/blockr")
 
 # Load data and block
 data <- readRDS("data.rds")
@@ -279,7 +252,7 @@ blockr.core::serve(
   data = data
 )
           ',
-          normalizePath(".")
+          monorepo, monorepo
         )
       }
 
@@ -331,8 +304,8 @@ blockr.core::serve(
       # Take screenshot
       app$get_screenshot(output_path)
 
-      # If using dock mode, crop to just the blocks panel (right side)
-      if (use_dock && file.exists(output_path)) {
+      # If using dock mode and magick is available, crop to the blocks panel
+      if (use_dock && has_magick && file.exists(output_path)) {
         # Get the bounding box of the blocks panel (contains block tabs)
         panel_bounds <- tryCatch(
           {

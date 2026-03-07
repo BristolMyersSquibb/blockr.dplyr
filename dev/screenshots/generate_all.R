@@ -11,14 +11,20 @@
 # This is required for shinytest2 to work in non-interactive mode
 Sys.setenv(NOT_CRAN = "true")
 
+# Use no-sandbox chromium wrapper if available (needed in containers)
+nosandbox <- "/home/dev/.local/bin/chromium-nosandbox"
+if (file.exists(nosandbox)) {
+  Sys.setenv(CHROMOTE_CHROME = nosandbox)
+}
+
 # Load package with devtools::load_all() to ensure latest changes are picked up
-devtools::load_all(".")
+pkgload::load_all("blockr.dplyr")
 
 # Source the validation function
-source("dev/screenshots/validate-screenshot.R")
+source("blockr.dplyr/dev/screenshots/validate-screenshot.R")
 
 cat("Generating screenshots for all blockr.dplyr blocks...\n")
-cat("Output directory: man/figures/\n\n")
+cat("Output directory: blockr.dplyr/man/figures/\n\n")
 
 # Common screenshot settings
 # Width 1400 -> crops to ~685px blocks panel
@@ -32,10 +38,10 @@ SCREENSHOT_DELAY <- 3
 # =============================================================================
 cat("1/16 - Arrange block\n")
 validate_block_screenshot(
-  block = new_arrange_block(columns = "hp", desc = TRUE),
+  block = new_arrange_block(columns = list(list(column = "hp", direction = "desc"))),
   data = mtcars,
   filename = "arrange-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -51,7 +57,7 @@ validate_block_screenshot(
   block = new_bind_cols_block(),
   data = datasets::iris,
   filename = "bind-cols-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -72,7 +78,7 @@ validate_block_screenshot(
   block = new_bind_rows_block(id_name = "source"),
   data = datasets::iris,
   filename = "bind-rows-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -96,7 +102,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "filter-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -111,7 +117,7 @@ validate_block_screenshot(
   block = new_filter_expr_block(exprs = "mpg > 20 & hp > 90"),
   data = mtcars,
   filename = "filter-expr-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -124,10 +130,10 @@ validate_block_screenshot(
 # =============================================================================
 cat("6/16 - Join block\n")
 validate_block_screenshot(
-  block = new_join_block(type = "left_join", natural_join = TRUE),
+  block = new_join_block(type = "left_join"),
   data = datasets::BOD,
   filename = "join-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -151,7 +157,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "mutate-expr-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -170,7 +176,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "pivot-longer-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -193,7 +199,7 @@ validate_block_screenshot(
       datasets::ChickWeight$Chick %in% c(1, 2, 3, 4, 5),
   ],
   filename = "pivot-wider-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -217,7 +223,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "rename-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -232,7 +238,7 @@ validate_block_screenshot(
   block = new_select_block(columns = c("mpg", "cyl", "hp", "wt", "qsec")),
   data = mtcars,
   filename = "select-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -252,7 +258,7 @@ validate_block_screenshot(
   ),
   data = datasets::esoph,
   filename = "separate-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -267,10 +273,10 @@ validate_block_screenshot(
 # =============================================================================
 cat("13/16 - Slice block\n")
 validate_block_screenshot(
-  block = new_slice_block(type = "max", n = 5, by_column = "mpg"),
+  block = new_slice_block(type = "max", n = 5, order_by = "mpg"),
   data = mtcars,
   filename = "slice-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -291,7 +297,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "summarize-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -313,7 +319,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "summarize-expr-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -334,7 +340,7 @@ validate_block_screenshot(
   ),
   data = mtcars,
   filename = "unite-block.png",
-  output_dir = "man/figures",
+  output_dir = "blockr.dplyr/man/figures",
   width = SCREENSHOT_WIDTH,
   height = SCREENSHOT_HEIGHT,
   delay = SCREENSHOT_DELAY,
@@ -349,4 +355,4 @@ cat("Screenshots saved to: man/figures/\n\n")
 # VALIDATION: Check screenshots match registry
 # =============================================================================
 
-source("dev/screenshots/validate_registry.R")
+source("blockr.dplyr/dev/screenshots/validate_registry.R")
