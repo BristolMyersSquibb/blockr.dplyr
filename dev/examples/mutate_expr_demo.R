@@ -1,5 +1,6 @@
 # Mutate expression block demo
-pkgload::load_all()
+pkgload::load_all("blockr.dplyr")
+pkgload::load_all("blockr")
 
 run_app(
   blocks = c(

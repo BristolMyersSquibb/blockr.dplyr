@@ -1,5 +1,6 @@
 # Summarize block demo (no-code style with dropdown functions)
-pkgload::load_all()
+pkgload::load_all("blockr.dplyr")
+pkgload::load_all("blockr")
 
 run_app(
   blocks = c(
