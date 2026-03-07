@@ -264,6 +264,12 @@ mod_multi_rename_ui <- function(id, extra_button = NULL) {
         flex: 1;
       }
 
+      /* Align remove button with the input fields, not the labels */
+      .multi-rename-pair .blockr-btn-icon {
+        align-self: flex-end;
+        height: 38px;
+      }
+
       /* Remove default margins from Shiny inputs */
       .multi-rename-pair .shiny-input-container {
         margin-bottom: 0 !important;
