@@ -592,11 +592,11 @@ new_summarize_block <- function(
           r_summaries_rv <- reactiveVal(summaries)
           r_by_rv <- reactiveVal(by)
 
-          # Group by selector using unified component
+          # Group by selector — pass the block's reactiveVal directly
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() colnames(data()),
-            initial_value = by
+            initial_value = r_by_rv
           )
 
           r_summaries <- mod_multi_summarize_server(

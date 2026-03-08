@@ -80,11 +80,13 @@ new_unite_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Column selector for columns to unite
+          r_cols_rv <- reactiveVal(cols)
+
+          # Column selector — pass the block's reactiveVal directly
           r_cols_selection <- mod_column_selector_server(
             id = "cols_selector",
             get_cols = \() colnames(data()),
-            initial_value = cols
+            initial_value = r_cols_rv
           )
 
           r_col <- reactiveVal(col)

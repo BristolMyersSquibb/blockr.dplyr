@@ -77,23 +77,27 @@ new_pivot_wider_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Column selectors using generic column selector (not group-by specific)
+          r_names_from_rv <- reactiveVal(names_from)
+          r_values_from_rv <- reactiveVal(values_from)
+          r_id_cols_rv <- reactiveVal(id_cols)
+
+          # Column selectors — pass the block's reactiveVals directly
           r_names_from <- mod_column_selector_server(
             id = "names_from_selector",
             get_cols = \() colnames(data()),
-            initial_value = names_from
+            initial_value = r_names_from_rv
           )
 
           r_values_from <- mod_column_selector_server(
             id = "values_from_selector",
             get_cols = \() colnames(data()),
-            initial_value = values_from
+            initial_value = r_values_from_rv
           )
 
           r_id_cols <- mod_column_selector_server(
             id = "id_cols_selector",
             get_cols = \() colnames(data()),
-            initial_value = id_cols
+            initial_value = r_id_cols_rv
           )
 
           r_values_fill <- reactiveVal(values_fill)

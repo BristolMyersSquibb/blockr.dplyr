@@ -93,11 +93,11 @@ new_summarize_expr_block <- function(
           r_exprs_rv <- reactiveVal(exprs)
           r_by_rv <- reactiveVal(by)
 
-          # Group by selector using unified component
+          # Group by selector — pass the block's reactiveVal directly
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() colnames(data()),
-            initial_value = by
+            initial_value = r_by_rv
           )
 
           r_exprs <- mod_multi_kvexpr_server(
@@ -126,7 +126,7 @@ new_summarize_expr_block <- function(
                 r_exprs_validated(),
                 r_expr_validated,
                 r_exprs_validated,
-                r_by_selection(),
+                r_by_rv(),
                 r_unpack()
               )
             },
@@ -136,7 +136,7 @@ new_summarize_expr_block <- function(
 
           # Auto-update when grouping changes
           observeEvent(
-            r_by_selection(),
+            r_by_rv(),
             {
               # Only update if we have validated expressions
               if (length(r_exprs_validated()) > 0) {
@@ -145,7 +145,7 @@ new_summarize_expr_block <- function(
                   r_exprs_validated(),
                   r_expr_validated,
                   r_exprs_validated,
-                  r_by_selection(),
+                  r_by_rv(),
                   r_unpack()
                 )
               }
@@ -161,7 +161,7 @@ new_summarize_expr_block <- function(
               r_exprs(),
               r_expr_validated,
               r_exprs_validated,
-              r_by_selection(),
+              r_by_rv(),
               r_unpack()
             )
             # Sync state so expr reactive recomputes
@@ -171,10 +171,10 @@ new_summarize_expr_block <- function(
           })
 
           list(
-            expr = reactive(parse_summarize(r_exprs_rv(), r_by_selection(), r_unpack())),
+            expr = reactive(parse_summarize(r_exprs_rv(), r_by_rv(), r_unpack())),
             state = list(
               exprs = r_exprs_rv,
-              by = r_by_selection,
+              by = r_by_rv,
               unpack = r_unpack
             )
           )

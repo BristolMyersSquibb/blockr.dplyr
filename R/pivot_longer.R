@@ -69,11 +69,13 @@ new_pivot_longer_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          # Column selector using generic column selector (not group-by specific)
+          r_cols_rv <- reactiveVal(cols)
+
+          # Column selector — pass the block's reactiveVal directly
           r_cols_selection <- mod_column_selector_server(
             id = "cols_selector",
             get_cols = \() colnames(data()),
-            initial_value = cols
+            initial_value = r_cols_rv
           )
 
           r_names_to <- reactiveVal(names_to)

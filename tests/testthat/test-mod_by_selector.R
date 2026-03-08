@@ -24,7 +24,7 @@ test_that("mod_column_selector_server basic functionality", {
     mod_column_selector_server,
     args = list(
       get_cols = function() c("col1", "col2", "col3"),
-      initial_value = c("col1")
+      initial_value = reactiveVal(c("col1"))
     ),
     {
       # Test initial value
@@ -50,7 +50,7 @@ test_that("mod_column_selector_server handles column updates", {
     mod_column_selector_server,
     args = list(
       get_cols = cols,
-      initial_value = character()
+      initial_value = reactiveVal(character())
     ),
     {
       # Initial state
@@ -73,7 +73,7 @@ test_that("mod_column_selector_server handles NULL gracefully", {
     mod_column_selector_server,
     args = list(
       get_cols = function() c("col1", "col2"),
-      initial_value = character()
+      initial_value = reactiveVal(character())
     ),
     {
       # Test NULL handling via ignoreNULL = FALSE

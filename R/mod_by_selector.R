@@ -40,9 +40,9 @@ mod_column_selector_ui <- function(
 #'
 #' @noRd
 #' @noRd
-mod_column_selector_server <- function(id, get_cols, initial_value = character()) {
+mod_column_selector_server <- function(id, get_cols, initial_value) {
   moduleServer(id, function(input, output, session) {
-    r_selection <- reactiveVal(initial_value)
+    r_selection <- initial_value
 
     # Update reactive value when selection changes
     observeEvent(

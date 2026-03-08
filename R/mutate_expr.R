@@ -50,29 +50,27 @@ new_mutate_expr_block <- function(
             external_value = r_exprs_rv
           )
 
-          # Group by selector
+          # Group by selector — pass the block's reactiveVal directly
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() colnames(data()),
-            initial_value = by
+            initial_value = r_by_rv
           )
 
           # Store the validated expression
           r_expr_validated <- reactiveVal(parse_mutate(r_exprs_rv(), r_by_rv()))
           r_exprs_validated <- reactiveVal(r_exprs_rv())
-          r_by_validated <- reactiveVal(r_by_rv())
 
           # Auto-update when grouping changes
-          observeEvent(r_by_selection(), {
+          observeEvent(r_by_rv(), {
             # Only update if we have validated expressions
             if (length(r_exprs_validated()) > 0) {
               apply_mutate(
                 data(),
                 r_exprs_validated(),
-                r_by_selection(),
+                r_by_rv(),
                 r_expr_validated,
-                r_exprs_validated,
-                r_by_validated
+                r_exprs_validated
               )
             }
           })
@@ -82,10 +80,9 @@ new_mutate_expr_block <- function(
             apply_mutate(
               data(),
               r_exprs(),
-              r_by_selection(),
+              r_by_rv(),
               r_expr_validated,
-              r_exprs_validated,
-              r_by_validated
+              r_exprs_validated
             )
             # Sync state so expr reactive recomputes
             if (!identical(r_exprs_rv(), r_exprs_validated())) {
@@ -94,10 +91,10 @@ new_mutate_expr_block <- function(
           })
 
           list(
-            expr = reactive(parse_mutate(r_exprs_rv(), r_by_validated())),
+            expr = reactive(parse_mutate(r_exprs_rv(), r_by_rv())),
             state = list(
               exprs = r_exprs_rv,
-              by = r_by_validated
+              by = r_by_rv
             )
           )
         }
@@ -237,8 +234,7 @@ apply_mutate <- function(
   exprs,
   by_selection,
   r_expr_validated,
-  r_exprs_validated,
-  r_by_validated
+  r_exprs_validated
 ) {
   # Convert list to character vector if needed (for compatibility with multi_kvexpr)
   if (is.list(exprs)) {
@@ -249,7 +245,6 @@ apply_mutate <- function(
   if (all(trimws(unname(exprs)) == "")) {
     expr <- parse_mutate(exprs, by_selection)
     r_expr_validated(expr)
-    r_by_validated(by_selection)
     return()
   }
 
@@ -276,5 +271,4 @@ apply_mutate <- function(
   }
   r_expr_validated(expr)
   r_exprs_validated(exprs)
-  r_by_validated(by_selection)
 }

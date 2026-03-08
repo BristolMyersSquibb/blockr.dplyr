@@ -70,10 +70,10 @@ mod_value_filter_server <- function(
 
     # r_conditions is the outer reactiveVal — single source of truth.
     # Both UI input changes and external writes (AI ctrl) go through it.
-    r_conditions <- reactiveVal(conditions)
+    r_conditions <- conditions
     r_data <- get_data
 
-    r_preserve_order <- reactiveVal(preserve_order)
+    r_preserve_order <- preserve_order
 
     # Ensure we have at least one condition slot
     initial_conds <- isolate(r_conditions())

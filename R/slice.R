@@ -70,7 +70,9 @@ new_slice_block <- function(
           # Must use r_prop() (the value) not prop (which may be a reactiveVal object)
           r_use_prop <- reactiveVal(!is.null(r_prop()))
 
-          # Group by selector using unified componen
+          r_by_rv <- reactiveVal(by)
+
+          # Group by selector — pass the block's reactiveVal directly
           r_by_selection <- mod_column_selector_server(
             id = "by_selector",
             get_cols = \() {
@@ -78,7 +80,7 @@ new_slice_block <- function(
               cols <- colnames(data())
               cols[nzchar(cols)] # Filter out empty column names
             },
-            initial_value = by
+            initial_value = r_by_rv
           )
 
           # Update column choices when data changes
