@@ -60,7 +60,7 @@ test_that("select block expression generation - exclude mode", {
       expect_true(is.list(result$state))
 
       # Set inputs (they don't get automatically set from constructor in testServer)
-      session$setInputs(columns = "b", exclude = TRUE)
+      session$setInputs(`col_picker-selection` = "b", exclude = TRUE)
       session$flushReact()
 
       # Check expression - should use minus syntax
@@ -155,7 +155,7 @@ test_that("select block reactive updates", {
       result <- session$returned
 
       # Set initial inputs first (they don't get automatically set from constructor in testServer)
-      session$setInputs(columns = "mpg", exclude = FALSE)
+      session$setInputs(`col_picker-selection` = "mpg", exclude = FALSE)
       session$flushReact()
 
       # Check that columns() reactive returns "mpg"
@@ -163,7 +163,7 @@ test_that("select block reactive updates", {
       expect_false(isTRUE(result$state$exclude()))
 
       # Update columns
-      session$setInputs(columns = c("mpg", "cyl"))
+      session$setInputs(`col_picker-selection` = c("mpg", "cyl"))
       session$flushReact()
       expect_equal(result$state$columns(), c("mpg", "cyl"))
 

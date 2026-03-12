@@ -84,19 +84,15 @@ new_select_block <- function(
       moduleServer(
         id,
         function(input, output, session) {
-          r_columns <- reactiveVal(columns)
+          r_columns <- column_picker_server(
+            "col_picker",
+            get_choices = reactive(colnames(data())),
+            initial_value = reactiveVal(columns)
+          )
           r_exclude <- reactiveVal(exclude)
           r_distinct <- reactiveVal(distinct)
-          r_initialized <- reactiveVal(FALSE)
 
           # Update reactive values when inputs change
-          observeEvent(
-            input$columns,
-            {
-              r_columns(input$columns)
-            }
-          )
-
           observeEvent(
             input$exclude,
             {
@@ -112,13 +108,6 @@ new_select_block <- function(
           )
 
           # Reverse sync: external_ctrl -> UI
-          observeEvent(r_columns(), {
-            if (r_initialized()) {
-              updateSelectizeInput(session, "columns",
-                choices = colnames(data()), selected = r_columns())
-            }
-          }, ignoreInit = TRUE)
-
           observeEvent(r_exclude(), {
             if (!identical(input$exclude, r_exclude())) {
               updateCheckboxInput(session, "exclude", value = r_exclude())
@@ -130,38 +119,6 @@ new_select_block <- function(
               updateCheckboxInput(session, "distinct", value = r_distinct())
             }
           }, ignoreInit = TRUE)
-
-          # Restore initial selection once on startup (like slice block)
-          observe({
-            if (!r_initialized() && length(colnames(data())) > 0) {
-              updateSelectizeInput(
-                session,
-                "columns",
-                choices = colnames(data()),
-                selected = r_columns()
-              )
-              r_initialized(TRUE)
-            }
-          })
-
-          # Update choices when data changes, preserve current selection
-          observeEvent(
-            colnames(data()),
-            {
-              if (r_initialized()) {
-                req(data())
-                cols <- colnames(data())
-
-                updateSelectizeInput(
-                  session,
-                  "columns",
-                  choices = cols,
-                  selected = r_columns() # Preserve current selection
-                )
-              }
-            },
-            ignoreNULL = FALSE
-          )
 
           list(
             expr = reactive({
@@ -251,18 +208,11 @@ new_select_block <- function(
                 div(
                   class = "block-input-wrapper",
                   style = "grid-column: 1 / -1;",
-                  selectizeInput(
-                    NS(id, "columns"),
+                  column_picker_ui(
+                    NS(id, "col_picker"),
                     label = "Columns to select (drag to reorder)",
                     choices = columns,
-                    selected = columns,
-                    multiple = TRUE,
-                    width = "100%",
-                    options = list(
-                      plugins = list("drag_drop", "remove_button"),
-                      persist = FALSE,
-                      placeholder = "Select columns..."
-                    )
+                    selected = columns
                   ),
                   # Checkboxes directly after input (no grid gap)
                   div(
