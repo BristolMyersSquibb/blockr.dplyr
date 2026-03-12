@@ -115,9 +115,11 @@ column_picker_server <- function(id, get_choices, initial_value = character()) {
       r_selection(input$selection)
     })
 
-    # state -> UI reverse sync (for external_ctrl)
+    # state -> UI reverse sync (for external_ctrl like All/None buttons)
+    # Skip when the change came from user input to avoid closing the dropdown.
     observeEvent(r_selection(), {
-      if (r_initialized()) {
+      if (r_initialized() &&
+        !setequal(r_selection() %||% character(), input$selection %||% character())) {
         updateSelectizeInput(session, "selection",
           choices = get_choices(), selected = r_selection()
         )
