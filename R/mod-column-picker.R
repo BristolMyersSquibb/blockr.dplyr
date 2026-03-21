@@ -7,6 +7,12 @@
 #' For now it lives in blockr.dplyr so that blocks here (and blockr.bi
 #' via import) can use it.
 #'
+#' NOTE: with only two consumers (select block, compare block) and the
+#' bulk actions now handled purely client-side, the module boundary adds
+#' nested namespacing and a two-way reactiveVal sync that may generate
+#' more complexity than it solves. Consider inlining if this doesn't
+#' gain more consumers.
+#'
 #' @param id Module ID.
 #' @param label Label text displayed above the selectize input.
 #' @param choices Initial choices (character vector).
@@ -19,7 +25,7 @@
 #' @return \code{column_picker_ui} returns a \code{shiny.tag}.
 #'
 #' @name column_picker
-#' @importFrom shiny actionLink reactiveVal
+#' @importFrom shiny reactiveVal
 #' @export
 column_picker_ui <- function(
   id,
@@ -38,8 +44,8 @@ column_picker_ui <- function(
       span(label),
       span(
         class = "blockr-column-picker-actions",
-        actionLink(ns("select_all"), "All"),
-        actionLink(ns("select_none"), "None")
+        tags$a(id = ns("select_all"), href = "#", "All"),
+        tags$a(id = ns("select_none"), href = "#", "None")
       )
     )
   } else {
@@ -82,7 +88,25 @@ column_picker_ui <- function(
         persist = FALSE,
         placeholder = placeholder
       )
-    )
+    ),
+
+    if (bulk_actions) tags$script(HTML(sprintf("
+      $(document).on('click', '#%s', function(e) {
+        e.preventDefault();
+        var sel = $('#%s')[0];
+        if (sel && sel.selectize) {
+          sel.selectize.setValue(Object.keys(sel.selectize.options));
+        }
+      });
+      $(document).on('click', '#%s', function(e) {
+        e.preventDefault();
+        var sel = $('#%s')[0];
+        if (sel && sel.selectize) {
+          sel.selectize.clear();
+        }
+      });
+    ", ns("select_all"), ns("selection"),
+       ns("select_none"), ns("selection"))))
   )
 }
 
@@ -115,7 +139,7 @@ column_picker_server <- function(id, get_choices, initial_value = character()) {
       r_selection(input$selection)
     })
 
-    # state -> UI reverse sync (for external_ctrl like All/None buttons)
+    # state -> UI reverse sync (for external reactiveVal two-way binding)
     # Skip when the change came from user input to avoid closing the dropdown.
     observeEvent(r_selection(), {
       if (r_initialized() &&
@@ -146,15 +170,6 @@ column_picker_server <- function(id, get_choices, initial_value = character()) {
         )
       }
     }, ignoreNULL = FALSE)
-
-    # Bulk actions
-    observeEvent(input$select_all, {
-      r_selection(get_choices())
-    })
-
-    observeEvent(input$select_none, {
-      r_selection(character())
-    })
 
     r_selection
   })
