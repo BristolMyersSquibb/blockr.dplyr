@@ -201,7 +201,7 @@ build_join_unified_expr <- function(payload) {
     } else {
       join_by_str <- paste(parts, collapse = ", ")
       glue::glue(
-        "dplyr::{join_type}(x, y, join_by({join_by_str}){suffix_arg})"
+        "dplyr::{join_type}(x, y, dplyr::join_by({join_by_str}){suffix_arg})"
       )
     }
   } else if (length(keys) > 0) {

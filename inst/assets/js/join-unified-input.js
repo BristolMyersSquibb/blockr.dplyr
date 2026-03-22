@@ -12,7 +12,7 @@
   var ICON_X = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>';
   var ICON_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg>';
   var ICON_CODE = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>';
-  var ICON_GEAR = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.434-.901 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.658.06a1.873 1.873 0 0 1 3.724 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16a1.873 1.873 0 0 1 2.693 2.693l-.16.292a1.873 1.873 0 0 0 1.116 2.692l.318.094a1.873 1.873 0 0 1 0 3.724l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291a1.873 1.873 0 0 1-2.693 2.693l-.292-.16a1.873 1.873 0 0 0-2.692 1.116l-.094.318a1.873 1.873 0 0 1-3.724 0l-.094-.319a1.873 1.873 0 0 0-2.693-1.115l-.291.16a1.873 1.873 0 0 1-2.693-2.693l.16-.292a1.873 1.873 0 0 0-1.116-2.692l-.318-.094a1.873 1.873 0 0 1 0-3.724l.319-.094a1.873 1.873 0 0 0 1.115-2.693l-.16-.291A1.873 1.873 0 0 1 4.88 2.77l.292.16a1.873 1.873 0 0 0 2.692-1.116z"/></svg>';
+  var ICON_GEAR = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>';
   var ICON_CONFIRM = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg>';
 
   // ---------------------------------------------------------------------------
@@ -137,11 +137,11 @@
   // Join type definitions
   // ---------------------------------------------------------------------------
   var JOIN_TYPES = [
-    { value: "left_join",  label: "left" },
-    { value: "inner_join", label: "inner" },
-    { value: "right_join", label: "right" },
-    { value: "full_join",  label: "full" },
-    { value: "semi_join",  label: "semi" },
+    { value: "left_join",  label: "left join" },
+    { value: "inner_join", label: "inner join" },
+    { value: "right_join", label: "right join" },
+    { value: "full_join",  label: "full join" },
+    { value: "semi_join",  label: "semi join" },
     { value: "anti_join",  label: "anti" }
   ];
 
@@ -202,11 +202,6 @@
     var header = document.createElement("div");
     header.className = "ju-header";
 
-    var joinLabel = document.createElement("span");
-    joinLabel.className = "ju-header-label";
-    joinLabel.textContent = "Join:";
-    header.appendChild(joinLabel);
-
     // Join type pill (click-through cycle)
     this.joinTypePill = document.createElement("button");
     this.joinTypePill.type = "button";
@@ -242,12 +237,6 @@
     // Settings popover
     this._buildPopover();
 
-    // Keys label
-    var keysLabel = document.createElement("div");
-    keysLabel.className = "ju-keys-label";
-    keysLabel.textContent = "Keys:";
-    this.card.appendChild(keysLabel);
-
     // Keys list
     this.listEl = document.createElement("div");
     this.listEl.className = "ju-keys-list";
@@ -267,7 +256,7 @@
     addExprLink.className = "ju-add-link-expr";
     addExprLink.innerHTML = ICON_CODE;
     addExprLink.title = "Add R expression";
-    addExprLink.addEventListener("click", function() { self._addExprRow(""); });
+    addExprLink.addEventListener("click", function() { self._addExprRow("between(col, start, end)"); });
     addRow.appendChild(addExprLink);
 
     this.card.appendChild(addRow);
