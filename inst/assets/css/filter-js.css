@@ -1,0 +1,118 @@
+/* FilterJs — Styles for JS-driven filter expression block.
+   Mirrors the existing multi-filter-condition styling. */
+
+.filter-js-container {
+  width: 100%;
+}
+
+.filter-js-conditions {
+  width: 100%;
+}
+
+/* Condition row — reuse the multi-filter-condition pattern */
+.filter-js-container .multi-filter-condition {
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+  border-radius: 8px !important;
+  height: 38px !important;
+  margin-bottom: 0 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+}
+
+.filter-js-container .multi-filter-condition:focus-within {
+  background-color: #ffffff;
+  border-color: var(--blockr-color-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-js-container .condition-code {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ACE editor inside condition row */
+.filter-js-container .filter-js-ace-editor {
+  height: 20px;
+  margin: 7px;
+  margin-bottom: 7.5px;
+  width: calc(100% - 14px);
+}
+
+.filter-js-container .filter-js-ace-editor,
+.filter-js-container .ace_editor,
+.filter-js-container .ace-tomorrow,
+.filter-js-container .ace_scroller,
+.filter-js-container .ace_content,
+.filter-js-container .ace_gutter {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.filter-js-container .ace_gutter {
+  display: none !important;
+}
+
+/* Hide blinking cursor on unfocused editors */
+.filter-js-container .ace_editor .ace_cursor-layer {
+  display: none;
+}
+
+.filter-js-container .ace_editor.ace_focus .ace_cursor-layer {
+  display: block;
+}
+
+/* Remove button (X) */
+.filter-js-container .blockr-btn-icon {
+  background: none;
+  border: none;
+  color: var(--blockr-color-text-muted, #6b7280);
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.filter-js-container .blockr-btn-icon:hover {
+  opacity: 1;
+  color: var(--blockr-color-danger, #dc3545);
+}
+
+/* Operator dropdown (AND/OR) — compact, matching condition row height */
+.filter-js-container .filter-js-operator-row {
+  margin: 4px 0 !important;
+}
+
+.filter-js-container .filter-js-operator-row .form-select {
+  height: 28px !important;
+  min-height: unset !important;
+  padding: 2px 28px 2px 8px !important;
+  font-size: var(--blockr-font-size-sm, 0.8125rem) !important;
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 6px;
+  color: var(--blockr-color-text-muted, #6b7280);
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-js-container .filter-js-operator-row .form-select:focus {
+  background-color: #ffffff;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Actions bar */
+.filter-js-container .blockr-multi-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

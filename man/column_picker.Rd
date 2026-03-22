@@ -57,4 +57,10 @@ A reusable Shiny module for selecting multiple columns with bulk actions
 This module is intended to eventually move to a \code{blockr.ui} package.
 For now it lives in blockr.dplyr so that blocks here (and blockr.bi
 via import) can use it.
+
+NOTE: with only two consumers (select block, compare block) and the
+bulk actions now handled purely client-side, the module boundary adds
+nested namespacing and a two-way reactiveVal sync that may generate
+more complexity than it solves. Consider inlining if this doesn't
+gain more consumers.
 }
