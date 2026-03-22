@@ -90,121 +90,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Selectize helpers (using Shiny's already-loaded selectize.js via jQuery)
-  // ---------------------------------------------------------------------------
-
-  function withSelectize(fn) {
-    if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { fn(); return; }
-    var a = 0, t = setInterval(function() {
-      a++;
-      if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { clearInterval(t); fn(); }
-      if (a > 100) clearInterval(t);
-    }, 100);
-  }
-
-  // Single-select for function picking
-  function createFuncSelectize(container, selected, onChange) {
-    var sel = document.createElement("select");
-    sel.className = "su-selectize-func";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      getValue: function() { return wrapper.api ? wrapper.api.getValue() : ""; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: SUMMARY_FUNCS.map(function(v) { return { value: v, text: v }; }),
-        items: selected ? [selected] : [SUMMARY_FUNCS[0]],
-        maxItems: 1,
-        placeholder: "Function...",
-        onChange: function(value) { if (onChange) onChange(value); }
-      });
-      wrapper.api = $sel[0].selectize;
-    });
-
-    return wrapper;
-  }
-
-  // Single-select for column picking
-  function createColumnSelectize(container, options, selected, onChange) {
-    var sel = document.createElement("select");
-    sel.className = "su-selectize-col";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      setOptions: function(opts, s) {
-        if (!wrapper.api) { wrapper._pending = { opts: opts, sel: s }; return; }
-        wrapper.api.clearOptions();
-        opts.forEach(function(v) { wrapper.api.addOption({ value: v, text: v }); });
-        wrapper.api.refreshOptions(false);
-        if (s) wrapper.api.setValue(s, true);
-        else if (opts.length > 0) wrapper.api.setValue(opts[0], true);
-      },
-      getValue: function() { return wrapper.api ? wrapper.api.getValue() : ""; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: options.map(function(v) { return { value: v, text: v }; }),
-        items: selected ? [selected] : (options.length > 0 ? [options[0]] : []),
-        maxItems: 1,
-        placeholder: "Column...",
-        onChange: function(value) { if (onChange) onChange(value); }
-      });
-      wrapper.api = $sel[0].selectize;
-      if (wrapper._pending) {
-        wrapper.setOptions(wrapper._pending.opts, wrapper._pending.sel);
-        delete wrapper._pending;
-      }
-    });
-
-    return wrapper;
-  }
-
-  // Multi-select for .by grouping
-  function createGroupBySelectize(container, options, selected, onChange) {
-    var sel = document.createElement("select");
-    sel.multiple = true;
-    sel.className = "su-selectize-by";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      setOptions: function(opts, s) {
-        if (!wrapper.api) { wrapper._pending = { opts: opts, sel: s }; return; }
-        wrapper.api.clearOptions();
-        opts.forEach(function(v) { wrapper.api.addOption({ value: v, text: v }); });
-        wrapper.api.refreshOptions(false);
-        if (s && s.length > 0) wrapper.api.setValue(s, true);
-      },
-      getValue: function() { return wrapper.api ? (wrapper.api.getValue() || []) : []; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: options.map(function(v) { return { value: v, text: v }; }),
-        items: selected || [],
-        plugins: ["remove_button", "drag_drop"],
-        placeholder: "Select grouping columns\u2026",
-        onChange: function(value) { if (onChange) onChange(value || []); }
-      });
-      wrapper.api = $sel[0].selectize;
-      if (wrapper._pending) {
-        wrapper.setOptions(wrapper._pending.opts, wrapper._pending.sel);
-        delete wrapper._pending;
-      }
-    });
-
-    return wrapper;
-  }
-
-  // ---------------------------------------------------------------------------
   // SummarizeUnified component
   // ---------------------------------------------------------------------------
   function SummarizeUnified(el) {
@@ -276,10 +161,14 @@
     byWrap.className = "su-by-wrap";
     this.bySection.appendChild(byWrap);
 
-    this._bySelectize = createGroupBySelectize(
-      byWrap, this.columnNames, [],
-      function(value) { self.byValues = value || []; self._autoSubmit(); }
-    );
+    this._bySelectize = BlockrSelect.multi(byWrap, {
+      options: this.columnNames,
+      selected: [],
+      placeholder: "Select grouping columns\u2026",
+      reorderable: true,
+      onChange: function(value) { self.byValues = value || []; self._autoSubmit(); }
+    });
+    this._bySelectize.el.classList.add("blockr-select--bordered");
 
     this.el.appendChild(this.bySection);
   };
@@ -331,14 +220,16 @@
     var funcDiv = document.createElement("div");
     funcDiv.className = "su-func-wrap";
     row.appendChild(funcDiv);
-    summary._funcSelectize = createFuncSelectize(
-      funcDiv, func || SUMMARY_FUNCS[0],
-      function(value) {
+    summary._funcSelectize = BlockrSelect.single(funcDiv, {
+      options: SUMMARY_FUNCS,
+      selected: func || SUMMARY_FUNCS[0],
+      placeholder: "Function\u2026",
+      onChange: function(value) {
         summary.func = value;
         self._updateColVisibility(summary);
         self._autoSubmit();
       }
-    );
+    });
 
     // "of" label
     var ofLabel = document.createElement("span");
@@ -352,13 +243,15 @@
     colWrap.className = "su-col-wrap";
     row.appendChild(colWrap);
     summary._colWrap = colWrap;
-    summary._colSelectize = createColumnSelectize(
-      colWrap, this.columnNames, col,
-      function(value) {
+    summary._colSelectize = BlockrSelect.single(colWrap, {
+      options: this.columnNames,
+      selected: col,
+      placeholder: "Column\u2026",
+      onChange: function(value) {
         summary.col = value;
         self._autoSubmit();
       }
-    );
+    });
 
     // Remove button
     var rmBtn = document.createElement("button");

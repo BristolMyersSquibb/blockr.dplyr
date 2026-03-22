@@ -87,60 +87,6 @@
   padding-right: 8px;
 }
 
-/* Override selectize styles inside unified filter rows — no borders, transparent bg */
-.fu-row .selectize-control { font-size: var(--blockr-font-size-base, 0.875rem); }
-
-.fu-row .selectize-input {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 6px !important;
-  min-height: 30px !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-}
-
-/* Keep items and input same line height so height doesn't shift */
-.fu-row .selectize-input > * {
-  margin: 2px 2px !important;
-}
-
-.fu-row .selectize-input.focus {
-  box-shadow: none !important;
-}
-
-.fu-row .selectize-dropdown {
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-}
-
-.fu-row .selectize-dropdown-content .option {
-  padding: 6px 10px !important;
-}
-
-/* Value selectize — fill remaining space */
-.fu-row-content .selectize-control {
-  width: 100%;
-}
-
-/* Keep selectize items compact */
-.fu-row .selectize-input > .item {
-  padding: 1px 6px !important;
-  margin: 1px 2px !important;
-  line-height: 1.4 !important;
-}
-
-/* Unified placeholder color */
-.fu-row .selectize-input > input::placeholder,
-.fu-row .selectize-input > .placeholder {
-  color: var(--blockr-grey-400, #9ca3af) !important;
-  opacity: 1 !important;
-}
-
 .fu-num-input::placeholder {
   color: var(--blockr-grey-400, #9ca3af);
 }

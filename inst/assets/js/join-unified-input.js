@@ -85,55 +85,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Selectize helpers (using Shiny's already-loaded selectize.js via jQuery)
-  // ---------------------------------------------------------------------------
-  function withSelectize(fn) {
-    if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { fn(); return; }
-    var a = 0, t = setInterval(function() {
-      a++;
-      if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { clearInterval(t); fn(); }
-      if (a > 100) clearInterval(t);
-    }, 100);
-  }
-
-  function createColumnSelectize(container, options, selected, placeholder, onChange) {
-    var sel = document.createElement("select");
-    sel.className = "ju-selectize-col";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      setOptions: function(opts, s) {
-        if (!wrapper.api) { wrapper._pending = { opts: opts, sel: s }; return; }
-        wrapper.api.clearOptions();
-        opts.forEach(function(v) { wrapper.api.addOption({ value: v, text: v }); });
-        wrapper.api.refreshOptions(false);
-        if (s && opts.indexOf(s) >= 0) wrapper.api.setValue(s, true);
-        else if (opts.length > 0) wrapper.api.setValue(opts[0], true);
-      },
-      getValue: function() { return wrapper.api ? wrapper.api.getValue() : ""; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: options.map(function(v) { return { value: v, text: v }; }),
-        items: selected ? [selected] : (options.length > 0 ? [options[0]] : []),
-        maxItems: 1,
-        placeholder: placeholder || "Column\u2026",
-        onChange: function(value) { if (onChange) onChange(value); }
-      });
-      wrapper.api = $sel[0].selectize;
-      if (wrapper._pending) {
-        wrapper.setOptions(wrapper._pending.opts, wrapper._pending.sel);
-        delete wrapper._pending;
-      }
-    });
-
-    return wrapper;
-  }
-
-  // ---------------------------------------------------------------------------
   // Join type definitions
   // ---------------------------------------------------------------------------
   var JOIN_TYPES = [
@@ -365,13 +316,15 @@
     var xDiv = document.createElement("div");
     xDiv.className = "ju-col-wrap ju-col-x";
     row.appendChild(xDiv);
-    key._xSelectize = createColumnSelectize(
-      xDiv, this.xColumns, xCol, "x column\u2026",
-      function(value) {
+    key._xSelectize = BlockrSelect.single(xDiv, {
+      options: this.xColumns,
+      selected: xCol,
+      placeholder: "x column\u2026",
+      onChange: function(value) {
         key.xCol = value;
         self._autoSubmit();
       }
-    );
+    });
 
     // Operator pill (click-through cycle)
     var opIdx = 0;
@@ -396,13 +349,15 @@
     var yDiv = document.createElement("div");
     yDiv.className = "ju-col-wrap ju-col-y";
     row.appendChild(yDiv);
-    key._ySelectize = createColumnSelectize(
-      yDiv, this.yColumns, yCol, "y column\u2026",
-      function(value) {
+    key._ySelectize = BlockrSelect.single(yDiv, {
+      options: this.yColumns,
+      selected: yCol,
+      placeholder: "y column\u2026",
+      onChange: function(value) {
         key.yCol = value;
         self._autoSubmit();
       }
-    );
+    });
 
     // Remove button
     var rmBtn = document.createElement("button");

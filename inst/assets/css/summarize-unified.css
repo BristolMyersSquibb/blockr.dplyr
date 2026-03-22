@@ -104,54 +104,6 @@
   min-width: 100px;
 }
 
-/* --- Override selectize styles inside unified summarize rows --- */
-.su-row .selectize-control { font-size: var(--blockr-font-size-base, 0.875rem); }
-
-.su-row .selectize-input {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 6px !important;
-  min-height: 30px !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-}
-
-.su-row .selectize-input > * {
-  margin: 2px 2px !important;
-}
-
-.su-row .selectize-input.focus {
-  box-shadow: none !important;
-}
-
-.su-row .selectize-dropdown {
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-}
-
-.su-row .selectize-dropdown-content .option {
-  padding: 6px 10px !important;
-}
-
-/* Keep selectize items compact */
-.su-row .selectize-input > .item {
-  padding: 1px 6px !important;
-  margin: 1px 2px !important;
-  line-height: 1.4 !important;
-}
-
-/* Unified placeholder color */
-.su-row .selectize-input > input::placeholder,
-.su-row .selectize-input > .placeholder {
-  color: var(--blockr-grey-400, #9ca3af) !important;
-  opacity: 1 !important;
-}
-
 /* --- Dynamic content area --- */
 .su-row-content {
   flex: 1;
@@ -306,49 +258,3 @@
   min-width: 0;
 }
 
-/* Group by selectize — standard bordered style */
-.su-by-wrap .selectize-control {
-  font-size: var(--blockr-font-size-base, 0.875rem);
-}
-
-.su-by-wrap .selectize-input {
-  background-color: var(--blockr-color-bg-input, #f9fafb) !important;
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  min-height: 36px !important;
-  padding: 4px 8px !important;
-  box-shadow: none !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-}
-
-.su-by-wrap .selectize-input.focus {
-  background-color: #ffffff !important;
-  border-color: var(--blockr-color-primary, #2563eb) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-
-.su-by-wrap .selectize-input > .item {
-  padding: 1px 6px !important;
-  margin: 1px 2px !important;
-  line-height: 1.4 !important;
-}
-
-.su-by-wrap .selectize-input > input::placeholder,
-.su-by-wrap .selectize-input > .placeholder {
-  color: var(--blockr-grey-400, #9ca3af) !important;
-  opacity: 1 !important;
-}
-
-.su-by-wrap .selectize-dropdown {
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-}
-
-.su-by-wrap .selectize-dropdown-content .option {
-  padding: 6px 10px !important;
-}

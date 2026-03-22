@@ -81,8 +81,6 @@ new_summarize_unified_block <- function(exprs = "dplyr::summarize(data)", ...) {
     function(id) {
       tagList(
         summarize_unified_dep(),
-        # Hidden selectizeInput to force Shiny to load selectize.js
-        div(style = "display:none;", shiny::selectizeInput(NS(id, "_sel_loader"), "", choices = NULL)),
         css_responsive_grid(),
         css_single_column("summarize"),
         div(
@@ -182,16 +180,9 @@ build_unified_summarize <- function(summaries, by_cols = NULL) {
 #' @noRd
 summarize_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
-  jqui_dir <- system.file("www/shared/jqueryui", package = "shiny")
 
   tagList(
-    # jQuery UI (for selectize drag_drop plugin)
-    htmlDependency(
-      name = "jqueryui",
-      version = utils::packageVersion("shiny"),
-      src = jqui_dir,
-      script = "jquery-ui.min.js"
-    ),
+    blockr_select_dep(),
     # ACE editor
     htmlDependency(
       name = "ace",

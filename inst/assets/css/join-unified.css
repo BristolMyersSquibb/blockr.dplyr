@@ -185,47 +185,6 @@
   min-width: 100px;
 }
 
-/* Override selectize styles inside join rows — no borders, transparent bg */
-.ju-row .selectize-control { font-size: var(--blockr-font-size-base, 0.875rem); }
-
-.ju-row .selectize-input {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 6px !important;
-  min-height: 30px !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-}
-
-.ju-row .selectize-input > * {
-  margin: 2px 2px !important;
-}
-
-.ju-row .selectize-input.focus {
-  box-shadow: none !important;
-}
-
-.ju-row .selectize-dropdown {
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-}
-
-.ju-row .selectize-dropdown-content .option {
-  padding: 6px 10px !important;
-}
-
-/* Unified placeholder color */
-.ju-row .selectize-input > input::placeholder,
-.ju-row .selectize-input > .placeholder {
-  color: var(--blockr-grey-400, #9ca3af) !important;
-  opacity: 1 !important;
-}
-
 /* --- Remove button — pushed to right edge --- */
 .ju-row-remove {
   display: flex;

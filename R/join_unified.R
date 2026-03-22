@@ -237,16 +237,9 @@ build_join_unified_expr <- function(payload) {
 #' @noRd
 join_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
-  jqui_dir <- system.file("www/shared/jqueryui", package = "shiny")
 
   tagList(
-    # jQuery UI (for selectize drag_drop plugin)
-    htmlDependency(
-      name = "jqueryui",
-      version = utils::packageVersion("shiny"),
-      src = jqui_dir,
-      script = "jquery-ui.min.js"
-    ),
+    blockr_select_dep(),
     # ACE editor
     htmlDependency(
       name = "ace",

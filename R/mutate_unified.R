@@ -148,16 +148,8 @@ new_mutate_unified_block <- function(exprs = list(new_col = "1"), ...) {
 #' @noRd
 mutate_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
-  jqui_dir <- system.file("www/shared/jqueryui", package = "shiny")
 
   tagList(
-    # jQuery UI
-    htmlDependency(
-      name = "jqueryui",
-      version = utils::packageVersion("shiny"),
-      src = jqui_dir,
-      script = "jquery-ui.min.js"
-    ),
     # ACE editor
     htmlDependency(
       name = "ace",

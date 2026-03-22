@@ -103,7 +103,6 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
     function(id) {
       tagList(
         filter_unified_dep(),
-        div(style = "display:none;", shiny::selectizeInput(NS(id, "_sel_loader"), "", choices = NULL)),
         css_responsive_grid(),
         css_single_column("filter"),
         div(
@@ -312,16 +311,9 @@ build_range_part <- function(cond) {
 #' @noRd
 filter_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
-  jqui_dir <- system.file("www/shared/jqueryui", package = "shiny")
 
   tagList(
-    # jQuery UI (for selectize drag_drop plugin)
-    htmlDependency(
-      name = "jqueryui",
-      version = utils::packageVersion("shiny"),
-      src = jqui_dir,
-      script = "jquery-ui.min.js"
-    ),
+    blockr_select_dep(),
     # ACE editor
     htmlDependency(
       name = "ace",

@@ -82,86 +82,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Selectize helpers (using Shiny's already-loaded selectize.js via jQuery)
-  // ---------------------------------------------------------------------------
-
-  // Wait for selectize to be available (Shiny loads it)
-  function withSelectize(fn) {
-    if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { fn(); return; }
-    var a = 0, t = setInterval(function() {
-      a++;
-      if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { clearInterval(t); fn(); }
-      if (a > 100) clearInterval(t); // give up after 10s
-    }, 100);
-  }
-
-  // Create a single-select selectize for column picking
-  function createColumnSelectize(container, options, selected, onChange) {
-    var sel = document.createElement("select");
-    sel.className = "fu-selectize-col";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      setOptions: function(opts, s) {
-        if (!wrapper.api) { wrapper._pending = { opts: opts, sel: s }; return; }
-        wrapper.api.clearOptions();
-        opts.forEach(function(v) { wrapper.api.addOption({ value: v, text: v }); });
-        wrapper.api.refreshOptions(false);
-        if (s) wrapper.api.setValue(s, true);
-        else if (opts.length > 0) wrapper.api.setValue(opts[0], true);
-      },
-      getValue: function() { return wrapper.api ? wrapper.api.getValue() : ""; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: options.map(function(v) { return { value: v, text: v }; }),
-        items: selected ? [selected] : (options.length > 0 ? [options[0]] : []),
-        maxItems: 1,
-        placeholder: "Column...",
-        onChange: function(value) { if (onChange) onChange(value); }
-      });
-      wrapper.api = $sel[0].selectize;
-      // Apply any pending options that arrived before init
-      if (wrapper._pending) {
-        wrapper.setOptions(wrapper._pending.opts, wrapper._pending.sel);
-        delete wrapper._pending;
-      }
-    });
-
-    return wrapper;
-  }
-
-  // Create a multi-select selectize for value picking
-  function createValueSelectize(container, options, selected, onChange) {
-    var sel = document.createElement("select");
-    sel.multiple = true;
-    sel.className = "fu-selectize-val";
-    container.appendChild(sel);
-
-    var wrapper = {
-      el: sel, api: null,
-      getValue: function() { return wrapper.api ? (wrapper.api.getValue() || []) : []; },
-      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
-    };
-
-    withSelectize(function() {
-      var $sel = $(sel).selectize({
-        options: options.map(function(v) { return { value: v, text: v }; }),
-        items: selected || [],
-        plugins: ["remove_button", "drag_drop"],
-        placeholder: "Select values\u2026",
-        onChange: function(value) { if (onChange) onChange(value || []); }
-      });
-      wrapper.api = $sel[0].selectize;
-    });
-
-    return wrapper;
-  }
-
-  // ---------------------------------------------------------------------------
   // FilterUnified component
   // ---------------------------------------------------------------------------
   function FilterUnified(el) {
@@ -315,10 +235,12 @@
     var colDiv = document.createElement("div");
     colDiv.className = "fu-col-wrap";
     row.appendChild(colDiv);
-    cond._colSelectize = createColumnSelectize(
-      colDiv, this.columnNames, column,
-      function(value) { self._onColumnChange(cond, value); }
-    );
+    cond._colSelectize = BlockrSelect.single(colDiv, {
+      options: this.columnNames,
+      selected: column,
+      placeholder: "Column\u2026",
+      onChange: function(value) { self._onColumnChange(cond, value); }
+    });
 
     // Operator button slot (populated on column change)
     cond._opBtnSlot = document.createElement("span");
@@ -403,13 +325,16 @@
       }
       if (meta.hasNA) allValues.push("<NA>");
 
-      cond._valueSelectize = createValueSelectize(
-        container, allValues, cond.values || [],
-        function(selected) {
+      cond._valueSelectize = BlockrSelect.multi(container, {
+        options: allValues,
+        selected: cond.values || [],
+        placeholder: "Select values\u2026",
+        reorderable: false,
+        onChange: function(selected) {
           cond.values = selected;
           self._autoSubmit();
         }
-      );
+      });
     } else {
       // Single number input for comparison operators
       var numInput = document.createElement("input");
