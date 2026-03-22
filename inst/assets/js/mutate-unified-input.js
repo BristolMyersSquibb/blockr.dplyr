@@ -286,11 +286,18 @@
     });
     this.rows = [];
 
-    // Add rows from data
+    // Add rows from data and auto-confirm
     if (columns && columns.length > 0) {
       columns.forEach(function(col) {
         self._addRow(col.name || "", col.expr || "");
       });
+      // Mark all confirm buttons as confirmed
+      this.rows.forEach(function(r) {
+        var btn = r.rowEl.querySelector(".mu-expr-confirm");
+        if (btn) btn.classList.add("confirmed");
+      });
+      // Auto-submit so the block evaluates immediately
+      this._submit();
     } else {
       self._addRow("", "");
     }

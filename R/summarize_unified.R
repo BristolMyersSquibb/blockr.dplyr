@@ -81,6 +81,8 @@ new_summarize_unified_block <- function(exprs = "dplyr::summarize(data)", ...) {
     function(id) {
       tagList(
         summarize_unified_dep(),
+        # Hidden selectizeInput to force Shiny to load selectize.js
+        div(style = "display:none;", shiny::selectizeInput(NS(id, "_sel_loader"), "", choices = NULL)),
         css_responsive_grid(),
         css_single_column("summarize"),
         div(

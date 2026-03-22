@@ -501,17 +501,21 @@
     var summaries = [];
     this.summaries.forEach(function(s) {
       if (s.type === "simple") {
-        var name = (s._nameInput ? s._nameInput.value : s.name) || "";
-        if (name === "") return;
         var func = s.func || "";
         if (func === "") return;
         var col = s.col || "";
         var isNoCol = NO_COL_FUNCS.indexOf(func) !== -1;
         if (!isNoCol && col === "") return;
+        // Auto-generate name if empty
+        var name = (s._nameInput ? s._nameInput.value.trim() : "") || "";
+        if (name === "") {
+          var shortFunc = func.replace(/.*::/, "");
+          name = isNoCol ? shortFunc : shortFunc + "_" + col;
+        }
         summaries.push({ type: "simple", name: name, func: func, col: col });
       } else if (s.type === "expr") {
-        var ename = (s._nameInput ? s._nameInput.value : s.name) || "";
-        if (ename === "") return;
+        var ename = (s._nameInput ? s._nameInput.value.trim() : "") || "";
+        if (ename === "") ename = "expr_" + (summaries.length + 1);
         var val = s.exprEl && s.exprEl._aceEditor ? s.exprEl._aceEditor.getValue().trim() : "";
         if (val === "") return;
         summaries.push({ type: "expr", name: ename, expr: val });
@@ -541,6 +545,10 @@
       if (s.type === "simple" && s._colSelectize) {
         var current = s._colSelectize.getValue();
         s._colSelectize.setOptions(self.columnNames, current);
+        // If no column was set, the first one got auto-selected — update state
+        if (!s.col && self.columnNames.length > 0) {
+          s.col = s._colSelectize.getValue();
+        }
       }
     });
 
@@ -549,6 +557,9 @@
       var currentBy = this._bySelectize.getValue();
       this._bySelectize.setOptions(this.columnNames, currentBy);
     }
+
+    // Auto-submit now that columns are available
+    this._autoSubmit();
   };
 
   // ---------------------------------------------------------------------------

@@ -103,6 +103,7 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
     function(id) {
       tagList(
         filter_unified_dep(),
+        div(style = "display:none;", shiny::selectizeInput(NS(id, "_sel_loader"), "", choices = NULL)),
         css_responsive_grid(),
         css_single_column("filter"),
         div(
