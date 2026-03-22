@@ -206,13 +206,20 @@
     var addRow = document.createElement("div");
     addRow.className = "fu-add-row";
 
+    // Left group: [+ Add condition] [</>] [AND]
     var addCondLink = document.createElement("span");
     addCondLink.className = "fu-add-link";
     addCondLink.innerHTML = '<span class="fu-add-icon">' + ICON_PLUS + '</span> Add condition';
     addCondLink.addEventListener("click", function() { self._addValueRow(null, null); });
     addRow.appendChild(addCondLink);
 
-    // AND/OR toggle — sits next to "+ Add condition"
+    var addExprLink = document.createElement("span");
+    addExprLink.className = "fu-add-link-expr";
+    addExprLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>';
+    addExprLink.title = "Add R expression";
+    addExprLink.addEventListener("click", function() { self._addExprRow(""); });
+    addRow.appendChild(addExprLink);
+
     this.opToggle = document.createElement("button");
     this.opToggle.type = "button";
     this.opToggle.className = "fu-pill fu-op-toggle";
@@ -231,32 +238,21 @@
     spacer.style.flex = "1";
     addRow.appendChild(spacer);
 
-    var addExprLink = document.createElement("span");
-    addExprLink.className = "fu-add-link-expr";
-    addExprLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>';
-    addExprLink.title = "Add R expression";
-    addExprLink.addEventListener("click", function() { self._addExprRow(""); });
-    addRow.appendChild(addExprLink);
-
-    this.card.appendChild(addRow);
-
-    // Preserve order checkbox
-    var optionsRow = document.createElement("div");
-    optionsRow.className = "fu-options-row";
-
-    var preserveLabel = document.createElement("label");
-    preserveLabel.className = "fu-preserve-label";
-    this.preserveCheckbox = document.createElement("input");
-    this.preserveCheckbox.type = "checkbox";
-    this.preserveCheckbox.addEventListener("change", function() {
-      self.preserveOrder = self.preserveCheckbox.checked;
+    // Right: preserve order toggle
+    this.preserveBtn = document.createElement("button");
+    this.preserveBtn.type = "button";
+    this.preserveBtn.className = "fu-pill fu-preserve-btn";
+    this.preserveBtn.textContent = "data order";
+    this.preserveBtn.title = "Click to preserve selection order";
+    this.preserveBtn.addEventListener("click", function() {
+      self.preserveOrder = !self.preserveOrder;
+      self.preserveBtn.textContent = self.preserveOrder ? "pick order" : "data order";
+      self.preserveBtn.classList.toggle("fu-preserve-active", self.preserveOrder);
       self._autoSubmit();
     });
-    preserveLabel.appendChild(this.preserveCheckbox);
-    preserveLabel.appendChild(document.createTextNode(" Preserve selection order"));
-    optionsRow.appendChild(preserveLabel);
+    addRow.appendChild(this.preserveBtn);
 
-    this.card.appendChild(optionsRow);
+    this.card.appendChild(addRow);
     this.preserveOrder = false;
   };
 

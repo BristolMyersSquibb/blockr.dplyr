@@ -219,6 +219,7 @@
 .fu-add-sep { display: none; }
 
 .fu-add-link-expr {
+  margin-left: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -240,24 +241,15 @@
 
 .fu-add-icon { display: inline-flex; align-items: center; }
 
-/* Options row (preserve order) */
-.fu-options-row {
-  padding: 2px 0;
+/* Preserve order pill — grey by default, blue when active */
+.fu-preserve-btn {
+  font-size: 10px !important;
 }
 
-.fu-preserve-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--blockr-font-size-xs, 0.75rem);
-  color: var(--blockr-grey-400, #9ca3af);
-  cursor: pointer;
-  user-select: none;
-}
-
-.fu-preserve-label input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
+.fu-preserve-btn.fu-preserve-active {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
 }
 
 /* --- Expression rows (inline in same list) --- */
