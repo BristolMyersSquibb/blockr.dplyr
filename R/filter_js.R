@@ -36,40 +36,24 @@ new_filter_js_block <- function(exprs = "TRUE", ...) {
 
         r_exprs_rv <- reactiveVal(exprs)
 
-        # Push column names to JS whenever upstream data changes
+        # Push column names to JS
         observeEvent(colnames(data()), {
           session$sendCustomMessage(
-            "filter-js-update-columns",
-            list(
-              id = ns("filter_input"),
-              columns = colnames(data())
-            )
+            "multi-expr-update-columns",
+            list(id = ns("filter_input"), columns = colnames(data()))
           )
         })
 
-        # Receive the composed expression from JS on Submit
+        # Receive composed expression from JS on Submit
         observeEvent(input$filter_input, {
           new_expr <- input$filter_input
           if (is.null(new_expr) || trimws(new_expr) == "") {
             new_expr <- "TRUE"
           }
-          # Validate: try to parse and eval against the actual data
+          # Validate parse only — eval is handled by the block framework
           expr <- try(parse_filter_expr(new_expr), silent = TRUE)
           if (inherits(expr, "try-error")) {
-            shiny::showNotification(
-              as.character(expr),
-              type = "error",
-              duration = 5
-            )
-            return()
-          }
-          ans <- try(eval(expr, list(data = data())), silent = TRUE)
-          if (inherits(ans, "try-error")) {
-            shiny::showNotification(
-              as.character(ans),
-              type = "error",
-              duration = 5
-            )
+            shiny::showNotification(as.character(expr), type = "error", duration = 5)
             return()
           }
           r_exprs_rv(new_expr)
@@ -84,7 +68,7 @@ new_filter_js_block <- function(exprs = "TRUE", ...) {
     # -- ui -------------------------------------------------------------------
     function(id) {
       tagList(
-        filter_js_dep(),
+        multi_expr_dep(),
         css_responsive_grid(),
         css_single_column("filter"),
         div(
@@ -102,11 +86,12 @@ new_filter_js_block <- function(exprs = "TRUE", ...) {
                     "Use Ctrl+Space for autocomplete."
                   )
                 ),
-                # The JS input binding owns this div
                 div(
                   id = NS(id, "filter_input"),
-                  class = "filter-js-container",
-                  `data-value` = exprs
+                  class = "multi-expr-container",
+                  `data-mode` = "expr",
+                  `data-value` = exprs,
+                  `data-add-label` = "Add condition"
                 )
               )
             )
@@ -119,26 +104,24 @@ new_filter_js_block <- function(exprs = "TRUE", ...) {
   )
 }
 
-#' HTML dependency for the filter-js input binding
+#' HTML dependencies for the multi-expr JS input binding
 #' @noRd
-filter_js_dep <- function() {
+multi_expr_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
 
   tagList(
-    # ACE editor + language tools (from shinyAce)
     htmlDependency(
       name = "ace",
       version = utils::packageVersion("shinyAce"),
       src = ace_dir,
       script = c("ace/ace.js", "ace/ext-language_tools.js")
     ),
-    # Our input binding + styles
     htmlDependency(
-      name = "filter-js-input",
+      name = "multi-expr-input",
       version = utils::packageVersion("blockr.dplyr"),
       src = system.file("assets", package = "blockr.dplyr"),
-      script = "js/filter-js-input.js",
-      stylesheet = "css/filter-js.css"
+      script = "js/multi-expr-input.js",
+      stylesheet = "css/multi-expr.css"
     )
   )
 }
