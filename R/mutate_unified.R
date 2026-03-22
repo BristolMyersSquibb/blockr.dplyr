@@ -147,16 +147,8 @@ new_mutate_unified_block <- function(exprs = list(new_col = "1"), ...) {
 #' HTML dependency for mutate-unified
 #' @noRd
 mutate_unified_dep <- function() {
-  ace_dir <- system.file("www", package = "shinyAce")
-
   tagList(
-    # ACE editor
-    htmlDependency(
-      name = "ace",
-      version = utils::packageVersion("shinyAce"),
-      src = ace_dir,
-      script = c("ace/ace.js", "ace/ext-language_tools.js")
-    ),
+    blockr_input_dep(),
     # Our input binding + styles
     htmlDependency(
       name = "mutate-unified-input",

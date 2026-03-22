@@ -12,7 +12,7 @@
   var ICON_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg>';
 
   // ---------------------------------------------------------------------------
-  // ACE editor helpers (for expression mode)
+  // Expression categories for autocomplete
   // ---------------------------------------------------------------------------
   var defaultCategories = {
     arithmetic: ["abs","sign","ceiling","floor","round","trunc","log","log2","log10","exp","sqrt"],
@@ -22,64 +22,6 @@
     string: ["str_c","paste","paste0","str_sub","str_to_lower","str_to_upper"],
     ranking: ["row_number","min_rank","dense_rank","percent_rank","ntile"]
   };
-
-  function backtickIfNeeded(n) {
-    return /^[a-zA-Z.][a-zA-Z0-9._]*$/.test(n) ? n : "`" + n + "`";
-  }
-
-  function withAce(fn) {
-    if (typeof ace !== "undefined") { fn(); return; }
-    var a = 0, t = setInterval(function() {
-      a++; if (typeof ace !== "undefined") { clearInterval(t); fn(); }
-      if (a > 50) clearInterval(t);
-    }, 100);
-  }
-
-  function makeCompleter(cols) {
-    return { getCompletions: function(_e,_s,_p,_pr,cb) {
-      var cats = Object.assign({}, defaultCategories);
-      cats.column = (cols||[]).map(backtickIfNeeded);
-      var list = [];
-      Object.keys(cats).forEach(function(cat) {
-        cats[cat].forEach(function(fn) {
-          var isC = cat === "column";
-          list.push({ caption: fn, value: fn + (isC ? "" : "()"), meta: cat, score: isC ? 1001 : 1000 });
-        });
-      });
-      list.sort(function(a,b) { return a.score !== b.score ? b.score - a.score : a.caption.localeCompare(b.caption); });
-      cb(null, list);
-    }};
-  }
-
-  function createAceEditor(container, value, cols, onChangeCallback, opts) {
-    var el = document.createElement("div");
-    el.className = "fu-ace-editor";
-    container.appendChild(el);
-    withAce(function() {
-      var ed = ace.edit(el);
-      ed.setTheme("ace/theme/tomorrow");
-      ed.session.setMode("ace/mode/r");
-      var maxL = (opts && opts.maxLines) || 1;
-      ed.setOptions({ minLines:1, maxLines:maxL, showLineNumbers:false, showPrintMargin:false,
-        highlightActiveLine:false, tabSize:2, fontSize:14,
-        enableLiveAutocompletion:true, enableBasicAutocompletion:true });
-      ed.setValue(value||"", 1);
-      ed.renderer.setScrollMargin(0,0,0,0);
-      ed.completers = [makeCompleter(cols)];
-      ed.commands.on("afterExec", function(e) {
-        if (e.command.name==="insertstring"||e.command.name==="Return") {
-          var p=ed.getCursorPosition(), l=ed.session.getLine(p.row);
-          if (l.substring(p.column-2,p.column)==="()") ed.moveCursorTo(p.row,p.column-1);
-        }
-      });
-      // Auto-submit on change (debounced by caller)
-      if (onChangeCallback) {
-        ed.session.on("change", onChangeCallback);
-      }
-      el._aceEditor = ed;
-    });
-    return el;
-  }
 
   // ---------------------------------------------------------------------------
   // FilterUnified component
@@ -223,7 +165,7 @@
       op: "is",
       values: (opts && opts.values) || [],
       numValue: (opts && opts.numValue) || null,
-      multiSelect: null, exprEl: null, rowEl: null
+      multiSelect: null, exprInput: null, rowEl: null
     };
 
     var row = document.createElement("div");
@@ -381,21 +323,17 @@
     };
     confirmBtn.addEventListener("click", doConfirm);
 
-    // When expression text changes, reset to unconfirmed
-    var exprEl = createAceEditor(codeDiv, value, this.columnNames, function() {
-      confirmBtn.classList.remove("confirmed");
-      confirmBtn.innerHTML = "Enter &#x21B5;";
-    }, { maxLines: 10 });
-
-    // Also confirm on Enter key in the ACE editor
-    withAce(function() {
-      if (exprEl._aceEditor) {
-        exprEl._aceEditor.commands.addCommand({
-          name: "confirmExpr",
-          bindKey: { win: "Enter", mac: "Enter" },
-          exec: function() { doConfirm(); }
-        });
-      }
+    // BlockrInput with autocomplete — onChange resets confirm, onConfirm triggers submit
+    var exprInput = BlockrInput.create(codeDiv, {
+      value: value,
+      columns: this.columnNames,
+      categories: defaultCategories,
+      placeholder: "R expression\u2026",
+      onChange: function() {
+        confirmBtn.classList.remove("confirmed");
+        confirmBtn.innerHTML = "Enter &#x21B5;";
+      },
+      onConfirm: function() { doConfirm(); }
     });
     row.appendChild(confirmBtn);
 
@@ -410,7 +348,7 @@
     this.conditions.push({
       id: id, filterType: "expr", column: null,
       values: null, min: null, max: null, exclude: false,
-      multiSelect: null, exprEl: exprEl, rowEl: row
+      multiSelect: null, exprInput: exprInput, rowEl: row
     });
     this._updateUI();
   };
@@ -429,7 +367,7 @@
 
     if (cond._valueSelectize) cond._valueSelectize.destroy();
     if (cond._colSelectize) cond._colSelectize.destroy();
-    if (cond.exprEl && cond.exprEl._aceEditor) cond.exprEl._aceEditor.destroy();
+    if (cond.exprInput) cond.exprInput.destroy();
     if (cond.rowEl && cond.rowEl.parentNode) cond.rowEl.parentNode.removeChild(cond.rowEl);
     this.conditions.splice(idx, 1);
     this._updateUI();
@@ -462,8 +400,8 @@
       } else if (c.filterType === "numeric" && c.numValue != null) {
         // Comparison operator with single value
         conditions.push({ type: "numeric", column: c.column, op: op, value: c.numValue });
-      } else if (c.filterType === "expr" && c.exprEl && c.exprEl._aceEditor) {
-        var val = c.exprEl._aceEditor.getValue().trim();
+      } else if (c.filterType === "expr" && c.exprInput) {
+        var val = c.exprInput.getValue();
         if (val && val !== "") conditions.push({ type: "expr", expr: val });
       }
     });

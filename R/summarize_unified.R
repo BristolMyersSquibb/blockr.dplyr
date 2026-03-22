@@ -179,17 +179,9 @@ build_unified_summarize <- function(summaries, by_cols = NULL) {
 #' HTML dependency for summarize-unified
 #' @noRd
 summarize_unified_dep <- function() {
-  ace_dir <- system.file("www", package = "shinyAce")
-
   tagList(
     blockr_select_dep(),
-    # ACE editor
-    htmlDependency(
-      name = "ace",
-      version = utils::packageVersion("shinyAce"),
-      src = ace_dir,
-      script = c("ace/ace.js", "ace/ext-language_tools.js")
-    ),
+    blockr_input_dep(),
     # Our input binding + styles
     htmlDependency(
       name = "summarize-unified-input",

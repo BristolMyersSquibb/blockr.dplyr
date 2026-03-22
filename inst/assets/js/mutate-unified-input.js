@@ -13,7 +13,7 @@
   var ICON_CONFIRM = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg>';
 
   // ---------------------------------------------------------------------------
-  // ACE editor helpers
+  // Expression categories for autocomplete
   // ---------------------------------------------------------------------------
   var defaultCategories = {
     arithmetic: ["abs","sign","ceiling","floor","round","trunc","log","log2","log10","exp","sqrt"],
@@ -23,63 +23,6 @@
     string: ["str_c","paste","paste0","str_sub","str_to_lower","str_to_upper"],
     ranking: ["row_number","min_rank","dense_rank","percent_rank","ntile"]
   };
-
-  function backtickIfNeeded(n) {
-    return /^[a-zA-Z.][a-zA-Z0-9._]*$/.test(n) ? n : "`" + n + "`";
-  }
-
-  function withAce(fn) {
-    if (typeof ace !== "undefined") { fn(); return; }
-    var a = 0, t = setInterval(function() {
-      a++; if (typeof ace !== "undefined") { clearInterval(t); fn(); }
-      if (a > 50) clearInterval(t);
-    }, 100);
-  }
-
-  function makeCompleter(cols) {
-    return { getCompletions: function(_e,_s,_p,_pr,cb) {
-      var cats = Object.assign({}, defaultCategories);
-      cats.column = (cols||[]).map(backtickIfNeeded);
-      var list = [];
-      Object.keys(cats).forEach(function(cat) {
-        cats[cat].forEach(function(fn) {
-          var isC = cat === "column";
-          list.push({ caption: fn, value: fn + (isC ? "" : "()"), meta: cat, score: isC ? 1001 : 1000 });
-        });
-      });
-      list.sort(function(a,b) { return a.score !== b.score ? b.score - a.score : a.caption.localeCompare(b.caption); });
-      cb(null, list);
-    }};
-  }
-
-  function createAceEditor(container, value, cols, onChangeCallback, opts) {
-    var el = document.createElement("div");
-    el.className = "mu-ace-editor";
-    container.appendChild(el);
-    withAce(function() {
-      var ed = ace.edit(el);
-      ed.setTheme("ace/theme/tomorrow");
-      ed.session.setMode("ace/mode/r");
-      var maxL = (opts && opts.maxLines) || 10;
-      ed.setOptions({ minLines:1, maxLines:maxL, showLineNumbers:false, showPrintMargin:false,
-        highlightActiveLine:false, tabSize:2, fontSize:14,
-        enableLiveAutocompletion:true, enableBasicAutocompletion:true });
-      ed.setValue(value||"", 1);
-      ed.renderer.setScrollMargin(0,0,0,0);
-      ed.completers = [makeCompleter(cols)];
-      ed.commands.on("afterExec", function(e) {
-        if (e.command.name==="insertstring"||e.command.name==="Return") {
-          var p=ed.getCursorPosition(), l=ed.session.getLine(p.row);
-          if (l.substring(p.column-2,p.column)==="()") ed.moveCursorTo(p.row,p.column-1);
-        }
-      });
-      if (onChangeCallback) {
-        ed.session.on("change", onChangeCallback);
-      }
-      el._aceEditor = ed;
-    });
-    return el;
-  }
 
   // ---------------------------------------------------------------------------
   // MutateUnified component
@@ -161,7 +104,7 @@
     var rowData = {
       id: id,
       nameInput: nameInput,
-      exprEl: null,
+      exprInput: null,
       confirmBtn: confirmBtn,
       rowEl: row
     };
@@ -173,23 +116,19 @@
     };
     confirmBtn.addEventListener("click", doConfirm);
 
-    // ACE editor — on change, reset confirm state
-    var exprEl = createAceEditor(codeDiv, expr, this.columnNames, function() {
-      confirmBtn.classList.remove("confirmed");
-      confirmBtn.innerHTML = "Enter &#x21B5;";
-    }, { maxLines: 10 });
-    rowData.exprEl = exprEl;
-
-    // Enter key in ACE confirms
-    withAce(function() {
-      if (exprEl._aceEditor) {
-        exprEl._aceEditor.commands.addCommand({
-          name: "confirmExpr",
-          bindKey: { win: "Enter", mac: "Enter" },
-          exec: function() { doConfirm(); }
-        });
-      }
+    // BlockrInput — on change, reset confirm state; Enter confirms
+    var exprInput = BlockrInput.create(codeDiv, {
+      value: expr,
+      columns: this.columnNames,
+      categories: defaultCategories,
+      placeholder: "R expression\u2026",
+      onChange: function() {
+        confirmBtn.classList.remove("confirmed");
+        confirmBtn.innerHTML = "Enter &#x21B5;";
+      },
+      onConfirm: function() { doConfirm(); }
     });
+    rowData.exprInput = exprInput;
     row.appendChild(confirmBtn);
 
     // Name input: debounced auto-submit on change (300ms)
@@ -227,7 +166,7 @@
     }
     if (!rowData) return;
 
-    if (rowData.exprEl && rowData.exprEl._aceEditor) rowData.exprEl._aceEditor.destroy();
+    if (rowData.exprInput) rowData.exprInput.destroy();
     if (rowData.rowEl && rowData.rowEl.parentNode) rowData.rowEl.parentNode.removeChild(rowData.rowEl);
     this.rows.splice(idx, 1);
     this._updateUI();
@@ -246,8 +185,8 @@
     this.rows.forEach(function(r) {
       var name = (r.nameInput.value || "").trim();
       var expr = "";
-      if (r.exprEl && r.exprEl._aceEditor) {
-        expr = r.exprEl._aceEditor.getValue().trim();
+      if (r.exprInput) {
+        expr = r.exprInput.getValue();
       }
       // Include the row even if name/expr are empty — R side will validate
       columns.push({ name: name, expr: expr });
@@ -269,10 +208,9 @@
 
   MutateUnified.prototype.updateColumns = function(cols) {
     this.columnNames = cols || [];
-    var completer = makeCompleter(this.columnNames);
     this.rows.forEach(function(r) {
-      if (r.exprEl && r.exprEl._aceEditor) {
-        r.exprEl._aceEditor.completers = [completer];
+      if (r.exprInput) {
+        r.exprInput.setColumns(cols);
       }
     });
   };
@@ -281,7 +219,7 @@
     var self = this;
     // Clear existing rows
     this.rows.forEach(function(r) {
-      if (r.exprEl && r.exprEl._aceEditor) r.exprEl._aceEditor.destroy();
+      if (r.exprInput) r.exprInput.destroy();
       if (r.rowEl && r.rowEl.parentNode) r.rowEl.parentNode.removeChild(r.rowEl);
     });
     this.rows = [];

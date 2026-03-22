@@ -310,17 +310,9 @@ build_range_part <- function(cond) {
 #' HTML dependency for filter-unified
 #' @noRd
 filter_unified_dep <- function() {
-  ace_dir <- system.file("www", package = "shinyAce")
-
   tagList(
     blockr_select_dep(),
-    # ACE editor
-    htmlDependency(
-      name = "ace",
-      version = utils::packageVersion("shinyAce"),
-      src = ace_dir,
-      script = c("ace/ace.js", "ace/ext-language_tools.js")
-    ),
+    blockr_input_dep(),
     # Our input binding + styles
     htmlDependency(
       name = "filter-unified-input",
