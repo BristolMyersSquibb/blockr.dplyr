@@ -49,6 +49,7 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
             if (type %in% c("numeric", "integer")) {
               info$min <- min(vals, na.rm = TRUE)
               info$max <- max(vals, na.rm = TRUE)
+              info$uniqueValues <- sort(unique(vals[!is.na(vals)]))
             } else {
               uv <- sort(unique(as.character(vals[!is.na(vals)])))
               info$values <- uv
@@ -144,6 +145,8 @@ build_unified_filter <- function(conditions, operator = "&") {
 
     if (cond$type == "values") {
       part <- build_value_part(cond)
+    } else if (cond$type == "numeric") {
+      part <- build_numeric_part(cond)
     } else if (cond$type == "range") {
       part <- build_range_part(cond)
     } else if (cond$type == "expr") {
@@ -212,6 +215,31 @@ build_value_part <- function(cond) {
 
   combine_op <- if (mode == "include") " | " else " & "
   paste0("(", paste(filter_parts, collapse = combine_op), ")")
+}
+
+#' Build filter part for a numeric operator condition
+#' @noRd
+build_numeric_part <- function(cond) {
+  column <- cond$column
+  op <- cond$op
+  value <- cond$value
+
+  if (is.null(column) || is.null(op) || is.null(value)) return(NULL)
+
+  # Map Unicode operators to R operators
+  r_op <- switch(op,
+    "=" = "==",
+    "\u2260" = "!=",
+    ">" = ">",
+    "\u2265" = ">=",
+    "<" = "<",
+    "\u2264" = "<=",
+    ">=" = ">=",
+    "<=" = "<=",
+    op
+  )
+
+  glue::glue("`{column}` {r_op} {value}")
 }
 
 #' Build filter part for a range condition

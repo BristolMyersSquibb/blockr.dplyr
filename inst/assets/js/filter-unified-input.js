@@ -336,34 +336,41 @@
     this.card.appendChild(addRow);
   };
 
-  // --- Switch toggle for exclude ---
-  FilterUnified.prototype._createExcludeToggle = function(cond) {
-    var self = this;
-    var toggle = document.createElement("label");
-    toggle.className = "fu-switch";
-    toggle.title = "Toggle include/exclude";
+  // --- Operator cycle button ---
+  var CAT_OPS = [
+    { value: "is", label: "is" },
+    { value: "is not", label: "is not" }
+  ];
+  var NUM_OPS = [
+    { value: "is", label: "is" },
+    { value: "is not", label: "is not" },
+    { value: ">", label: ">" },
+    { value: ">=", label: "\u2265" },
+    { value: "<", label: "<" },
+    { value: "<=", label: "\u2264" }
+  ];
 
-    var input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = cond.exclude;
-    input.addEventListener("change", function() {
-      cond.exclude = input.checked;
-      slider.classList.toggle("active", input.checked);
-      labelEl.textContent = input.checked ? "Excl" : "Incl";
+  FilterUnified.prototype._createOpButton = function(cond, ops) {
+    var self = this;
+    var idx = 0;
+    cond.op = ops[0].value;
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "fu-op-btn";
+    btn.textContent = ops[0].label;
+    btn.title = "Click to cycle operator";
+    btn.addEventListener("click", function() {
+      idx = (idx + 1) % ops.length;
+      cond.op = ops[idx].value;
+      btn.textContent = ops[idx].label;
+      self._renderDynamicContent(cond);
       self._autoSubmit();
     });
-    toggle.appendChild(input);
 
-    var slider = document.createElement("span");
-    slider.className = "fu-switch-slider" + (cond.exclude ? " active" : "");
-    toggle.appendChild(slider);
-
-    var labelEl = document.createElement("span");
-    labelEl.className = "fu-switch-label";
-    labelEl.textContent = cond.exclude ? "Excl" : "Incl";
-    toggle.appendChild(labelEl);
-
-    return toggle;
+    cond._opBtn = btn;
+    cond._opList = ops;
+    return btn;
   };
 
   // --- Value condition rows ---
@@ -373,10 +380,9 @@
     var id = this.nextId++;
     var cond = {
       id: id, filterType: "none", column: column || "",
+      op: "is",
       values: (opts && opts.values) || [],
-      min: (opts && opts.min) || null,
-      max: (opts && opts.max) || null,
-      exclude: (opts && opts.exclude) || false,
+      numValue: (opts && opts.numValue) || null,
       multiSelect: null, exprEl: null, rowEl: null
     };
 
@@ -395,15 +401,15 @@
     row.appendChild(colSelect);
     cond._colSelect = colSelect;
 
+    // Operator button slot (populated on column change)
+    cond._opBtnSlot = document.createElement("span");
+    row.appendChild(cond._opBtnSlot);
+
     // Dynamic content area
     var contentDiv = document.createElement("div");
     contentDiv.className = "fu-row-content";
     row.appendChild(contentDiv);
     cond._contentDiv = contentDiv;
-
-    // Exclude switch toggle
-    var exclToggle = this._createExcludeToggle(cond);
-    row.appendChild(exclToggle);
 
     // Remove button
     var rmBtn = document.createElement("button");
@@ -427,10 +433,6 @@
 
   FilterUnified.prototype._populateColumnSelect = function(select, selected) {
     select.innerHTML = "";
-    var opt0 = document.createElement("option");
-    opt0.value = "";
-    opt0.textContent = "Select column...";
-    select.appendChild(opt0);
 
     this.columnNames.forEach(function(name) {
       var opt = document.createElement("option");
@@ -439,87 +441,83 @@
       if (name === selected) opt.selected = true;
       select.appendChild(opt);
     });
-  };
 
-  FilterUnified.prototype._onColumnChange = function(cond, colName) {
-    var self = this;
-    cond.column = colName;
-    var meta = this.columnMeta[colName];
-    var contentDiv = cond._contentDiv;
-
-    if (cond.multiSelect) { cond.multiSelect.destroy(); cond.multiSelect = null; }
-    contentDiv.innerHTML = "";
-
-    if (!meta) { cond.filterType = "none"; return; }
-
-    if (meta.type === "numeric" || meta.type === "integer") {
-      cond.filterType = "range";
-      cond.min = meta.min;
-      cond.max = meta.max;
-      this._renderRangeUI(cond, contentDiv, meta);
-    } else {
-      cond.filterType = "values";
-      cond.values = [];
-      this._renderValuesUI(cond, contentDiv, meta);
+    // If no column was explicitly selected and we have columns, pick the first
+    if (!selected && this.columnNames.length > 0) {
+      select.value = this.columnNames[0];
     }
   };
 
-  FilterUnified.prototype._renderValuesUI = function(cond, container, meta) {
-    var self = this;
-    var allValues = (meta.values || []).slice();
-    if (meta.hasEmpty) allValues.push("<empty>");
-    if (meta.hasNA) allValues.push("<NA>");
+  FilterUnified.prototype._onColumnChange = function(cond, colName) {
+    cond.column = colName;
+    var meta = this.columnMeta[colName];
 
-    cond.multiSelect = new MultiSelect(container, allValues, cond.values, function(selected) {
-      cond.values = selected;
-      self._autoSubmit();
-    });
+    // Reset selections when column changes
+    cond.values = [];
+    cond.numValue = null;
+
+    if (cond.multiSelect) { cond.multiSelect.destroy(); cond.multiSelect = null; }
+    cond._contentDiv.innerHTML = "";
+    cond._opBtnSlot.innerHTML = "";
+
+    if (!meta) { cond.filterType = "none"; return; }
+
+    var isNumeric = meta.type === "numeric" || meta.type === "integer";
+    cond._meta = meta;
+    cond.filterType = isNumeric ? "numeric" : "values";
+
+    // Create operator button with the right ops for this type
+    var ops = isNumeric ? NUM_OPS : CAT_OPS;
+    var btn = this._createOpButton(cond, ops);
+    cond._opBtnSlot.appendChild(btn);
+
+    this._renderDynamicContent(cond);
   };
 
-  FilterUnified.prototype._renderRangeUI = function(cond, container, meta) {
+  // Unified content renderer — dispatches based on op
+  FilterUnified.prototype._renderDynamicContent = function(cond) {
     var self = this;
-    var rangeDiv = document.createElement("div");
-    rangeDiv.className = "fu-range";
+    var container = cond._contentDiv;
+    var meta = cond._meta;
 
-    var minLabel = document.createElement("span");
-    minLabel.className = "fu-range-label";
-    minLabel.textContent = "Min";
-    rangeDiv.appendChild(minLabel);
+    if (cond.multiSelect) { cond.multiSelect.destroy(); cond.multiSelect = null; }
+    container.innerHTML = "";
 
-    var minInput = document.createElement("input");
-    minInput.type = "number";
-    minInput.className = "fu-range-input";
-    minInput.step = "any";
-    minInput.value = meta.min != null ? meta.min : "";
-    minInput.addEventListener("input", function() {
-      cond.min = minInput.value === "" ? null : parseFloat(minInput.value);
-      self._autoSubmit();
-    });
-    rangeDiv.appendChild(minInput);
+    if (!meta) return;
 
-    var dash = document.createElement("span");
-    dash.className = "fu-range-dash";
-    dash.textContent = "—";
-    rangeDiv.appendChild(dash);
+    var op = cond.op;
 
-    var maxLabel = document.createElement("span");
-    maxLabel.className = "fu-range-label";
-    maxLabel.textContent = "Max";
-    rangeDiv.appendChild(maxLabel);
+    if (op === "is" || op === "is not") {
+      // Multi-select for exact values (both categorical and numeric)
+      var allValues;
+      if (meta.type === "numeric" || meta.type === "integer") {
+        allValues = (meta.uniqueValues || []).map(String);
+      } else {
+        allValues = (meta.values || []).slice();
+        if (meta.hasEmpty) allValues.push("<empty>");
+      }
+      if (meta.hasNA) allValues.push("<NA>");
 
-    var maxInput = document.createElement("input");
-    maxInput.type = "number";
-    maxInput.className = "fu-range-input";
-    maxInput.step = "any";
-    maxInput.value = meta.max != null ? meta.max : "";
-    maxInput.addEventListener("input", function() {
-      cond.max = maxInput.value === "" ? null : parseFloat(maxInput.value);
-      self._autoSubmit();
-    });
-    rangeDiv.appendChild(maxInput);
-
-    container.appendChild(rangeDiv);
+      cond.multiSelect = new MultiSelect(container, allValues, cond.values || [], function(selected) {
+        cond.values = selected;
+        self._autoSubmit();
+      });
+    } else {
+      // Single number input for comparison operators
+      var numInput = document.createElement("input");
+      numInput.type = "number";
+      numInput.className = "fu-num-input";
+      numInput.step = "any";
+      numInput.placeholder = "Value...";
+      if (cond.numValue != null) numInput.value = cond.numValue;
+      numInput.addEventListener("input", function() {
+        cond.numValue = numInput.value === "" ? null : parseFloat(numInput.value);
+        self._autoSubmit();
+      });
+      container.appendChild(numInput);
+    }
   };
+
 
   // --- Expression rows ---
 
@@ -617,12 +615,19 @@
   FilterUnified.prototype._compose = function() {
     var conditions = [];
     this.conditions.forEach(function(c) {
-      if (c.filterType === "values" && c.column && c.values && c.values.length > 0) {
-        conditions.push({ type: "values", column: c.column, values: c.values,
-          mode: c.exclude ? "exclude" : "include" });
-      } else if (c.filterType === "range" && c.column && (c.min != null || c.max != null)) {
-        conditions.push({ type: "range", column: c.column, min: c.min, max: c.max,
-          mode: c.exclude ? "exclude" : "include" });
+      if (!c.column && c.filterType !== "expr") return;
+
+      var op = c.op;
+
+      if ((c.filterType === "values" || c.filterType === "numeric") && (op === "is" || op === "is not")) {
+        // Multi-select values (categorical or numeric =)
+        if (c.values && c.values.length > 0) {
+          conditions.push({ type: "values", column: c.column, values: c.values,
+            mode: op === "is" ? "include" : "exclude" });
+        }
+      } else if (c.filterType === "numeric" && c.numValue != null) {
+        // Comparison operator with single value
+        conditions.push({ type: "numeric", column: c.column, op: op, value: c.numValue });
       } else if (c.filterType === "expr" && c.exprEl && c.exprEl._aceEditor) {
         var val = c.exprEl._aceEditor.getValue().trim();
         if (val && val !== "") conditions.push({ type: "expr", expr: val });
@@ -655,8 +660,10 @@
       if (c._colSelect) {
         var current = c._colSelect.value;
         self._populateColumnSelect(c._colSelect, current);
-        if (current && self.columnMeta[current]) {
-          self._onColumnChange(c, current);
+        // Auto-select first column if none was set
+        var col = c._colSelect.value;
+        if (col && self.columnMeta[col]) {
+          self._onColumnChange(c, col);
         }
       }
     });
