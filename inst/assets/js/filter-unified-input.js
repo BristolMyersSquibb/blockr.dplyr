@@ -283,36 +283,17 @@
   FilterUnified.prototype._buildDOM = function() {
     var self = this;
 
-    // Header
-    var header = document.createElement("div");
-    header.className = "fu-header";
-
-    this.opToggle = document.createElement("button");
-    this.opToggle.type = "button";
-    this.opToggle.className = "fu-op-toggle";
-    this.opToggle.textContent = "AND";
-    this.opToggle.title = "Toggle AND / OR";
-    this.opToggle.style.visibility = "hidden";
-    this.opToggle.addEventListener("click", function() {
-      self.operator = self.operator === "&" ? "|" : "&";
-      self.opToggle.textContent = self.operator === "&" ? "AND" : "OR";
-      self._autoSubmit();
-    });
-    header.appendChild(this.opToggle);
-
-    this.el.appendChild(header);
-
     // Card
     this.card = document.createElement("div");
     this.card.className = "fu-card";
     this.el.appendChild(this.card);
 
-    // Value conditions list
+    // Conditions list
     this.listEl = document.createElement("div");
     this.listEl.className = "fu-conditions";
     this.card.appendChild(this.listEl);
 
-    // Add row with condition + expression options
+    // Add row: [+ Add condition] [AND] ... [R expression]
     var addRow = document.createElement("div");
     addRow.className = "fu-add-row";
 
@@ -322,14 +303,29 @@
     addCondLink.addEventListener("click", function() { self._addValueRow(null, null); });
     addRow.appendChild(addCondLink);
 
-    var addSep = document.createElement("span");
-    addSep.className = "fu-add-sep";
-    addSep.textContent = "or";
-    addRow.appendChild(addSep);
+    // AND/OR toggle — sits next to "+ Add condition"
+    this.opToggle = document.createElement("button");
+    this.opToggle.type = "button";
+    this.opToggle.className = "fu-pill fu-op-toggle";
+    this.opToggle.textContent = "AND";
+    this.opToggle.title = "Toggle AND / OR";
+    this.opToggle.style.visibility = "hidden";
+    this.opToggle.addEventListener("click", function() {
+      self.operator = self.operator === "&" ? "|" : "&";
+      self.opToggle.textContent = self.operator === "&" ? "AND" : "OR";
+      self._autoSubmit();
+    });
+    addRow.appendChild(this.opToggle);
+
+    // Spacer
+    var spacer = document.createElement("span");
+    spacer.style.flex = "1";
+    addRow.appendChild(spacer);
 
     var addExprLink = document.createElement("span");
     addExprLink.className = "fu-add-link-expr";
-    addExprLink.textContent = "R expression";
+    addExprLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>';
+    addExprLink.title = "Add R expression";
     addExprLink.addEventListener("click", function() { self._addExprRow(""); });
     addRow.appendChild(addExprLink);
 
@@ -357,7 +353,7 @@
 
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "fu-op-btn";
+    btn.className = "fu-pill fu-op-btn";
     btn.textContent = ops[0].label;
     btn.title = "Click to cycle operator";
     btn.addEventListener("click", function() {
@@ -426,8 +422,11 @@
     this.conditions.push(cond);
     this._updateUI();
 
-    if (column && this.columnMeta[column]) {
-      this._onColumnChange(cond, column);
+    // Trigger column change — either for the explicitly passed column
+    // or for the auto-selected first column
+    var activeCol = column || colSelect.value;
+    if (activeCol && this.columnMeta[activeCol]) {
+      this._onColumnChange(cond, activeCol);
     }
   };
 

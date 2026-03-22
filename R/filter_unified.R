@@ -113,11 +113,6 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
               div(
                 class = "block-section-grid",
                 div(
-                  class = "block-help-text",
-                  tags$p("Filter rows by selecting values or setting ranges. ",
-                         "Use expression mode for advanced filters.")
-                ),
-                div(
                   id = NS(id, "filter_input"),
                   class = "filter-unified-container"
                 )

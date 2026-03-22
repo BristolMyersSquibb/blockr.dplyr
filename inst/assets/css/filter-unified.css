@@ -2,132 +2,112 @@
 
 .filter-unified-container { width: 100%; }
 
-/* --- Header --- */
-.fu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
 
-.fu-op-toggle {
+/* Unified click-through pill style */
+.fu-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  justify-content: center;
+  padding: 2px 8px;
   height: 24px;
+  min-width: 28px;
   font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--blockr-color-primary, #2563eb);
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  font-weight: 500;
+  color: var(--blockr-grey-500, #6b7280);
+  background: var(--blockr-grey-50, #f9fafb);
+  border: 1px solid var(--blockr-grey-200, #e5e7eb);
   border-radius: 4px;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.fu-op-toggle:hover {
-  background: rgba(37, 99, 235, 0.15);
+.fu-pill:hover {
+  background: var(--blockr-grey-100, #f3f4f6);
+  border-color: var(--blockr-grey-300, #d1d5db);
+  color: var(--blockr-grey-600, #4b5563);
 }
 
-/* --- Card --- */
+.fu-op-toggle {
+  margin-left: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- Card (no border, transparent) --- */
 .fu-card {
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
   overflow: visible;
-  background: var(--blockr-color-bg-input, #f9fafb);
 }
 
-/* --- Rows --- */
+/* --- Rows — all rows get a bordered input box --- */
 .fu-row {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 42px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
-  background: #fff;
-  transition: background 0.1s ease;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-.fu-row:hover { background: #fafbfc; }
-
 .fu-row:focus-within {
-  background: #fff;
-  box-shadow: inset 3px 0 0 var(--blockr-color-primary, #2563eb);
+  background-color: #ffffff;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* --- Shared form control style (aligned with blockr.dock design system) --- */
 .fu-col-select,
 .fu-op-select,
 .fu-num-input {
-  height: 32px;
+  height: 30px;
   padding: 4px 10px;
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  background: transparent;
+  border: none;
   color: var(--blockr-color-text-primary, #111827);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .fu-col-select:focus,
 .fu-op-select:focus,
 .fu-num-input:focus {
-  background-color: #ffffff;
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   outline: none;
 }
 
-/* Column dropdown — extra right padding for the native arrow */
+/* Column dropdown */
 .fu-col-select {
   width: 150px;
   min-width: 110px;
   max-width: 190px;
-  padding-right: 28px;
+  padding-right: 24px;
   cursor: pointer;
   flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+  border-radius: 0;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 12px;
+  background-position: right 8px center;
+  background-size: 10px;
 }
 
-/* Operator cycle button (pill style, like AND/OR toggle) */
+/* Operator cycle button — uses shared pill style */
 .fu-op-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  height: 24px;
-  min-width: 32px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--blockr-color-primary, #2563eb);
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
   flex-shrink: 0;
-  white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.fu-op-btn:hover {
-  background: rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-/* Number input */
+/* Number input — fills remaining space */
 .fu-num-input {
   flex: 1;
+  width: 100%;
   min-width: 60px;
+  box-sizing: border-box;
 }
 
 .fu-num-input::placeholder {
@@ -142,11 +122,12 @@
 }
 
 
-/* Remove button */
+/* Remove button — pushed to right edge */
 .fu-row-remove {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
   width: 26px;
   height: 26px;
   background: none;
@@ -168,8 +149,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  min-height: 34px;
+  padding: 4px 0;
+  min-height: 30px;
   font-size: 13px;
   user-select: none;
   color: var(--blockr-grey-400, #9ca3af);
@@ -192,10 +173,9 @@
 .fu-add-link-expr {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  height: 22px;
-  font-size: 11px;
-  font-weight: 500;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   color: var(--blockr-grey-400, #9ca3af);
   background: transparent;
   border: 1px solid var(--blockr-color-border, #e5e7eb);
@@ -222,21 +202,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
-  padding: 3px 10px 3px 4px;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
-  background: var(--blockr-color-bg-input, #f9fafb);
+  min-height: 30px;
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  font-size: var(--blockr-font-size-base, 0.875rem);
   gap: 4px;
   flex-wrap: nowrap;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.fu-multiselect-trigger:hover {
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .fu-multiselect-placeholder {
@@ -323,10 +296,10 @@
 }
 
 .fu-multiselect-search {
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: none;
   border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
-  font-size: 13px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
   outline: none;
   border-radius: 8px 8px 0 0;
 }
@@ -340,9 +313,9 @@
 .fu-multiselect-option {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
   cursor: pointer;
   transition: background 0.1s ease;
 }
@@ -396,9 +369,9 @@
 
 .fu-expr-confirm.confirmed {
   background: none;
-  border-color: var(--blockr-color-border, #e5e7eb);
+  border-color: transparent;
   color: var(--blockr-grey-400, #9ca3af);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .fu-ace-editor {
