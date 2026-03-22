@@ -10,7 +10,6 @@
   // ---------------------------------------------------------------------------
   var ICON_X = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>';
   var ICON_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg>';
-  var ICON_CHEVRON = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/></svg>';
 
   // ---------------------------------------------------------------------------
   // ACE editor helpers (for expression mode)
@@ -82,175 +81,84 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Multi-select dropdown widget
+  // Selectize helpers (using Shiny's already-loaded selectize.js via jQuery)
   // ---------------------------------------------------------------------------
-  function MultiSelect(container, values, selected, onChange) {
-    this.values = values || [];
-    this.selected = new Set(selected || []);
-    this.onChange = onChange || function(){};
-    this.isOpen = false;
-    this._build(container);
+
+  // Wait for selectize to be available (Shiny loads it)
+  function withSelectize(fn) {
+    if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { fn(); return; }
+    var a = 0, t = setInterval(function() {
+      a++;
+      if (typeof $ !== "undefined" && $.fn && $.fn.selectize) { clearInterval(t); fn(); }
+      if (a > 100) clearInterval(t); // give up after 10s
+    }, 100);
   }
 
-  MultiSelect.prototype._build = function(container) {
-    var self = this;
-    this.el = document.createElement("div");
-    this.el.className = "fu-multiselect";
+  // Create a single-select selectize for column picking
+  function createColumnSelectize(container, options, selected, onChange) {
+    var sel = document.createElement("select");
+    sel.className = "fu-selectize-col";
+    container.appendChild(sel);
 
-    this.trigger = document.createElement("div");
-    this.trigger.className = "fu-multiselect-trigger";
-    this.trigger.addEventListener("click", function(e) {
-      e.stopPropagation(); self.toggle();
-    });
-    this._updateTrigger();
-    this.el.appendChild(this.trigger);
-
-    this.panel = document.createElement("div");
-    this.panel.className = "fu-multiselect-panel";
-    this.panel.style.display = "none";
-
-    this.searchInput = document.createElement("input");
-    this.searchInput.type = "text";
-    this.searchInput.className = "fu-multiselect-search";
-    this.searchInput.placeholder = "Search...";
-    this.searchInput.addEventListener("input", function() { self._filter(); });
-    this.searchInput.addEventListener("click", function(e) { e.stopPropagation(); });
-    this.panel.appendChild(this.searchInput);
-
-    this.listEl = document.createElement("div");
-    this.listEl.className = "fu-multiselect-list";
-    this._renderOptions();
-    this.panel.appendChild(this.listEl);
-
-    this.el.appendChild(this.panel);
-    container.appendChild(this.el);
-
-    this._outsideClick = function(e) {
-      if (!self.el.contains(e.target)) self.close();
+    var wrapper = {
+      el: sel, api: null,
+      setOptions: function(opts, s) {
+        if (!wrapper.api) { wrapper._pending = { opts: opts, sel: s }; return; }
+        wrapper.api.clearOptions();
+        opts.forEach(function(v) { wrapper.api.addOption({ value: v, text: v }); });
+        wrapper.api.refreshOptions(false);
+        if (s) wrapper.api.setValue(s, true);
+        else if (opts.length > 0) wrapper.api.setValue(opts[0], true);
+      },
+      getValue: function() { return wrapper.api ? wrapper.api.getValue() : ""; },
+      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
     };
-    document.addEventListener("click", this._outsideClick);
-  };
 
-  MultiSelect.prototype._renderOptions = function() {
-    var self = this;
-    this.listEl.innerHTML = "";
-    this.optionEls = [];
-
-    this.values.forEach(function(val) {
-      var opt = document.createElement("label");
-      opt.className = "fu-multiselect-option";
-      if (self.selected.has(val)) opt.classList.add("selected");
-      opt.setAttribute("data-value", val);
-
-      var cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = self.selected.has(val);
-      cb.addEventListener("change", function(e) {
-        e.stopPropagation();
-        if (cb.checked) self.selected.add(val);
-        else self.selected.delete(val);
-        opt.classList.toggle("selected", cb.checked);
-        self._updateTrigger();
-        self.onChange(Array.from(self.selected));
+    withSelectize(function() {
+      var $sel = $(sel).selectize({
+        options: options.map(function(v) { return { value: v, text: v }; }),
+        items: selected ? [selected] : (options.length > 0 ? [options[0]] : []),
+        maxItems: 1,
+        placeholder: "Column...",
+        onChange: function(value) { if (onChange) onChange(value); }
       });
-      opt.appendChild(cb);
-
-      var label = document.createElement("span");
-      label.textContent = val;
-      opt.appendChild(label);
-
-      self.listEl.appendChild(opt);
-      self.optionEls.push({ el: opt, value: val.toLowerCase() });
-    });
-  };
-
-  MultiSelect.prototype._filter = function() {
-    var q = this.searchInput.value.toLowerCase();
-    this.optionEls.forEach(function(o) {
-      o.el.style.display = o.value.indexOf(q) >= 0 ? "" : "none";
-    });
-  };
-
-  MultiSelect.prototype._updateTrigger = function() {
-    var self = this;
-    this.trigger.innerHTML = "";
-    var n = this.selected.size;
-
-    if (n === 0) {
-      var ph = document.createElement("span");
-      ph.className = "fu-multiselect-placeholder";
-      ph.textContent = "Select values...";
-      this.trigger.appendChild(ph);
-    } else {
-      var chipsDiv = document.createElement("span");
-      chipsDiv.className = "fu-multiselect-chips";
-
-      var arr = Array.from(this.selected);
-      var maxShow = 3;
-      var shown = arr.slice(0, maxShow);
-
-      shown.forEach(function(val) {
-        var chip = document.createElement("span");
-        chip.className = "fu-chip";
-
-        var chipText = document.createElement("span");
-        chipText.className = "fu-chip-text";
-        chipText.textContent = val;
-        chip.appendChild(chipText);
-
-        var chipX = document.createElement("span");
-        chipX.className = "fu-chip-remove";
-        chipX.innerHTML = "&times;";
-        chipX.addEventListener("click", function(e) {
-          e.stopPropagation();
-          self.selected.delete(val);
-          // Update checkbox in dropdown
-          self.optionEls.forEach(function(o) {
-            if (o.el.getAttribute("data-value") === val) {
-              o.el.classList.remove("selected");
-              var cb = o.el.querySelector("input[type=checkbox]");
-              if (cb) cb.checked = false;
-            }
-          });
-          self._updateTrigger();
-          self.onChange(Array.from(self.selected));
-        });
-        chip.appendChild(chipX);
-        chipsDiv.appendChild(chip);
-      });
-
-      if (arr.length > maxShow) {
-        var more = document.createElement("span");
-        more.className = "fu-chip-more";
-        more.textContent = "+" + (arr.length - maxShow) + " more";
-        chipsDiv.appendChild(more);
+      wrapper.api = $sel[0].selectize;
+      // Apply any pending options that arrived before init
+      if (wrapper._pending) {
+        wrapper.setOptions(wrapper._pending.opts, wrapper._pending.sel);
+        delete wrapper._pending;
       }
+    });
 
-      this.trigger.appendChild(chipsDiv);
-    }
+    return wrapper;
+  }
 
-    var chevron = document.createElement("span");
-    chevron.className = "fu-multiselect-chevron";
-    chevron.innerHTML = ICON_CHEVRON;
-    this.trigger.appendChild(chevron);
-  };
+  // Create a multi-select selectize for value picking
+  function createValueSelectize(container, options, selected, onChange) {
+    var sel = document.createElement("select");
+    sel.multiple = true;
+    sel.className = "fu-selectize-val";
+    container.appendChild(sel);
 
-  MultiSelect.prototype.toggle = function() { this.isOpen ? this.close() : this.open(); };
-  MultiSelect.prototype.open = function() {
-    this.isOpen = true; this.panel.style.display = "";
-    this.searchInput.value = ""; this._filter(); this.searchInput.focus();
-  };
-  MultiSelect.prototype.close = function() { this.isOpen = false; this.panel.style.display = "none"; };
+    var wrapper = {
+      el: sel, api: null,
+      getValue: function() { return wrapper.api ? (wrapper.api.getValue() || []) : []; },
+      destroy: function() { if (wrapper.api) wrapper.api.destroy(); }
+    };
 
-  MultiSelect.prototype.setValues = function(values, selected) {
-    this.values = values || []; this.selected = new Set(selected || []);
-    this._renderOptions(); this._updateTrigger();
-  };
+    withSelectize(function() {
+      var $sel = $(sel).selectize({
+        options: options.map(function(v) { return { value: v, text: v }; }),
+        items: selected || [],
+        plugins: ["remove_button"],
+        placeholder: "Select values...",
+        onChange: function(value) { if (onChange) onChange(value || []); }
+      });
+      wrapper.api = $sel[0].selectize;
+    });
 
-  MultiSelect.prototype.destroy = function() {
-    document.removeEventListener("click", this._outsideClick);
-    if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
-  };
+    return wrapper;
+  }
 
   // ---------------------------------------------------------------------------
   // FilterUnified component
@@ -387,15 +295,14 @@
     row.setAttribute("data-cond-id", id);
     cond.rowEl = row;
 
-    // Column dropdown
-    var colSelect = document.createElement("select");
-    colSelect.className = "fu-col-select";
-    this._populateColumnSelect(colSelect, column);
-    colSelect.addEventListener("change", function() {
-      self._onColumnChange(cond, colSelect.value);
-    });
-    row.appendChild(colSelect);
-    cond._colSelect = colSelect;
+    // Column dropdown (selectize single-select)
+    var colDiv = document.createElement("div");
+    colDiv.className = "fu-col-wrap";
+    row.appendChild(colDiv);
+    cond._colSelectize = createColumnSelectize(
+      colDiv, this.columnNames, column,
+      function(value) { self._onColumnChange(cond, value); }
+    );
 
     // Operator button slot (populated on column change)
     cond._opBtnSlot = document.createElement("span");
@@ -424,26 +331,9 @@
 
     // Trigger column change — either for the explicitly passed column
     // or for the auto-selected first column
-    var activeCol = column || colSelect.value;
+    var activeCol = column || cond._colSelectize.getValue();
     if (activeCol && this.columnMeta[activeCol]) {
       this._onColumnChange(cond, activeCol);
-    }
-  };
-
-  FilterUnified.prototype._populateColumnSelect = function(select, selected) {
-    select.innerHTML = "";
-
-    this.columnNames.forEach(function(name) {
-      var opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      if (name === selected) opt.selected = true;
-      select.appendChild(opt);
-    });
-
-    // If no column was explicitly selected and we have columns, pick the first
-    if (!selected && this.columnNames.length > 0) {
-      select.value = this.columnNames[0];
     }
   };
 
@@ -455,7 +345,7 @@
     cond.values = [];
     cond.numValue = null;
 
-    if (cond.multiSelect) { cond.multiSelect.destroy(); cond.multiSelect = null; }
+    if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
     cond._contentDiv.innerHTML = "";
     cond._opBtnSlot.innerHTML = "";
 
@@ -479,7 +369,7 @@
     var container = cond._contentDiv;
     var meta = cond._meta;
 
-    if (cond.multiSelect) { cond.multiSelect.destroy(); cond.multiSelect = null; }
+    if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
     container.innerHTML = "";
 
     if (!meta) return;
@@ -497,10 +387,13 @@
       }
       if (meta.hasNA) allValues.push("<NA>");
 
-      cond.multiSelect = new MultiSelect(container, allValues, cond.values || [], function(selected) {
-        cond.values = selected;
-        self._autoSubmit();
-      });
+      cond._valueSelectize = createValueSelectize(
+        container, allValues, cond.values || [],
+        function(selected) {
+          cond.values = selected;
+          self._autoSubmit();
+        }
+      );
     } else {
       // Single number input for comparison operators
       var numInput = document.createElement("input");
@@ -593,7 +486,8 @@
     }
     if (!cond) return;
 
-    if (cond.multiSelect) cond.multiSelect.destroy();
+    if (cond._valueSelectize) cond._valueSelectize.destroy();
+    if (cond._colSelectize) cond._colSelectize.destroy();
     if (cond.exprEl && cond.exprEl._aceEditor) cond.exprEl._aceEditor.destroy();
     if (cond.rowEl && cond.rowEl.parentNode) cond.rowEl.parentNode.removeChild(cond.rowEl);
     this.conditions.splice(idx, 1);
@@ -656,11 +550,11 @@
       self.columnNames.push(col.name);
     });
     this.conditions.forEach(function(c) {
-      if (c._colSelect) {
-        var current = c._colSelect.value;
-        self._populateColumnSelect(c._colSelect, current);
+      if (c._colSelectize) {
+        var current = c._colSelectize.getValue();
+        c._colSelectize.setOptions(self.columnNames, current);
         // Auto-select first column if none was set
-        var col = c._colSelect.value;
+        var col = c._colSelectize.getValue();
         if (col && self.columnMeta[col]) {
           self._onColumnChange(c, col);
         }

@@ -78,23 +78,60 @@
   outline: none;
 }
 
-/* Column dropdown */
-.fu-col-select {
-  width: 150px;
-  min-width: 110px;
-  max-width: 190px;
-  padding-right: 24px;
-  cursor: pointer;
+/* Column selectize wrapper */
+.fu-col-wrap {
+  width: 160px;
+  min-width: 120px;
   flex-shrink: 0;
-  border-right: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 0;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 10px;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+/* Override selectize styles inside unified filter rows — no borders, transparent bg */
+.fu-row .selectize-control { font-size: var(--blockr-font-size-base, 0.875rem); }
+
+.fu-row .selectize-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 6px !important;
+  min-height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+/* Keep items and input same line height so height doesn't shift */
+.fu-row .selectize-input > * {
+  margin: 2px 2px !important;
+}
+
+.fu-row .selectize-input.focus {
+  box-shadow: none !important;
+}
+
+.fu-row .selectize-dropdown {
+  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+}
+
+.fu-row .selectize-dropdown-content .option {
+  padding: 6px 10px !important;
+}
+
+/* Value selectize — fill remaining space */
+.fu-row-content .selectize-control {
+  width: 100%;
+}
+
+/* Keep selectize items compact */
+.fu-row .selectize-input > .item {
+  padding: 1px 6px !important;
+  margin: 1px 2px !important;
+  line-height: 1.4 !important;
 }
 
 /* Operator cycle button — uses shared pill style */
@@ -191,149 +228,6 @@
 }
 
 .fu-add-icon { display: inline-flex; align-items: center; }
-
-/* --- Multi-select dropdown --- */
-.fu-multiselect {
-  position: relative;
-  width: 100%;
-}
-
-.fu-multiselect-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 30px;
-  padding: 2px 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  gap: 4px;
-  flex-wrap: nowrap;
-}
-
-.fu-multiselect-placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
-  padding-left: 4px;
-}
-
-.fu-multiselect-chips {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex-wrap: wrap;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.fu-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 4px 1px 7px;
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.15);
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--blockr-color-primary, #2563eb);
-  white-space: nowrap;
-  max-width: 120px;
-}
-
-.fu-chip-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fu-chip-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  font-size: 14px;
-  line-height: 1;
-  color: rgba(37, 99, 235, 0.5);
-  cursor: pointer;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.fu-chip-remove:hover {
-  color: var(--blockr-color-danger, #dc3545);
-  background: rgba(220, 53, 69, 0.1);
-}
-
-.fu-chip-more {
-  font-size: 11px;
-  color: var(--blockr-grey-400, #9ca3af);
-  white-space: nowrap;
-  padding-left: 2px;
-}
-
-.fu-multiselect-chevron {
-  display: flex;
-  align-items: center;
-  color: var(--blockr-grey-400, #9ca3af);
-  flex-shrink: 0;
-}
-
-.fu-multiselect-panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  margin-top: 4px;
-  background: #fff;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-height: 250px;
-  display: flex;
-  flex-direction: column;
-}
-
-.fu-multiselect-search {
-  padding: 6px 10px;
-  border: none;
-  border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  outline: none;
-  border-radius: 8px 8px 0 0;
-}
-
-.fu-multiselect-list {
-  overflow-y: auto;
-  max-height: 200px;
-  padding: 4px 0;
-}
-
-.fu-multiselect-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  cursor: pointer;
-  transition: background 0.1s ease;
-}
-
-.fu-multiselect-option:hover {
-  background: var(--blockr-color-bg-hover, #f3f4f6);
-}
-
-.fu-multiselect-option.selected {
-  background: rgba(37, 99, 235, 0.04);
-}
-
-.fu-multiselect-option input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
-  accent-color: var(--blockr-color-primary, #2563eb);
-}
-
 
 /* --- Expression rows (inline in same list) --- */
 

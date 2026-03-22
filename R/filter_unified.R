@@ -278,12 +278,15 @@ filter_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
 
   tagList(
+    # Selectize is loaded by Shiny — no explicit dependency needed
+    # ACE editor
     htmlDependency(
       name = "ace",
       version = utils::packageVersion("shinyAce"),
       src = ace_dir,
       script = c("ace/ace.js", "ace/ext-language_tools.js")
     ),
+    # Our input binding + styles
     htmlDependency(
       name = "filter-unified-input",
       version = utils::packageVersion("blockr.dplyr"),
