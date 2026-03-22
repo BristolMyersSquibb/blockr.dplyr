@@ -1,46 +1,96 @@
-/* FilterJs — Styles for JS-driven filter expression block.
-   Mirrors the existing multi-filter-condition styling. */
+/* FilterJs — Unified card with global operator toggle.
+ *
+ *  Layout:
+ *    [AND toggle]                    [Submit]
+ *    ┌──────────────────────────────────────┐
+ *    │  expression 1                      x │
+ *    ├──────────────────────────────────────┤
+ *    │  expression 2                      x │
+ *    ├──────────────────────────────────────┤
+ *    │  + Add condition                     │
+ *    └──────────────────────────────────────┘
+ */
 
 .filter-js-container {
   width: 100%;
 }
 
+/* --- Header: operator toggle + submit --- */
+
+.filter-js-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.filter-js-op-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  height: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blockr-color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.filter-js-op-toggle:hover {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+/* --- Card container --- */
+
+.filter-js-card {
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--blockr-color-bg-input, #f9fafb);
+}
+
+/* --- Condition rows --- */
+
 .filter-js-conditions {
   width: 100%;
 }
 
-/* Condition row — reuse the multi-filter-condition pattern */
-.filter-js-container .multi-filter-condition {
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
-  border-radius: 8px !important;
-  height: 38px !important;
-  margin-bottom: 0 !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+.filter-js-row {
   display: flex;
   align-items: center;
+  min-height: 36px;
+  border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+  background: #fff;
+  transition: background 0.1s ease;
 }
 
-.filter-js-container .multi-filter-condition:focus-within {
-  background-color: #ffffff;
-  border-color: var(--blockr-color-primary, #2563eb) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.filter-js-row:hover {
+  background: #fafbfc;
 }
 
-.filter-js-container .condition-code {
+.filter-js-row:focus-within {
+  background: #fff;
+  box-shadow: inset 3px 0 0 var(--blockr-color-primary, #2563eb);
+}
+
+.filter-js-row-code {
   flex: 1;
   min-width: 0;
 }
 
-/* ACE editor inside condition row */
-.filter-js-container .filter-js-ace-editor {
+/* ACE editor inside row */
+.filter-js-ace-editor {
   height: 20px;
-  margin: 7px;
-  margin-bottom: 7.5px;
-  width: calc(100% - 14px);
+  margin: 8px 10px;
 }
 
-.filter-js-container .filter-js-ace-editor,
 .filter-js-container .ace_editor,
 .filter-js-container .ace-tomorrow,
 .filter-js-container .ace_scroller,
@@ -56,7 +106,6 @@
   display: none !important;
 }
 
-/* Hide blinking cursor on unfocused editors */
 .filter-js-container .ace_editor .ace_cursor-layer {
   display: none;
 }
@@ -65,54 +114,65 @@
   display: block;
 }
 
-/* Remove button (X) */
-.filter-js-container .blockr-btn-icon {
-  background: none;
-  border: none;
-  color: var(--blockr-color-text-muted, #6b7280);
-  cursor: pointer;
-  padding: 4px 8px;
+/* --- Remove button (x) --- */
+
+.filter-js-row-remove {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--blockr-grey-400, #9ca3af);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
-.filter-js-container .blockr-btn-icon:hover {
+.filter-js-row:hover .filter-js-row-remove {
+  opacity: 1;
+}
+
+.filter-js-row-remove:hover {
   opacity: 1;
   color: var(--blockr-color-danger, #dc3545);
+  background: rgba(220, 53, 69, 0.08);
 }
 
-/* Operator dropdown (AND/OR) — compact, matching condition row height */
-.filter-js-container .filter-js-operator-row {
-  margin: 4px 0 !important;
-}
+/* --- Add row (bottom of card) --- */
 
-.filter-js-container .filter-js-operator-row .form-select {
-  height: 28px !important;
-  min-height: unset !important;
-  padding: 2px 28px 2px 8px !important;
-  font-size: var(--blockr-font-size-sm, 0.8125rem) !important;
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 6px;
-  color: var(--blockr-color-text-muted, #6b7280);
-  line-height: 1;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.filter-js-container .filter-js-operator-row .form-select:focus {
-  background-color: #ffffff;
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  outline: none;
-}
-
-/* Actions bar */
-.filter-js-container .blockr-multi-actions {
+.filter-js-add-row {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  min-height: 32px;
+  cursor: pointer;
+  color: var(--blockr-grey-400, #9ca3af);
+  transition: color 0.15s ease, background 0.15s ease;
+  user-select: none;
+  font-size: 13px;
+}
+
+.filter-js-add-row:hover {
+  color: var(--blockr-color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.filter-js-add-icon {
+  display: flex;
+  align-items: center;
+}
+
+.filter-js-add-label {
+  font-size: 13px;
+}
+
+/* --- Submit button --- */
+
+.filter-js-submit {
+  font-size: 13px;
 }

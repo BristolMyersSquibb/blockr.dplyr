@@ -1,6 +1,9 @@
 // FilterJs — Custom Shiny input binding for JS-driven filter expressions.
 // All condition-row management (add/remove/toggle) happens client-side.
 // R is only contacted on Submit (to parse + eval the expression).
+//
+// UI design: unified card with global AND/OR toggle, condition rows with
+// inline remove, and a "+" row at the bottom of the card.
 
 (function() {
   "use strict";
@@ -10,13 +13,8 @@
   // ---------------------------------------------------------------------------
 
   function backtickIfNeeded(name) {
-    // Wrap non-syntactic column names in backticks (same logic as R side)
     if (/^[a-zA-Z.][a-zA-Z0-9._]*$/.test(name)) return name;
     return "`" + name + "`";
-  }
-
-  function makeId(prefix, n) {
-    return prefix + "-cond-" + n;
   }
 
   // Default function categories for autocomplete (mirrors get_default_categories())
@@ -34,15 +32,41 @@
   // ACE editor helpers
   // ---------------------------------------------------------------------------
 
-  // Wait for ACE to be available, then call fn
   function withAce(fn) {
     if (typeof ace !== "undefined") { fn(); return; }
     var attempts = 0;
     var timer = setInterval(function() {
       attempts++;
       if (typeof ace !== "undefined") { clearInterval(timer); fn(); }
-      if (attempts > 50) clearInterval(timer); // give up after 5s
+      if (attempts > 50) clearInterval(timer);
     }, 100);
+  }
+
+  function makeCompleter(columns) {
+    return {
+      getCompletions: function(_editor, _session, _pos, _prefix, callback) {
+        var cats = Object.assign({}, defaultCategories);
+        cats.column = (columns || []).map(backtickIfNeeded);
+        var wordList = [];
+        Object.keys(cats).forEach(function(category) {
+          cats[category].forEach(function(fn) {
+            var isCol = category === "column";
+            wordList.push({
+              caption: fn,
+              value: fn + (isCol ? "" : "()"),
+              meta: category,
+              score: isCol ? 1001 : 1000
+            });
+          });
+        });
+        wordList.sort(function(a, b) {
+          if (a.score !== b.score) return b.score - a.score;
+          if (a.meta === b.meta) return a.caption.localeCompare(b.caption);
+          return a.meta.localeCompare(b.meta);
+        });
+        callback(null, wordList);
+      }
+    };
   }
 
   function createAceEditor(containerEl, value, columns) {
@@ -50,9 +74,8 @@
     editorEl.className = "filter-js-ace-editor";
     containerEl.appendChild(editorEl);
 
-    var editor = null;
     withAce(function() {
-      editor = ace.edit(editorEl);
+      var editor = ace.edit(editorEl);
       editor.setTheme("ace/theme/tomorrow");
       editor.session.setMode("ace/mode/r");
       editor.setOptions({
@@ -65,35 +88,9 @@
         enableLiveAutocompletion: true,
         enableBasicAutocompletion: true
       });
-      editor.setValue(value || "TRUE", 1); // 1 = move cursor to end
+      editor.setValue(value || "TRUE", 1);
       editor.renderer.setScrollMargin(0, 0, 0, 0);
-
-      // Custom completer scoped to this editor's container
-      var completer = {
-        getCompletions: function(_editor, _session, _pos, _prefix, callback) {
-          var cats = Object.assign({}, defaultCategories);
-          cats.column = (columns || []).map(backtickIfNeeded);
-          var wordList = [];
-          Object.keys(cats).forEach(function(category) {
-            cats[category].forEach(function(fn) {
-              var isCol = category === "column";
-              wordList.push({
-                caption: fn,
-                value: fn + (isCol ? "" : "()"),
-                meta: category,
-                score: isCol ? 1001 : 1000
-              });
-            });
-          });
-          wordList.sort(function(a, b) {
-            if (a.score !== b.score) return b.score - a.score;
-            if (a.meta === b.meta) return a.caption.localeCompare(b.caption);
-            return a.meta.localeCompare(b.meta);
-          });
-          callback(null, wordList);
-        }
-      };
-      editor.completers = [completer];
+      editor.completers = [makeCompleter(columns)];
 
       // Move cursor inside parens after inserting a function
       editor.commands.on("afterExec", function(e) {
@@ -106,7 +103,6 @@
         }
       });
 
-      // Store editor reference
       editorEl._aceEditor = editor;
     });
 
@@ -121,34 +117,8 @@
   }
 
   function setEditorColumns(editorEl, columns) {
-    // The completer closure captures the columns array by reference through
-    // the _filterJsColumns property. We update it here so the next
-    // completion request sees the new columns.
     if (editorEl && editorEl._aceEditor) {
-      editorEl._aceEditor.completers = [{
-        getCompletions: function(_editor, _session, _pos, _prefix, callback) {
-          var cats = Object.assign({}, defaultCategories);
-          cats.column = (columns || []).map(backtickIfNeeded);
-          var wordList = [];
-          Object.keys(cats).forEach(function(category) {
-            cats[category].forEach(function(fn) {
-              var isCol = category === "column";
-              wordList.push({
-                caption: fn,
-                value: fn + (isCol ? "" : "()"),
-                meta: category,
-                score: isCol ? 1001 : 1000
-              });
-            });
-          });
-          wordList.sort(function(a, b) {
-            if (a.score !== b.score) return b.score - a.score;
-            if (a.meta === b.meta) return a.caption.localeCompare(b.caption);
-            return a.meta.localeCompare(b.meta);
-          });
-          callback(null, wordList);
-        }
-      }];
+      editorEl._aceEditor.completers = [makeCompleter(columns)];
     }
   }
 
@@ -160,128 +130,119 @@
   }
 
   // ---------------------------------------------------------------------------
-  // FilterJs "component" — manages state + DOM for one input binding instance
+  // SVG icons
+  // ---------------------------------------------------------------------------
+
+  var ICON_X = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>';
+  var ICON_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg>';
+
+  // ---------------------------------------------------------------------------
+  // FilterJs component
   // ---------------------------------------------------------------------------
 
   function FilterJs(el) {
     this.el = el;
-    this.conditions = [];  // [{id: Number, editorEl: Element}]
-    this.operators = [];   // "&" or "|"
+    this.conditions = [];  // [{id, editorEl, rowEl}]
+    this.operator = "&";   // uniform: "&" or "|"
     this.nextId = 1;
     this.columns = [];
-    this._callback = null; // Shiny subscribe callback
+    this._callback = null;
     this._submitted = false;
 
-    // Read initial value from data attribute
     var initial = el.getAttribute("data-value") || "TRUE";
     this._initValue = initial;
 
-    // Build the DOM skeleton
     this._buildDOM();
-    // Add the initial condition
     this._addCondition(initial);
   }
 
   FilterJs.prototype._buildDOM = function() {
     var self = this;
 
-    // Conditions container
-    this.conditionsEl = document.createElement("div");
-    this.conditionsEl.className = "filter-js-conditions";
-    this.el.appendChild(this.conditionsEl);
+    // Header bar: operator toggle + submit
+    var headerEl = document.createElement("div");
+    headerEl.className = "filter-js-header";
 
-    // Actions bar (Add Condition + Submit)
-    var actionsEl = document.createElement("div");
-    actionsEl.className = "blockr-multi-actions";
+    // Operator toggle button
+    this.opToggleEl = document.createElement("button");
+    this.opToggleEl.type = "button";
+    this.opToggleEl.className = "filter-js-op-toggle";
+    this.opToggleEl.textContent = "AND";
+    this.opToggleEl.title = "Toggle between AND / OR (applies to all conditions)";
+    this.opToggleEl.addEventListener("click", function() {
+      self.operator = self.operator === "&" ? "|" : "&";
+      self.opToggleEl.textContent = self.operator === "&" ? "AND" : "OR";
+      self._updateSeparators();
+    });
+    headerEl.appendChild(this.opToggleEl);
 
-    var addBtn = document.createElement("button");
-    addBtn.className = "btn btn-outline-secondary btn-sm";
-    addBtn.type = "button";
-    addBtn.innerHTML = '<i class="fa fa-plus"></i> Add Condition';
-    addBtn.addEventListener("click", function() { self._addCondition("TRUE"); });
-
+    // Submit button
     var submitBtn = document.createElement("button");
-    submitBtn.className = "btn btn-primary btn-sm";
+    submitBtn.className = "btn btn-primary btn-sm filter-js-submit";
     submitBtn.type = "button";
     submitBtn.textContent = "Submit";
     submitBtn.addEventListener("click", function() { self._submit(); });
+    headerEl.appendChild(submitBtn);
 
-    actionsEl.appendChild(addBtn);
-    actionsEl.appendChild(submitBtn);
-    this.el.appendChild(actionsEl);
+    this.el.appendChild(headerEl);
+
+    // Card container for conditions
+    this.cardEl = document.createElement("div");
+    this.cardEl.className = "filter-js-card";
+    this.el.appendChild(this.cardEl);
+
+    // Conditions list (inside card)
+    this.conditionsEl = document.createElement("div");
+    this.conditionsEl.className = "filter-js-conditions";
+    this.cardEl.appendChild(this.conditionsEl);
+
+    // Add row (inside card, at bottom)
+    var addRow = document.createElement("div");
+    addRow.className = "filter-js-add-row";
+    addRow.addEventListener("click", function() { self._addCondition(""); });
+
+    var addIcon = document.createElement("span");
+    addIcon.className = "filter-js-add-icon";
+    addIcon.innerHTML = ICON_PLUS;
+    addRow.appendChild(addIcon);
+
+    var addLabel = document.createElement("span");
+    addLabel.className = "filter-js-add-label";
+    addLabel.textContent = "Add condition";
+    addRow.appendChild(addLabel);
+
+    this.cardEl.appendChild(addRow);
   };
 
   FilterJs.prototype._addCondition = function(value) {
     var self = this;
     var id = this.nextId++;
-    var idx = this.conditions.length;
-
-    // If not the first condition, add an operator row before this condition
-    if (idx > 0) {
-      var opRow = this._createOperatorRow(idx - 1);
-      this.conditionsEl.appendChild(opRow);
-      this.operators.push("&");
-    }
 
     // Condition row
     var rowEl = document.createElement("div");
-    rowEl.className = "input-group mb-2 multi-filter-condition border border-dark-subtle rounded";
+    rowEl.className = "filter-js-row";
     rowEl.setAttribute("data-cond-id", id);
 
+    // Code editor area
     var codeDiv = document.createElement("div");
-    codeDiv.className = "condition-code";
+    codeDiv.className = "filter-js-row-code";
     rowEl.appendChild(codeDiv);
 
     var editorEl = createAceEditor(codeDiv, value, this.columns);
 
-    // Remove button (only if > 1 condition)
+    // Remove button
     var removeBtn = document.createElement("button");
-    removeBtn.className = "blockr-btn-icon";
+    removeBtn.className = "filter-js-row-remove";
     removeBtn.type = "button";
-    removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>';
+    removeBtn.innerHTML = ICON_X;
+    removeBtn.title = "Remove condition";
     removeBtn.addEventListener("click", function() { self._removeCondition(id); });
     rowEl.appendChild(removeBtn);
 
     this.conditionsEl.appendChild(rowEl);
     this.conditions.push({ id: id, editorEl: editorEl, rowEl: rowEl });
     this._updateRemoveButtons();
-  };
-
-  FilterJs.prototype._createOperatorRow = function(opIndex) {
-    var self = this;
-    var opRow = document.createElement("div");
-    opRow.className = "d-flex justify-content-start my-2 filter-js-operator-row";
-    opRow.setAttribute("data-op-index", opIndex);
-
-    var select = document.createElement("select");
-    select.className = "form-select form-select-sm";
-    select.style.width = "80px";
-
-    var optAnd = document.createElement("option");
-    optAnd.value = "&";
-    optAnd.textContent = "AND";
-    optAnd.selected = true;
-
-    var optOr = document.createElement("option");
-    optOr.value = "|";
-    optOr.textContent = "OR";
-
-    select.appendChild(optAnd);
-    select.appendChild(optOr);
-
-    select.addEventListener("change", function() {
-      // Find the actual operator index based on position in DOM
-      var opRows = self.conditionsEl.querySelectorAll(".filter-js-operator-row");
-      for (var i = 0; i < opRows.length; i++) {
-        if (opRows[i] === opRow) {
-          self.operators[i] = select.value;
-          break;
-        }
-      }
-    });
-
-    opRow.appendChild(select);
-    return opRow;
+    this._updateSeparators();
   };
 
   FilterJs.prototype._removeCondition = function(id) {
@@ -295,53 +256,38 @@
 
     var cond = this.conditions[idx];
     destroyEditor(cond.editorEl);
-
-    // Remove the condition row from DOM
     if (cond.rowEl.parentNode) cond.rowEl.parentNode.removeChild(cond.rowEl);
 
-    // Remove the associated operator row
-    // If removing first condition, remove the operator AFTER it
-    // If removing any other, remove the operator BEFORE it
-    var opRows = this.conditionsEl.querySelectorAll(".filter-js-operator-row");
-    var opIdx = idx > 0 ? idx - 1 : 0;
-    if (opRows.length > 0 && opIdx < opRows.length) {
-      opRows[opIdx].parentNode.removeChild(opRows[opIdx]);
-    }
-
-    // Update arrays
     this.conditions.splice(idx, 1);
-    if (this.operators.length > 0) {
-      this.operators.splice(idx > 0 ? idx - 1 : 0, 1);
-    }
-
     this._updateRemoveButtons();
+    this._updateSeparators();
   };
 
   FilterJs.prototype._updateRemoveButtons = function() {
     var single = this.conditions.length <= 1;
     this.conditions.forEach(function(c) {
-      var btn = c.rowEl.querySelector(".blockr-btn-icon");
-      if (btn) btn.style.display = single ? "none" : "";
+      var btn = c.rowEl.querySelector(".filter-js-row-remove");
+      if (btn) btn.style.visibility = single ? "hidden" : "visible";
     });
   };
 
-  FilterJs.prototype._compose = function() {
-    if (this.conditions.length === 0) return "TRUE";
-    if (this.conditions.length === 1) {
-      var val = getEditorValue(this.conditions[0].editorEl);
-      return val || "TRUE";
-    }
+  FilterJs.prototype._updateSeparators = function() {
+    // Show/hide the operator toggle based on condition count
+    this.opToggleEl.style.visibility = this.conditions.length > 1 ? "visible" : "hidden";
+    // Update the CSS class for separator labels
+    var label = this.operator === "&" ? "AND" : "OR";
+    this.conditionsEl.setAttribute("data-separator", label);
+  };
 
+  FilterJs.prototype._compose = function() {
+    var op = this.operator;
     var parts = [];
     for (var i = 0; i < this.conditions.length; i++) {
       var v = getEditorValue(this.conditions[i].editorEl) || "TRUE";
-      if (i > 0) {
-        var op = (i - 1 < this.operators.length) ? this.operators[i - 1] : "&";
-        parts.push(op);
-      }
       parts.push(v);
     }
-    return parts.join(" ");
+    if (parts.length === 0) return "TRUE";
+    return parts.join(" " + op + " ");
   };
 
   FilterJs.prototype._submit = function() {
@@ -355,23 +301,18 @@
   };
 
   FilterJs.prototype.setValue = function(value) {
-    // External ctrl: reset to a single condition with the given expression
-    // Destroy existing conditions
     while (this.conditions.length > 0) {
       var c = this.conditions.pop();
       destroyEditor(c.editorEl);
     }
-    this.operators = [];
     this.conditionsEl.innerHTML = "";
     this._addCondition(value || "TRUE");
-    // Auto-submit on external set
     this._submitted = true;
     if (this._callback) this._callback(true);
   };
 
   FilterJs.prototype.updateColumns = function(columns) {
     this.columns = columns || [];
-    // Update all existing editors
     this.conditions.forEach(function(c) {
       setEditorColumns(c.editorEl, columns);
     });
@@ -384,40 +325,31 @@
   var FilterJsBinding = new Shiny.InputBinding();
 
   $.extend(FilterJsBinding, {
-
     find: function(scope) {
       return $(scope).find(".filter-js-container");
     },
-
     getId: function(el) {
       return el.id || null;
     },
-
     getValue: function(el) {
       if (!el._filterJs) return el.getAttribute("data-value") || "TRUE";
       return el._filterJs.getValue();
     },
-
     setValue: function(el, value) {
       if (el._filterJs) el._filterJs.setValue(value);
     },
-
     subscribe: function(el, callback) {
       if (el._filterJs) {
         el._filterJs._callback = function() { callback(true); };
       }
     },
-
     unsubscribe: function(el) {
       if (el._filterJs) el._filterJs._callback = null;
     },
-
     initialize: function(el) {
       el._filterJs = new FilterJs(el);
     },
-
     receiveMessage: function(el, data) {
-      // Handle messages from R (e.g., external ctrl setValue)
       if (data.hasOwnProperty("value")) {
         this.setValue(el, data.value);
       }
