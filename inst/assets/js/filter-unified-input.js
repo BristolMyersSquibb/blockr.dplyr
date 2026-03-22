@@ -51,7 +51,7 @@
     }};
   }
 
-  function createAceEditor(container, value, cols, onChangeCallback) {
+  function createAceEditor(container, value, cols, onChangeCallback, opts) {
     var el = document.createElement("div");
     el.className = "fu-ace-editor";
     container.appendChild(el);
@@ -59,7 +59,8 @@
       var ed = ace.edit(el);
       ed.setTheme("ace/theme/tomorrow");
       ed.session.setMode("ace/mode/r");
-      ed.setOptions({ maxLines:1, showLineNumbers:false, showPrintMargin:false,
+      var maxL = (opts && opts.maxLines) || 1;
+      ed.setOptions({ minLines:1, maxLines:maxL, showLineNumbers:false, showPrintMargin:false,
         highlightActiveLine:false, tabSize:2, fontSize:14,
         enableLiveAutocompletion:true, enableBasicAutocompletion:true });
       ed.setValue(value||"", 1);
@@ -150,8 +151,8 @@
       var $sel = $(sel).selectize({
         options: options.map(function(v) { return { value: v, text: v }; }),
         items: selected || [],
-        plugins: ["remove_button"],
-        placeholder: "Select values...",
+        plugins: ["remove_button", "drag_drop"],
+        placeholder: "Select values\u2026",
         onChange: function(value) { if (onChange) onChange(value || []); }
       });
       wrapper.api = $sel[0].selectize;
@@ -238,6 +239,25 @@
     addRow.appendChild(addExprLink);
 
     this.card.appendChild(addRow);
+
+    // Preserve order checkbox
+    var optionsRow = document.createElement("div");
+    optionsRow.className = "fu-options-row";
+
+    var preserveLabel = document.createElement("label");
+    preserveLabel.className = "fu-preserve-label";
+    this.preserveCheckbox = document.createElement("input");
+    this.preserveCheckbox.type = "checkbox";
+    this.preserveCheckbox.addEventListener("change", function() {
+      self.preserveOrder = self.preserveCheckbox.checked;
+      self._autoSubmit();
+    });
+    preserveLabel.appendChild(this.preserveCheckbox);
+    preserveLabel.appendChild(document.createTextNode(" Preserve selection order"));
+    optionsRow.appendChild(preserveLabel);
+
+    this.card.appendChild(optionsRow);
+    this.preserveOrder = false;
   };
 
   // --- Operator cycle button ---
@@ -400,7 +420,7 @@
       numInput.type = "number";
       numInput.className = "fu-num-input";
       numInput.step = "any";
-      numInput.placeholder = "Value...";
+      numInput.placeholder = "Enter value\u2026";
       if (cond.numValue != null) numInput.value = cond.numValue;
       numInput.addEventListener("input", function() {
         cond.numValue = numInput.value === "" ? null : parseFloat(numInput.value);
@@ -444,7 +464,7 @@
     var exprEl = createAceEditor(codeDiv, value, this.columnNames, function() {
       confirmBtn.classList.remove("confirmed");
       confirmBtn.innerHTML = "Enter &#x21B5;";
-    });
+    }, { maxLines: 10 });
 
     // Also confirm on Enter key in the ACE editor
     withAce(function() {
@@ -526,7 +546,7 @@
         if (val && val !== "") conditions.push({ type: "expr", expr: val });
       }
     });
-    return { conditions: conditions, operator: this.operator };
+    return { conditions: conditions, operator: this.operator, preserveOrder: this.preserveOrder };
   };
 
   FilterUnified.prototype._submit = function() {

@@ -73,13 +73,14 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
 
           conds <- payload$conditions
           op <- payload$operator %||% "&"
+          preserve <- isTRUE(payload$preserveOrder)
 
           if (is.null(conds) || length(conds) == 0) {
             r_expr_text("dplyr::filter(data, TRUE)")
             return()
           }
 
-          expr_text <- build_unified_filter(conds, op)
+          expr_text <- build_unified_filter(conds, op, preserve)
           # Validate parse
           parsed <- try(parse(text = expr_text)[[1]], silent = TRUE)
           if (inherits(parsed, "try-error")) {
@@ -132,14 +133,24 @@ new_filter_unified_block <- function(exprs = "TRUE", ...) {
 #' @param operator Global operator ("&" or "|")
 #' @return Character string with the full dplyr::filter expression
 #' @noRd
-build_unified_filter <- function(conditions, operator = "&") {
+build_unified_filter <- function(conditions, operator = "&",
+                                 preserve_order = FALSE) {
   parts <- character(0)
+  order_columns <- list()
 
   for (cond in conditions) {
     part <- NULL
 
     if (cond$type == "values") {
       part <- build_value_part(cond)
+      # Track columns + values for preserve order
+      if (preserve_order && !is.null(cond$column) && cond$mode == "include") {
+        vals <- unlist(cond$values)
+        regular <- vals[!vals %in% c("<NA>", "<empty>")]
+        if (length(regular) > 0) {
+          order_columns[[cond$column]] <- regular
+        }
+      }
     } else if (cond$type == "numeric") {
       part <- build_numeric_part(cond)
     } else if (cond$type == "range") {
@@ -156,7 +167,31 @@ build_unified_filter <- function(conditions, operator = "&") {
 
   op_str <- if (operator == "|") " | " else " & "
   combined <- paste(parts, collapse = op_str)
-  glue::glue("dplyr::filter(data, {combined})")
+  text <- glue::glue("dplyr::filter(data, {combined})")
+
+  # Append arrange() for preserve order
+  if (preserve_order && length(order_columns) > 0) {
+    arrange_parts <- character(0)
+    for (col in names(order_columns)) {
+      vals <- order_columns[[col]]
+      numeric_vals <- suppressWarnings(as.numeric(vals))
+      if (all(!is.na(numeric_vals))) {
+        values_str <- paste(numeric_vals, collapse = ", ")
+      } else {
+        values_str <- paste(sprintf('"%s"', vals), collapse = ", ")
+      }
+      arrange_parts <- c(
+        arrange_parts,
+        glue::glue("match(`{col}`, c({values_str}))")
+      )
+    }
+    if (length(arrange_parts) > 0) {
+      arrange_expr <- paste(arrange_parts, collapse = ", ")
+      text <- glue::glue("{text} |> dplyr::arrange({arrange_expr})")
+    }
+  }
+
+  text
 }
 
 #' Build filter part for a values condition
@@ -276,9 +311,16 @@ build_range_part <- function(cond) {
 #' @noRd
 filter_unified_dep <- function() {
   ace_dir <- system.file("www", package = "shinyAce")
+  jqui_dir <- system.file("www/shared/jqueryui", package = "shiny")
 
   tagList(
-    # Selectize is loaded by Shiny — no explicit dependency needed
+    # jQuery UI (for selectize drag_drop plugin)
+    htmlDependency(
+      name = "jqueryui",
+      version = utils::packageVersion("shiny"),
+      src = jqui_dir,
+      script = "jquery-ui.min.js"
+    ),
     # ACE editor
     htmlDependency(
       name = "ace",

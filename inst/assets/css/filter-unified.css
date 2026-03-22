@@ -134,6 +134,17 @@
   line-height: 1.4 !important;
 }
 
+/* Unified placeholder color */
+.fu-row .selectize-input > input::placeholder,
+.fu-row .selectize-input > .placeholder {
+  color: var(--blockr-grey-400, #9ca3af) !important;
+  opacity: 1 !important;
+}
+
+.fu-num-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
 /* Operator cycle button — uses shared pill style */
 .fu-op-btn {
   flex-shrink: 0;
@@ -229,6 +240,26 @@
 
 .fu-add-icon { display: inline-flex; align-items: center; }
 
+/* Options row (preserve order) */
+.fu-options-row {
+  padding: 2px 0;
+}
+
+.fu-preserve-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  color: var(--blockr-grey-400, #9ca3af);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fu-preserve-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
 /* --- Expression rows (inline in same list) --- */
 
 .fu-row-expr .fu-expr-code {
@@ -269,14 +300,10 @@
 }
 
 .fu-ace-editor {
-  height: 18px;
+  min-height: 18px;
   margin: 7px 4px;
 }
 
-.filter-unified-container .ace_editor {
-  font-size: 12px !important;
-  font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", monospace !important;
-}
 
 .filter-unified-container .ace_editor,
 .filter-unified-container .ace-tomorrow,
