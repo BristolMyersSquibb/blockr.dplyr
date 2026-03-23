@@ -104,27 +104,16 @@
       this.popoverEl.className = 'blockr-popover';
       this.popoverEl.style.display = 'none';
 
-      const row = document.createElement('div');
-      row.className = 'blockr-popover-row';
-
-      const label = document.createElement('label');
-      label.className = 'blockr-popover-label';
-      label.textContent = 'Distinct:';
-      row.appendChild(label);
-
       this._distinctToggle = document.createElement('button');
       this._distinctToggle.type = 'button';
       this._distinctToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._distinctToggle.textContent = 'off';
+      this._distinctToggle.textContent = 'Distinct';
       this._distinctToggle.addEventListener('click', () => {
         this.distinct = !this.distinct;
-        this._distinctToggle.textContent = this.distinct ? 'on' : 'off';
         this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
         this._autoSubmit();
       });
-      row.appendChild(this._distinctToggle);
-
-      this.popoverEl.appendChild(row);
+      this.popoverEl.appendChild(this._distinctToggle);
       this.card.appendChild(this.popoverEl);
     }
 
@@ -169,7 +158,6 @@
 
       this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
       this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
-      this._distinctToggle.textContent = this.distinct ? 'on' : 'off';
       this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
 
       if (this._multiSelect) {

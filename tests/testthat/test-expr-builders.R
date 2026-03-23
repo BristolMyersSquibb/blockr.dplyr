@@ -1,8 +1,14 @@
 # Tests for all expression builders in R/expr-builders.R
 
 eval_bquoted <- function(expr, df, name = "data") {
-  resolved <- do.call(bquote, list(expr, stats::setNames(list(as.name(name)), name)))
-  eval(resolved, envir = stats::setNames(list(df), name))
+  resolved <- do.call(
+    bquote,
+    list(expr, stats::setNames(list(as.name(name)), name))
+  )
+  eval(
+    resolved,
+    envir = stats::setNames(list(df), name)
+  )
 }
 
 # --- Mutate ---
@@ -35,7 +41,10 @@ test_that("make_mutate_expr handles multiple rows", {
 # --- Summarize ---
 
 test_that("make_summarize_expr with simple summary", {
-  summaries <- list(list(type = "simple", name = "avg", func = "mean", col = "mpg"))
+  summaries <- list(list(
+    type = "simple", name = "avg",
+    func = "mean", col = "mpg"
+  ))
   expr <- make_summarize_expr(summaries)
   result <- eval_bquoted(expr, mtcars)
   expect_equal(result$avg, mean(mtcars$mpg))
@@ -49,14 +58,20 @@ test_that("make_summarize_expr with n()", {
 })
 
 test_that("make_summarize_expr with grouping", {
-  summaries <- list(list(type = "simple", name = "avg", func = "mean", col = "mpg"))
+  summaries <- list(list(
+    type = "simple", name = "avg",
+    func = "mean", col = "mpg"
+  ))
   expr <- make_summarize_expr(summaries, by = "cyl")
   result <- eval_bquoted(expr, mtcars)
   expect_equal(nrow(result), length(unique(mtcars$cyl)))
 })
 
 test_that("make_summarize_expr with expression", {
-  summaries <- list(list(type = "expr", name = "custom", expr = "sum(mpg) / dplyr::n()"))
+  summaries <- list(list(
+    type = "expr", name = "custom",
+    expr = "sum(mpg) / dplyr::n()"
+  ))
   expr <- make_summarize_expr(summaries)
   result <- eval_bquoted(expr, mtcars)
   expect_equal(result$custom, sum(mtcars$mpg) / nrow(mtcars))

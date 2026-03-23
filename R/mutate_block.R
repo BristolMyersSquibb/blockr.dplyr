@@ -81,7 +81,10 @@ new_mutate_block <- function(
         list(
           expr = reactive({
             s <- r_state()
-            make_mutate_expr(s$rows %||% s$columns %||% list(), s$by %||% character())
+            make_mutate_expr(
+              s$rows %||% s$columns %||% list(),
+              s$by %||% character()
+            )
           }),
           state = list(state = r_state)
         )

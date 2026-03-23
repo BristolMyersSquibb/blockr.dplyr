@@ -104,9 +104,11 @@ blockr_deser.summarize_block <- function(x, data, ...) {
 blockr_deser.summarize_expr_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_summarize_block", function(p) {
     exprs <- p$exprs %||% list()
-    summaries <- mapply(function(nm, ex) list(type = "expr", name = nm, expr = ex),
-                        names(exprs), unname(exprs), SIMPLIFY = FALSE,
-                        USE.NAMES = FALSE)
+    summaries <- mapply(
+      function(nm, ex) list(type = "expr", name = nm, expr = ex),
+      names(exprs), unname(exprs),
+      SIMPLIFY = FALSE, USE.NAMES = FALSE
+    )
     list(summaries = summaries, by = p$by %||% list())
   })
 }

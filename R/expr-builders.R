@@ -142,7 +142,10 @@ make_expr_part <- function(cond) {
 #' @return A language object
 #' @noRd
 make_mutate_expr <- function(rows, by = character()) {
-  rows <- Filter(function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""), rows)
+  rows <- Filter(
+    function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""),
+    rows
+  )
 
   if (length(rows) == 0) {
     return(bbquote(.(data)))
@@ -214,7 +217,9 @@ make_summarize_expr <- function(summaries, by = character()) {
       if (func_full == "dplyr::n") {
         call_expr <- str2lang(paste0(func_full, "()"))
       } else if (nzchar(col)) {
-        call_expr <- str2lang(paste0(func_full, "(", backtick_if_needed(col), ")"))
+        call_expr <- str2lang(paste0(
+          func_full, "(", backtick_if_needed(col), ")"
+        ))
       } else {
         next
       }
@@ -251,8 +256,11 @@ make_summarize_expr <- function(summaries, by = character()) {
 #' @param suffix_y Suffix for y columns
 #' @return A language object
 #' @noRd
-make_join_expr <- function(type = "left_join", keys = list(), exprs = character(),
-                           suffix_x = ".x", suffix_y = ".y") {
+make_join_expr <- function(type = "left_join",
+                           keys = list(),
+                           exprs = character(),
+                           suffix_x = ".x",
+                           suffix_y = ".y") {
   join_fn <- paste0("dplyr::", type)
 
   has_non_equi <- any(vapply(keys, function(k) k$op != "==", logical(1)))
@@ -275,10 +283,13 @@ make_join_expr <- function(type = "left_join", keys = list(), exprs = character(
       text <- paste0(join_fn, "(.(x), .(y))")
     } else {
       jb_text <- paste(jb_parts, collapse = ", ")
-      text <- paste0(join_fn, "(.(x), .(y), by = dplyr::join_by(", jb_text, "))")
+      text <- paste0(
+        join_fn, "(.(x), .(y), by = dplyr::join_by(",
+        jb_text, "))"
+      )
     }
   } else if (length(keys) > 0) {
-    # Equi-join: by = c(x_col = "y_col")
+    # Equi-join with named character vector
     by_parts <- vapply(keys, function(k) {
       paste0(backtick_if_needed(k$xCol), ' = "', k$yCol, '"')
     }, character(1))
@@ -291,7 +302,7 @@ make_join_expr <- function(type = "left_join", keys = list(), exprs = character(
 
   # Add suffix for non-semi/anti joins
   if (!type %in% c("semi_join", "anti_join") &&
-      (suffix_x != ".x" || suffix_y != ".y")) {
+        (suffix_x != ".x" || suffix_y != ".y")) {
     text <- sub(
       "\\)$",
       paste0(', suffix = c("', suffix_x, '", "', suffix_y, '"))'),
@@ -451,18 +462,28 @@ make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
 
 #' Build a tidyr::pivot_longer expression
 #' @noRd
-make_pivot_longer_expr <- function(cols, names_to = "name", values_to = "value",
-                                   values_drop_na = FALSE, names_prefix = "") {
+make_pivot_longer_expr <- function(
+    cols, names_to = "name",
+    values_to = "value",
+    values_drop_na = FALSE,
+    names_prefix = "") {
   if (length(cols) == 0) return(bbquote(.(data)))
 
   col_syms <- lapply(cols, as.name)
   cols_call <- as.call(c(quote(c), col_syms))
 
-  expr <- as.call(list(str2lang("tidyr::pivot_longer"), quote(.(data)), cols_call))
+  expr <- as.call(list(
+    str2lang("tidyr::pivot_longer"),
+    quote(.(data)), cols_call
+  ))
   expr[["names_to"]] <- names_to %||% "name"
   expr[["values_to"]] <- values_to %||% "value"
-  if (isTRUE(values_drop_na)) expr[["values_drop_na"]] <- TRUE
-  if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
+  if (isTRUE(values_drop_na)) {
+    expr[["values_drop_na"]] <- TRUE
+  }
+  if (nzchar(names_prefix %||% "")) {
+    expr[["names_prefix"]] <- names_prefix
+  }
 
   bbquote(.(expr), list(expr = expr))
 }
@@ -473,9 +494,12 @@ make_pivot_longer_expr <- function(cols, names_to = "name", values_to = "value",
 
 #' Build a tidyr::pivot_wider expression
 #' @noRd
-make_pivot_wider_expr <- function(names_from, values_from, id_cols = character(),
-                                  values_fill = NULL, names_sep = "_",
-                                  names_prefix = "") {
+make_pivot_wider_expr <- function(
+    names_from, values_from,
+    id_cols = character(),
+    values_fill = NULL,
+    names_sep = "_",
+    names_prefix = "") {
   if (length(names_from) == 0 || length(values_from) == 0) {
     return(bbquote(.(data)))
   }
@@ -498,7 +522,9 @@ make_pivot_wider_expr <- function(names_from, values_from, id_cols = character()
     expr[["id_cols"]] <- as.call(c(quote(c), lapply(id_cols, as.name)))
   }
 
-  if (!is.null(values_fill) && length(values_fill) > 0) expr[["values_fill"]] <- values_fill
+  if (!is.null(values_fill) && length(values_fill) > 0) {
+    expr[["values_fill"]] <- values_fill
+  }
   if (!identical(names_sep, "_")) expr[["names_sep"]] <- names_sep
   if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
 
@@ -511,7 +537,9 @@ make_pivot_wider_expr <- function(names_from, values_from, id_cols = character()
 
 #' Build a tidyr::unite expression
 #' @noRd
-make_unite_expr <- function(col, cols, sep = "_", remove = TRUE, na.rm = FALSE) {
+make_unite_expr <- function(col, cols, sep = "_", # nolint: object_name_linter.
+                            remove = TRUE,
+                            na.rm = FALSE) { # nolint: object_name_linter.
   if (length(cols) == 0 || !nzchar(col %||% "")) return(bbquote(.(data)))
 
   col_syms <- lapply(cols, as.name)
@@ -534,7 +562,10 @@ make_separate_expr <- function(col, into, sep = "[^[:alnum:]]+",
                                extra = "warn", fill = "warn") {
   if (!nzchar(col %||% "") || length(into) == 0) return(bbquote(.(data)))
 
-  expr <- as.call(list(str2lang("tidyr::separate"), quote(.(data)), as.name(col), into))
+  expr <- as.call(list(
+    str2lang("tidyr::separate"), quote(.(data)),
+    as.name(col), into
+  ))
   if (!identical(sep, "[^[:alnum:]]+")) expr[["sep"]] <- sep
   if (!isTRUE(remove)) expr[["remove"]] <- FALSE
   if (isTRUE(convert)) expr[["convert"]] <- TRUE

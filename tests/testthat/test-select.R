@@ -19,15 +19,24 @@ test_that("select block: empty columns pass all data through", {
 
 test_that("select block: select specific columns", {
   blk <- new_select_block(
-    state = list(columns = list("mpg", "cyl"), exclude = FALSE, distinct = FALSE)
+    state = list(
+      columns = list("mpg", "cyl"),
+      exclude = FALSE, distinct = FALSE
+    )
   )
 
-  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
-    session$flushReact()
-    result <- eval_bquoted(session$returned$expr(), mtcars)
-    expect_equal(colnames(result), c("mpg", "cyl"))
-    expect_equal(nrow(result), nrow(mtcars))
-  })
+  testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars)),
+    {
+      session$flushReact()
+      result <- eval_bquoted(
+        session$returned$expr(), mtcars
+      )
+      expect_equal(colnames(result), c("mpg", "cyl"))
+      expect_equal(nrow(result), nrow(mtcars))
+    }
+  )
 })
 
 test_that("select block: exclude mode removes specified columns", {
@@ -61,21 +70,33 @@ test_that("select block: distinct deduplicates rows", {
 
 test_that("select block: state change from include to exclude", {
   blk <- new_select_block(
-    state = list(columns = list("mpg", "cyl"), exclude = FALSE, distinct = FALSE)
+    state = list(
+      columns = list("mpg", "cyl"),
+      exclude = FALSE, distinct = FALSE
+    )
   )
 
-  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
-    session$flushReact()
-    result1 <- eval_bquoted(session$returned$expr(), mtcars)
-    expect_equal(colnames(result1), c("mpg", "cyl"))
+  testServer(
+    blk$expr_server,
+    args = list(data = reactive(mtcars)),
+    {
+      session$flushReact()
+      result1 <- eval_bquoted(
+        session$returned$expr(), mtcars
+      )
+      expect_equal(colnames(result1), c("mpg", "cyl"))
 
-    # Switch to exclude mode
-    session$returned$state$state(list(
-      columns = list("mpg", "cyl"), exclude = TRUE, distinct = FALSE
-    ))
-    session$flushReact()
-    result2 <- eval_bquoted(session$returned$expr(), mtcars)
-    expect_false("mpg" %in% colnames(result2))
-    expect_false("cyl" %in% colnames(result2))
-  })
+      # Switch to exclude mode
+      session$returned$state$state(list(
+        columns = list("mpg", "cyl"),
+        exclude = TRUE, distinct = FALSE
+      ))
+      session$flushReact()
+      result2 <- eval_bquoted(
+        session$returned$expr(), mtcars
+      )
+      expect_false("mpg" %in% colnames(result2))
+      expect_false("cyl" %in% colnames(result2))
+    }
+  )
 })

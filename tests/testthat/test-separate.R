@@ -149,7 +149,7 @@ test_that("separate block: state change updates separator and column names", {
 # Join block (binary, needs special handling with x and y)
 # =========================================================================
 
-test_that("join block: empty keys performs natural join", {
+test_that("join block: empty keys passes through x", {
   df_x <- data.frame(id = 1:3, val_x = c("a", "b", "c"),
                      stringsAsFactors = FALSE)
   df_y <- data.frame(id = 2:4, val_y = c("x", "y", "z"),
@@ -168,16 +168,15 @@ test_that("join block: empty keys performs natural join", {
     {
       session$flushReact()
       expr_val <- session$returned$expr()
-      # For join blocks, the expression uses .(x) and .(y) placeholders
+      # With no keys, expression is just .(x) — pass-through
       resolved <- do.call(bquote, list(
         expr_val,
         list(x = as.name("x"), y = as.name("y"))
       ))
       result <- eval(resolved, envir = list(x = df_x, y = df_y))
       expect_true(is.data.frame(result))
-      # Left join: all rows from x
       expect_equal(nrow(result), 3)
-      expect_true("val_y" %in% colnames(result))
+      expect_equal(colnames(result), colnames(df_x))
     }
   )
 })

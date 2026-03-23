@@ -114,14 +114,16 @@
       this.card.appendChild(addRow);
     }
 
-    _createOpButton(cond, ops) {
-      let idx = 0;
-      cond.op = ops[0].value;
+    _createOpButton(cond, ops, initialOp) {
+      let idx = initialOp
+        ? Math.max(0, ops.findIndex(o => o.value === initialOp))
+        : 0;
+      cond.op = ops[idx].value;
 
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'blockr-pill fb-op-btn';
-      btn.textContent = ops[0].label;
+      btn.textContent = ops[idx].label;
       btn.title = 'Click to cycle operator';
       btn.addEventListener('click', () => {
         idx = (idx + 1) % ops.length;
@@ -193,16 +195,18 @@
 
       const activeCol = column || cond._colSelectize.getValue();
       if (activeCol && this.columnMeta[activeCol]) {
-        this._onColumnChange(cond, activeCol);
+        this._onColumnChange(cond, activeCol, opts);
       }
     }
 
-    _onColumnChange(cond, colName) {
+    _onColumnChange(cond, colName, opts) {
       cond.column = colName;
       const meta = this.columnMeta[colName];
 
-      cond.values = [];
-      cond.numValue = null;
+      // Restore values/numValue from opts if provided (setState path),
+      // otherwise reset to empty (user interaction path)
+      cond.values = opts?.values || [];
+      cond.numValue = opts?.numValue ?? null;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
       cond._contentDiv.innerHTML = '';
@@ -214,8 +218,10 @@
       cond._meta = meta;
       cond.filterType = isNumeric ? 'numeric' : 'values';
 
+      // Map condition op to operator list value for initial selection
       const ops = isNumeric ? NUM_OPS : CAT_OPS;
-      const btn = this._createOpButton(cond, ops);
+      const initialOp = opts?.op || null;
+      const btn = this._createOpButton(cond, ops, initialOp);
       cond._opBtnSlot.appendChild(btn);
 
       this._renderDynamicContent(cond);
@@ -406,9 +412,15 @@
           if (cond.type === 'expr') {
             this._addExprRow(cond.expr || '');
           } else if (cond.type === 'values') {
-            this._addValueRow(cond.column, { values: cond.values || [] });
+            this._addValueRow(cond.column, {
+              values: cond.values || [],
+              op: cond.mode === 'exclude' ? 'is not' : 'is'
+            });
           } else if (cond.type === 'numeric') {
-            this._addValueRow(cond.column, { numValue: cond.value });
+            this._addValueRow(cond.column, {
+              numValue: cond.value,
+              op: cond.op || '>'
+            });
           }
         }
       }

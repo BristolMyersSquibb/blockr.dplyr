@@ -222,18 +222,12 @@
 
       // with_ties toggle (min/max)
       this._popWithTiesWrap = document.createElement('div');
-      this._popWithTiesWrap.className = 'blockr-popover-row';
-      const withTiesLabel = document.createElement('label');
-      withTiesLabel.className = 'blockr-popover-label';
-      withTiesLabel.textContent = 'With ties:';
-      this._popWithTiesWrap.appendChild(withTiesLabel);
       this._withTiesToggle = document.createElement('button');
       this._withTiesToggle.type = 'button';
       this._withTiesToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._withTiesToggle.textContent = 'on';
+      this._withTiesToggle.textContent = 'With ties';
       this._withTiesToggle.addEventListener('click', () => {
         this.with_ties = !this.with_ties;
-        this._withTiesToggle.textContent = this.with_ties ? 'on' : 'off';
         this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
         this._autoSubmit();
       });
@@ -242,18 +236,12 @@
 
       // replace toggle (sample)
       this._popReplaceWrap = document.createElement('div');
-      this._popReplaceWrap.className = 'blockr-popover-row';
-      const replaceLabel = document.createElement('label');
-      replaceLabel.className = 'blockr-popover-label';
-      replaceLabel.textContent = 'Replace:';
-      this._popReplaceWrap.appendChild(replaceLabel);
       this._replaceToggle = document.createElement('button');
       this._replaceToggle.type = 'button';
       this._replaceToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._replaceToggle.textContent = 'off';
+      this._replaceToggle.textContent = 'Replace';
       this._replaceToggle.addEventListener('click', () => {
         this.replace = !this.replace;
-        this._replaceToggle.textContent = this.replace ? 'on' : 'off';
         this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
         this._autoSubmit();
       });
@@ -374,9 +362,7 @@
       }
 
       // Update toggles
-      this._withTiesToggle.textContent = this.with_ties ? 'on' : 'off';
       this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
-      this._replaceToggle.textContent = this.replace ? 'on' : 'off';
       this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
 
       this._updatePopoverVisibility();

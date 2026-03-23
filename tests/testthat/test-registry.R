@@ -1,11 +1,18 @@
 test_that("register_dplyr_blocks runs without error", {
-  register_fn <- get("register_dplyr_blocks", envir = asNamespace("blockr.dplyr"))
+  register_fn <- get(
+    "register_dplyr_blocks",
+    envir = asNamespace("blockr.dplyr")
+  )
   expect_silent(register_fn())
 })
 
 test_that("all expected blocks are registered", {
   blocks <- blockr.core::available_blocks()
-  block_ctors <- vapply(blocks, function(b) attr(b, "ctor_name") %||% "", character(1))
+  block_ctors <- vapply(
+    blocks,
+    function(b) attr(b, "ctor_name") %||% "",
+    character(1)
+  )
 
   expected <- c(
     "new_select_block", "new_join_block", "new_arrange_block",

@@ -138,24 +138,16 @@
       this.popoverEl.style.display = 'none';
 
       // values_drop_na toggle
-      const dropNaRow = document.createElement('div');
-      dropNaRow.className = 'blockr-popover-row';
-      const dropNaLabel = document.createElement('label');
-      dropNaLabel.className = 'blockr-popover-label';
-      dropNaLabel.textContent = 'Drop NA:';
-      dropNaRow.appendChild(dropNaLabel);
       this._dropNaToggle = document.createElement('button');
       this._dropNaToggle.type = 'button';
       this._dropNaToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._dropNaToggle.textContent = 'off';
+      this._dropNaToggle.textContent = 'Drop NA';
       this._dropNaToggle.addEventListener('click', () => {
         this.values_drop_na = !this.values_drop_na;
-        this._dropNaToggle.textContent = this.values_drop_na ? 'on' : 'off';
         this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
         this._autoSubmit();
       });
-      dropNaRow.appendChild(this._dropNaToggle);
-      this.popoverEl.appendChild(dropNaRow);
+      this.popoverEl.appendChild(this._dropNaToggle);
 
       // names_prefix
       const prefixRow = document.createElement('div');
@@ -232,7 +224,6 @@
 
       // Update popover controls
       this._prefixInput.value = this.names_prefix;
-      this._dropNaToggle.textContent = this.values_drop_na ? 'on' : 'off';
       this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
 
       // Update multi-select

@@ -30,7 +30,7 @@ new_bind_rows_block <- function(
 ) {
   new_transform_block(
     # -- server ---------------------------------------------------------------
-    function(id, ...args) {
+    function(id, ...args) { # nolint: object_name_linter.
       moduleServer(id, function(input, output, session) {
         ns <- session$ns
         r_state <- reactiveVal(state)
@@ -91,7 +91,7 @@ new_bind_rows_block <- function(
         )
       )
     },
-    dat_valid = function(...args) {
+    dat_valid = function(...args) { # nolint: object_name_linter.
       stopifnot(length(...args) >= 1L)
     },
     class = "bind_rows_block",

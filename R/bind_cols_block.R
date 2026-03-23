@@ -27,7 +27,7 @@
 new_bind_cols_block <- function(...) {
   new_transform_block(
     # -- server ---------------------------------------------------------------
-    function(id, ...args) {
+    function(id, ...args) { # nolint: object_name_linter.
       moduleServer(id, function(input, output, session) {
         arg_names <- reactive(
           setNames(names(...args), dot_args_names(...args))
@@ -57,7 +57,7 @@ new_bind_cols_block <- function(...) {
         )
       )
     },
-    dat_valid = function(...args) {
+    dat_valid = function(...args) { # nolint: object_name_linter.
       stopifnot(length(...args) >= 1L)
     },
     class = "bind_cols_block",

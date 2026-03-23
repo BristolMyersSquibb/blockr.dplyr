@@ -139,44 +139,28 @@
       this.popoverEl.style.display = 'none';
 
       // remove toggle
-      const removeRow = document.createElement('div');
-      removeRow.className = 'blockr-popover-row';
-      const removeLabel = document.createElement('label');
-      removeLabel.className = 'blockr-popover-label';
-      removeLabel.textContent = 'Remove:';
-      removeRow.appendChild(removeLabel);
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
       this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'on';
+      this._removeToggle.textContent = 'Remove';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
-        this._removeToggle.textContent = this.remove ? 'on' : 'off';
         this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
-      removeRow.appendChild(this._removeToggle);
-      this.popoverEl.appendChild(removeRow);
+      this.popoverEl.appendChild(this._removeToggle);
 
       // convert toggle
-      const convertRow = document.createElement('div');
-      convertRow.className = 'blockr-popover-row';
-      const convertLabel = document.createElement('label');
-      convertLabel.className = 'blockr-popover-label';
-      convertLabel.textContent = 'Convert:';
-      convertRow.appendChild(convertLabel);
       this._convertToggle = document.createElement('button');
       this._convertToggle.type = 'button';
       this._convertToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._convertToggle.textContent = 'off';
+      this._convertToggle.textContent = 'Convert';
       this._convertToggle.addEventListener('click', () => {
         this.convert = !this.convert;
-        this._convertToggle.textContent = this.convert ? 'on' : 'off';
         this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
         this._autoSubmit();
       });
-      convertRow.appendChild(this._convertToggle);
-      this.popoverEl.appendChild(convertRow);
+      this.popoverEl.appendChild(this._convertToggle);
 
       // extra text input
       const extraRow = document.createElement('div');
@@ -286,9 +270,7 @@
       this._sepInput.value = this.sep;
 
       // Update popover controls
-      this._removeToggle.textContent = this.remove ? 'on' : 'off';
       this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
-      this._convertToggle.textContent = this.convert ? 'on' : 'off';
       this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
       this._extraInput.value = this.extra;
       this._fillInput.value = this.fill;

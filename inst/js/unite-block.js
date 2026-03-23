@@ -139,44 +139,28 @@
       this.popoverEl.style.display = 'none';
 
       // remove toggle
-      const removeRow = document.createElement('div');
-      removeRow.className = 'blockr-popover-row';
-      const removeLabel = document.createElement('label');
-      removeLabel.className = 'blockr-popover-label';
-      removeLabel.textContent = 'Remove:';
-      removeRow.appendChild(removeLabel);
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
       this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'on';
+      this._removeToggle.textContent = 'Remove';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
-        this._removeToggle.textContent = this.remove ? 'on' : 'off';
         this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
-      removeRow.appendChild(this._removeToggle);
-      this.popoverEl.appendChild(removeRow);
+      this.popoverEl.appendChild(this._removeToggle);
 
       // na.rm toggle
-      const naRmRow = document.createElement('div');
-      naRmRow.className = 'blockr-popover-row';
-      const naRmLabel = document.createElement('label');
-      naRmLabel.className = 'blockr-popover-label';
-      naRmLabel.textContent = 'na.rm:';
-      naRmRow.appendChild(naRmLabel);
       this._naRmToggle = document.createElement('button');
       this._naRmToggle.type = 'button';
       this._naRmToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._naRmToggle.textContent = 'off';
+      this._naRmToggle.textContent = 'Drop NA';
       this._naRmToggle.addEventListener('click', () => {
         this.na_rm = !this.na_rm;
-        this._naRmToggle.textContent = this.na_rm ? 'on' : 'off';
         this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
         this._autoSubmit();
       });
-      naRmRow.appendChild(this._naRmToggle);
-      this.popoverEl.appendChild(naRmRow);
+      this.popoverEl.appendChild(this._naRmToggle);
 
       this.card.appendChild(this.popoverEl);
     }
@@ -233,9 +217,7 @@
       this._sepInput.value = this.sep;
 
       // Update popover toggles
-      this._removeToggle.textContent = this.remove ? 'on' : 'off';
       this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
-      this._naRmToggle.textContent = this.na_rm ? 'on' : 'off';
       this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
 
       // Update multi-select

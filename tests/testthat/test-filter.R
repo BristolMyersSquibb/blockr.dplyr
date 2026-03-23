@@ -90,7 +90,10 @@ test_that("make_filter_expr handles numeric condition (is / ==)", {
 })
 
 test_that("make_filter_expr handles expression condition", {
-  conds <- list(list(type = "expr", expr = "Sepal.Length > 5 & Species == 'setosa'"))
+  conds <- list(list(
+    type = "expr",
+    expr = "Sepal.Length > 5 & Species == 'setosa'"
+  ))
   expr <- make_filter_expr(conds, "&")
   result <- eval_bquoted(expr, iris)
   expect_true(all(result$Sepal.Length > 5))

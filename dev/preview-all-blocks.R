@@ -1,4 +1,5 @@
 pkgload::load_all("blockr.dplyr")
+pkgload::load_all("blockr.ai")
 library(blockr.dock)
 library(blockr.dag)
 library(blockr.extra)
@@ -65,5 +66,6 @@ serve(
       list(from = "data3", to = "bind_cols", input = "y")
     ),
     extensions = new_dag_extension()
-  )
+  ),
+  plugins = custom_plugins(c(ai_ctrl_block()))
 )
