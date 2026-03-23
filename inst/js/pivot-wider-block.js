@@ -62,7 +62,7 @@
       namesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
       const namesFromLabel = document.createElement('label');
       namesFromLabel.className = 'blockr-label';
-      namesFromLabel.textContent = 'names_from';
+      namesFromLabel.textContent = 'Names from';
       namesFromWrap.appendChild(namesFromLabel);
       this._namesFromSelect = Blockr.Select.multi(namesFromWrap, {
         options: this.columnNames,
@@ -81,7 +81,7 @@
       valuesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
       const valuesFromLabel = document.createElement('label');
       valuesFromLabel.className = 'blockr-label';
-      valuesFromLabel.textContent = 'values_from';
+      valuesFromLabel.textContent = 'Values from';
       valuesFromWrap.appendChild(valuesFromLabel);
       this._valuesFromSelect = Blockr.Select.multi(valuesFromWrap, {
         options: this.columnNames,
@@ -100,7 +100,7 @@
       idColsWrap.className = 'pwb-picker-wrap blockr-select--bordered';
       const idColsLabel = document.createElement('label');
       idColsLabel.className = 'blockr-label';
-      idColsLabel.textContent = 'id_cols (optional)';
+      idColsLabel.textContent = 'ID columns (optional)';
       idColsWrap.appendChild(idColsLabel);
       this._idColsSelect = Blockr.Select.multi(idColsWrap, {
         options: this.columnNames,

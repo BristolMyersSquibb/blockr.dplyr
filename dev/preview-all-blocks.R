@@ -1,10 +1,10 @@
 pkgload::load_all("blockr.dplyr")
 library(blockr.dock)
 library(blockr.dag)
-library(blockr.extra)
+# library(blockr.extra)
 
 options(
-  blockr.html_table_preview = TRUE,
+  # blockr.html_table_preview = TRUE,
   "g6R.mode" = "dev",
   "g6R.preserve_elements_position" = TRUE
 )

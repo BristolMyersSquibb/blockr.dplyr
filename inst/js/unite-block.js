@@ -82,7 +82,7 @@
       sepWrap.className = 'ub-field ub-field-narrow';
       const sepLabel = document.createElement('label');
       sepLabel.className = 'blockr-label';
-      sepLabel.textContent = 'sep';
+      sepLabel.textContent = 'Separator';
       sepWrap.appendChild(sepLabel);
       this._sepInput = document.createElement('input');
       this._sepInput.type = 'text';
@@ -101,6 +101,10 @@
       // Column picker (bordered)
       const pickerWrap = document.createElement('div');
       pickerWrap.className = 'ub-picker-wrap blockr-select--bordered';
+      const pickerLabel = document.createElement('label');
+      pickerLabel.className = 'blockr-label';
+      pickerLabel.textContent = 'Columns';
+      pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
 
       this._multiSelect = Blockr.Select.multi(pickerWrap, {

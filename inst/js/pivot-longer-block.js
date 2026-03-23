@@ -56,6 +56,10 @@
       // Column picker (bordered)
       const pickerWrap = document.createElement('div');
       pickerWrap.className = 'plb-picker-wrap blockr-select--bordered';
+      const pickerLabel = document.createElement('label');
+      pickerLabel.className = 'blockr-label';
+      pickerLabel.textContent = 'Columns';
+      pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
 
       this._multiSelect = Blockr.Select.multi(pickerWrap, {
@@ -78,7 +82,7 @@
       namesToWrap.className = 'plb-field';
       const namesToLabel = document.createElement('label');
       namesToLabel.className = 'blockr-label';
-      namesToLabel.textContent = 'names_to';
+      namesToLabel.textContent = 'Names to';
       namesToWrap.appendChild(namesToLabel);
       this._namesToInput = document.createElement('input');
       this._namesToInput.type = 'text';
@@ -97,7 +101,7 @@
       valuesToWrap.className = 'plb-field';
       const valuesToLabel = document.createElement('label');
       valuesToLabel.className = 'blockr-label';
-      valuesToLabel.textContent = 'values_to';
+      valuesToLabel.textContent = 'Values to';
       valuesToWrap.appendChild(valuesToLabel);
       this._valuesToInput = document.createElement('input');
       this._valuesToInput.type = 'text';

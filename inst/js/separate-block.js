@@ -83,7 +83,7 @@
       intoWrap.className = 'spb-field';
       const intoLabel = document.createElement('label');
       intoLabel.className = 'blockr-label';
-      intoLabel.textContent = 'into (comma-separated)';
+      intoLabel.textContent = 'Into (comma-separated)';
       intoWrap.appendChild(intoLabel);
       this._intoInput = document.createElement('input');
       this._intoInput.type = 'text';
@@ -102,7 +102,7 @@
       sepWrap.className = 'spb-field spb-field-narrow';
       const sepLabel = document.createElement('label');
       sepLabel.className = 'blockr-label';
-      sepLabel.textContent = 'sep';
+      sepLabel.textContent = 'Separator';
       sepWrap.appendChild(sepLabel);
       this._sepInput = document.createElement('input');
       this._sepInput.type = 'text';

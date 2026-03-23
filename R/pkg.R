@@ -11,3 +11,6 @@
 #' @importFrom dplyr dense_rank min_rank percent_rank cume_dist ntile
 #' @importFrom dplyr between near bind_rows bind_cols
 NULL
+
+# Suppress R CMD check NOTEs for bbquote placeholders
+utils::globalVariables(c("data", "cols"))
