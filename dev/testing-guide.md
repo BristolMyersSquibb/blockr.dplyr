@@ -2,90 +2,66 @@
 
 ## Strategy
 
-1. **Unit tests** for pure functions (expression builders, helpers, parsers) — no Shiny needed
-2. **testServer with `block_server`** for all Shiny reactivity, state, and data transformation
+1. **Unit tests** for expression builders — pure R, no Shiny
+2. **testServer** for block reactive logic — uses `blk$expr_server`
+3. **AI discovery tests** — `dev/test-ai-discovery.R` (requires OPENAI_API_KEY)
+4. **Playwright** for visual e2e — via `blockr-playwright` skill
 
-That's it. Two layers, both fast.
+## Unit tests for expression builders
 
----
-
-## Unit Tests
-
-Test pure R functions directly. Fast (~0.1s per test).
+Expression builders are pure functions in `R/expr-builders.R`. They return bquoted language objects with `.(data)` placeholder. Use this helper to evaluate them:
 
 ```r
-test_that("parse_mutate handles single expression", {
-  result <- parse_mutate("new_col = old_col * 2")
-  expect_equal(result[[1]]$name, "new_col")
-  expect_equal(result[[1]]$expr, "old_col * 2")
+eval_bquoted <- function(expr, df) {
+  resolved <- do.call(bquote, list(expr, list(data = as.name("data"))))
+  eval(resolved, envir = list(data = df))
+}
+
+test_that("make_filter_expr handles values condition", {
+  conds <- list(list(type = "values", column = "cyl",
+                     values = list("4", "6"), mode = "include"))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, mtcars)
+  expect_true(all(result$cyl %in% c(4, 6)))
 })
 ```
 
----
+## testServer for blocks
 
-## testServer (block_server)
-
-This is the main testing pattern. Tests the full block lifecycle: reactive state, expression generation, and data transformation — all through `block_server`, the same entry point the framework uses at runtime.
+Test the inner `expr_server` to verify expressions are built correctly from constructor state:
 
 ```r
-test_that("filter block filters by selected values", {
-  block <- new_filter_block(
-    conditions = list(list(column = "cyl", values = c(4, 6), mode = "include"))
+test_that("filter block produces correct expression", {
+  blk <- new_filter_block(
+    state = list(
+      conditions = list(list(type = "values", column = "cyl",
+                             values = list("4"), mode = "include")),
+      operator = "&"
+    )
   )
 
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(all(result$cyl %in% c(4, 6)))
-      expect_false(any(result$cyl == 8))
-    },
-    args = list(x = block, data = list(data = function() mtcars))
-  )
+  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
+    session$flushReact()
+    expr_result <- session$returned$expr()
+    evaluated <- eval_bquoted(expr_result, mtcars)
+    expect_true(all(evaluated$cyl == 4))
+  })
 })
 ```
-
-Key points:
-- Use `blockr.core:::get_s3_method("block_server", block)` to get the method
-- Args format: `list(x = block, data = list(data = function() df))`
-- `session$returned$result()` gives the transformed data
-- `session$returned$state` gives the reactive state values
-- Always call `session$flushReact()` before reading results
 
 ### Testing state changes
 
-To test that changing state propagates to the result:
-
 ```r
-test_that("external state change propagates", {
-  block <- new_filter_block()
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      expect_equal(nrow(session$returned$result()), 150)
-
-      # Modify state directly (simulates AI ctrl or programmatic updates)
-      state <- session$returned$state
-      state$conditions(list(
-        list(column = "Species", values = c("virginica"), mode = "include")
-      ))
-      session$flushReact()
-
-      expect_equal(nrow(session$returned$result()), 50)
-    },
-    args = list(x = block, data = list(data = function() iris))
-  )
-})
+state <- session$returned$state
+state$state(list(conditions = list(...), operator = "&"))
+session$flushReact()
+expr_result2 <- session$returned$expr()
 ```
 
----
+## AI discovery tests
 
-## Browser Testing
+Run `dev/test-ai-discovery.R` or `dev/test-ai-discovery-v2.R` to verify all blocks work with the LLM pipeline. Requires `OPENAI_API_KEY` (in `/workspace/.Renviron`).
 
-For e2e package tests, shinytest2 is an option but we don't use it — `testServer` covers reactive logic faster and more reliably.
+## Playwright e2e
 
-For interactive debugging of UI rendering or JS interactions, use Playwright via the `blockr-playwright` skill. It connects a real browser to a running Shiny app and lets you inspect, screenshot, and interact step by step.
+For UI testing, use the `blockr-playwright` skill to launch an app and interact via browser automation. See `dev/preview-all-blocks.R` for a dock app with all blocks.
