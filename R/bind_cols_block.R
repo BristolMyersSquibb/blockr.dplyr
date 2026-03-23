@@ -61,7 +61,7 @@ new_bind_cols_block <- function(...) {
       stopifnot(length(...args) >= 1L)
     },
     class = "bind_cols_block",
-    expr_type = "quoted",
+    expr_type = "bquoted",
     allow_empty_state = TRUE,
     ...
   )

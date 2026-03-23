@@ -66,7 +66,7 @@
       this._colSelect = Blockr.Select.single(colWrap, {
         options: this.columnNames,
         selected: null,
-        placeholder: 'Source column\u2026',
+        placeholder: 'Select column\u2026',
         onChange: (value) => {
           this.col = value;
           this._autoSubmit();
@@ -147,12 +147,12 @@
       removeRow.appendChild(removeLabel);
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill spb-popover-toggle spb-popover-toggle-active';
+      this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
       this._removeToggle.textContent = 'on';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
         this._removeToggle.textContent = this.remove ? 'on' : 'off';
-        this._removeToggle.classList.toggle('spb-popover-toggle-active', this.remove);
+        this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
       removeRow.appendChild(this._removeToggle);
@@ -167,12 +167,12 @@
       convertRow.appendChild(convertLabel);
       this._convertToggle = document.createElement('button');
       this._convertToggle.type = 'button';
-      this._convertToggle.className = 'blockr-pill spb-popover-toggle';
+      this._convertToggle.className = 'blockr-pill blockr-popover-toggle';
       this._convertToggle.textContent = 'off';
       this._convertToggle.addEventListener('click', () => {
         this.convert = !this.convert;
         this._convertToggle.textContent = this.convert ? 'on' : 'off';
-        this._convertToggle.classList.toggle('spb-popover-toggle-active', this.convert);
+        this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
         this._autoSubmit();
       });
       convertRow.appendChild(this._convertToggle);
@@ -287,9 +287,9 @@
 
       // Update popover controls
       this._removeToggle.textContent = this.remove ? 'on' : 'off';
-      this._removeToggle.classList.toggle('spb-popover-toggle-active', this.remove);
+      this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
       this._convertToggle.textContent = this.convert ? 'on' : 'off';
-      this._convertToggle.classList.toggle('spb-popover-toggle-active', this.convert);
+      this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
       this._extraInput.value = this.extra;
       this._fillInput.value = this.fill;
     }

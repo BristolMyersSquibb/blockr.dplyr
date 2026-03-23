@@ -183,7 +183,7 @@
       this._popOrderByWrap.className = 'blockr-popover-row';
       const orderByLabel = document.createElement('label');
       orderByLabel.className = 'blockr-popover-label';
-      orderByLabel.textContent = 'order_by';
+      orderByLabel.textContent = 'Order by:';
       this._popOrderByWrap.appendChild(orderByLabel);
       const orderBySelectWrap = document.createElement('div');
       orderBySelectWrap.className = 'blockr-popover-select-wrap';
@@ -204,7 +204,7 @@
       this._popWeightByWrap.className = 'blockr-popover-row';
       const weightByLabel = document.createElement('label');
       weightByLabel.className = 'blockr-popover-label';
-      weightByLabel.textContent = 'weight_by';
+      weightByLabel.textContent = 'Weight by:';
       this._popWeightByWrap.appendChild(weightByLabel);
       const weightBySelectWrap = document.createElement('div');
       weightBySelectWrap.className = 'blockr-popover-select-wrap';
@@ -220,44 +220,44 @@
       });
       this.popoverEl.appendChild(this._popWeightByWrap);
 
-      // with_ties checkbox (min/max)
+      // with_ties toggle (min/max)
       this._popWithTiesWrap = document.createElement('div');
       this._popWithTiesWrap.className = 'blockr-popover-row';
-      this._withTiesCheckbox = document.createElement('input');
-      this._withTiesCheckbox.type = 'checkbox';
-      this._withTiesCheckbox.id = Blockr.uid('slb-ties');
-      this._withTiesCheckbox.checked = this.with_ties;
-      this._withTiesCheckbox.className = 'blockr-popover-checkbox';
-      this._withTiesCheckbox.addEventListener('change', () => {
-        this.with_ties = this._withTiesCheckbox.checked;
+      const withTiesLabel = document.createElement('label');
+      withTiesLabel.className = 'blockr-popover-label';
+      withTiesLabel.textContent = 'With ties:';
+      this._popWithTiesWrap.appendChild(withTiesLabel);
+      this._withTiesToggle = document.createElement('button');
+      this._withTiesToggle.type = 'button';
+      this._withTiesToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
+      this._withTiesToggle.textContent = 'on';
+      this._withTiesToggle.addEventListener('click', () => {
+        this.with_ties = !this.with_ties;
+        this._withTiesToggle.textContent = this.with_ties ? 'on' : 'off';
+        this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
         this._autoSubmit();
       });
-      this._popWithTiesWrap.appendChild(this._withTiesCheckbox);
-      const withTiesLabel = document.createElement('label');
-      withTiesLabel.htmlFor = this._withTiesCheckbox.id;
-      withTiesLabel.className = 'blockr-popover-label';
-      withTiesLabel.textContent = 'with_ties';
-      this._popWithTiesWrap.appendChild(withTiesLabel);
+      this._popWithTiesWrap.appendChild(this._withTiesToggle);
       this.popoverEl.appendChild(this._popWithTiesWrap);
 
-      // replace checkbox (sample)
+      // replace toggle (sample)
       this._popReplaceWrap = document.createElement('div');
       this._popReplaceWrap.className = 'blockr-popover-row';
-      this._replaceCheckbox = document.createElement('input');
-      this._replaceCheckbox.type = 'checkbox';
-      this._replaceCheckbox.id = Blockr.uid('slb-replace');
-      this._replaceCheckbox.checked = this.replace;
-      this._replaceCheckbox.className = 'blockr-popover-checkbox';
-      this._replaceCheckbox.addEventListener('change', () => {
-        this.replace = this._replaceCheckbox.checked;
+      const replaceLabel = document.createElement('label');
+      replaceLabel.className = 'blockr-popover-label';
+      replaceLabel.textContent = 'Replace:';
+      this._popReplaceWrap.appendChild(replaceLabel);
+      this._replaceToggle = document.createElement('button');
+      this._replaceToggle.type = 'button';
+      this._replaceToggle.className = 'blockr-pill blockr-popover-toggle';
+      this._replaceToggle.textContent = 'off';
+      this._replaceToggle.addEventListener('click', () => {
+        this.replace = !this.replace;
+        this._replaceToggle.textContent = this.replace ? 'on' : 'off';
+        this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
         this._autoSubmit();
       });
-      this._popReplaceWrap.appendChild(this._replaceCheckbox);
-      const replaceLabel = document.createElement('label');
-      replaceLabel.htmlFor = this._replaceCheckbox.id;
-      replaceLabel.className = 'blockr-popover-label';
-      replaceLabel.textContent = 'replace';
-      this._popReplaceWrap.appendChild(replaceLabel);
+      this._popReplaceWrap.appendChild(this._replaceToggle);
       this.popoverEl.appendChild(this._popReplaceWrap);
 
       this.card.appendChild(this.popoverEl);
@@ -374,8 +374,10 @@
       }
 
       // Update toggles
-      this._withTiesCheckbox.checked = this.with_ties;
-      this._replaceCheckbox.checked = this.replace;
+      this._withTiesToggle.textContent = this.with_ties ? 'on' : 'off';
+      this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
+      this._replaceToggle.textContent = this.replace ? 'on' : 'off';
+      this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
 
       this._updatePopoverVisibility();
     }

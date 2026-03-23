@@ -65,7 +65,7 @@
       this._multiSelect = Blockr.Select.multi(pickerWrap, {
         options: this.columnNames,
         selected: [],
-        placeholder: 'Columns to pivot\u2026',
+        placeholder: 'Select columns\u2026',
         reorderable: true,
         onChange: (selected) => {
           this.cols = selected;
@@ -146,12 +146,12 @@
       dropNaRow.appendChild(dropNaLabel);
       this._dropNaToggle = document.createElement('button');
       this._dropNaToggle.type = 'button';
-      this._dropNaToggle.className = 'blockr-pill plb-popover-toggle';
+      this._dropNaToggle.className = 'blockr-pill blockr-popover-toggle';
       this._dropNaToggle.textContent = 'off';
       this._dropNaToggle.addEventListener('click', () => {
         this.values_drop_na = !this.values_drop_na;
         this._dropNaToggle.textContent = this.values_drop_na ? 'on' : 'off';
-        this._dropNaToggle.classList.toggle('plb-popover-toggle-active', this.values_drop_na);
+        this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
         this._autoSubmit();
       });
       dropNaRow.appendChild(this._dropNaToggle);
@@ -233,7 +233,7 @@
       // Update popover controls
       this._prefixInput.value = this.names_prefix;
       this._dropNaToggle.textContent = this.values_drop_na ? 'on' : 'off';
-      this._dropNaToggle.classList.toggle('plb-popover-toggle-active', this.values_drop_na);
+      this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
 
       // Update multi-select
       if (this._multiSelect) {

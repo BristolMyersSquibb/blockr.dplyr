@@ -130,7 +130,7 @@
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
       nameInput.className = 'sb-name-input';
-      nameInput.placeholder = 'name';
+      nameInput.placeholder = 'column_name';
       nameInput.value = name || '';
       nameInput.addEventListener('input', () => {
         summary.name = nameInput.value;
@@ -223,7 +223,7 @@
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
       nameInput.className = 'sb-name-input';
-      nameInput.placeholder = 'name';
+      nameInput.placeholder = 'column_name';
       nameInput.value = name || '';
       row.appendChild(nameInput);
 

@@ -67,7 +67,7 @@
       this._namesFromSelect = Blockr.Select.multi(namesFromWrap, {
         options: this.columnNames,
         selected: [],
-        placeholder: 'Name columns\u2026',
+        placeholder: 'Select columns\u2026',
         reorderable: false,
         onChange: (selected) => {
           this.names_from = selected;
@@ -86,7 +86,7 @@
       this._valuesFromSelect = Blockr.Select.multi(valuesFromWrap, {
         options: this.columnNames,
         selected: [],
-        placeholder: 'Value columns\u2026',
+        placeholder: 'Select columns\u2026',
         reorderable: false,
         onChange: (selected) => {
           this.values_from = selected;
@@ -105,7 +105,7 @@
       this._idColsSelect = Blockr.Select.multi(idColsWrap, {
         options: this.columnNames,
         selected: [],
-        placeholder: 'ID columns\u2026',
+        placeholder: 'Select columns\u2026',
         reorderable: false,
         onChange: (selected) => {
           this.id_cols = selected;

@@ -285,8 +285,8 @@ make_join_expr <- function(type = "left_join", keys = list(), exprs = character(
     by_text <- paste(by_parts, collapse = ", ")
     text <- paste0(join_fn, "(.(x), .(y), by = c(", by_text, "))")
   } else {
-    # Natural join
-    text <- paste0(join_fn, "(.(x), .(y))")
+    # No keys selected yet: pass through x until user configures
+    return(bbquote(.(x)))
   }
 
   # Add suffix for non-semi/anti joins
@@ -315,6 +315,9 @@ make_join_expr <- function(type = "left_join", keys = list(), exprs = character(
 #' @return A language object
 #' @noRd
 make_select_expr <- function(columns, exclude = FALSE, distinct = FALSE) {
+  exclude <- isTRUE(exclude)
+  distinct <- isTRUE(distinct)
+
   if (length(columns) == 0) {
     base <- bbquote(dplyr::select(.(data), dplyr::everything()))
   } else {

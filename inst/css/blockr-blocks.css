@@ -244,7 +244,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 12px 14px;
-  min-width: 220px;
+  min-width: 280px;
 }
 
 .blockr-popover-row {
@@ -291,12 +291,23 @@
   min-width: 0;
 }
 
-.blockr-popover-checkbox {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--blockr-color-primary, #2563eb);
-  cursor: pointer;
-  flex-shrink: 0;
+.blockr-popover-select-wrap .blockr-select__control {
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-height: 28px;
+}
+
+/* Shared popover toggle pill */
+.blockr-popover-toggle {
+  font-size: 10px !important;
+}
+
+.blockr-popover-toggle-active {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
 }
 
 /* --- Add expression link (code icon button) --- */

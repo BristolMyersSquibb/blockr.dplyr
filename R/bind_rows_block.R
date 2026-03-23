@@ -95,7 +95,7 @@ new_bind_rows_block <- function(
       stopifnot(length(...args) >= 1L)
     },
     class = "bind_rows_block",
-    expr_type = "quoted",
+    expr_type = "bquoted",
     external_ctrl = TRUE,
     allow_empty_state = "state",
     ...

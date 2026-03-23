@@ -1,10 +1,10 @@
 pkgload::load_all("blockr.dplyr")
 library(blockr.dock)
 library(blockr.dag)
-# library(blockr.extra)
+library(blockr.extra)
 
 options(
-  # blockr.html_table_preview = TRUE,
+  blockr.html_table_preview = TRUE,
   "g6R.mode" = "dev",
   "g6R.preserve_elements_position" = TRUE
 )
@@ -14,6 +14,7 @@ serve(
     blocks = c(
       data1 = new_dataset_block("mtcars"),
       data2 = new_dataset_block("iris"),
+      data3 = new_dataset_block("mtcars"),
 
       # Column-picker blocks
       select = new_select_block(),
@@ -61,7 +62,7 @@ serve(
       list(from = "data1", to = "bind_rows", input = "x"),
       list(from = "data2", to = "bind_rows", input = "y"),
       list(from = "data1", to = "bind_cols", input = "x"),
-      list(from = "data2", to = "bind_cols", input = "y")
+      list(from = "data3", to = "bind_cols", input = "y")
     ),
     extensions = new_dag_extension()
   )

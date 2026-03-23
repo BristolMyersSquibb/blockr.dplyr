@@ -107,22 +107,22 @@
       const row = document.createElement('div');
       row.className = 'blockr-popover-row';
 
-      this._distinctCheckbox = document.createElement('input');
-      this._distinctCheckbox.type = 'checkbox';
-      this._distinctCheckbox.id = Blockr.uid('sb-distinct');
-      this._distinctCheckbox.checked = this.distinct;
-      this._distinctCheckbox.className = 'blockr-popover-checkbox';
-      this._distinctCheckbox.addEventListener('change', () => {
-        this.distinct = this._distinctCheckbox.checked;
+      const label = document.createElement('label');
+      label.className = 'blockr-popover-label';
+      label.textContent = 'Distinct:';
+      row.appendChild(label);
+
+      this._distinctToggle = document.createElement('button');
+      this._distinctToggle.type = 'button';
+      this._distinctToggle.className = 'blockr-pill blockr-popover-toggle';
+      this._distinctToggle.textContent = 'off';
+      this._distinctToggle.addEventListener('click', () => {
+        this.distinct = !this.distinct;
+        this._distinctToggle.textContent = this.distinct ? 'on' : 'off';
+        this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
         this._autoSubmit();
       });
-      row.appendChild(this._distinctCheckbox);
-
-      const label = document.createElement('label');
-      label.htmlFor = this._distinctCheckbox.id;
-      label.className = 'blockr-popover-label';
-      label.textContent = 'Distinct rows';
-      row.appendChild(label);
+      row.appendChild(this._distinctToggle);
 
       this.popoverEl.appendChild(row);
       this.card.appendChild(this.popoverEl);
@@ -169,7 +169,8 @@
 
       this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
       this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
-      this._distinctCheckbox.checked = this.distinct;
+      this._distinctToggle.textContent = this.distinct ? 'on' : 'off';
+      this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
 
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnNames, this.columns);

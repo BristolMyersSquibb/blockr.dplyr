@@ -63,7 +63,7 @@
       colWrap.className = 'ub-field';
       const colLabel = document.createElement('label');
       colLabel.className = 'blockr-label';
-      colLabel.textContent = 'New column';
+      colLabel.textContent = 'New column name';
       colWrap.appendChild(colLabel);
       this._colInput = document.createElement('input');
       this._colInput.type = 'text';
@@ -103,14 +103,14 @@
       pickerWrap.className = 'ub-picker-wrap blockr-select--bordered';
       const pickerLabel = document.createElement('label');
       pickerLabel.className = 'blockr-label';
-      pickerLabel.textContent = 'Columns';
+      pickerLabel.textContent = 'Columns to unite';
       pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
 
       this._multiSelect = Blockr.Select.multi(pickerWrap, {
         options: this.columnNames,
         selected: [],
-        placeholder: 'Columns to unite\u2026',
+        placeholder: 'Select columns\u2026',
         reorderable: true,
         onChange: (selected) => {
           this.cols = selected;
@@ -147,12 +147,12 @@
       removeRow.appendChild(removeLabel);
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill ub-popover-toggle ub-popover-toggle-active';
+      this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
       this._removeToggle.textContent = 'on';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
         this._removeToggle.textContent = this.remove ? 'on' : 'off';
-        this._removeToggle.classList.toggle('ub-popover-toggle-active', this.remove);
+        this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
       removeRow.appendChild(this._removeToggle);
@@ -167,12 +167,12 @@
       naRmRow.appendChild(naRmLabel);
       this._naRmToggle = document.createElement('button');
       this._naRmToggle.type = 'button';
-      this._naRmToggle.className = 'blockr-pill ub-popover-toggle';
+      this._naRmToggle.className = 'blockr-pill blockr-popover-toggle';
       this._naRmToggle.textContent = 'off';
       this._naRmToggle.addEventListener('click', () => {
         this.na_rm = !this.na_rm;
         this._naRmToggle.textContent = this.na_rm ? 'on' : 'off';
-        this._naRmToggle.classList.toggle('ub-popover-toggle-active', this.na_rm);
+        this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
         this._autoSubmit();
       });
       naRmRow.appendChild(this._naRmToggle);
@@ -234,9 +234,9 @@
 
       // Update popover toggles
       this._removeToggle.textContent = this.remove ? 'on' : 'off';
-      this._removeToggle.classList.toggle('ub-popover-toggle-active', this.remove);
+      this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
       this._naRmToggle.textContent = this.na_rm ? 'on' : 'off';
-      this._naRmToggle.classList.toggle('ub-popover-toggle-active', this.na_rm);
+      this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
 
       // Update multi-select
       if (this._multiSelect) {
