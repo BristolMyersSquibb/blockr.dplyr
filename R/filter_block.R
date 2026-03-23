@@ -80,7 +80,7 @@ new_filter_block <- function(
             make_filter_expr(
               s$conditions %||% list(),
               s$operator %||% "&",
-              s$preserveOrder %||% FALSE
+              isTRUE(s$preserveOrder)
             )
           }),
           state = list(state = r_state)

@@ -16,7 +16,7 @@ NULL
 #' @noRd
 make_filter_expr <- function(conditions,
                              operator = "&",
-                             preserveOrder = FALSE) {
+                             preserve_order = FALSE) {
   if (length(conditions) == 0) {
     return(bbquote(dplyr::filter(.(data), TRUE)))
   }
@@ -38,12 +38,13 @@ make_filter_expr <- function(conditions,
     list(combined = combined)
   )
 
-  if (!isTRUE(preserveOrder)) return(filter_expr)
+  if (!isTRUE(preserve_order)) return(filter_expr)
 
   # Build arrange(match(col, c(v1, v2, ...))) for pick order
-  # Use the first values-type condition with values
   val_cond <- Filter(
-    function(c) identical(c$type, "values") && length(c$values) > 0,
+    function(c) {
+      identical(c$type, "values") && length(c$values) > 0
+    },
     conditions
   )
   if (length(val_cond) == 0) return(filter_expr)
@@ -57,14 +58,12 @@ make_filter_expr <- function(conditions,
   nums <- suppressWarnings(as.numeric(vals))
   val_vec <- if (all(!is.na(nums))) nums else vals
 
-  match_call <- call("match", col_sym, val_vec)
-  bbquote(
-    dplyr::arrange(
-      dplyr::filter(.(data), .(combined)),
-      .(match_expr)
-    ),
-    list(combined = combined, match_expr = match_call)
-  )
+  match_expr <- call("match", col_sym, val_vec)
+  as.call(list(
+    str2lang("dplyr::arrange"),
+    filter_expr,
+    match_expr
+  ))
 }
 
 #' Dispatch a single filter condition to the appropriate builder
