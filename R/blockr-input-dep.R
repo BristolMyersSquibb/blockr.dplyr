@@ -1,11 +1,19 @@
 #' HTML dependency for blockr-input component
 #' @noRd
 blockr_input_dep <- function() {
-  htmltools::htmlDependency(
-    name = "blockr-input",
-    version = utils::packageVersion("blockr.dplyr"),
-    src = system.file("assets", package = "blockr.dplyr"),
-    script = "js/blockr-input.js",
-    stylesheet = "css/blockr-input.css"
+  htmltools::tagList(
+    blockr_core_js_dep(),
+    htmltools::htmlDependency(
+      name = "blockr-input-js",
+      version = utils::packageVersion("blockr.dplyr"),
+      src = system.file("js", package = "blockr.dplyr"),
+      script = "blockr-input.js"
+    ),
+    htmltools::htmlDependency(
+      name = "blockr-input-css",
+      version = utils::packageVersion("blockr.dplyr"),
+      src = system.file("css", package = "blockr.dplyr"),
+      stylesheet = "blockr-input.css"
+    )
   )
 }

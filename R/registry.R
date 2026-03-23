@@ -9,7 +9,6 @@ register_dplyr_blocks <- function() {
       "new_summarize_block",
       "new_summarize_expr_block",
       "new_filter_block",
-      "new_filter_expr_block",
       "new_bind_rows_block",
       "new_bind_cols_block",
       "new_rename_block",
@@ -27,7 +26,6 @@ register_dplyr_blocks <- function() {
       "Aggregate Data",
       "Aggregate (Advanced)",
       "Filter Rows",
-      "Filter (Advanced)",
       "Stack Tables",
       "Combine Side-by-Side",
       "Rename Columns",
@@ -44,8 +42,7 @@ register_dplyr_blocks <- function() {
       "Create new columns or modify existing ones using R formulas. (dplyr: mutate)",
       "Calculate totals, averages, counts, and other statistics. No coding required. (dplyr: summarize)",
       "Create summary statistics using R expressions. Supports grouping. (dplyr: summarize)",
-      "Keep only rows that match selected values. No coding required. (dplyr: filter)",
-      "Filter rows using R expressions with AND/OR logic. (dplyr: filter)",
+      "Filter rows by values, numeric comparisons, or R expressions with AND/OR logic. (dplyr: filter)",
       "Stack tables vertically by matching column names. (dplyr: bind_rows)",
       "Place tables next to each other horizontally. Both tables must have the same number of rows. (dplyr: bind_cols)",
       "Change column names to make them more readable. (dplyr: rename)",
@@ -70,7 +67,6 @@ register_dplyr_blocks <- function() {
       "transform",
       "transform",
       "transform",
-      "transform",
       "transform"
     ),
     icon = c(
@@ -80,8 +76,7 @@ register_dplyr_blocks <- function() {
       "pencil-square", # mutate_expr block
       "sliders", # summarize block (simple)
       "calculator", # summarize_expr block
-      "filter", # filter block (simple)
-      "code-slash", # filter_expr block
+      "filter", # filter block
       "arrows-collapse", # bind_rows block (vertical arrows = rows stacking)
       "arrows-collapse-vertical", # bind_cols block (horizontal arrows = columns joining)
       "tags", # rename block
@@ -173,48 +168,35 @@ register_dplyr_blocks <- function() {
       # filter_block:
       structure(
         c(
-          conditions = paste0(
-            "List of filter conditions, each with: ",
-            "column (string), values (array of strings, even for numbers), ",
-            "mode (\"include\" or \"exclude\"), ",
-            "operator (\"|\" or \"&\", how this condition connects to the previous one, default \"&\")"
-          ),
-          preserve_order = "Boolean, whether to preserve selection order"
+          state = paste0(
+            "Object with: conditions (array of condition objects) and operator ",
+            "(\"&\" or \"|\"). Condition types: ",
+            "\"values\" (column, values array of strings, mode \"include\"/\"exclude\"), ",
+            "\"numeric\" (column, op like \">\"/\">=\"/\"<\"/\"<=\", value as number), ",
+            "\"expr\" (expr as R expression string)"
+          )
         ),
         examples = list(
-          conditions = list(
-            list(column = "Species", values = list("setosa"), mode = "include")
-          ),
-          preserve_order = FALSE
+          state = list(
+            conditions = list(
+              list(type = "values", column = "Species",
+                   values = list("setosa"), mode = "include")
+            ),
+            operator = "&"
+          )
         ),
         prompt = paste(
-          "The values array must always contain strings, even for numeric columns (e.g. [\"4\"] not [4]).",
-          "The operator field connects a condition to the previous one.",
+          "The state contains the full filter configuration as a single object.",
+          "Conditions can be: type 'values' (column + values array + mode 'include'/'exclude'),",
+          "type 'numeric' (column + op like '>', '>=', '<', '<=' + numeric value),",
+          "or type 'expr' (free R expression string).",
+          "Values must be strings even for numeric columns.",
           "\n\nIMPORTANT -- include vs exclude mode:",
-          "ALWAYS prefer mode \"include\" with the matching values.",
-          "Only use mode \"exclude\" when the user explicitly says \"exclude\", \"remove\", \"drop\", or \"not\".",
-          "For example, \"sepal width smaller than 5\" means: include all Sepal.Width values that are < 5,",
-          "NOT exclude values >= 5.",
-          "\n\nThis block uses exact value matching, not comparison operators.",
-          "For numeric comparisons (e.g. \"< 5\"), list every matching value from the data in the values array.",
-          "Use the data preview to identify which values satisfy the condition.",
-          "\n\nData exploration: this block requires exact values. For columns with many distinct values,",
-          "explore the data first to discover actual values (e.g. unique(data$column))."
-        )
-      ),
-      # filter_expr_block:
-      structure(
-        c(
-          exprs = "R expression string for filtering rows"
-        ),
-        examples = list(exprs = "mpg > 20 & cyl == 4"),
-        prompt = paste(
-          "The expression is an R expression string, NOT regex.",
-          "For regex in R, use double backslashes: gsub('\\\\(', '', x) not gsub('\\(', '', x).",
-          "Column names with spaces or special characters must be backtick-quoted: `PBO N = 334`.",
-          "Check option blockr.dplyr.summary_functions for domain-specific helper functions that may be available.",
-          "\n\nR coding rules: always use the base pipe |> (never %>%).",
-          "Namespace-prefix all functions except base and stats (e.g. dplyr::filter(), stringr::str_detect())."
+          "ALWAYS prefer mode 'include' with the matching values.",
+          "Only use mode 'exclude' when the user explicitly says 'exclude', 'remove', 'drop', or 'not'.",
+          "\n\nFor numeric comparisons, prefer type 'numeric' over type 'values'.",
+          "\n\nR coding rules for expr type: always use the base pipe |> (never %>%).",
+          "Namespace-prefix all functions except base and stats."
         )
       ),
       # bind_rows_block:
