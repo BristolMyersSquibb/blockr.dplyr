@@ -138,9 +138,10 @@ make_expr_part <- function(cond) {
 
 #' Build a dplyr::mutate expression from JS rows
 #' @param rows List of row objects, each with `name` and `expr` strings
+#' @param by Character vector of grouping column names (optional)
 #' @return A language object
 #' @noRd
-make_mutate_expr <- function(rows) {
+make_mutate_expr <- function(rows, by = character()) {
   rows <- Filter(function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""), rows)
 
   if (length(rows) == 0) {
@@ -158,6 +159,12 @@ make_mutate_expr <- function(rows) {
   expr <- quote(dplyr::mutate(.(data)))
   for (nm in names(args)) {
     expr[[backtick_if_needed(nm)]] <- args[[nm]]
+  }
+
+  # Add .by if grouping columns
+  if (length(by) > 0) {
+    by_syms <- lapply(by, as.name)
+    expr[[".by"]] <- as.call(c(quote(c), by_syms))
   }
 
   bbquote(.(expr), list(expr = expr))
@@ -411,7 +418,7 @@ make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
 
   expr <- as.call(list(str2lang(fn_str), quote(.(data))))
 
-  if (!is.null(prop) && prop > 0 && prop <= 1) {
+  if (is.numeric(prop) && length(prop) == 1 && prop > 0 && prop <= 1) {
     expr[["prop"]] <- prop
   } else {
     expr[["n"]] <- as.integer(n %||% 5L)
@@ -488,7 +495,7 @@ make_pivot_wider_expr <- function(names_from, values_from, id_cols = character()
     expr[["id_cols"]] <- as.call(c(quote(c), lapply(id_cols, as.name)))
   }
 
-  if (!is.null(values_fill)) expr[["values_fill"]] <- values_fill
+  if (!is.null(values_fill) && length(values_fill) > 0) expr[["values_fill"]] <- values_fill
   if (!identical(names_sep, "_")) expr[["names_sep"]] <- names_sep
   if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
 

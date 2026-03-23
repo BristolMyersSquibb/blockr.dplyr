@@ -48,3 +48,17 @@
   min-width: 0;
   position: relative;
 }
+
+/* --- Group by section (matches summarize pattern) --- */
+.mb-by-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.mb-by-wrap {
+  flex: 1;
+  min-width: 0;
+}

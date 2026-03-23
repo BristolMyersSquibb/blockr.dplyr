@@ -4,11 +4,15 @@
 \alias{new_mutate_block}
 \title{Mutate block (JS-driven)}
 \usage{
-new_mutate_block(state = list(rows = list(list(name = "", expr = ""))), ...)
+new_mutate_block(
+  state = list(rows = list(list(name = "", expr = "")), by = list()),
+  ...
+)
 }
 \arguments{
 \item{state}{List with \code{rows} (array of objects with \code{name} and \code{expr}
-strings). Each row becomes a \code{dplyr::mutate()} argument.}
+strings) and optional \code{by} (array of grouping column names).
+Each row becomes a \code{dplyr::mutate()} argument.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }

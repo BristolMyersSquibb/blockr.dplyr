@@ -208,6 +208,17 @@ test_that("make_separate_expr works", {
 
 # --- Build column meta ---
 
+test_that("make_mutate_expr with grouping", {
+  rows <- list(list(name = "avg", expr = "mean(mpg)"))
+  expr <- make_mutate_expr(rows, by = "cyl")
+  result <- eval_bquoted(expr, mtcars)
+  # Grouped mutate: avg should differ by cyl group
+  expect_true("avg" %in% colnames(result))
+  expect_equal(nrow(result), nrow(mtcars))
+  # Values should be group-specific means, not the overall mean
+  expect_false(all(result$avg == mean(mtcars$mpg)))
+})
+
 test_that("build_column_meta returns correct structure", {
   meta <- build_column_meta(iris)
   expect_length(meta, ncol(iris))

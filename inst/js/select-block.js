@@ -1,8 +1,8 @@
 /**
  * SelectBlock — JS-driven column select block input binding.
  *
- * Multi-select column picker with reorderable tags, exclude toggle, and
- * distinct toggle pill. Auto-submits on any change (300ms debounce).
+ * Multi-select column picker with reorderable tags, exclude toggle,
+ * and distinct option in gear popover. Auto-submits on any change (300ms debounce).
  *
  * Depends on: blockr-core.js, blockr-select.js
  */
@@ -20,6 +20,7 @@
       this._submitted = false;
       this._debounceTimer = null;
       this._multiSelect = null;
+      this._popoverOpen = false;
 
       this._buildDOM();
     }
@@ -33,6 +34,21 @@
       this.card = document.createElement('div');
       this.card.className = 'sb-card';
       this.el.appendChild(this.card);
+
+      // Gear header (top-right)
+      const gearHeader = document.createElement('div');
+      gearHeader.className = 'blockr-gear-header';
+      this.gearBtn = document.createElement('button');
+      this.gearBtn.type = 'button';
+      this.gearBtn.className = 'blockr-gear-btn';
+      this.gearBtn.innerHTML = Blockr.icons.gear;
+      this.gearBtn.title = 'Options';
+      this.gearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._togglePopover();
+      });
+      gearHeader.appendChild(this.gearBtn);
+      this.card.appendChild(gearHeader);
 
       // Column picker
       const pickerWrap = document.createElement('div');
@@ -51,11 +67,10 @@
       });
       this._multiSelect.el.classList.add('blockr-select--bordered');
 
-      // Toggle bar: include/exclude pill + distinct pill
+      // Toggle bar: include/exclude pill
       const toggleBar = document.createElement('div');
       toggleBar.className = 'blockr-add-row';
 
-      // Exclude toggle
       this.excludeBtn = document.createElement('button');
       this.excludeBtn.type = 'button';
       this.excludeBtn.className = 'blockr-pill sb-toggle';
@@ -69,20 +84,64 @@
       });
       toggleBar.appendChild(this.excludeBtn);
 
-      // Distinct toggle
-      this.distinctBtn = document.createElement('button');
-      this.distinctBtn.type = 'button';
-      this.distinctBtn.className = 'blockr-pill sb-toggle';
-      this.distinctBtn.textContent = 'distinct';
-      this.distinctBtn.title = 'Toggle distinct rows';
-      this.distinctBtn.addEventListener('click', () => {
-        this.distinct = !this.distinct;
-        this.distinctBtn.classList.toggle('sb-toggle-active', this.distinct);
+      this.card.appendChild(toggleBar);
+
+      // Settings popover
+      this._buildPopover();
+
+      // Close popover on outside click
+      document.addEventListener('click', (e) => {
+        if (this._popoverOpen && this.popoverEl &&
+            !this.popoverEl.contains(e.target) &&
+            !this.gearBtn.contains(e.target)) {
+          this._closePopover();
+        }
+      });
+    }
+
+    _buildPopover() {
+      this.popoverEl = document.createElement('div');
+      this.popoverEl.className = 'blockr-popover';
+      this.popoverEl.style.display = 'none';
+
+      const row = document.createElement('div');
+      row.className = 'blockr-popover-row';
+
+      this._distinctCheckbox = document.createElement('input');
+      this._distinctCheckbox.type = 'checkbox';
+      this._distinctCheckbox.id = Blockr.uid('sb-distinct');
+      this._distinctCheckbox.checked = this.distinct;
+      this._distinctCheckbox.className = 'blockr-popover-checkbox';
+      this._distinctCheckbox.addEventListener('change', () => {
+        this.distinct = this._distinctCheckbox.checked;
         this._autoSubmit();
       });
-      toggleBar.appendChild(this.distinctBtn);
+      row.appendChild(this._distinctCheckbox);
 
-      this.card.appendChild(toggleBar);
+      const label = document.createElement('label');
+      label.htmlFor = this._distinctCheckbox.id;
+      label.className = 'blockr-popover-label';
+      label.textContent = 'Distinct rows';
+      row.appendChild(label);
+
+      this.popoverEl.appendChild(row);
+      this.card.appendChild(this.popoverEl);
+    }
+
+    _togglePopover() {
+      this._popoverOpen ? this._closePopover() : this._openPopover();
+    }
+
+    _openPopover() {
+      this.popoverEl.style.display = 'block';
+      this._popoverOpen = true;
+      this.gearBtn.classList.add('blockr-gear-active');
+    }
+
+    _closePopover() {
+      this.popoverEl.style.display = 'none';
+      this._popoverOpen = false;
+      this.gearBtn.classList.remove('blockr-gear-active');
     }
 
     _compose() {
@@ -108,12 +167,10 @@
       this.exclude = !!state?.exclude;
       this.distinct = !!state?.distinct;
 
-      // Update toggles
       this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
       this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
-      this.distinctBtn.classList.toggle('sb-toggle-active', this.distinct);
+      this._distinctCheckbox.checked = this.distinct;
 
-      // Update multi-select
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnNames, this.columns);
       }
@@ -161,7 +218,6 @@
 
   Shiny.inputBindings.register(binding, 'blockr.select');
 
-  // Column names handler (global — dispatches by msg.id)
   Shiny.addCustomMessageHandler('select-columns', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
@@ -180,7 +236,6 @@
     }
   });
 
-  // External control state update handler (global — dispatches by msg.id)
   Shiny.addCustomMessageHandler('select-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {

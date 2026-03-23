@@ -5,6 +5,7 @@
 
 .sb-card {
   overflow: visible;
+  position: relative;
 }
 
 /* Column picker wrapper */

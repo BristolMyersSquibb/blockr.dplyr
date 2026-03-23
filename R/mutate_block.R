@@ -4,7 +4,8 @@
 #' Each row defines a new or modified column using an R expression.
 #'
 #' @param state List with `rows` (array of objects with `name` and `expr`
-#'   strings). Each row becomes a `dplyr::mutate()` argument.
+#'   strings) and optional `by` (array of grouping column names).
+#'   Each row becomes a `dplyr::mutate()` argument.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -28,7 +29,7 @@
 #'
 #' @export
 new_mutate_block <- function(
-  state = list(rows = list(list(name = "", expr = ""))),
+  state = list(rows = list(list(name = "", expr = "")), by = list()),
   ...
 ) {
   new_transform_block(
@@ -80,7 +81,7 @@ new_mutate_block <- function(
         list(
           expr = reactive({
             s <- r_state()
-            make_mutate_expr(s$rows %||% s$columns %||% list())
+            make_mutate_expr(s$rows %||% s$columns %||% list(), s$by %||% character())
           }),
           state = list(state = r_state)
         )
@@ -91,6 +92,7 @@ new_mutate_block <- function(
       tagList(
         blockr_core_js_dep(),
         blockr_blocks_css_dep(),
+        blockr_select_dep(),
         blockr_input_dep(),
         mutate_block_dep(),
         div(

@@ -64,9 +64,9 @@
       this._gearHeader = gearHeader;
       this.card.appendChild(gearHeader);
 
-      // Top row: type + n
+      // Top row: type + n in a standard blockr-row
       const topRow = document.createElement('div');
-      topRow.className = 'slb-top-row';
+      topRow.className = 'blockr-row';
 
       // Type selector
       const typeWrap = document.createElement('div');
@@ -81,7 +81,7 @@
           this._autoSubmit();
         }
       });
-      this._typeSelect.el.classList.add('blockr-select--bordered');
+      // No --bordered class needed: the row provides the border
       topRow.appendChild(typeWrap);
 
       // n input
@@ -94,12 +94,40 @@
       this._nInput.min = '1';
       this._nInput.placeholder = 'n';
       this._nInput.addEventListener('input', () => {
-        const val = parseInt(this._nInput.value, 10);
-        this.n = isNaN(val) ? 5 : val;
+        this._updateNValue();
         this._autoSubmit();
       });
       nWrap.appendChild(this._nInput);
       topRow.appendChild(nWrap);
+
+      // n/% toggle pill
+      this._usesProp = false;
+      this._nModePill = document.createElement('button');
+      this._nModePill.type = 'button';
+      this._nModePill.className = 'blockr-pill slb-mode-pill';
+      this._nModePill.textContent = 'n';
+      this._nModePill.title = 'Toggle between count (n) and proportion (%)';
+      this._nModePill.addEventListener('click', () => {
+        this._usesProp = !this._usesProp;
+        this._nModePill.textContent = this._usesProp ? '%' : 'n';
+        this._nModePill.classList.toggle('slb-mode-active', this._usesProp);
+        if (this._usesProp) {
+          this._nInput.min = '0';
+          this._nInput.max = '100';
+          this._nInput.step = '1';
+          this._nInput.placeholder = '%';
+          this._nInput.value = '10';
+        } else {
+          this._nInput.min = '1';
+          this._nInput.removeAttribute('max');
+          this._nInput.step = '1';
+          this._nInput.placeholder = 'n';
+          this._nInput.value = '5';
+        }
+        this._updateNValue();
+        this._autoSubmit();
+      });
+      topRow.appendChild(this._nModePill);
 
       this.card.appendChild(topRow);
 
@@ -273,6 +301,17 @@
       this._popReplaceWrap.style.display = isSample ? '' : 'none';
     }
 
+    _updateNValue() {
+      const raw = parseFloat(this._nInput.value);
+      if (this._usesProp) {
+        this.prop = isNaN(raw) ? null : raw / 100;
+        this.n = null;
+      } else {
+        this.n = isNaN(raw) ? 5 : Math.round(raw);
+        this.prop = null;
+      }
+    }
+
     _compose() {
       return {
         type: this.type,
@@ -311,8 +350,17 @@
         this._typeSelect.setOptions(SLICE_TYPES, this.type);
       }
 
-      // Update n input
-      this._nInput.value = this.n;
+      // Update n/prop mode
+      this._usesProp = this.prop != null && this.prop > 0;
+      this._nModePill.textContent = this._usesProp ? '%' : 'n';
+      this._nModePill.classList.toggle('slb-mode-active', this._usesProp);
+      if (this._usesProp) {
+        this._nInput.value = Math.round(this.prop * 100);
+        this._nInput.placeholder = '%';
+      } else {
+        this._nInput.value = this.n ?? 5;
+        this._nInput.placeholder = 'n';
+      }
 
       // Update column selects
       if (this._orderBySelect) {

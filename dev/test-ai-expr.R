@@ -1,6 +1,6 @@
 # Test App 2: Expression & Aggregation (mtcars)
 #
-# Chain: dataset(mtcars) -> mutate_expr -> summarize -> rename
+# Chain: dataset(mtcars) -> mutate -> summarize -> rename
 # Each block supports AI-driven external control.
 #
 # Usage:
@@ -17,11 +17,9 @@ app <- serve(
   new_dock_board(
     blocks = c(
       data      = new_dataset_block("mtcars"),
-      mutate    = new_mutate_expr_block(exprs = list(new_col = "1")),
-      summarize = new_summarize_block(
-        summaries = list(count = list(func = "dplyr::n", col = ""))
-      ),
-      rename    = new_rename_block(renames = list(new_col = character()))
+      mutate    = new_mutate_block(),
+      summarize = new_summarize_block(),
+      rename    = new_rename_block()
     ),
     links = c(
       new_link("data",      "mutate",    "data"),

@@ -121,7 +121,7 @@ register_dplyr_blocks <- function() {
         c(
           state = paste0(
             "Object with: rows (array of objects, each with 'name' (new column name) ",
-            "and 'expr' (R expression string))"
+            "and 'expr' (R expression string)), and optional by (array of grouping column names)"
           )
         ),
         examples = list(

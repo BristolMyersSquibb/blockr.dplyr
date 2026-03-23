@@ -8,40 +8,31 @@
   position: relative;
 }
 
-/* Top row: type + n */
-.slb-top-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
+/* Type selector — first element in row, gets border-right separator */
 .slb-type-wrap {
   width: 140px;
   min-width: 100px;
   flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
 }
 
+/* n input — fills remaining space inside the row */
 .slb-n-wrap {
-  flex: 0 0 80px;
+  flex: 1;
   min-width: 60px;
-  min-height: 42px;
-  background: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
 }
 
-.slb-n-wrap .blockr-num-input {
-  height: auto;
-  padding: 8px 12px;
+/* n/% mode toggle pill */
+.slb-mode-pill {
+  flex-shrink: 0;
+  min-width: 28px;
 }
 
-.slb-n-wrap:focus-within {
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.slb-mode-active {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
 }
 
 /* Gear button and popover styles are in blockr-blocks.css (shared) */

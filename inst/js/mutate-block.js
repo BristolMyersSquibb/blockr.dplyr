@@ -25,11 +25,19 @@
       this.rows = [];
       this.nextId = 1;
       this.columnNames = [];
+      this.byValues = [];
       this._callback = null;
       this._submitted = false;
+      this._debounceTimer = null;
+      this._bySelect = null;
 
       this._buildDOM();
       this._addRow('', '');
+    }
+
+    _autoSubmit() {
+      clearTimeout(this._debounceTimer);
+      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -52,6 +60,33 @@
       addRow.appendChild(addLink);
 
       this.card.appendChild(addRow);
+
+      // Group by section (below the card, like summarize)
+      const bySection = document.createElement('div');
+      bySection.className = 'mb-by-section';
+
+      const byLabel = document.createElement('span');
+      byLabel.className = 'blockr-label';
+      byLabel.textContent = 'Group by:';
+      bySection.appendChild(byLabel);
+
+      const byWrap = document.createElement('div');
+      byWrap.className = 'mb-by-wrap';
+      bySection.appendChild(byWrap);
+
+      this._bySelect = Blockr.Select.multi(byWrap, {
+        options: this.columnNames,
+        selected: [],
+        placeholder: 'Select grouping columns\u2026',
+        reorderable: true,
+        onChange: (value) => {
+          this.byValues = value || [];
+          this._autoSubmit();
+        }
+      });
+      this._bySelect.el.classList.add('blockr-select--bordered');
+
+      this.el.appendChild(bySection);
     }
 
     _addRow(name, expr) {
@@ -171,7 +206,7 @@
         const expr = r.exprInput ? r.exprInput.getValue() : '';
         columns.push({ name, expr });
       }
-      return { columns };
+      return { columns, by: this.byValues || [] };
     }
 
     _submit() {
@@ -208,6 +243,12 @@
         }
         this._submit();
       }
+      // Update group by
+      this.byValues = (state?.by || []).slice();
+      if (this._bySelect) {
+        this._bySelect.setOptions(this.columnNames, this.byValues);
+      }
+
       this._updateUI();
     }
 
@@ -215,6 +256,9 @@
       this.columnNames = cols || [];
       for (const r of this.rows) {
         r.exprInput?.setColumns(this.columnNames);
+      }
+      if (this._bySelect) {
+        this._bySelect.setOptions(this.columnNames, this.byValues);
       }
     }
   }
