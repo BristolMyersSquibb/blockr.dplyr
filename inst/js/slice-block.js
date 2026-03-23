@@ -106,7 +106,7 @@
       this._nModePill.type = 'button';
       this._nModePill.className = 'blockr-pill slb-mode-pill';
       this._nModePill.textContent = 'n';
-      this._nModePill.title = 'Toggle between count (n) and proportion (%)';
+      this._nModePill.title = 'Toggle between selecting a fixed number of rows (n) or a percentage (%)';
       this._nModePill.addEventListener('click', () => {
         this._usesProp = !this._usesProp;
         this._nModePill.textContent = this._usesProp ? '%' : 'n';
@@ -225,9 +225,11 @@
       this._withTiesToggle = document.createElement('button');
       this._withTiesToggle.type = 'button';
       this._withTiesToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._withTiesToggle.textContent = 'With ties';
+      this._withTiesToggle.textContent = 'Keep ties';
+      this._withTiesToggle.title = 'Toggle whether rows with equal values are all included or cut off at n';
       this._withTiesToggle.addEventListener('click', () => {
         this.with_ties = !this.with_ties;
+        this._withTiesToggle.textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
         this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
         this._autoSubmit();
       });
@@ -239,9 +241,11 @@
       this._replaceToggle = document.createElement('button');
       this._replaceToggle.type = 'button';
       this._replaceToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._replaceToggle.textContent = 'Replace';
+      this._replaceToggle.textContent = 'No replacement';
+      this._replaceToggle.title = 'Toggle whether sampled rows can be picked more than once';
       this._replaceToggle.addEventListener('click', () => {
         this.replace = !this.replace;
+        this._replaceToggle.textContent = this.replace ? 'With replacement' : 'No replacement';
         this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
         this._autoSubmit();
       });
@@ -362,7 +366,9 @@
       }
 
       // Update toggles
+      this._withTiesToggle.textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
       this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
+      this._replaceToggle.textContent = this.replace ? 'With replacement' : 'No replacement';
       this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
 
       this._updatePopoverVisibility();

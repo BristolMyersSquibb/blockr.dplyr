@@ -141,9 +141,11 @@
       this._dropNaToggle = document.createElement('button');
       this._dropNaToggle.type = 'button';
       this._dropNaToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._dropNaToggle.textContent = 'Drop NA';
+      this._dropNaToggle.textContent = 'Keep NA';
+      this._dropNaToggle.title = 'Toggle whether rows with NA values are dropped from the result';
       this._dropNaToggle.addEventListener('click', () => {
         this.values_drop_na = !this.values_drop_na;
+        this._dropNaToggle.textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
         this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
         this._autoSubmit();
       });
@@ -224,6 +226,7 @@
 
       // Update popover controls
       this._prefixInput.value = this.names_prefix;
+      this._dropNaToggle.textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
       this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
 
       // Update multi-select

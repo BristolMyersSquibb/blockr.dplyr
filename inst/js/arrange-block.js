@@ -86,7 +86,7 @@
       dirBtn.className = 'blockr-pill ab-dir-btn';
       dirBtn.textContent = direction === 'desc' ? 'desc' : 'asc';
       if (direction === 'desc') dirBtn.classList.add('ab-dir-desc');
-      dirBtn.title = 'Toggle ascending / descending';
+      dirBtn.title = 'Toggle between ascending (A\u2192Z, 1\u21929) and descending (Z\u2192A, 9\u21921) sort order';
       dirBtn.addEventListener('click', () => {
         row.direction = row.direction === 'asc' ? 'desc' : 'asc';
         dirBtn.textContent = row.direction;

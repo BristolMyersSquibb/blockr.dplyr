@@ -14,7 +14,9 @@ NULL
 #' @param operator Global operator: "&" or "|"
 #' @return A language object like `dplyr::filter(.(data), ...)`
 #' @noRd
-make_filter_expr <- function(conditions, operator = "&") {
+make_filter_expr <- function(conditions,
+                             operator = "&",
+                             preserveOrder = FALSE) {
   if (length(conditions) == 0) {
     return(bbquote(dplyr::filter(.(data), TRUE)))
   }
@@ -31,9 +33,37 @@ make_filter_expr <- function(conditions, operator = "&") {
     parts
   )
 
-  bbquote(
+  filter_expr <- bbquote(
     dplyr::filter(.(data), .(combined)),
     list(combined = combined)
+  )
+
+  if (!isTRUE(preserveOrder)) return(filter_expr)
+
+  # Build arrange(match(col, c(v1, v2, ...))) for pick order
+  # Use the first values-type condition with values
+  val_cond <- Filter(
+    function(c) identical(c$type, "values") && length(c$values) > 0,
+    conditions
+  )
+  if (length(val_cond) == 0) return(filter_expr)
+
+  vc <- val_cond[[1]]
+  col_sym <- as.name(vc$column)
+  vals <- unlist(vc$values)
+  vals <- vals[!vals %in% c("<NA>", "<empty>")]
+  if (length(vals) == 0) return(filter_expr)
+
+  nums <- suppressWarnings(as.numeric(vals))
+  val_vec <- if (all(!is.na(nums))) nums else vals
+
+  match_call <- call("match", col_sym, val_vec)
+  bbquote(
+    dplyr::arrange(
+      dplyr::filter(.(data), .(combined)),
+      .(match_expr)
+    ),
+    list(combined = combined, match_expr = match_call)
   )
 }
 
@@ -519,7 +549,13 @@ make_pivot_wider_expr <- function(
   }
 
   if (length(id_cols) > 0) {
-    expr[["id_cols"]] <- as.call(c(quote(c), lapply(id_cols, as.name)))
+    # Exclude columns already used by names_from / values_from
+    id_cols <- setdiff(id_cols, c(names_from, values_from))
+    if (length(id_cols) > 0) {
+      expr[["id_cols"]] <- as.call(
+        c(quote(c), lapply(id_cols, as.name))
+      )
+    }
   }
 
   if (!is.null(values_fill) && length(values_fill) > 0) {

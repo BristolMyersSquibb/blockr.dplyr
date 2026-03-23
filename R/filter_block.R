@@ -77,7 +77,11 @@ new_filter_block <- function(
         list(
           expr = reactive({
             s <- r_state()
-            make_filter_expr(s$conditions %||% list(), s$operator %||% "&")
+            make_filter_expr(
+              s$conditions %||% list(),
+              s$operator %||% "&",
+              s$preserveOrder %||% FALSE
+            )
           }),
           state = list(state = r_state)
         )

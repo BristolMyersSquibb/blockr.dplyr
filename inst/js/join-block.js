@@ -102,7 +102,7 @@
       this.joinTypePill.type = 'button';
       this.joinTypePill.className = 'blockr-pill jb-join-type-pill';
       this.joinTypePill.textContent = JOIN_TYPES[0].label;
-      this.joinTypePill.title = 'Click to cycle join type';
+      this.joinTypePill.title = 'Cycle through join types: left (keep all x rows), inner (only matching), right (keep all y rows), full (keep everything), semi (x rows with a match), anti (x rows without a match)';
       this.joinTypePill.addEventListener('click', () => {
         this.joinTypeIdx = (this.joinTypeIdx + 1) % JOIN_TYPES.length;
         this.joinType = JOIN_TYPES[this.joinTypeIdx].value;
@@ -256,7 +256,7 @@
       opBtn.type = 'button';
       opBtn.className = 'blockr-pill jb-op-btn';
       opBtn.textContent = KEY_OPS[opIdx].label;
-      opBtn.title = 'Click to cycle operator';
+      opBtn.title = 'Cycle through join operators (==, \u2265, >, \u2264, <) for non-equi joins';
       opBtn.addEventListener('click', () => {
         opIdx = (opIdx + 1) % KEY_OPS.length;
         key.op = KEY_OPS[opIdx].value;

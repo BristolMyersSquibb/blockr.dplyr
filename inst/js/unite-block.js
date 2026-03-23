@@ -142,9 +142,11 @@
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
       this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'Remove';
+      this._removeToggle.textContent = 'Remove original';
+      this._removeToggle.title = 'Toggle whether the source columns are removed after uniting';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
+        this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
         this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
@@ -154,9 +156,11 @@
       this._naRmToggle = document.createElement('button');
       this._naRmToggle.type = 'button';
       this._naRmToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._naRmToggle.textContent = 'Drop NA';
+      this._naRmToggle.textContent = 'Keep NA';
+      this._naRmToggle.title = 'Toggle whether NA values are removed before pasting columns together';
       this._naRmToggle.addEventListener('click', () => {
         this.na_rm = !this.na_rm;
+        this._naRmToggle.textContent = this.na_rm ? 'Drop NA' : 'Keep NA';
         this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
         this._autoSubmit();
       });
@@ -217,7 +221,9 @@
       this._sepInput.value = this.sep;
 
       // Update popover toggles
+      this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
       this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
+      this._naRmToggle.textContent = this.na_rm ? 'Drop NA' : 'Keep NA';
       this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
 
       // Update multi-select

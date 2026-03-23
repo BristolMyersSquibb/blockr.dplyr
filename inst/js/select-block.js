@@ -75,7 +75,7 @@
       this.excludeBtn.type = 'button';
       this.excludeBtn.className = 'blockr-pill sb-toggle';
       this.excludeBtn.textContent = 'include';
-      this.excludeBtn.title = 'Toggle include / exclude';
+      this.excludeBtn.title = 'Toggle between keeping or removing the selected columns';
       this.excludeBtn.addEventListener('click', () => {
         this.exclude = !this.exclude;
         this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
@@ -107,9 +107,11 @@
       this._distinctToggle = document.createElement('button');
       this._distinctToggle.type = 'button';
       this._distinctToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._distinctToggle.textContent = 'Distinct';
+      this._distinctToggle.textContent = 'Keep all rows';
+      this._distinctToggle.title = 'Toggle deduplication of rows based on selected columns';
       this._distinctToggle.addEventListener('click', () => {
         this.distinct = !this.distinct;
+        this._distinctToggle.textContent = this.distinct ? 'Keep distinct rows only' : 'Keep all rows';
         this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
         this._autoSubmit();
       });
@@ -158,6 +160,7 @@
 
       this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
       this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
+      this._distinctToggle.textContent = this.distinct ? 'Keep distinct rows only' : 'Keep all rows';
       this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
 
       if (this._multiSelect) {

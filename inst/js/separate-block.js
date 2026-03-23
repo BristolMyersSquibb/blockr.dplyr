@@ -142,9 +142,11 @@
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
       this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'Remove';
+      this._removeToggle.textContent = 'Remove original';
+      this._removeToggle.title = 'Toggle whether the source column is removed after splitting';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
+        this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
         this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
         this._autoSubmit();
       });
@@ -154,9 +156,11 @@
       this._convertToggle = document.createElement('button');
       this._convertToggle.type = 'button';
       this._convertToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._convertToggle.textContent = 'Convert';
+      this._convertToggle.textContent = 'Keep types';
+      this._convertToggle.title = 'Toggle whether split values are auto-converted to numbers or logicals';
       this._convertToggle.addEventListener('click', () => {
         this.convert = !this.convert;
+        this._convertToggle.textContent = this.convert ? 'Auto-convert' : 'Keep types';
         this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
         this._autoSubmit();
       });
@@ -270,7 +274,9 @@
       this._sepInput.value = this.sep;
 
       // Update popover controls
+      this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
       this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
+      this._convertToggle.textContent = this.convert ? 'Auto-convert' : 'Keep types';
       this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
       this._extraInput.value = this.extra;
       this._fillInput.value = this.fill;

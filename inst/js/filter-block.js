@@ -85,7 +85,7 @@
       this.opToggle.type = 'button';
       this.opToggle.className = 'blockr-pill fb-op-toggle';
       this.opToggle.textContent = 'AND';
-      this.opToggle.title = 'Toggle AND / OR';
+      this.opToggle.title = 'Toggle between AND (all conditions must match) and OR (any condition can match)';
       this.opToggle.style.visibility = 'hidden';
       this.opToggle.addEventListener('click', () => {
         this.operator = this.operator === '&' ? '|' : '&';
@@ -102,11 +102,17 @@
       this.preserveBtn.type = 'button';
       this.preserveBtn.className = 'blockr-pill fb-preserve-btn';
       this.preserveBtn.textContent = 'data order';
-      this.preserveBtn.title = 'Click to preserve selection order';
+      this.preserveBtn.title = 'Toggle between original data order and the order you picked values';
       this.preserveBtn.addEventListener('click', () => {
         this.preserveOrder = !this.preserveOrder;
         this.preserveBtn.textContent = this.preserveOrder ? 'pick order' : 'data order';
         this.preserveBtn.classList.toggle('fb-preserve-active', this.preserveOrder);
+        // Re-render value selects so reorderable state updates
+        for (const c of this.conditions) {
+          if (c.filterType === 'values' || c.filterType === 'numeric') {
+            this._renderDynamicContent(c);
+          }
+        }
         this._autoSubmit();
       });
       addRow.appendChild(this.preserveBtn);
@@ -124,7 +130,7 @@
       btn.type = 'button';
       btn.className = 'blockr-pill fb-op-btn';
       btn.textContent = ops[idx].label;
-      btn.title = 'Click to cycle operator';
+      btn.title = 'Cycle through comparison operators (is, is not, >, \u2265, <, \u2264)';
       btn.addEventListener('click', () => {
         idx = (idx + 1) % ops.length;
         cond.op = ops[idx].value;
@@ -252,7 +258,7 @@
           options: allValues,
           selected: cond.values || [],
           placeholder: 'Select values\u2026',
-          reorderable: false,
+          reorderable: this.preserveOrder,
           onChange: (selected) => {
             cond.values = selected;
             this._autoSubmit();
