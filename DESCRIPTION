@@ -39,15 +39,10 @@ RoxygenNote: 7.3.3
 Imports:
     shiny,
     blockr.core (>= 0.1.2),
-    bsicons,
     dplyr,
     tidyr,
-    shinyAce,
-    glue,
     htmltools,
-    bslib,
     jsonlite,
-    shinyjs,
     rlang,
     utils,
     datasets
