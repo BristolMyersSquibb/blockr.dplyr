@@ -1,0 +1,53 @@
+/* JoinBlock — join block specific styles */
+/* Shared row/pill/confirm/add-row styles come from blockr-blocks.css */
+
+.join-block-container { width: 100%; }
+
+/* --- Card (no border, transparent) --- */
+.jb-card {
+  overflow: visible;
+  position: relative;
+}
+
+/* --- Header row: join type pill --- */
+.jb-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  margin-bottom: 6px;
+}
+
+/* Join type pill */
+.jb-join-type-pill {
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+/* Operator cycle button */
+.jb-op-btn { flex-shrink: 0; }
+
+/* Gear button and popover styles are in blockr-blocks.css (shared) */
+
+/* --- Column selectize wrappers --- */
+.jb-col-wrap {
+  width: 140px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.jb-col-x {
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+.jb-col-y {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* --- Expression rows --- */
+.jb-row-expr .jb-expr-code {
+  flex: 1;
+  min-width: 0;
+}

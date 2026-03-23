@@ -1,0 +1,68 @@
+/* UniteBlock — unite block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.unite-block-container { width: 100%; }
+
+.ub-card {
+  overflow: visible;
+  position: relative;
+}
+
+/* Input row */
+.ub-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ub-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.ub-field-narrow {
+  flex: 0 0 80px;
+  min-width: 60px;
+}
+
+.ub-text-input {
+  width: 100%;
+  height: 30px;
+  padding: 4px 10px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  background: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 6px;
+  color: var(--blockr-color-text-primary, #111827);
+  box-sizing: border-box;
+}
+
+.ub-text-input:focus {
+  outline: none;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ub-text-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+/* Column picker wrapper */
+.ub-picker-wrap {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+/* Gear button and popover styles are in blockr-blocks.css (shared) */
+
+/* Popover toggle pill */
+.ub-popover-toggle {
+  font-size: 10px !important;
+}
+
+.ub-popover-toggle-active {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
+}

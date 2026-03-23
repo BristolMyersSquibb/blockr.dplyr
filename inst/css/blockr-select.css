@@ -35,13 +35,14 @@
   border-radius: 0;
 }
 
-/* Bordered modifier — for standalone use outside row containers */
+/* Bordered modifier — for standalone use outside row containers.
+   Matches blockr.dock's .selectize-input / .form-control sizing. */
 .blockr-select--bordered .blockr-select__control {
   background-color: var(--blockr-color-bg-input, #f9fafb);
   border: 1px solid var(--blockr-color-border, #e5e7eb);
   border-radius: 8px;
-  padding: 4px 8px;
-  min-height: 36px;
+  padding: 6px 12px;
+  min-height: 42px;
 }
 
 .blockr-select--bordered.blockr-select--open .blockr-select__control,
@@ -249,7 +250,6 @@
 
 .blockr-select__option--selected {
   font-weight: 600;
-  color: var(--blockr-color-primary, #2563eb);
 }
 
 .blockr-select__option:hover {

@@ -132,6 +132,436 @@ make_expr_part <- function(cond) {
   tryCatch(str2lang(expr_str), error = function(e) NULL)
 }
 
+# =========================================================================
+# Mutate
+# =========================================================================
+
+#' Build a dplyr::mutate expression from JS rows
+#' @param rows List of row objects, each with `name` and `expr` strings
+#' @return A language object
+#' @noRd
+make_mutate_expr <- function(rows) {
+  rows <- Filter(function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""), rows)
+
+  if (length(rows) == 0) {
+    return(bbquote(.(data)))
+  }
+
+  args <- lapply(rows, function(r) {
+    tryCatch(str2lang(r$expr), error = function(e) NULL)
+  })
+  names(args) <- vapply(rows, function(r) r$name, character(1))
+  args <- Filter(Negate(is.null), args)
+
+  if (length(args) == 0) return(bbquote(.(data)))
+
+  expr <- quote(dplyr::mutate(.(data)))
+  for (nm in names(args)) {
+    expr[[backtick_if_needed(nm)]] <- args[[nm]]
+  }
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Summarize
+# =========================================================================
+
+#' Map short function names to R calls for summarize
+#' @noRd
+summarize_func_map <- function(func) {
+  switch(func,
+    "mean" = "mean",
+    "median" = "stats::median",
+    "sd" = "stats::sd",
+    "min" = "min",
+    "max" = "max",
+    "sum" = "sum",
+    "n" = "dplyr::n",
+    "n_distinct" = "dplyr::n_distinct",
+    "first" = "dplyr::first",
+    "last" = "dplyr::last",
+    func
+  )
+}
+
+#' Build a dplyr::summarize expression from JS summaries
+#' @param summaries List of summary objects with type, name, func/expr, col
+#' @param by Character vector of grouping column names
+#' @return A language object
+#' @noRd
+make_summarize_expr <- function(summaries, by = character()) {
+  if (length(summaries) == 0) {
+    return(bbquote(dplyr::summarize(.(data))))
+  }
+
+  expr <- quote(dplyr::summarize(.(data)))
+
+  for (s in summaries) {
+    nm <- backtick_if_needed(s$name %||% "")
+    if (!nzchar(nm)) next
+
+    if (identical(s$type, "simple")) {
+      func_full <- summarize_func_map(s$func %||% "")
+      col <- s$col %||% ""
+      if (func_full == "dplyr::n") {
+        call_expr <- str2lang(paste0(func_full, "()"))
+      } else if (nzchar(col)) {
+        call_expr <- str2lang(paste0(func_full, "(", backtick_if_needed(col), ")"))
+      } else {
+        next
+      }
+    } else if (identical(s$type, "expr")) {
+      expr_str <- trimws(s$expr %||% "")
+      if (!nzchar(expr_str)) next
+      call_expr <- tryCatch(str2lang(expr_str), error = function(e) NULL)
+      if (is.null(call_expr)) next
+    } else {
+      next
+    }
+
+    expr[[nm]] <- call_expr
+  }
+
+  # Add .by if grouping columns
+  if (length(by) > 0) {
+    by_syms <- lapply(by, as.name)
+    expr[[".by"]] <- as.call(c(quote(c), by_syms))
+  }
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Join
+# =========================================================================
+
+#' Build a dplyr join expression from JS payload
+#' @param type Join type (e.g., "left_join")
+#' @param keys List of key objects with xCol, op, yCol
+#' @param exprs Character vector of R expression strings
+#' @param suffix_x Suffix for x columns
+#' @param suffix_y Suffix for y columns
+#' @return A language object
+#' @noRd
+make_join_expr <- function(type = "left_join", keys = list(), exprs = character(),
+                           suffix_x = ".x", suffix_y = ".y") {
+  join_fn <- paste0("dplyr::", type)
+
+  has_non_equi <- any(vapply(keys, function(k) k$op != "==", logical(1)))
+  has_exprs <- length(exprs) > 0
+
+  if (has_non_equi || has_exprs) {
+    # Use dplyr::join_by()
+    jb_parts <- character()
+    for (k in keys) {
+      x <- backtick_if_needed(k$xCol)
+      y <- backtick_if_needed(k$yCol)
+      jb_parts <- c(jb_parts, paste0(x, " ", k$op, " ", y))
+    }
+    for (e in exprs) {
+      if (nzchar(trimws(e))) jb_parts <- c(jb_parts, trimws(e))
+    }
+
+    if (length(jb_parts) == 0) {
+      # Natural join (no by argument)
+      text <- paste0(join_fn, "(.(x), .(y))")
+    } else {
+      jb_text <- paste(jb_parts, collapse = ", ")
+      text <- paste0(join_fn, "(.(x), .(y), by = dplyr::join_by(", jb_text, "))")
+    }
+  } else if (length(keys) > 0) {
+    # Equi-join: by = c(x_col = "y_col")
+    by_parts <- vapply(keys, function(k) {
+      paste0(backtick_if_needed(k$xCol), ' = "', k$yCol, '"')
+    }, character(1))
+    by_text <- paste(by_parts, collapse = ", ")
+    text <- paste0(join_fn, "(.(x), .(y), by = c(", by_text, "))")
+  } else {
+    # Natural join
+    text <- paste0(join_fn, "(.(x), .(y))")
+  }
+
+  # Add suffix for non-semi/anti joins
+  if (!type %in% c("semi_join", "anti_join") &&
+      (suffix_x != ".x" || suffix_y != ".y")) {
+    text <- sub(
+      "\\)$",
+      paste0(', suffix = c("', suffix_x, '", "', suffix_y, '"))'),
+      text
+    )
+  }
+
+  parsed <- tryCatch(str2lang(text), error = function(e) NULL)
+  if (is.null(parsed)) return(bbquote(dplyr::left_join(.(x), .(y))))
+  parsed
+}
+
+# =========================================================================
+# Select
+# =========================================================================
+
+#' Build a dplyr::select expression
+#' @param columns Character vector of column names
+#' @param exclude Logical, if TRUE use negative selection
+#' @param distinct Logical, if TRUE chain distinct()
+#' @return A language object
+#' @noRd
+make_select_expr <- function(columns, exclude = FALSE, distinct = FALSE) {
+  if (length(columns) == 0) {
+    base <- bbquote(dplyr::select(.(data), dplyr::everything()))
+  } else {
+    col_syms <- lapply(columns, as.name)
+    cols_call <- as.call(c(quote(c), col_syms))
+
+    if (exclude) {
+      base <- bbquote(
+        dplyr::select(.(data), -.(cols)),
+        list(cols = cols_call)
+      )
+    } else {
+      base <- bbquote(
+        dplyr::select(.(data), ..(cols)),
+        list(cols = col_syms),
+        splice = TRUE
+      )
+    }
+  }
+
+  if (distinct) {
+    bbquote(dplyr::distinct(.(base)), list(base = base))
+  } else {
+    base
+  }
+}
+
+# =========================================================================
+# Arrange
+# =========================================================================
+
+#' Build a dplyr::arrange expression
+#' @param columns List of objects with `column` and `direction` ("asc"/"desc")
+#' @return A language object
+#' @noRd
+make_arrange_expr <- function(columns) {
+  if (length(columns) == 0) return(bbquote(.(data)))
+
+  args <- lapply(columns, function(c) {
+    col <- as.name(c$column)
+    if (identical(c$direction, "desc")) {
+      as.call(list(str2lang("dplyr::desc"), col))
+    } else {
+      col
+    }
+  })
+
+  expr <- as.call(c(quote(dplyr::arrange), quote(.(data)), args))
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Rename
+# =========================================================================
+
+#' Build a dplyr::rename expression
+#' @param renames Named list where names = new names, values = old names
+#' @return A language object
+#' @noRd
+make_rename_expr <- function(renames) {
+  if (length(renames) == 0) return(bbquote(.(data)))
+
+  expr <- quote(dplyr::rename(.(data)))
+  for (new_nm in names(renames)) {
+    old_nm <- renames[[new_nm]]
+    if (nzchar(new_nm) && nzchar(old_nm)) {
+      expr[[backtick_if_needed(new_nm)]] <- as.name(old_nm)
+    }
+  }
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Slice
+# =========================================================================
+
+#' Build a dplyr::slice_* expression
+#' @param type Slice type: "head", "tail", "min", "max", "sample"
+#' @param n Number of rows
+#' @param prop Proportion (alternative to n)
+#' @param order_by Column for min/max
+#' @param with_ties Keep tied values (min/max)
+#' @param weight_by Column for weighted sampling
+#' @param replace Sample with replacement
+#' @param by Grouping columns
+#' @return A language object
+#' @noRd
+make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
+                            order_by = "", with_ties = TRUE,
+                            weight_by = "", replace = FALSE,
+                            by = character()) {
+  fn_str <- switch(type,
+    "head" = "dplyr::slice_head",
+    "tail" = "dplyr::slice_tail",
+    "min" = "dplyr::slice_min",
+    "max" = "dplyr::slice_max",
+    "sample" = "dplyr::slice_sample",
+    "dplyr::slice_head"
+  )
+
+  expr <- as.call(list(str2lang(fn_str), quote(.(data))))
+
+  if (!is.null(prop) && prop > 0 && prop <= 1) {
+    expr[["prop"]] <- prop
+  } else {
+    expr[["n"]] <- as.integer(n %||% 5L)
+  }
+
+  if (type %in% c("min", "max") && nzchar(order_by %||% "")) {
+    expr[["order_by"]] <- as.name(order_by)
+    if (!isTRUE(with_ties)) expr[["with_ties"]] <- FALSE
+  }
+
+  if (type == "sample") {
+    if (nzchar(weight_by %||% "")) expr[["weight_by"]] <- as.name(weight_by)
+    if (isTRUE(replace)) expr[["replace"]] <- TRUE
+  }
+
+  if (length(by) > 0) {
+    by_syms <- lapply(by, as.name)
+    expr[[".by"]] <- as.call(c(quote(c), by_syms))
+  }
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Pivot longer
+# =========================================================================
+
+#' Build a tidyr::pivot_longer expression
+#' @noRd
+make_pivot_longer_expr <- function(cols, names_to = "name", values_to = "value",
+                                   values_drop_na = FALSE, names_prefix = "") {
+  if (length(cols) == 0) return(bbquote(.(data)))
+
+  col_syms <- lapply(cols, as.name)
+  cols_call <- as.call(c(quote(c), col_syms))
+
+  expr <- as.call(list(str2lang("tidyr::pivot_longer"), quote(.(data)), cols_call))
+  expr[["names_to"]] <- names_to %||% "name"
+  expr[["values_to"]] <- values_to %||% "value"
+  if (isTRUE(values_drop_na)) expr[["values_drop_na"]] <- TRUE
+  if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Pivot wider
+# =========================================================================
+
+#' Build a tidyr::pivot_wider expression
+#' @noRd
+make_pivot_wider_expr <- function(names_from, values_from, id_cols = character(),
+                                  values_fill = NULL, names_sep = "_",
+                                  names_prefix = "") {
+  if (length(names_from) == 0 || length(values_from) == 0) {
+    return(bbquote(.(data)))
+  }
+
+  expr <- as.call(list(str2lang("tidyr::pivot_wider"), quote(.(data))))
+
+  if (length(names_from) == 1) {
+    expr[["names_from"]] <- as.name(names_from)
+  } else {
+    expr[["names_from"]] <- as.call(c(quote(c), lapply(names_from, as.name)))
+  }
+
+  if (length(values_from) == 1) {
+    expr[["values_from"]] <- as.name(values_from)
+  } else {
+    expr[["values_from"]] <- as.call(c(quote(c), lapply(values_from, as.name)))
+  }
+
+  if (length(id_cols) > 0) {
+    expr[["id_cols"]] <- as.call(c(quote(c), lapply(id_cols, as.name)))
+  }
+
+  if (!is.null(values_fill)) expr[["values_fill"]] <- values_fill
+  if (!identical(names_sep, "_")) expr[["names_sep"]] <- names_sep
+  if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Unite
+# =========================================================================
+
+#' Build a tidyr::unite expression
+#' @noRd
+make_unite_expr <- function(col, cols, sep = "_", remove = TRUE, na.rm = FALSE) {
+  if (length(cols) == 0 || !nzchar(col %||% "")) return(bbquote(.(data)))
+
+  col_syms <- lapply(cols, as.name)
+  expr <- as.call(c(quote(tidyr::unite), quote(.(data)), col, col_syms))
+  if (!identical(sep, "_")) expr[["sep"]] <- sep
+  if (!isTRUE(remove)) expr[["remove"]] <- FALSE
+  if (isTRUE(na.rm)) expr[["na.rm"]] <- TRUE
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Separate
+# =========================================================================
+
+#' Build a tidyr::separate expression
+#' @noRd
+make_separate_expr <- function(col, into, sep = "[^[:alnum:]]+",
+                               remove = TRUE, convert = FALSE,
+                               extra = "warn", fill = "warn") {
+  if (!nzchar(col %||% "") || length(into) == 0) return(bbquote(.(data)))
+
+  expr <- as.call(list(str2lang("tidyr::separate"), quote(.(data)), as.name(col), into))
+  if (!identical(sep, "[^[:alnum:]]+")) expr[["sep"]] <- sep
+  if (!isTRUE(remove)) expr[["remove"]] <- FALSE
+  if (isTRUE(convert)) expr[["convert"]] <- TRUE
+  if (!identical(extra, "warn")) expr[["extra"]] <- extra
+  if (!identical(fill, "warn")) expr[["fill"]] <- fill
+
+  bbquote(.(expr), list(expr = expr))
+}
+
+# =========================================================================
+# Bind rows / cols
+# =========================================================================
+
+#' Build a dplyr::bind_rows expression (variadic)
+#' @param id_name Optional id column name
+#' @param arg_names Named character vector of input names
+#' @return A language object
+#' @noRd
+make_bind_rows_expr <- function(id_name = "", arg_names = character()) {
+  data_args <- lapply(arg_names, as.name)
+  expr <- as.call(c(quote(dplyr::bind_rows), data_args))
+  if (nzchar(id_name %||% "")) expr[[".id"]] <- id_name
+  expr
+}
+
+#' Build a dplyr::bind_cols expression (variadic)
+#' @param arg_names Named character vector of input names
+#' @return A language object
+#' @noRd
+make_bind_cols_expr <- function(arg_names = character()) {
+  as.call(c(quote(dplyr::bind_cols), lapply(arg_names, as.name)))
+}
+
+# =========================================================================
+# Shared utilities
+# =========================================================================
+
 #' Build column metadata for JS
 #'
 #' Computes type, range (numeric), unique values, and NA/empty presence

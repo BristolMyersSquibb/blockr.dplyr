@@ -1,0 +1,50 @@
+/* MutateBlock — mutate block specific styles */
+/* Shared row/pill/confirm styles come from blockr-blocks.css */
+
+.mutate-block-container { width: 100%; }
+
+.mb-card { overflow: visible; }
+
+/* --- Name input area: ~150px, transparent bg, border-right separator --- */
+.mb-name-wrap {
+  width: 150px;
+  min-width: 100px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+.mb-name-input {
+  width: 100%;
+  height: 30px;
+  padding: 4px 6px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: var(--blockr-color-text-primary, #111827);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.mb-name-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+  opacity: 1;
+}
+
+/* --- Equals separator --- */
+.mb-eq-sep {
+  flex-shrink: 0;
+  color: var(--blockr-grey-400, #9ca3af);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 2px;
+  user-select: none;
+}
+
+/* --- Expression code area --- */
+.mb-expr-code {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
