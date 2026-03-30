@@ -624,6 +624,10 @@ new_summarize_block <- function(
                 r_by_selection(),
                 session
               )
+              # Sync state so expr reactive recomputes
+              if (!identical(r_summaries_rv(), r_summaries_validated())) {
+                r_summaries_rv(r_summaries_validated())
+              }
             },
             ignoreNULL = FALSE,
             ignoreInit = TRUE
