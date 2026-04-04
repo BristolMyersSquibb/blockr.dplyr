@@ -82,7 +82,7 @@ new_join_block <- function(
               list(id = ns("join_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

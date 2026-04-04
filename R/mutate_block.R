@@ -77,7 +77,7 @@ new_mutate_block <- function(
               list(id = ns("mutate_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

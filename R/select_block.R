@@ -68,7 +68,7 @@ new_select_block <- function(
               list(id = ns("select_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

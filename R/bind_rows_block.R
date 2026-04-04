@@ -56,7 +56,7 @@ new_bind_rows_block <- function(
               list(id = ns("bind_rows_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         arg_names <- reactive(
           setNames(names(...args), dot_args_names(...args))

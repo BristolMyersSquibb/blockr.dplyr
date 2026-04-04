@@ -10,28 +10,40 @@
 #' @keywords internal
 NULL
 
-# Helper: convert old payload to new state-based args and call constructor
+# Helper: convert old payload to new state-based args and call constructor.
+# Preserves original class from JSON so blockr.core's class check passes.
 legacy_deser_block <- function(data, ctor_name, state_builder) {
-  ctor <- blockr_deser(data[["constructor"]])
+  # Old constructor may no longer exist (e.g., new_filter_expr_block -> new_filter_block)
+  ctor <- tryCatch(
+    blockr_deser(data[["constructor"]]),
+    error = function(e) NULL
+  )
   payload <- data[["payload"]]
+  orig_class <- data[["object"]]
 
   # If payload already has "state", it's the new format — pass through
   if ("state" %in% names(payload)) {
     args <- c(payload, list(
-      ctor = coal(ctor_name(ctor), ctor_name),
-      ctor_pkg = ctor_pkg(ctor)
+      ctor = if (!is.null(ctor)) coal(ctor_name(ctor), ctor_name) else ctor_name,
+      ctor_pkg = if (!is.null(ctor)) ctor_pkg(ctor) else utils::packageName()
     ))
-    return(do.call(ctor_name, args))
+    res <- do.call(ctor_name, args)
+  } else {
+    # Old format: convert individual params to state
+    state <- state_builder(payload)
+    args <- list(
+      state = state,
+      ctor = if (!is.null(ctor)) coal(ctor_name(ctor), ctor_name) else ctor_name,
+      ctor_pkg = if (!is.null(ctor)) ctor_pkg(ctor) else utils::packageName()
+    )
+    res <- do.call(ctor_name, args)
   }
 
-  # Old format: convert individual params to state
-  state <- state_builder(payload)
-  args <- list(
-    state = state,
-    ctor = coal(ctor_name(ctor), ctor_name),
-    ctor_pkg = ctor_pkg(ctor)
-  )
-  do.call(ctor_name, args)
+  # Restore original class so blockr.core's class check passes
+  if (!is.null(orig_class) && !identical(class(res), orig_class)) {
+    class(res) <- orig_class
+  }
+  res
 }
 
 # --- Filter (old: conditions + preserve_order) ---

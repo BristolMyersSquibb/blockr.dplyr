@@ -66,7 +66,7 @@ new_rename_block <- function(
               list(id = ns("rename_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

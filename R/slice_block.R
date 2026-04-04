@@ -87,7 +87,7 @@ new_slice_block <- function(
               list(id = ns("slice_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

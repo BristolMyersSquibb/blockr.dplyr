@@ -84,7 +84,7 @@ new_separate_block <- function(
               list(id = ns("separate_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

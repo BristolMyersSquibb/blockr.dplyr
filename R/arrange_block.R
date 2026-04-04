@@ -68,7 +68,7 @@ new_arrange_block <- function(
               list(id = ns("arrange_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

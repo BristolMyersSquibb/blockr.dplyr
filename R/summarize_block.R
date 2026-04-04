@@ -72,7 +72,7 @@ new_summarize_block <- function(
               list(id = ns("summarize_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

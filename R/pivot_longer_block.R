@@ -78,7 +78,7 @@ new_pivot_longer_block <- function(
               list(id = ns("pivot_longer_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

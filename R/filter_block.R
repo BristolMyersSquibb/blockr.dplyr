@@ -73,7 +73,7 @@ new_filter_block <- function(
               list(id = ns("filter_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({

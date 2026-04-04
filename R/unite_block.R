@@ -79,7 +79,7 @@ new_unite_block <- function(
               list(id = ns("unite_input"), state = r_state())
             )
           }
-        }, ignoreInit = TRUE)
+        })
 
         list(
           expr = reactive({
