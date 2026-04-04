@@ -19,47 +19,47 @@ register_dplyr_blocks <- function() {
     ),
     name = c(
       "Select Columns",
-      "Lookup & Merge",
-      "Sort Rows",
-      "Calculate Columns",
-      "Aggregate Data",
+      "Join",
+      "Arrange Rows",
+      "Mutate Columns",
+      "Summarize",
       "Filter Rows",
-      "Stack Tables",
-      "Combine Side-by-Side",
-      "Rename Columns",
-      "Pick Rows",
-      "Unpivot (Wide to Long)",
-      "Pivot (Long to Wide)",
-      "Combine Columns",
-      "Split Column"
+      "Bind Rows",
+      "Bind Columns",
+      "Rename",
+      "Slice Rows",
+      "Pivot Longer",
+      "Pivot Wider",
+      "Unite Columns",
+      "Separate Column"
     ),
     description = c(
       paste0(
-        "Choose which columns to keep or remove. ",
-        "Can also remove duplicate rows. ",
+        "Choose, reorder, or exclude columns. ",
+        "Optionally remove duplicate rows. ",
         "(dplyr: select, distinct)"
       ),
       paste0(
         "Combine two tables by matching values ",
-        "in a shared column. ",
-        "(dplyr: left_join, inner_join, etc.)"
+        "in shared columns. Left, inner, right, ",
+        "full, anti, semi joins. (dplyr: *_join)"
       ),
       paste0(
-        "Sort your data by one or more columns, ",
+        "Sort rows by one or more columns, ",
         "ascending or descending. (dplyr: arrange)"
       ),
       paste0(
-        "Create new columns or modify existing ",
+        "Add new columns or transform existing ",
         "ones using R expressions. (dplyr: mutate)"
       ),
       paste0(
         "Calculate totals, averages, counts, and ",
-        "other statistics. Simple mode or R ",
-        "expressions. (dplyr: summarize)"
+        "other statistics, optionally by group. ",
+        "(dplyr: summarize)"
       ),
       paste0(
-        "Filter rows by values, numeric comparisons,",
-        " or R expressions with AND/OR logic. ",
+        "Keep or remove rows by values, ",
+        "comparisons, or expressions. ",
         "(dplyr: filter)"
       ),
       paste0(
@@ -67,28 +67,25 @@ register_dplyr_blocks <- function() {
         "column names. (dplyr: bind_rows)"
       ),
       paste0(
-        "Place tables next to each other ",
-        "horizontally. Both tables must have the ",
-        "same number of rows. (dplyr: bind_cols)"
+        "Place tables side-by-side horizontally. ",
+        "Both must have the same number of rows. ",
+        "(dplyr: bind_cols)"
       ),
       paste0(
-        "Change column names to make them more ",
-        "readable. (dplyr: rename)"
+        "Change column names without modifying ",
+        "data. (dplyr: rename)"
       ),
       paste0(
-        "Select specific rows: first N, last N, ",
-        "random sample, or rows with min/max ",
-        "values. (dplyr: slice)"
+        "Pick rows by position, random sample, ",
+        "or min/max of a column. (dplyr: slice)"
       ),
       paste0(
-        "Convert columns into rows. Useful when ",
-        "column headers contain data values. ",
-        "(tidyr: pivot_longer)"
+        "Reshape wide data to long \u2014 gather ",
+        "columns into rows. (tidyr: pivot_longer)"
       ),
       paste0(
-        "Convert rows into columns. Turn ",
-        "categories into separate columns. ",
-        "(tidyr: pivot_wider)"
+        "Reshape long data to wide \u2014 spread ",
+        "rows into columns. (tidyr: pivot_wider)"
       ),
       paste0(
         "Merge multiple columns into one by ",
@@ -148,6 +145,12 @@ register_dplyr_blocks <- function() {
             exclude = FALSE,
             distinct = FALSE
           )
+        ),
+        prompt = paste(
+          "Set columns to keep (or set",
+          "exclude=true to remove them",
+          "instead). Set distinct=true",
+          "to deduplicate rows."
         )
       ),
       # join_block:
@@ -172,6 +175,17 @@ register_dplyr_blocks <- function() {
             suffix_x = ".x",
             suffix_y = ".y"
           )
+        ),
+        prompt = paste(
+          "Set type to the join function:",
+          "left_join, inner_join,",
+          "right_join, full_join,",
+          "anti_join, or semi_join.",
+          "Keys define column pairs to",
+          "match (xCol op yCol). Op is",
+          "usually '==' but can be",
+          "'>=', '>', '<=', '<' for",
+          "non-equi joins."
         )
       ),
       # arrange_block:
@@ -187,14 +201,20 @@ register_dplyr_blocks <- function() {
           state = list(columns = list(
             list(column = "mpg", direction = "desc")
           ))
+        ),
+        prompt = paste(
+          "Each entry has column (name)",
+          "and direction ('asc' or",
+          "'desc'). Rows are sorted by",
+          "columns in order."
         )
       ),
       # mutate_block:
       structure(
         c(
           state = paste0(
-            "Object with: rows (array of ",
-            "objects, each with 'name' ",
+            "Object with: mutations (array ",
+            "of objects, each with 'name' ",
             "(new column name) and 'expr' ",
             "(R expression string)), and ",
             "optional by (array of grouping ",
@@ -203,7 +223,7 @@ register_dplyr_blocks <- function() {
         ),
         examples = list(
           state = list(
-            rows = list(
+            mutations = list(
               list(
                 name = "mpg_squared",
                 expr = "mpg^2"
@@ -216,15 +236,32 @@ register_dplyr_blocks <- function() {
           )
         ),
         prompt = paste(
-          "Expressions are R code strings.",
-          "Each row creates or modifies",
-          "a column. Column names with",
-          "spaces or special characters",
-          "must be backtick-quoted.",
-          "\n\nR coding rules: always use",
-          "the base pipe |> (never %>%).",
-          "Namespace-prefix all functions",
-          "except base and stats."
+          "Each mutation creates or modifies",
+          "a column. The 'name' field is the",
+          "new column name, 'expr' is an R",
+          "expression. Column names with",
+          "spaces or special characters must",
+          "be backtick-quoted.",
+          "\n\nTo group the operation (e.g.,",
+          "mean per group), put grouping",
+          "columns in the 'by' array -- do",
+          "NOT write group_by() inside",
+          "expressions.",
+          "\n\nExample: mean mpg per cylinder:",
+          "mutations: [{name: 'mean_mpg',",
+          "expr: 'mean(mpg)'}], by: ['cyl']",
+          "\n\nR coding rules for expressions:",
+          "Do NOT prefix base R functions",
+          "(mean, sum, sd, min, max, median,",
+          "abs, sqrt, log, round, paste,",
+          "ifelse, is.na, etc.).",
+          "DO prefix dplyr/tidyr functions:",
+          "dplyr::n(), dplyr::n_distinct(),",
+          "dplyr::first(), dplyr::last(),",
+          "dplyr::lag(), dplyr::lead(),",
+          "dplyr::case_when(),",
+          "dplyr::if_else().",
+          "Use the base pipe |> (never %>%)."
         )
       ),
       # summarize_block:
@@ -262,13 +299,33 @@ register_dplyr_blocks <- function() {
           )
         ),
         prompt = paste(
-          "Simple mode uses predefined",
-          "functions (mean, median, sd,",
-          "min, max, sum, n, n_distinct,",
-          "first, last). Expression mode",
-          "allows arbitrary R code.",
-          "The 'n' function does not need",
-          "a column argument."
+          "Two modes for each summary:",
+          "- Simple: type='simple', func",
+          "(mean/median/sd/min/max/sum/n/",
+          "n_distinct/first/last), col",
+          "(column name). For func='n',",
+          "set col to empty string.",
+          "- Expression: type='expr',",
+          "name, expr (R code string).",
+          "\n\nPut grouping columns in 'by'",
+          "-- this is how you group. Do NOT",
+          "write group_by() in expressions.",
+          "\n\nExample: mean mpg + count",
+          "per cylinder:",
+          "summaries: [{type:'simple',",
+          "name:'avg_mpg', func:'mean',",
+          "col:'mpg'}, {type:'simple',",
+          "name:'count', func:'n',",
+          "col:''}], by: ['cyl']",
+          "\n\nPrefer simple mode over expr",
+          "mode when a predefined function",
+          "exists.",
+          "\n\nR coding rules for expr mode:",
+          "Do NOT prefix base R functions",
+          "(mean, sum, sd, etc.).",
+          "DO prefix dplyr functions:",
+          "dplyr::n(), dplyr::n_distinct().",
+          "Use the base pipe |> (never %>%)."
         )
       ),
       # filter_block:
@@ -304,18 +361,20 @@ register_dplyr_blocks <- function() {
           )
         ),
         prompt = paste(
-          "The state contains the full",
-          "filter configuration as a",
-          "single object. Conditions can",
-          "be: type 'values' (column +",
-          "values array + mode",
-          "'include'/'exclude'), type",
-          "'numeric' (column + op like",
-          "'>', '>=', '<', '<=' + numeric",
-          "value), or type 'expr' (free R",
+          "Conditions can be: type",
+          "'values' (column + values",
+          "array + mode 'include'/",
+          "'exclude'), type 'numeric'",
+          "(column + op like '>', '>=',",
+          "'<', '<=' + numeric value),",
+          "or type 'expr' (free R",
           "expression string). Values",
           "must be strings even for",
           "numeric columns.",
+          "\n\nThe 'operator' field combines",
+          "multiple conditions: '&' for",
+          "AND (all must match), '|' for",
+          "OR (any can match).",
           "\n\nIMPORTANT -- include vs",
           "exclude mode: ALWAYS prefer",
           "mode 'include' with the",
@@ -323,14 +382,17 @@ register_dplyr_blocks <- function() {
           "'exclude' when the user",
           "explicitly says 'exclude',",
           "'remove', 'drop', or 'not'.",
-          "\n\nFor numeric comparisons,",
-          "prefer type 'numeric' over",
-          "type 'values'.",
-          "\n\nR coding rules for expr",
-          "type: always use the base",
-          "pipe |> (never %>%).",
-          "Namespace-prefix all functions",
-          "except base and stats."
+          "\n\nPrefer type 'values' for",
+          "categorical filtering, type",
+          "'numeric' for comparisons.",
+          "Only use type 'expr' when the",
+          "other types cannot express the",
+          "condition.",
+          "\n\nR coding rules for expr type:",
+          "Do NOT prefix base R functions",
+          "(mean, sum, grepl, is.na, etc.).",
+          "DO prefix dplyr/tidyr functions.",
+          "Use the base pipe |> (never %>%)."
         )
       ),
       # bind_rows_block:
@@ -362,6 +424,14 @@ register_dplyr_blocks <- function() {
             miles_per_gallon = "mpg",
             cylinders = "cyl"
           ))
+        ),
+        prompt = paste(
+          "Renames is an object mapping",
+          "new names to old names:",
+          "{new_name: 'old_name', ...}.",
+          "Keys are the desired new column",
+          "names, values are the existing",
+          "column names to rename."
         )
       ),
       # slice_block:
@@ -391,10 +461,20 @@ register_dplyr_blocks <- function() {
           )
         ),
         prompt = paste(
-          "Use either n or prop,",
-          "not both. order_by is",
-          "required for min and",
-          "max types."
+          "Types: 'head' (first n rows),",
+          "'tail' (last n), 'min' (rows",
+          "with smallest order_by values),",
+          "'max' (largest order_by values),",
+          "'sample' (random sample).",
+          "\n\nUse n for count or prop",
+          "(0-1) for proportion -- not both.",
+          "order_by is required for min/max.",
+          "with_ties: include tied rows",
+          "(min/max only).",
+          "weight_by: weighted sampling",
+          "(sample only).",
+          "\n\nPut grouping columns in 'by'",
+          "to slice within each group."
         )
       ),
       # pivot_longer_block:
@@ -428,7 +508,9 @@ register_dplyr_blocks <- function() {
             " id_cols (array, optional), ",
             "values_fill (value or null), ",
             "names_sep (string), ",
-            "names_prefix (string)"
+            "names_prefix (string), ",
+            "values_fn (string or null, ",
+            "e.g. 'mean', 'sum', 'first')"
           )
         ),
         examples = list(
@@ -438,8 +520,16 @@ register_dplyr_blocks <- function() {
             id_cols = list(),
             values_fill = NULL,
             names_sep = "_",
-            names_prefix = ""
+            names_prefix = "",
+            values_fn = NULL
           )
+        ),
+        prompt = paste(
+          "Set values_fn (e.g., 'mean',",
+          "'sum', 'first') when data has",
+          "duplicate id+name combinations.",
+          "Without values_fn, duplicates",
+          "will cause an error."
         )
       ),
       # unite_block:

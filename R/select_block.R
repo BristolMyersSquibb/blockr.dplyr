@@ -55,12 +55,13 @@ new_select_block <- function(
         observeEvent(input$select_input, {
           self_write$active <- TRUE
           r_state(input$select_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "select-block-update",

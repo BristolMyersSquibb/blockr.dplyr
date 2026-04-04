@@ -213,7 +213,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.cols = (state?.cols || []).slice();
       this.names_to = state?.names_to || 'name';
       this.values_to = state?.values_to || 'value';
@@ -300,7 +300,7 @@
   Shiny.addCustomMessageHandler('pivot-longer-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

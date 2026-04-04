@@ -68,7 +68,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.id_name = state?.id_name || '';
       this._idInput.value = this.id_name;
     }
@@ -107,7 +107,7 @@
   Shiny.addCustomMessageHandler('bind-rows-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

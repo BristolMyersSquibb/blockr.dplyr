@@ -71,12 +71,13 @@ new_separate_block <- function(
         observeEvent(input$separate_input, {
           self_write$active <- TRUE
           r_state(input$separate_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "separate-block-update",
@@ -93,9 +94,7 @@ new_separate_block <- function(
               s$into %||% list(),
               s$sep %||% "[^[:alnum:]]+",
               s$remove %||% TRUE,
-              s$convert %||% FALSE,
-              s$extra %||% "warn",
-              s$fill %||% "warn"
+              s$convert %||% FALSE
             )
           }),
           state = list(state = r_state)

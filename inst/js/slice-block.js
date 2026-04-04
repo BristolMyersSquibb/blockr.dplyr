@@ -327,7 +327,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.type = state?.type || 'head';
       this.n = state?.n ?? 5;
       this.prop = state?.prop ?? null;
@@ -335,7 +335,8 @@
       this.with_ties = state?.with_ties !== false;
       this.weight_by = state?.weight_by || '';
       this.replace = !!state?.replace;
-      this.by = (state?.by || []).slice();
+      const byRaw = state?.by || [];
+      this.by = Array.isArray(byRaw) ? byRaw.slice() : [byRaw];
 
       // Update type select
       if (this._typeSelect) {
@@ -449,7 +450,7 @@
   Shiny.addCustomMessageHandler('slice-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

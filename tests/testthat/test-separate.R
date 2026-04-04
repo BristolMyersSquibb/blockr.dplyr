@@ -111,37 +111,33 @@ test_that("separate block: state change updates separator and column names", {
   blk <- new_separate_block(
     state = list(
       col = "data",
-      into = c("year", "month_day"),
+      into = c("year", "month", "day"),
       sep = "_",
       remove = TRUE,
-      convert = FALSE,
-      extra = "merge",
-      fill = "warn"
+      convert = FALSE
     )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
     session$flushReact()
     result1 <- eval_bquoted(session$returned$expr(), df)
-    expect_equal(ncol(result1), 2)
+    expect_equal(ncol(result1), 3)
     expect_equal(result1$year, c("2024", "2024"))
-    expect_equal(result1$month_day, c("01_15", "02_20"))
+    expect_equal(result1$day, c("15", "20"))
 
-    # Change to separate into 3 columns
+    # Change to separate into 2 columns with different sep
     session$returned$state$state(list(
       col = "data",
-      into = c("year", "month", "day"),
+      into = c("part1", "part2"),
       sep = "_",
       remove = TRUE,
-      convert = FALSE,
-      extra = "warn",
-      fill = "warn"
+      convert = FALSE
     ))
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
-    expect_equal(ncol(result2), 3)
-    expect_true("day" %in% colnames(result2))
-    expect_equal(result2$day, c("15", "20"))
+    expect_equal(ncol(result2), 2)
+    expect_true("part1" %in% colnames(result2))
+    expect_true("part2" %in% colnames(result2))
   })
 })
 

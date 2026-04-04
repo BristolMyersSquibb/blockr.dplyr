@@ -20,6 +20,7 @@
       this.values_fill = '';
       this.names_sep = '_';
       this.names_prefix = '';
+      this.values_fn = '';
       this.columnNames = [];
       this._callback = null;
       this._submitted = false;
@@ -191,6 +192,28 @@
       prefixRow.appendChild(this._prefixInput);
       this.popoverEl.appendChild(prefixRow);
 
+      // values_fn (aggregation function for duplicates)
+      const fnRow = document.createElement('div');
+      fnRow.className = 'blockr-popover-row';
+      const fnLabel = document.createElement('label');
+      fnLabel.className = 'blockr-popover-label';
+      fnLabel.textContent = 'Aggregation:';
+      fnRow.appendChild(fnLabel);
+      const fnWrap = document.createElement('div');
+      fnWrap.className = 'blockr-popover-select-wrap';
+      fnRow.appendChild(fnWrap);
+      const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
+      this._valuesFnSelect = Blockr.Select.single(fnWrap, {
+        options: fnOptions,
+        selected: this.values_fn || '',
+        placeholder: '(none)',
+        onChange: (value) => {
+          this.values_fn = value;
+          this._autoSubmit();
+        }
+      });
+      this.popoverEl.appendChild(fnRow);
+
       this.card.appendChild(this.popoverEl);
     }
 
@@ -221,7 +244,8 @@
         id_cols: this.id_cols.slice(),
         values_fill: this.values_fill || null,
         names_sep: this.names_sep,
-        names_prefix: this.names_prefix
+        names_prefix: this.names_prefix,
+        values_fn: this.values_fn || null
       };
     }
 
@@ -235,18 +259,23 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.names_from = (state?.names_from || []).slice();
       this.values_from = (state?.values_from || []).slice();
       this.id_cols = (state?.id_cols || []).slice();
       this.values_fill = state?.values_fill || '';
       this.names_sep = state?.names_sep ?? '_';
       this.names_prefix = state?.names_prefix || '';
+      this.values_fn = state?.values_fn || '';
 
       // Update popover text inputs
       this._fillInput.value = this.values_fill;
       this._sepInput.value = this.names_sep;
       this._prefixInput.value = this.names_prefix;
+      if (this._valuesFnSelect) {
+        const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
+        this._valuesFnSelect.setOptions(fnOptions, this.values_fn);
+      }
 
       // Update multi-selects
       if (this._namesFromSelect) {
@@ -333,7 +362,7 @@
   Shiny.addCustomMessageHandler('pivot-wider-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

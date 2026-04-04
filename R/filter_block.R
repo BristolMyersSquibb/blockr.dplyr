@@ -60,15 +60,16 @@ new_filter_block <- function(
         observeEvent(input$filter_input, {
           self_write$active <- TRUE
           r_state(input$filter_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
-              "block-update",
+              "filter-block-update",
               list(id = ns("filter_input"), state = r_state())
             )
           }

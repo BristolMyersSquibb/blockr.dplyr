@@ -116,3 +116,30 @@ test_that("pivot_wider block: state change updates pivot", {
     expect_true("val_weight" %in% colnames(result2))
   })
 })
+
+test_that("make_pivot_wider_expr: values_fn aggregates duplicates", {
+  # iris has 50 rows per Species — pivoting without values_fn produces list-cols
+  expr <- make_pivot_wider_expr(
+    names_from = "Species",
+    values_from = "Sepal.Length",
+    values_fn = "mean"
+  )
+  result <- eval_bquoted(expr, iris)
+  expect_true("setosa" %in% colnames(result))
+  expect_true("versicolor" %in% colnames(result))
+  expect_true("virginica" %in% colnames(result))
+  # values_fn = mean produces scalar numeric columns, not list-cols
+  expect_true(is.numeric(result$setosa))
+  expect_true(is.numeric(result$versicolor))
+})
+
+test_that("make_pivot_wider_expr: empty values_fn is ignored", {
+  expr <- make_pivot_wider_expr(
+    names_from = "measure",
+    values_from = "value",
+    values_fn = ""
+  )
+  # Expression should not contain values_fn
+  expr_text <- deparse(expr)
+  expect_false(any(grepl("values_fn", expr_text)))
+})

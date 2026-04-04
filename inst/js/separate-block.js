@@ -2,8 +2,7 @@
  * SeparateBlock — JS-driven tidyr::separate block input binding.
  *
  * Main UI: source column single-select (bordered), into text input
- * (comma-separated names), separator text input.
- * Gear popover: remove toggle, convert toggle, extra text input, fill text input.
+ * (comma-separated names), separator text input, remove/convert toggle pills.
  * Auto-submits on any change (300ms debounce).
  *
  * Depends on: blockr-core.js, blockr-select.js
@@ -19,14 +18,11 @@
       this.sep = '[^[:alnum:]]+';
       this.remove = true;
       this.convert = false;
-      this.extra = 'warn';
-      this.fill = 'warn';
       this.columnNames = [];
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
       this._colSelect = null;
-      this._popoverOpen = false;
 
       this._buildDOM();
     }
@@ -40,21 +36,6 @@
       this.card = document.createElement('div');
       this.card.className = 'spb-card';
       this.el.appendChild(this.card);
-
-      // Gear header (top-right)
-      const gearHeader = document.createElement('div');
-      gearHeader.className = 'blockr-gear-header';
-      this.gearBtn = document.createElement('button');
-      this.gearBtn.type = 'button';
-      this.gearBtn.className = 'blockr-gear-btn';
-      this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
-      gearHeader.appendChild(this.gearBtn);
-      this.card.appendChild(gearHeader);
 
       // Source column picker (bordered)
       const colWrap = document.createElement('div');
@@ -74,7 +55,7 @@
       });
       this.card.appendChild(colWrap);
 
-      // Text inputs row: into + sep + gear
+      // Text inputs row: into + sep
       const inputRow = document.createElement('div');
       inputRow.className = 'spb-input-row';
 
@@ -118,113 +99,37 @@
 
       this.card.appendChild(inputRow);
 
-      // Settings popover
-      this._buildPopover();
+      // Toggle bar: remove + convert pills
+      const toggleBar = document.createElement('div');
+      toggleBar.className = 'blockr-add-row';
 
-      // Close popover on outside click
-      document.addEventListener('click', (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
-          this._closePopover();
-        }
-      });
-    }
-
-    // --- Settings popover ---
-
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
-
-      // remove toggle
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'Remove original';
+      this._removeToggle.className = 'blockr-pill sb-toggle sb-toggle-active';
+      this._removeToggle.textContent = 'remove original';
       this._removeToggle.title = 'Toggle whether the source column is removed after splitting';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
-        this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
-        this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
+        this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
+        this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
         this._autoSubmit();
       });
-      this.popoverEl.appendChild(this._removeToggle);
+      toggleBar.appendChild(this._removeToggle);
 
-      // convert toggle
       this._convertToggle = document.createElement('button');
       this._convertToggle.type = 'button';
-      this._convertToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._convertToggle.textContent = 'Keep types';
+      this._convertToggle.className = 'blockr-pill sb-toggle';
+      this._convertToggle.textContent = 'keep types';
       this._convertToggle.title = 'Toggle whether split values are auto-converted to numbers or logicals';
       this._convertToggle.addEventListener('click', () => {
         this.convert = !this.convert;
-        this._convertToggle.textContent = this.convert ? 'Auto-convert' : 'Keep types';
-        this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
+        this._convertToggle.textContent = this.convert ? 'auto-convert' : 'keep types';
+        this._convertToggle.classList.toggle('sb-toggle-active', this.convert);
         this._autoSubmit();
       });
-      this.popoverEl.appendChild(this._convertToggle);
+      toggleBar.appendChild(this._convertToggle);
 
-      // extra text input
-      const extraRow = document.createElement('div');
-      extraRow.className = 'blockr-popover-row';
-      const extraLabel = document.createElement('label');
-      extraLabel.className = 'blockr-popover-label';
-      extraLabel.textContent = 'Extra:';
-      extraRow.appendChild(extraLabel);
-      this._extraInput = document.createElement('input');
-      this._extraInput.type = 'text';
-      this._extraInput.className = 'blockr-popover-input';
-      this._extraInput.value = this.extra;
-      this._extraInput.placeholder = 'warn';
-      this._extraInput.addEventListener('input', () => {
-        this.extra = this._extraInput.value || 'warn';
-        this._autoSubmit();
-      });
-      extraRow.appendChild(this._extraInput);
-      this.popoverEl.appendChild(extraRow);
-
-      // fill text input
-      const fillRow = document.createElement('div');
-      fillRow.className = 'blockr-popover-row';
-      const fillLabel = document.createElement('label');
-      fillLabel.className = 'blockr-popover-label';
-      fillLabel.textContent = 'Fill:';
-      fillRow.appendChild(fillLabel);
-      this._fillInput = document.createElement('input');
-      this._fillInput.type = 'text';
-      this._fillInput.className = 'blockr-popover-input';
-      this._fillInput.value = this.fill;
-      this._fillInput.placeholder = 'warn';
-      this._fillInput.addEventListener('input', () => {
-        this.fill = this._fillInput.value || 'warn';
-        this._autoSubmit();
-      });
-      fillRow.appendChild(this._fillInput);
-      this.popoverEl.appendChild(fillRow);
-
-      this.card.appendChild(this.popoverEl);
-    }
-
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
-    }
-
-    _openPopover() {
-      this.popoverEl.style.display = 'block';
-      this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      this.popoverEl.style.display = 'none';
-      this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      this.card.appendChild(toggleBar);
     }
 
     _parseInto(text) {
@@ -239,9 +144,7 @@
         into: this.into.slice(),
         sep: this.sep,
         remove: this.remove,
-        convert: this.convert,
-        extra: this.extra,
-        fill: this.fill
+        convert: this.convert
       };
     }
 
@@ -255,14 +158,12 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.col = state?.col || '';
       this.into = (state?.into || []).slice();
       this.sep = state?.sep ?? '[^[:alnum:]]+';
       this.remove = state?.remove !== false;
       this.convert = !!state?.convert;
-      this.extra = state?.extra || 'warn';
-      this.fill = state?.fill || 'warn';
 
       // Update column select
       if (this._colSelect) {
@@ -273,13 +174,11 @@
       this._intoInput.value = this.into.join(', ');
       this._sepInput.value = this.sep;
 
-      // Update popover controls
-      this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
-      this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
-      this._convertToggle.textContent = this.convert ? 'Auto-convert' : 'Keep types';
-      this._convertToggle.classList.toggle('blockr-popover-toggle-active', this.convert);
-      this._extraInput.value = this.extra;
-      this._fillInput.value = this.fill;
+      // Update toggles
+      this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
+      this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
+      this._convertToggle.textContent = this.convert ? 'auto-convert' : 'keep types';
+      this._convertToggle.classList.toggle('sb-toggle-active', this.convert);
     }
 
     updateColumns(names) {
@@ -348,7 +247,7 @@
   Shiny.addCustomMessageHandler('separate-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

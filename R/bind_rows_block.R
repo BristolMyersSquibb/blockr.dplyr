@@ -43,12 +43,13 @@ new_bind_rows_block <- function(
         observeEvent(input$bind_rows_input, {
           self_write$active <- TRUE
           r_state(input$bind_rows_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "bind-rows-block-update",

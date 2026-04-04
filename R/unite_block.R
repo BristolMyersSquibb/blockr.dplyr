@@ -38,7 +38,7 @@ new_unite_block <- function(
     cols = list(),
     sep = "_",
     remove = TRUE,
-    na.rm = FALSE
+    na_rm = FALSE
   ),
   ...
 ) {
@@ -66,12 +66,13 @@ new_unite_block <- function(
         observeEvent(input$unite_input, {
           self_write$active <- TRUE
           r_state(input$unite_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "unite-block-update",
@@ -88,7 +89,7 @@ new_unite_block <- function(
               s$cols %||% list(),
               s$sep %||% "_",
               s$remove %||% TRUE,
-              s$na.rm %||% FALSE
+              s$na_rm %||% FALSE
             )
           }),
           state = list(state = r_state)

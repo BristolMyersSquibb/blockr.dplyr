@@ -347,7 +347,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       // Clear existing summaries
       while (this.summaries.length > 0) {
         const s = this.summaries[0];
@@ -372,8 +372,9 @@
         }
       }
 
-      // Rebuild group by
-      const by = state?.by || [];
+      // Rebuild group by (ensure array — R may send scalar string)
+      const byRaw = state?.by || [];
+      const by = Array.isArray(byRaw) ? byRaw.slice() : [byRaw];
       this.byValues = by;
       if (this._bySelectize) {
         this._bySelectize.setOptions(this.columnNames, by);
@@ -382,7 +383,7 @@
       this._updateUI();
 
       // Auto-submit if state has content
-      if (summaries.length > 0) {
+      if (summaries.length > 0 && !silent) {
         this._submit();
       }
     }
@@ -462,6 +463,25 @@
         const el2 = document.getElementById(msg.id);
         if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
         else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
+        if (attempts > 50) clearInterval(t);
+      }, 100);
+    }
+  });
+
+  // External control state update handler (global — dispatches by msg.id)
+  Shiny.addCustomMessageHandler('summarize-block-update', (msg) => {
+    const el = document.getElementById(msg.id);
+    if (el?._block) {
+      el._block.setState(msg.state, true);
+    } else if (el) {
+      el._pendingState = msg.state;
+    } else {
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        const el2 = document.getElementById(msg.id);
+        if (el2?._block) { el2._block.setState(msg.state, true); clearInterval(t); }
+        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
         if (attempts > 50) clearInterval(t);
       }, 100);
     }

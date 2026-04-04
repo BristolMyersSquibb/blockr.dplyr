@@ -1,6 +1,6 @@
 pkgload::load_all("blockr.dplyr")
 pkgload::load_all("blockr.ai")
-library(blockr.dock)
+pkgload::load_all("blockr.dock")
 library(blockr.dag)
 library(blockr.extra)
 

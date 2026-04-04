@@ -2,8 +2,7 @@
  * UniteBlock — JS-driven tidyr::unite block input binding.
  *
  * Main UI: new column name text input, columns multi-select (bordered),
- * separator text input.
- * Gear popover: remove toggle, na.rm toggle.
+ * separator text input, remove/na_rm toggle pills.
  * Auto-submits on any change (300ms debounce).
  *
  * Depends on: blockr-core.js, blockr-select.js
@@ -24,7 +23,6 @@
       this._submitted = false;
       this._debounceTimer = null;
       this._multiSelect = null;
-      this._popoverOpen = false;
 
       this._buildDOM();
     }
@@ -38,21 +36,6 @@
       this.card = document.createElement('div');
       this.card.className = 'ub-card';
       this.el.appendChild(this.card);
-
-      // Gear header (top-right)
-      const gearHeader = document.createElement('div');
-      gearHeader.className = 'blockr-gear-header';
-      this.gearBtn = document.createElement('button');
-      this.gearBtn.type = 'button';
-      this.gearBtn.className = 'blockr-gear-btn';
-      this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
-      gearHeader.appendChild(this.gearBtn);
-      this.card.appendChild(gearHeader);
 
       // Top row: new column name + separator
       const topRow = document.createElement('div');
@@ -118,75 +101,37 @@
         }
       });
 
-      // Settings popover
-      this._buildPopover();
+      // Toggle bar: remove + na_rm pills
+      const toggleBar = document.createElement('div');
+      toggleBar.className = 'blockr-add-row';
 
-      // Close popover on outside click
-      document.addEventListener('click', (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
-          this._closePopover();
-        }
-      });
-    }
-
-    // --- Settings popover ---
-
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
-
-      // remove toggle
       this._removeToggle = document.createElement('button');
       this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._removeToggle.textContent = 'Remove original';
+      this._removeToggle.className = 'blockr-pill sb-toggle sb-toggle-active';
+      this._removeToggle.textContent = 'remove original';
       this._removeToggle.title = 'Toggle whether the source columns are removed after uniting';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
-        this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
-        this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
+        this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
+        this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
         this._autoSubmit();
       });
-      this.popoverEl.appendChild(this._removeToggle);
+      toggleBar.appendChild(this._removeToggle);
 
-      // na.rm toggle
       this._naRmToggle = document.createElement('button');
       this._naRmToggle.type = 'button';
-      this._naRmToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._naRmToggle.textContent = 'Keep NA';
+      this._naRmToggle.className = 'blockr-pill sb-toggle';
+      this._naRmToggle.textContent = 'keep NA';
       this._naRmToggle.title = 'Toggle whether NA values are removed before pasting columns together';
       this._naRmToggle.addEventListener('click', () => {
         this.na_rm = !this.na_rm;
-        this._naRmToggle.textContent = this.na_rm ? 'Drop NA' : 'Keep NA';
-        this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
+        this._naRmToggle.textContent = this.na_rm ? 'drop NA' : 'keep NA';
+        this._naRmToggle.classList.toggle('sb-toggle-active', this.na_rm);
         this._autoSubmit();
       });
-      this.popoverEl.appendChild(this._naRmToggle);
+      toggleBar.appendChild(this._naRmToggle);
 
-      this.card.appendChild(this.popoverEl);
-    }
-
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
-    }
-
-    _openPopover() {
-      this.popoverEl.style.display = 'block';
-      this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      this.popoverEl.style.display = 'none';
-      this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      this.card.appendChild(toggleBar);
     }
 
     _compose() {
@@ -209,7 +154,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.col = state?.col || 'united';
       this.cols = (state?.cols || []).slice();
       this.sep = state?.sep ?? '_';
@@ -220,11 +165,11 @@
       this._colInput.value = this.col;
       this._sepInput.value = this.sep;
 
-      // Update popover toggles
-      this._removeToggle.textContent = this.remove ? 'Remove original' : 'Keep original';
-      this._removeToggle.classList.toggle('blockr-popover-toggle-active', this.remove);
-      this._naRmToggle.textContent = this.na_rm ? 'Drop NA' : 'Keep NA';
-      this._naRmToggle.classList.toggle('blockr-popover-toggle-active', this.na_rm);
+      // Update toggles
+      this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
+      this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
+      this._naRmToggle.textContent = this.na_rm ? 'drop NA' : 'keep NA';
+      this._naRmToggle.classList.toggle('sb-toggle-active', this.na_rm);
 
       // Update multi-select
       if (this._multiSelect) {
@@ -297,7 +242,7 @@
   Shiny.addCustomMessageHandler('unite-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

@@ -59,15 +59,16 @@ new_summarize_block <- function(
         observeEvent(input$summarize_input, {
           self_write$active <- TRUE
           r_state(input$summarize_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
-              "block-update",
+              "summarize-block-update",
               list(id = ns("summarize_input"), state = r_state())
             )
           }

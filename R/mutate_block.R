@@ -1,11 +1,11 @@
 #' Mutate block (JS-driven)
 #'
-#' JS-driven mutate block with dynamic rows of name + expression pairs.
-#' Each row defines a new or modified column using an R expression.
+#' JS-driven mutate block with dynamic mutation rows of name + expression pairs.
+#' Each mutation defines a new or modified column using an R expression.
 #'
-#' @param state List with `rows` (array of objects with `name` and `expr`
+#' @param state List with `mutations` (array of objects with `name` and `expr`
 #'   strings) and optional `by` (array of grouping column names).
-#'   Each row becomes a `dplyr::mutate()` argument.
+#'   Each mutation becomes a `dplyr::mutate()` argument.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -14,7 +14,7 @@
 #'   serve(
 #'     new_mutate_block(
 #'       state = list(
-#'         rows = list(
+#'         mutations = list(
 #'           list(name = "Sepal.Ratio", expr = "Sepal.Length / Sepal.Width")
 #'         )
 #'       )
@@ -29,7 +29,7 @@
 #'
 #' @export
 new_mutate_block <- function(
-  state = list(rows = list(list(name = "", expr = "")), by = list()),
+  state = list(mutations = list(list(name = "", expr = "")), by = list()),
   ...
 ) {
   new_transform_block(
@@ -51,28 +51,29 @@ new_mutate_block <- function(
           )
         })
 
-        # Send initial rows on first data arrival
+        # Send initial mutations on first data arrival
         observeEvent(data(), {
           s <- r_state()
           session$sendCustomMessage(
-            "mutate-set-rows",
-            list(id = ns("mutate_input"), rows = s$rows %||% list())
+            "mutate-set-mutations",
+            list(id = ns("mutate_input"), mutations = s$mutations %||% list())
           )
         }, once = TRUE)
 
-        # JS -> R: user changed the mutate rows
+        # JS -> R: user changed the mutations
         observeEvent(input$mutate_input, {
           self_write$active <- TRUE
           r_state(input$mutate_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input, no need to echo back
           } else {
             session$sendCustomMessage(
-              "block-update",
+              "mutate-block-update",
               list(id = ns("mutate_input"), state = r_state())
             )
           }
@@ -82,7 +83,7 @@ new_mutate_block <- function(
           expr = reactive({
             s <- r_state()
             make_mutate_expr(
-              s$rows %||% s$columns %||% list(),
+              s$mutations %||% list(),
               s$by %||% character()
             )
           }),

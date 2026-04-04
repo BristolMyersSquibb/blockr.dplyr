@@ -394,7 +394,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       // Clear existing conditions
       while (this.conditions.length > 0) {
         const cond = this.conditions[0];
@@ -516,12 +516,21 @@
   });
 
   // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('block-update', (msg) => {
+  Shiny.addCustomMessageHandler('filter-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
+    } else {
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        const el2 = document.getElementById(msg.id);
+        if (el2?._block) { el2._block.setState(msg.state, true); clearInterval(t); }
+        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
+        if (attempts > 50) clearInterval(t);
+      }, 100);
     }
   });
 })();

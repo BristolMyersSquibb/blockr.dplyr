@@ -73,10 +73,10 @@ blockr_deser.filter_expr_block <- function(x, data, ...) {
 blockr_deser.mutate_expr_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_mutate_block", function(p) {
     exprs <- p$exprs %||% list()
-    rows <- mapply(function(nm, ex) list(name = nm, expr = ex),
-                   names(exprs), unname(exprs), SIMPLIFY = FALSE,
-                   USE.NAMES = FALSE)
-    list(rows = rows, by = p$by %||% list())
+    mutations <- mapply(function(nm, ex) list(name = nm, expr = ex),
+                        names(exprs), unname(exprs), SIMPLIFY = FALSE,
+                        USE.NAMES = FALSE)
+    list(mutations = mutations, by = p$by %||% list())
   })
 }
 
@@ -236,7 +236,7 @@ blockr_deser.unite_block <- function(x, data, ...) {
       cols = p$cols %||% list(),
       sep = p$sep %||% "_",
       remove = p$remove %||% TRUE,
-      na.rm = p$na.rm %||% FALSE
+      na_rm = p$na.rm %||% FALSE
     )
   })
 }

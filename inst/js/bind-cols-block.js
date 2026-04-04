@@ -45,7 +45,7 @@
       return this._compose();
     }
 
-    setState() {
+    setState(state, silent) {
       // No state to set
     }
   }
@@ -79,7 +79,7 @@
   Shiny.addCustomMessageHandler('bind-cols-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

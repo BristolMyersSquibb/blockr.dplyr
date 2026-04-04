@@ -2,7 +2,7 @@
  * SelectBlock — JS-driven column select block input binding.
  *
  * Multi-select column picker with reorderable tags, exclude toggle,
- * and distinct option in gear popover. Auto-submits on any change (300ms debounce).
+ * and distinct option. Auto-submits on any change (300ms debounce).
  *
  * Depends on: blockr-core.js, blockr-select.js
  */
@@ -20,7 +20,6 @@
       this._submitted = false;
       this._debounceTimer = null;
       this._multiSelect = null;
-      this._popoverOpen = false;
 
       this._buildDOM();
     }
@@ -34,21 +33,6 @@
       this.card = document.createElement('div');
       this.card.className = 'sb-card';
       this.el.appendChild(this.card);
-
-      // Gear header (top-right)
-      const gearHeader = document.createElement('div');
-      gearHeader.className = 'blockr-gear-header';
-      this.gearBtn = document.createElement('button');
-      this.gearBtn.type = 'button';
-      this.gearBtn.className = 'blockr-gear-btn';
-      this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Options';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
-      gearHeader.appendChild(this.gearBtn);
-      this.card.appendChild(gearHeader);
 
       // Column picker
       const pickerWrap = document.createElement('div');
@@ -67,7 +51,7 @@
       });
       this._multiSelect.el.classList.add('blockr-select--bordered');
 
-      // Toggle bar: include/exclude pill
+      // Toggle bar: include/exclude pill + distinct pill
       const toggleBar = document.createElement('div');
       toggleBar.className = 'blockr-add-row';
 
@@ -84,55 +68,20 @@
       });
       toggleBar.appendChild(this.excludeBtn);
 
-      this.card.appendChild(toggleBar);
-
-      // Settings popover
-      this._buildPopover();
-
-      // Close popover on outside click
-      document.addEventListener('click', (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
-          this._closePopover();
-        }
-      });
-    }
-
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
-
       this._distinctToggle = document.createElement('button');
       this._distinctToggle.type = 'button';
-      this._distinctToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._distinctToggle.textContent = 'Keep all rows';
+      this._distinctToggle.className = 'blockr-pill sb-toggle';
+      this._distinctToggle.textContent = 'all rows';
       this._distinctToggle.title = 'Toggle deduplication of rows based on selected columns';
       this._distinctToggle.addEventListener('click', () => {
         this.distinct = !this.distinct;
-        this._distinctToggle.textContent = this.distinct ? 'Keep distinct rows only' : 'Keep all rows';
-        this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
+        this._distinctToggle.textContent = this.distinct ? 'distinct rows' : 'all rows';
+        this._distinctToggle.classList.toggle('sb-toggle-active', this.distinct);
         this._autoSubmit();
       });
-      this.popoverEl.appendChild(this._distinctToggle);
-      this.card.appendChild(this.popoverEl);
-    }
+      toggleBar.appendChild(this._distinctToggle);
 
-    _togglePopover() {
-      this._popoverOpen ? this._closePopover() : this._openPopover();
-    }
-
-    _openPopover() {
-      this.popoverEl.style.display = 'block';
-      this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      this.popoverEl.style.display = 'none';
-      this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      this.card.appendChild(toggleBar);
     }
 
     _compose() {
@@ -153,15 +102,15 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       this.columns = (state?.columns || []).slice();
       this.exclude = !!state?.exclude;
       this.distinct = !!state?.distinct;
 
       this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
       this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
-      this._distinctToggle.textContent = this.distinct ? 'Keep distinct rows only' : 'Keep all rows';
-      this._distinctToggle.classList.toggle('blockr-popover-toggle-active', this.distinct);
+      this._distinctToggle.textContent = this.distinct ? 'distinct rows' : 'all rows';
+      this._distinctToggle.classList.toggle('sb-toggle-active', this.distinct);
 
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnNames, this.columns);
@@ -231,7 +180,7 @@
   Shiny.addCustomMessageHandler('select-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }

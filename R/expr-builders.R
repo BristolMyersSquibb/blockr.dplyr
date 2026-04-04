@@ -170,27 +170,27 @@ make_expr_part <- function(cond) {
 #' @param by Character vector of grouping column names (optional)
 #' @return A language object
 #' @noRd
-make_mutate_expr <- function(rows, by = character()) {
-  rows <- Filter(
+make_mutate_expr <- function(mutations, by = character()) {
+  mutations <- Filter(
     function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""),
-    rows
+    mutations
   )
 
-  if (length(rows) == 0) {
+  if (length(mutations) == 0) {
     return(bbquote(.(data)))
   }
 
-  args <- lapply(rows, function(r) {
+  args <- lapply(mutations, function(r) {
     tryCatch(str2lang(r$expr), error = function(e) NULL)
   })
-  names(args) <- vapply(rows, function(r) r$name, character(1))
+  names(args) <- vapply(mutations, function(r) r$name, character(1))
   args <- Filter(Negate(is.null), args)
 
   if (length(args) == 0) return(bbquote(.(data)))
 
   expr <- quote(dplyr::mutate(.(data)))
   for (nm in names(args)) {
-    expr[[backtick_if_needed(nm)]] <- args[[nm]]
+    expr[[nm]] <- args[[nm]]
   }
 
   # Add .by if grouping columns
@@ -237,7 +237,7 @@ make_summarize_expr <- function(summaries, by = character()) {
   expr <- quote(dplyr::summarize(.(data)))
 
   for (s in summaries) {
-    nm <- backtick_if_needed(s$name %||% "")
+    nm <- s$name %||% ""
     if (!nzchar(nm)) next
 
     if (identical(s$type, "simple")) {
@@ -424,7 +424,7 @@ make_rename_expr <- function(renames) {
   for (new_nm in names(renames)) {
     old_nm <- renames[[new_nm]]
     if (nzchar(new_nm) && nzchar(old_nm)) {
-      expr[[backtick_if_needed(new_nm)]] <- as.name(old_nm)
+      expr[[new_nm]] <- as.name(old_nm)
     }
   }
 
@@ -478,8 +478,9 @@ make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
   }
 
   if (length(by) > 0) {
+    by <- as.character(unlist(by))
     by_syms <- lapply(by, as.name)
-    expr[[".by"]] <- as.call(c(quote(c), by_syms))
+    expr[["by"]] <- as.call(c(quote(c), by_syms))
   }
 
   bbquote(.(expr), list(expr = expr))
@@ -528,7 +529,12 @@ make_pivot_wider_expr <- function(
     id_cols = character(),
     values_fill = NULL,
     names_sep = "_",
-    names_prefix = "") {
+    names_prefix = "",
+    values_fn = NULL) {
+  names_from <- as.character(unlist(names_from))
+  values_from <- as.character(unlist(values_from))
+  id_cols <- as.character(unlist(id_cols))
+
   if (length(names_from) == 0 || length(values_from) == 0) {
     return(bbquote(.(data)))
   }
@@ -562,6 +568,15 @@ make_pivot_wider_expr <- function(
   }
   if (!identical(names_sep, "_")) expr[["names_sep"]] <- names_sep
   if (nzchar(names_prefix %||% "")) expr[["names_prefix"]] <- names_prefix
+  if (nzchar(values_fn %||% "")) {
+    # Namespace common aggregation functions so they resolve in eval context
+    dplyr_fns <- c("first", "last", "n_distinct")
+    if (values_fn %in% dplyr_fns) {
+      expr[["values_fn"]] <- str2lang(paste0("dplyr::", values_fn))
+    } else {
+      expr[["values_fn"]] <- str2lang(values_fn)
+    }
+  }
 
   bbquote(.(expr), list(expr = expr))
 }
@@ -572,16 +587,16 @@ make_pivot_wider_expr <- function(
 
 #' Build a tidyr::unite expression
 #' @noRd
-make_unite_expr <- function(col, cols, sep = "_", # nolint: object_name_linter.
+make_unite_expr <- function(col, cols, sep = "_",
                             remove = TRUE,
-                            na.rm = FALSE) { # nolint: object_name_linter.
+                            na_rm = FALSE) {
   if (length(cols) == 0 || !nzchar(col %||% "")) return(bbquote(.(data)))
 
   col_syms <- lapply(cols, as.name)
   expr <- as.call(c(quote(tidyr::unite), quote(.(data)), col, col_syms))
   if (!identical(sep, "_")) expr[["sep"]] <- sep
   if (!isTRUE(remove)) expr[["remove"]] <- FALSE
-  if (isTRUE(na.rm)) expr[["na.rm"]] <- TRUE
+  if (isTRUE(na_rm)) expr[["na.rm"]] <- TRUE
 
   bbquote(.(expr), list(expr = expr))
 }
@@ -595,6 +610,7 @@ make_unite_expr <- function(col, cols, sep = "_", # nolint: object_name_linter.
 make_separate_expr <- function(col, into, sep = "[^[:alnum:]]+",
                                remove = TRUE, convert = FALSE,
                                extra = "warn", fill = "warn") {
+  into <- as.character(unlist(into))
   if (!nzchar(col %||% "") || length(into) == 0) return(bbquote(.(data)))
 
   expr <- as.call(list(

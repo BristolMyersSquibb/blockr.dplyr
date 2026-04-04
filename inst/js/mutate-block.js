@@ -200,13 +200,13 @@
     }
 
     _compose() {
-      const columns = [];
+      const mutations = [];
       for (const r of this.rows) {
         const name = (r.nameInput.value || '').trim();
         const expr = r.exprInput ? r.exprInput.getValue() : '';
-        columns.push({ name, expr });
+        mutations.push({ name, expr });
       }
-      return { columns, by: this.byValues || [] };
+      return { mutations, by: this.byValues || [] };
     }
 
     _submit() {
@@ -219,7 +219,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       // Clear existing rows
       while (this.rows.length > 0) {
         const r = this.rows[0];
@@ -229,22 +229,23 @@
       }
 
       // Rebuild from state
-      const columns = state?.columns || [];
-      if (columns.length === 0) {
+      const mutations = state?.mutations || [];
+      if (mutations.length === 0) {
         this._addRow('', '');
       } else {
-        for (const col of columns) {
-          this._addRow(col.name || '', col.expr || '');
+        for (const m of mutations) {
+          this._addRow(m.name || '', m.expr || '');
         }
-        // Mark all confirm buttons as confirmed and auto-submit
+        // Mark all confirm buttons as confirmed
         for (const r of this.rows) {
           r.confirmBtn?.classList.add('confirmed');
           if (r.confirmBtn) r.confirmBtn.innerHTML = Blockr.icons.confirm;
         }
-        this._submit();
+        if (!silent) this._submit();
       }
-      // Update group by
-      this.byValues = (state?.by || []).slice();
+      // Update group by (ensure array — R may send scalar string)
+      const by = state?.by || [];
+      this.byValues = Array.isArray(by) ? by.slice() : [by];
       if (this._bySelect) {
         this._bySelect.setOptions(this.columnNames, this.byValues);
       }
@@ -315,20 +316,40 @@
     }
   });
 
-  // Set initial rows handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('mutate-set-rows', (msg) => {
+  // Set initial mutations handler (global — dispatches by msg.id)
+  Shiny.addCustomMessageHandler('mutate-set-mutations', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState({ columns: msg.rows });
+      el._block.setState({ mutations: msg.mutations });
     } else if (el) {
-      el._pendingState = { columns: msg.rows };
+      el._pendingState = { mutations: msg.mutations };
     } else {
       let attempts = 0;
       const t = setInterval(() => {
         attempts++;
         const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState({ columns: msg.rows }); clearInterval(t); }
-        else if (el2) { el2._pendingState = { columns: msg.rows }; clearInterval(t); }
+        if (el2?._block) { el2._block.setState({ mutations: msg.mutations }); clearInterval(t); }
+        else if (el2) { el2._pendingState = { mutations: msg.mutations }; clearInterval(t); }
+        if (attempts > 50) clearInterval(t);
+      }, 100);
+    }
+  });
+
+  // External control state update handler (global — dispatches by msg.id)
+  // silent=true: R already has the state, don't echo back via _submit()
+  Shiny.addCustomMessageHandler('mutate-block-update', (msg) => {
+    const el = document.getElementById(msg.id);
+    if (el?._block) {
+      el._block.setState(msg.state, true);
+    } else if (el) {
+      el._pendingState = msg.state;
+    } else {
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        const el2 = document.getElementById(msg.id);
+        if (el2?._block) { el2._block.setState(msg.state); clearInterval(t); }
+        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
         if (attempts > 50) clearInterval(t);
       }, 100);
     }

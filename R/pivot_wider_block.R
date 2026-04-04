@@ -69,12 +69,13 @@ new_pivot_wider_block <- function(
         observeEvent(input$pivot_wider_input, {
           self_write$active <- TRUE
           r_state(input$pivot_wider_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "pivot-wider-block-update",
@@ -92,7 +93,8 @@ new_pivot_wider_block <- function(
               s$id_cols %||% list(),
               s$values_fill,
               s$names_sep %||% "_",
-              s$names_prefix %||% ""
+              s$names_prefix %||% "",
+              s$values_fn %||% ""
             )
           }),
           state = list(state = r_state)

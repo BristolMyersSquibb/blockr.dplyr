@@ -55,12 +55,13 @@ new_arrange_block <- function(
         observeEvent(input$arrange_input, {
           self_write$active <- TRUE
           r_state(input$arrange_input)
+          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            self_write$active <- FALSE
+            # Skip: change originated from JS input
           } else {
             session$sendCustomMessage(
               "arrange-block-update",

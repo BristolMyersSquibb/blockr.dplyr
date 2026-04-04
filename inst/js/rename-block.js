@@ -162,7 +162,7 @@
       return this._compose();
     }
 
-    setState(state) {
+    setState(state, silent) {
       // Clear existing rows
       while (this.rows.length > 0) {
         const row = this.rows[0];
@@ -252,7 +252,7 @@
   Shiny.addCustomMessageHandler('rename-block-update', (msg) => {
     const el = document.getElementById(msg.id);
     if (el?._block) {
-      el._block.setState(msg.state);
+      el._block.setState(msg.state, true);
     } else if (el) {
       el._pendingState = msg.state;
     }
