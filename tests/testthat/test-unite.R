@@ -1,434 +1,137 @@
-# Basic construction tests
-test_that("unite block constructor", {
-  blk <- new_unite_block()
-  expect_s3_class(blk, c("unite_block", "transform_block", "block"))
-})
+# Helper: evaluate a bquoted expression the same way blockr.core does.
+eval_bquoted <- function(expr, df) {
+  resolved <- do.call(bquote, list(expr, list(data = as.name("data"))))
+  eval(resolved, envir = list(data = df))
+}
 
-test_that("unite block with parameters", {
+test_that("unite block: empty cols pass data through", {
   blk <- new_unite_block(
-    col = "full_name",
-    cols = c("first", "last"),
-    sep = " "
+    state = list(
+      col = "united", cols = list(),
+      sep = "_", remove = TRUE, na_rm = FALSE
+    )
   )
-  expect_s3_class(blk, c("unite_block", "transform_block", "block"))
+
+  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), mtcars)
+    expect_equal(result, mtcars)
+  })
 })
 
-# testServer tests for data transformation
-test_that("unite basic transformation - testServer", {
-  # Create test data
-  test_data <- data.frame(
-    first_name = c("John", "Jane", "Bob"),
-    last_name = c("Doe", "Smith", "Johnson"),
-    age = c(30, 25, 35)
-  )
-
-  block <- new_unite_block(
-    col = "full_name",
-    cols = c("first_name", "last_name"),
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Should have full_name and age columns (first_name and last_name removed)
-      expect_true("full_name" %in% names(result))
-      expect_true("age" %in% names(result))
-      expect_false("first_name" %in% names(result))
-      expect_false("last_name" %in% names(result))
-      # Check combined values
-      expect_equal(result$full_name[1], "John Doe")
-      expect_equal(result$full_name[2], "Jane Smith")
-      expect_equal(result$full_name[3], "Bob Johnson")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite with custom separator - testServer", {
-  test_data <- data.frame(
-    year = c("2024", "2024", "2024"),
-    month = c("01", "02", "03"),
-    day = c("15", "20", "25")
-  )
-
-  block <- new_unite_block(
-    col = "date",
-    cols = c("year", "month", "day"),
-    sep = "-"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true("date" %in% names(result))
-      expect_equal(result$date[1], "2024-01-15")
-      expect_equal(result$date[2], "2024-02-20")
-      expect_equal(result$date[3], "2024-03-25")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite with remove=FALSE - testServer", {
-  test_data <- data.frame(
-    first = c("John", "Jane"),
-    last = c("Doe", "Smith")
-  )
-
-  block <- new_unite_block(
-    col = "full_name",
-    cols = c("first", "last"),
-    sep = " ",
-    remove = FALSE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # All columns should be present (remove = FALSE)
-      expect_true(all(c("first", "last", "full_name") %in% names(result)))
-      expect_equal(result$full_name[1], "John Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite with na.rm=TRUE - testServer", {
-  test_data <- data.frame(
-    prefix = c("Dr.", NA, "Prof."),
+test_that("unite block: combines columns into one", {
+  df <- data.frame(
     first = c("John", "Jane", "Bob"),
-    last = c("Doe", "Smith", "Johnson")
+    last = c("Doe", "Smith", "Jones"),
+    age = c(30, 25, 40),
+    stringsAsFactors = FALSE
   )
 
-  # Without NA removal
-  block_keep_na <- new_unite_block(
-    col = "full_name",
-    cols = c("prefix", "first", "last"),
-    sep = " ",
-    na.rm = FALSE
+  blk <- new_unite_block(
+    state = list(
+      col = "full_name",
+      cols = list("first", "last"),
+      sep = " ",
+      remove = TRUE,
+      na_rm = FALSE
+    )
   )
 
-  testServer(
-    blockr.core:::get_s3_method("block_server", block_keep_na),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # NA values should appear as "NA" in the string
-      expect_true(grepl("NA", result$full_name[2]))
-    },
-    args = list(x = block_keep_na, data = list(data = function() test_data))
-  )
-
-  # With NA removal
-  block_drop_na <- new_unite_block(
-    col = "full_name",
-    cols = c("prefix", "first", "last"),
-    sep = " ",
-    na.rm = TRUE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block_drop_na),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # NA values should be omitted
-      expect_equal(result$full_name[1], "Dr. John Doe")
-      expect_equal(result$full_name[2], "Jane Smith")  # No "NA" in string
-      expect_equal(result$full_name[3], "Prof. Bob Johnson")
-    },
-    args = list(x = block_drop_na, data = list(data = function() test_data))
-  )
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_true("full_name" %in% colnames(result))
+    expect_false("first" %in% colnames(result))
+    expect_false("last" %in% colnames(result))
+    expect_equal(result$full_name, c("John Doe", "Jane Smith", "Bob Jones"))
+  })
 })
 
-test_that("unite with multiple columns - testServer", {
-  test_data <- data.frame(
-    country = c("USA", "UK", "Canada"),
-    state = c("CA", "England", "ON"),
-    city = c("LA", "London", "Toronto"),
-    zip = c("90001", "SW1A", "M5H")
+test_that("unite block: remove = FALSE keeps original columns", {
+  df <- data.frame(
+    x = c("a", "b"),
+    y = c("1", "2"),
+    stringsAsFactors = FALSE
   )
 
-  block <- new_unite_block(
-    col = "location",
-    cols = c("city", "state", "country", "zip"),
-    sep = ", "
+  blk <- new_unite_block(
+    state = list(
+      col = "combined",
+      cols = list("x", "y"),
+      sep = "-",
+      remove = FALSE,
+      na_rm = FALSE
+    )
   )
 
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true("location" %in% names(result))
-      expect_equal(result$location[1], "LA, CA, USA, 90001")
-      expect_equal(result$location[2], "London, England, UK, SW1A")
-      expect_equal(result$location[3], "Toronto, ON, Canada, M5H")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_true("combined" %in% colnames(result))
+    expect_true("x" %in% colnames(result))
+    expect_true("y" %in% colnames(result))
+    expect_equal(result$combined, c("a-1", "b-2"))
+  })
 })
 
-test_that("unite with non-syntactic column names - testServer", {
-  test_data <- data.frame(
+test_that("unite block: na_rm handles NA values", {
+  df <- data.frame(
+    x = c("a", NA, "c"),
+    y = c("1", "2", NA),
+    stringsAsFactors = FALSE
+  )
+
+  blk <- new_unite_block(
+    state = list(
+      col = "combined",
+      cols = list("x", "y"),
+      sep = "_",
+      remove = TRUE,
+      na_rm = TRUE
+    )
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_equal(result$combined, c("a_1", "2", "c"))
+  })
+})
+
+test_that("unite block: state change updates separator and columns", {
+  df <- data.frame(
     a = c("x", "y"),
-    b = c("1", "2")
-  )
-  names(test_data) <- c("First Name", "Last Name")
-
-  block <- new_unite_block(
-    col = "Full Name",
-    cols = c("First Name", "Last Name"),
-    sep = " "
+    b = c("1", "2"),
+    c = c("p", "q"),
+    stringsAsFactors = FALSE
   )
 
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true("Full Name" %in% names(result))
-      expect_equal(result$`Full Name`[1], "x 1")
-      expect_equal(result$`Full Name`[2], "y 2")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite full parameter combination - testServer", {
-  test_data <- data.frame(
-    dept = c("Sales", "IT", "HR"),
-    division = c(NA, "Tech", "Admin"),
-    location = c("NYC", "SF", "LA"),
-    code = c("001", "002", "003")
+  blk <- new_unite_block(
+    state = list(
+      col = "ab",
+      cols = list("a", "b"),
+      sep = "_",
+      remove = TRUE,
+      na_rm = FALSE
+    )
   )
 
-  block <- new_unite_block(
-    col = "department_id",
-    cols = c("dept", "division", "location", "code"),
-    sep = "-",
-    remove = FALSE,
-    na.rm = TRUE
-  )
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result1 <- eval_bquoted(session$returned$expr(), df)
+    expect_equal(result1$ab, c("x_1", "y_2"))
 
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # All original columns should remain (remove = FALSE)
-      expect_true(all(c("dept", "division", "location", "code", "department_id") %in% names(result)))
-      # NA should be omitted (na.rm = TRUE)
-      expect_equal(result$department_id[1], "Sales-NYC-001")
-      expect_equal(result$department_id[2], "IT-Tech-SF-002")
-      expect_equal(result$department_id[3], "HR-Admin-LA-003")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite with underscore separator (default) - testServer", {
-  test_data <- data.frame(
-    category = c("A", "B", "C"),
-    subcategory = c("1", "2", "3"),
-    item = c("x", "y", "z")
-  )
-
-  block <- new_unite_block(
-    col = "item_id",
-    cols = c("category", "subcategory", "item")
-    # sep defaults to "_"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_equal(result$item_id[1], "A_1_x")
-      expect_equal(result$item_id[2], "B_2_y")
-      expect_equal(result$item_id[3], "C_3_z")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-# =============================================================================
-# setInputs tests - verify UI input changes produce expected output
-# =============================================================================
-
-test_that("unite - input col changes output column name - testServer", {
-  test_data <- data.frame(
-    first = c("John", "Jane"),
-    last = c("Doe", "Smith")
-  )
-
-  block <- new_unite_block(
-    col = "full_name",
-    cols = c("first", "last"),
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result
-      result <- session$returned$result()
-      expect_true("full_name" %in% names(result))
-      expect_equal(result$full_name[1], "John Doe")
-
-      # Change column name
-      expr$setInputs(col = "combined_name")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true("combined_name" %in% names(result))
-      expect_false("full_name" %in% names(result))
-      expect_equal(result$combined_name[1], "John Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite - input sep changes output separator - testServer", {
-  test_data <- data.frame(
-    year = c("2024", "2024"),
-    month = c("01", "02"),
-    day = c("15", "20")
-  )
-
-  block <- new_unite_block(
-    col = "date",
-    cols = c("year", "month", "day"),
-    sep = "-"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result with "-"
-      result <- session$returned$result()
-      expect_equal(result$date[1], "2024-01-15")
-
-      # Change separator to "/"
-      expr$setInputs(sep = "/")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_equal(result$date[1], "2024/01/15")
-      expect_equal(result$date[2], "2024/02/20")
-
-      # Change separator to space
-      expr$setInputs(sep = " ")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_equal(result$date[1], "2024 01 15")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite - input remove changes column retention - testServer", {
-  test_data <- data.frame(
-    first = c("John", "Jane"),
-    last = c("Doe", "Smith"),
-    age = c(30, 25)
-  )
-
-  block <- new_unite_block(
-    col = "full_name",
-    cols = c("first", "last"),
-    sep = " ",
-    remove = TRUE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result - columns removed
-      result <- session$returned$result()
-      expect_true("full_name" %in% names(result))
-      expect_false("first" %in% names(result))
-      expect_false("last" %in% names(result))
-
-      # Change remove to FALSE
-      expr$setInputs(remove = FALSE)
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true("full_name" %in% names(result))
-      expect_true("first" %in% names(result))
-      expect_true("last" %in% names(result))
-      expect_equal(result$full_name[1], "John Doe")
-      expect_equal(result$first[1], "John")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("unite - input na_rm changes NA handling - testServer", {
-  test_data <- data.frame(
-    prefix = c("Dr.", NA, "Prof."),
-    name = c("John", "Jane", "Bob")
-  )
-
-  block <- new_unite_block(
-    col = "full",
-    cols = c("prefix", "name"),
-    sep = " ",
-    na.rm = FALSE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result - NA included as "NA"
-      result <- session$returned$result()
-      expect_true(grepl("NA", result$full[2]))
-
-      # Change na_rm to TRUE
-      expr$setInputs(na_rm = TRUE)
-      session$flushReact()
-      result <- session$returned$result()
-      # NA should be omitted
-      expect_equal(result$full[1], "Dr. John")
-      expect_equal(result$full[2], "Jane")  # No "NA" prefix
-      expect_equal(result$full[3], "Prof. Bob")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
+    # Change to unite all three columns with different separator
+    session$returned$state$state(list(
+      col = "abc",
+      cols = list("a", "b", "c"),
+      sep = "-",
+      remove = TRUE,
+      na_rm = FALSE
+    ))
+    session$flushReact()
+    result2 <- eval_bquoted(session$returned$expr(), df)
+    expect_true("abc" %in% colnames(result2))
+    expect_equal(result2$abc, c("x-1-p", "y-2-q"))
+  })
 })

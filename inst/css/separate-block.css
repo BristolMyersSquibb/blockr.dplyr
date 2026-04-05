@@ -1,0 +1,57 @@
+/* SeparateBlock — separate block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.separate-block-container { width: 100%; }
+
+.spb-card {
+  overflow: visible;
+  position: relative;
+}
+
+/* Column picker wrapper */
+.spb-col-wrap {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+/* Input row */
+.spb-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.spb-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.spb-field-narrow {
+  flex: 0 0 140px;
+  min-width: 100px;
+}
+
+.spb-text-input {
+  width: 100%;
+  height: 30px;
+  padding: 4px 10px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  background: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 6px;
+  color: var(--blockr-color-text-primary, #111827);
+  box-sizing: border-box;
+}
+
+.spb-text-input:focus {
+  outline: none;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.spb-text-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+/* Gear button and popover styles are in blockr-blocks.css (shared) */

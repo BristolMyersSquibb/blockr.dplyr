@@ -1,0 +1,26 @@
+/* ArrangeBlock — arrange block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.arrange-block-container { width: 100%; }
+
+.ab-card { overflow: visible; }
+
+/* Column selectize wrapper */
+.ab-col-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Direction toggle pill */
+.ab-dir-btn {
+  flex-shrink: 0;
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  min-width: 38px;
+}
+
+.ab-dir-desc {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
+}

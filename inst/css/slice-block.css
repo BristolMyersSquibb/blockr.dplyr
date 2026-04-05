@@ -1,0 +1,58 @@
+/* SliceBlock — slice block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.slice-block-container { width: 100%; }
+
+.slb-card {
+  overflow: visible;
+  position: relative;
+}
+
+/* Type selector — first element in row, gets border-right separator */
+.slb-type-wrap {
+  width: 140px;
+  min-width: 100px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+/* n input — fills remaining space inside the row */
+.slb-n-wrap {
+  flex: 1;
+  min-width: 60px;
+}
+
+/* n/% mode toggle pill */
+.slb-mode-pill {
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.slb-mode-active {
+  color: var(--blockr-color-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Rows text input (custom positions) — fills same space as n input */
+.slb-rows-wrap {
+  flex: 1;
+  min-width: 80px;
+}
+
+/* Gear button and popover styles are in blockr-blocks.css (shared) */
+
+/* --- Group by section (summarize pattern) --- */
+.slb-by-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.slb-by-wrap {
+  flex: 1;
+  min-width: 0;
+}

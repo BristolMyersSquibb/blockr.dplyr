@@ -1,0 +1,104 @@
+/* =========================================================================
+   BlockrInput — code input with autocomplete
+   ========================================================================= */
+
+.blockr-input {
+  position: relative;
+  width: 100%;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* --- Input field --- */
+.blockr-input__field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: var(--blockr-color-text-primary, #111827);
+  padding: 2px 4px;
+  margin: 0;
+  box-sizing: border-box;
+  resize: none; /* textarea */
+}
+
+.blockr-input__field::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+/* Bordered modifier for standalone use.
+   Matches blockr.dock's .form-control sizing. */
+.blockr-input--bordered .blockr-input__field {
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.blockr-input--bordered .blockr-input__field:focus {
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* --- Autocomplete popup --- */
+.blockr-input__popup {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+}
+
+.blockr-input--popup-open .blockr-input__popup {
+  display: block;
+}
+
+/* --- Completion items --- */
+.blockr-input__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.blockr-input__item--highlighted {
+  background: var(--blockr-grey-50, #f9fafb);
+}
+
+.blockr-input__item:hover {
+  background: var(--blockr-grey-50, #f9fafb);
+}
+
+.blockr-input__item-text {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.8125rem;
+  color: var(--blockr-color-text-primary, #111827);
+}
+
+.blockr-input__item-parens {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.8125rem;
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+.blockr-input__item-meta {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--blockr-grey-400, #9ca3af);
+  text-transform: lowercase;
+}

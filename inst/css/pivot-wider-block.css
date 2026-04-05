@@ -1,0 +1,17 @@
+/* PivotWiderBlock — pivot wider block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.pivot-wider-block-container { width: 100%; }
+
+.pwb-card {
+  overflow: visible;
+  position: relative;
+}
+
+/* Column picker wrappers */
+.pwb-picker-wrap {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+/* Gear button and popover styles are in blockr-blocks.css (shared) */

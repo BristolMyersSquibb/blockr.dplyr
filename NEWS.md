@@ -1,10 +1,11 @@
 # blockr.dplyr 0.1.0.9001
 
-## UI Improvements
-
-- Cleaner delete buttons with Bootstrap Icons
-- Modernized ACE editor styling
-- Filter block auto-selects first column on startup
+- All block UIs rewritten as JS-driven components for instant feedback.
+- Filter, summarize, and mutate blocks each unify no-code and expression
+  modes in a single UI.
+- Filter block supports value, numeric, and expression conditions, plus
+  a `preserveOrder` option.
+- Summarize block extensible via `blockr.dplyr.summary_functions` option.
 
 # blockr.dplyr 0.1.0
 

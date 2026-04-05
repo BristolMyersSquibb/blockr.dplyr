@@ -20,7 +20,7 @@ serve(
       filter  = new_filter_block(),
       select  = new_select_block(),
       arrange = new_arrange_block(),
-      slice   = new_slice_block(type = "head", n = 5)
+      slice   = new_slice_block(state = list(type = "head", n = 5L))
     ),
     links = c(
       new_link("data",    "filter",  "data"),

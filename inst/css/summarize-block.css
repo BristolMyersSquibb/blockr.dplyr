@@ -1,0 +1,77 @@
+/* SummarizeBlock — summarize block specific styles */
+/* Shared row/pill/confirm styles come from blockr-blocks.css */
+
+.summarize-block-container { width: 100%; }
+
+.sb-card { overflow: visible; }
+
+/* --- Name input — plain text field, left side with separator --- */
+.sb-name-input {
+  flex: 1;
+  min-width: 60px;
+  height: 30px;
+  padding: 4px 8px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  color: var(--blockr-color-text-primary, #111827);
+  outline: none;
+}
+
+.sb-name-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+/* --- Equals sign --- */
+.sb-eq-sign {
+  color: var(--blockr-grey-400, #9ca3af);
+  font-size: 13px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* --- "of" label between func and col --- */
+.sb-of-label {
+  color: var(--blockr-grey-400, #9ca3af);
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  flex-shrink: 0;
+  padding: 0 2px;
+  user-select: none;
+}
+
+/* --- Function selectize wrapper --- */
+.sb-func-wrap {
+  flex: 1;
+  min-width: 80px;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+/* --- Column selectize wrapper --- */
+.sb-col-wrap {
+  flex: 1;
+  min-width: 80px;
+}
+
+/* --- Expression row code area --- */
+.sb-row-expr .sb-expr-code {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Group by section --- */
+.sb-by-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.sb-by-wrap {
+  flex: 1;
+  min-width: 0;
+}

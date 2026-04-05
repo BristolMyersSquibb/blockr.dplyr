@@ -1,647 +1,256 @@
-# Basic construction tests
-test_that("separate block constructor", {
-  blk <- new_separate_block()
-  expect_s3_class(blk, c("separate_block", "transform_block", "block"))
-})
+# Helper: evaluate a bquoted expression the same way blockr.core does.
+eval_bquoted <- function(expr, df) {
+  resolved <- do.call(bquote, list(expr, list(data = as.name("data"))))
+  eval(resolved, envir = list(data = df))
+}
 
-test_that("separate block with parameters", {
+test_that("separate block: empty col passes data through", {
   blk <- new_separate_block(
-    col = "full_name",
-    into = c("first", "last"),
-    sep = " "
+    state = list(
+      col = "", into = list(),
+      sep = "[^[:alnum:]]+", remove = TRUE,
+      convert = FALSE, extra = "warn", fill = "warn"
+    )
   )
-  expect_s3_class(blk, c("separate_block", "transform_block", "block"))
+
+  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), mtcars)
+    expect_equal(result, mtcars)
+  })
 })
 
-# testServer tests for data transformation
-test_that("separate basic transformation - testServer", {
-  # Create test data
-  test_data <- data.frame(
-    full_name = c("John Doe", "Jane Smith", "Bob Johnson"),
-    age = c(30, 25, 35)
+test_that("separate block: splits column into multiple", {
+  df <- data.frame(
+    x = c("a-1", "b-2", "c-3"),
+    stringsAsFactors = FALSE
   )
 
-  block <- new_separate_block(
-    col = "full_name",
-    into = c("first_name", "last_name"),
-    sep = " "
+  blk <- new_separate_block(
+    state = list(
+      col = "x",
+      into = c("letter", "number"),
+      sep = "-",
+      remove = TRUE,
+      convert = FALSE,
+      extra = "warn",
+      fill = "warn"
+    )
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_true("letter" %in% colnames(result))
+    expect_true("number" %in% colnames(result))
+    expect_false("x" %in% colnames(result))
+    expect_equal(result$letter, c("a", "b", "c"))
+    expect_equal(result$number, c("1", "2", "3"))
+  })
+})
+
+test_that("separate block: convert converts types", {
+  df <- data.frame(
+    x = c("a-1", "b-2", "c-3"),
+    stringsAsFactors = FALSE
+  )
+
+  blk <- new_separate_block(
+    state = list(
+      col = "x",
+      into = c("letter", "number"),
+      sep = "-",
+      remove = TRUE,
+      convert = TRUE,
+      extra = "warn",
+      fill = "warn"
+    )
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_type(result$number, "integer")
+    expect_equal(result$number, c(1L, 2L, 3L))
+  })
+})
+
+test_that("separate block: remove = FALSE keeps original column", {
+  df <- data.frame(
+    x = c("a-1", "b-2"),
+    stringsAsFactors = FALSE
+  )
+
+  blk <- new_separate_block(
+    state = list(
+      col = "x",
+      into = c("letter", "number"),
+      sep = "-",
+      remove = FALSE,
+      convert = FALSE,
+      extra = "warn",
+      fill = "warn"
+    )
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), df)
+    expect_true("x" %in% colnames(result))
+    expect_true("letter" %in% colnames(result))
+    expect_true("number" %in% colnames(result))
+  })
+})
+
+test_that("separate block: state change updates separator and column names", {
+  df <- data.frame(
+    data = c("2024_01_15", "2024_02_20"),
+    stringsAsFactors = FALSE
+  )
+
+  blk <- new_separate_block(
+    state = list(
+      col = "data",
+      into = c("year", "month", "day"),
+      sep = "_",
+      remove = TRUE,
+      convert = FALSE
+    )
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    result1 <- eval_bquoted(session$returned$expr(), df)
+    expect_equal(ncol(result1), 3)
+    expect_equal(result1$year, c("2024", "2024"))
+    expect_equal(result1$day, c("15", "20"))
+
+    # Change to separate into 2 columns with different sep
+    session$returned$state$state(list(
+      col = "data",
+      into = c("part1", "part2"),
+      sep = "_",
+      remove = TRUE,
+      convert = FALSE
+    ))
+    session$flushReact()
+    result2 <- eval_bquoted(session$returned$expr(), df)
+    expect_equal(ncol(result2), 2)
+    expect_true("part1" %in% colnames(result2))
+    expect_true("part2" %in% colnames(result2))
+  })
+})
+
+# =========================================================================
+# Join block (binary, needs special handling with x and y)
+# =========================================================================
+
+test_that("join block: empty keys passes through x", {
+  df_x <- data.frame(id = 1:3, val_x = c("a", "b", "c"),
+                     stringsAsFactors = FALSE)
+  df_y <- data.frame(id = 2:4, val_y = c("x", "y", "z"),
+                     stringsAsFactors = FALSE)
+
+  blk <- new_join_block(
+    state = list(
+      type = "left_join", keys = list(), exprs = list(),
+      suffix_x = ".x", suffix_y = ".y"
+    )
   )
 
   testServer(
-    blockr.core:::get_s3_method("block_server", block),
+    blk$expr_server,
+    args = list(x = reactive(df_x), y = reactive(df_y)),
     {
       session$flushReact()
-      result <- session$returned$result()
-
+      expr_val <- session$returned$expr()
+      # With no keys, expression is just .(x) — pass-through
+      resolved <- do.call(bquote, list(
+        expr_val,
+        list(x = as.name("x"), y = as.name("y"))
+      ))
+      result <- eval(resolved, envir = list(x = df_x, y = df_y))
       expect_true(is.data.frame(result))
-      # Should have first_name, last_name, and age columns
-      expect_true(all(c("first_name", "last_name", "age") %in% names(result)))
-      # full_name should be removed (default remove = TRUE)
-      expect_false("full_name" %in% names(result))
-      # Check separated values
-      expect_equal(result$first_name[1], "John")
-      expect_equal(result$last_name[1], "Doe")
-      expect_equal(result$first_name[2], "Jane")
-      expect_equal(result$last_name[2], "Smith")
-    },
-    args = list(x = block, data = list(data = function() test_data))
+      expect_equal(nrow(result), 3)
+      expect_equal(colnames(result), colnames(df_x))
+    }
   )
 })
 
-test_that("separate with custom separator - testServer", {
-  test_data <- data.frame(
-    date_string = c("2024-01-15", "2024-02-20", "2024-03-25")
-  )
+test_that("join block: equi-join with key", {
+  df_x <- data.frame(id = 1:3, val_x = c("a", "b", "c"),
+                     stringsAsFactors = FALSE)
+  df_y <- data.frame(id = 2:4, val_y = c("x", "y", "z"),
+                     stringsAsFactors = FALSE)
 
-  block <- new_separate_block(
-    col = "date_string",
-    into = c("year", "month", "day"),
-    sep = "-"
+  blk <- new_join_block(
+    state = list(
+      type = "inner_join",
+      keys = list(list(xCol = "id", op = "==", yCol = "id")),
+      exprs = list(),
+      suffix_x = ".x", suffix_y = ".y"
+    )
   )
 
   testServer(
-    blockr.core:::get_s3_method("block_server", block),
+    blk$expr_server,
+    args = list(x = reactive(df_x), y = reactive(df_y)),
     {
       session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true(all(c("year", "month", "day") %in% names(result)))
-      expect_equal(result$year[1], "2024")
-      expect_equal(result$month[1], "01")
-      expect_equal(result$day[1], "15")
-      expect_equal(result$year[2], "2024")
-      expect_equal(result$month[2], "02")
-      expect_equal(result$day[2], "20")
-    },
-    args = list(x = block, data = list(data = function() test_data))
+      expr_val <- session$returned$expr()
+      resolved <- do.call(bquote, list(
+        expr_val,
+        list(x = as.name("x"), y = as.name("y"))
+      ))
+      result <- eval(resolved, envir = list(x = df_x, y = df_y))
+      # Inner join: only matching rows (id 2 and 3)
+      expect_equal(nrow(result), 2)
+      expect_true(all(result$id %in% c(2, 3)))
+    }
   )
 })
 
-test_that("separate with remove=FALSE - testServer", {
-  test_data <- data.frame(
-    full_name = c("John Doe", "Jane Smith"),
-    id = c(1, 2)
+test_that("join block: state change switches join type", {
+  df_x <- data.frame(id = 1:3, val_x = c("a", "b", "c"),
+                     stringsAsFactors = FALSE)
+  df_y <- data.frame(id = 2:4, val_y = c("x", "y", "z"),
+                     stringsAsFactors = FALSE)
+
+  blk <- new_join_block(
+    state = list(
+      type = "inner_join",
+      keys = list(list(xCol = "id", op = "==", yCol = "id")),
+      exprs = list(),
+      suffix_x = ".x", suffix_y = ".y"
+    )
   )
 
-  block <- new_separate_block(
-    col = "full_name",
-    into = c("first", "last"),
-    sep = " ",
-    remove = FALSE
-  )
+  eval_join <- function(expr_val) {
+    resolved <- do.call(bquote, list(
+      expr_val,
+      list(x = as.name("x"), y = as.name("y"))
+    ))
+    eval(resolved, envir = list(x = df_x, y = df_y))
+  }
 
   testServer(
-    blockr.core:::get_s3_method("block_server", block),
+    blk$expr_server,
+    args = list(x = reactive(df_x), y = reactive(df_y)),
     {
       session$flushReact()
-      result <- session$returned$result()
+      result1 <- eval_join(session$returned$expr())
+      expect_equal(nrow(result1), 2)  # inner join
 
-      expect_true(is.data.frame(result))
-      # All columns should be present (remove = FALSE)
-      expect_true(all(c("full_name", "first", "last", "id") %in% names(result)))
-      expect_equal(result$full_name[1], "John Doe")
-      expect_equal(result$first[1], "John")
-      expect_equal(result$last[1], "Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with convert=TRUE - testServer", {
-  test_data <- data.frame(
-    data_string = c("10-20", "30-40", "50-60")
-  )
-
-  block <- new_separate_block(
-    col = "data_string",
-    into = c("min_val", "max_val"),
-    sep = "-",
-    convert = TRUE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
+      # Switch to full join
+      session$returned$state$state(list(
+        type = "full_join",
+        keys = list(list(xCol = "id", op = "==", yCol = "id")),
+        exprs = list(),
+        suffix_x = ".x", suffix_y = ".y"
+      ))
       session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # With convert=TRUE, numeric strings should be converted to integers
-      expect_true(is.numeric(result$min_val))
-      expect_true(is.numeric(result$max_val))
-      expect_equal(result$min_val[1], 10)
-      expect_equal(result$max_val[1], 20)
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with regex separator - testServer", {
-  test_data <- data.frame(
-    mixed_col = c("a-b", "c_d", "e.f")
-  )
-
-  # Use regex to match any of: hyphen, underscore, or period
-  block <- new_separate_block(
-    col = "mixed_col",
-    into = c("col1", "col2"),
-    sep = "[-_.]"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_equal(result$col1[1], "a")
-      expect_equal(result$col2[1], "b")
-      expect_equal(result$col1[2], "c")
-      expect_equal(result$col2[2], "d")
-      expect_equal(result$col1[3], "e")
-      expect_equal(result$col2[3], "f")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with extra='drop' - testServer", {
-  test_data <- data.frame(
-    address = c("123 Main St Apt 4", "456 Oak Ave")
-  )
-
-  block <- new_separate_block(
-    col = "address",
-    into = c("number", "street"),
-    sep = " ",
-    extra = "drop"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Extra pieces should be dropped silently
-      expect_equal(result$number[1], "123")
-      expect_equal(result$street[1], "Main")
-      expect_equal(result$number[2], "456")
-      expect_equal(result$street[2], "Oak")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with extra='merge' - testServer", {
-  test_data <- data.frame(
-    address = c("123 Main St Apt 4", "456 Oak Ave Unit 2B")
-  )
-
-  block <- new_separate_block(
-    col = "address",
-    into = c("number", "street", "rest"),
-    sep = " ",
-    extra = "merge"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Extra pieces should be merged into the last column
-      expect_equal(result$number[1], "123")
-      expect_equal(result$street[1], "Main")
-      expect_equal(result$rest[1], "St Apt 4")
-      expect_equal(result$number[2], "456")
-      expect_equal(result$street[2], "Oak")
-      expect_equal(result$rest[2], "Ave Unit 2B")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with fill='right' - testServer", {
-  test_data <- data.frame(
-    name = c("John Doe Smith", "Jane", "Bob Johnson")
-  )
-
-  block <- new_separate_block(
-    col = "name",
-    into = c("first", "middle", "last"),
-    sep = " ",
-    fill = "right"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Row 2 has only one piece, should fill with NA on the right
-      expect_equal(result$first[2], "Jane")
-      expect_true(is.na(result$middle[2]))
-      expect_true(is.na(result$last[2]))
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with fill='left' - testServer", {
-  test_data <- data.frame(
-    name = c("John Doe Smith", "Jane", "Bob Johnson")
-  )
-
-  block <- new_separate_block(
-    col = "name",
-    into = c("first", "middle", "last"),
-    sep = " ",
-    fill = "left"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Row 2 has only one piece, should fill with NA on the left
-      expect_true(is.na(result$first[2]))
-      expect_true(is.na(result$middle[2]))
-      expect_equal(result$last[2], "Jane")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with non-syntactic column names - testServer", {
-  test_data <- data.frame(
-    a = c("x y", "a b")
-  )
-  names(test_data) <- c("Full Name")
-
-  block <- new_separate_block(
-    col = "Full Name",
-    into = c("First Name", "Last Name"),
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true("First Name" %in% names(result))
-      expect_true("Last Name" %in% names(result))
-      expect_equal(result$`First Name`[1], "x")
-      expect_equal(result$`Last Name`[1], "y")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with default regex separator - testServer", {
-  test_data <- data.frame(
-    mixed = c("a-b", "c_d", "e.f", "g h")
-  )
-
-  # Default sep = "[^[:alnum:]]+" matches any non-alphanumeric
-  block <- new_separate_block(
-    col = "mixed",
-    into = c("col1", "col2")
-    # sep defaults to "[^[:alnum:]]+"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # All rows should be separated correctly by the default regex
-      expect_equal(result$col1[1], "a")
-      expect_equal(result$col2[1], "b")
-      expect_equal(result$col1[2], "c")
-      expect_equal(result$col2[2], "d")
-      expect_equal(result$col1[3], "e")
-      expect_equal(result$col2[3], "f")
-      expect_equal(result$col1[4], "g")
-      expect_equal(result$col2[4], "h")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate full parameter combination - testServer", {
-  test_data <- data.frame(
-    product_data = c("A1-100-red", "B2-200", "C3-300-blue-large"),
-    id = c(1, 2, 3)
-  )
-
-  block <- new_separate_block(
-    col = "product_data",
-    into = c("code", "price", "details"),
-    sep = "-",
-    remove = FALSE,
-    convert = FALSE,
-    extra = "merge",
-    fill = "right"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      # Original column should remain (remove = FALSE)
-      expect_true("product_data" %in% names(result))
-      # Row 1: Normal case
-      expect_equal(result$code[1], "A1")
-      expect_equal(result$price[1], "100")
-      expect_equal(result$details[1], "red")
-      # Row 2: Missing piece, should fill right with NA
-      expect_equal(result$code[2], "B2")
-      expect_equal(result$price[2], "200")
-      expect_true(is.na(result$details[2]))
-      # Row 3: Extra pieces, should merge into last column
-      expect_equal(result$code[3], "C3")
-      expect_equal(result$price[3], "300")
-      expect_equal(result$details[3], "blue-large")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate with comma-separated string for into parameter - testServer", {
-  test_data <- data.frame(
-    full_name = c("John Doe", "Jane Smith")
-  )
-
-  # Test that into can be specified as comma-separated string
-  block <- new_separate_block(
-    col = "full_name",
-    into = "first_name, last_name",  # Single string with comma
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      session$flushReact()
-      result <- session$returned$result()
-
-      expect_true(is.data.frame(result))
-      expect_true(all(c("first_name", "last_name") %in% names(result)))
-      expect_equal(result$first_name[1], "John")
-      expect_equal(result$last_name[1], "Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-# =============================================================================
-# setInputs tests - verify UI input changes produce expected output
-# =============================================================================
-
-test_that("separate - input col changes which column is separated - testServer", {
-  test_data <- data.frame(
-    name = c("John Doe", "Jane Smith"),
-    email = c("john@example.com", "jane@example.com")
-  )
-
-  block <- new_separate_block(
-    col = "name",
-    into = c("first", "second"),
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result - separating name
-      result <- session$returned$result()
-      expect_equal(result$first[1], "John")
-      expect_equal(result$second[1], "Doe")
-
-      # Change to separate email column
-      expr$setInputs(col = "email", sep = "@")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_equal(result$first[1], "john")
-      expect_equal(result$second[1], "example.com")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input sep changes separator - testServer", {
-  test_data <- data.frame(
-    data_col = c("2024-01-15", "2024-02-20")
-  )
-
-  block <- new_separate_block(
-    col = "data_col",
-    into = c("year", "month", "day"),
-    sep = "-"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result with "-"
-      result <- session$returned$result()
-      expect_equal(result$year[1], "2024")
-      expect_equal(result$month[1], "01")
-      expect_equal(result$day[1], "15")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input into changes output column names - testServer", {
-  test_data <- data.frame(
-    full_name = c("John Doe", "Jane Smith")
-  )
-
-  block <- new_separate_block(
-    col = "full_name",
-    into = c("first", "last"),
-    sep = " "
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result
-      result <- session$returned$result()
-      expect_true(all(c("first", "last") %in% names(result)))
-      expect_equal(result$first[1], "John")
-
-      # Change column names
-      expr$setInputs(into = "given_name, family_name")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true(all(c("given_name", "family_name") %in% names(result)))
-      expect_false("first" %in% names(result))
-      expect_equal(result$given_name[1], "John")
-      expect_equal(result$family_name[1], "Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input remove changes column retention - testServer", {
-  test_data <- data.frame(
-    full_name = c("John Doe", "Jane Smith"),
-    age = c(30, 25)
-  )
-
-  block <- new_separate_block(
-    col = "full_name",
-    into = c("first", "last"),
-    sep = " ",
-    remove = TRUE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result - original column removed
-      result <- session$returned$result()
-      expect_false("full_name" %in% names(result))
-      expect_true(all(c("first", "last", "age") %in% names(result)))
-
-      # Change remove to FALSE
-      expr$setInputs(remove = FALSE)
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true("full_name" %in% names(result))
-      expect_true(all(c("first", "last") %in% names(result)))
-      expect_equal(result$full_name[1], "John Doe")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input convert changes type conversion - testServer", {
-  test_data <- data.frame(
-    data_string = c("10-20", "30-40")
-  )
-
-  block <- new_separate_block(
-    col = "data_string",
-    into = c("min_val", "max_val"),
-    sep = "-",
-    convert = FALSE
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result - no conversion
-      result <- session$returned$result()
-      expect_true(is.character(result$min_val))
-
-      # Change convert to TRUE
-      expr$setInputs(convert = TRUE)
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true(is.numeric(result$min_val))
-      expect_equal(result$min_val[1], 10)
-      expect_equal(result$max_val[1], 20)
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input extra changes handling of extra pieces - testServer", {
-  test_data <- data.frame(
-    address = c("123 Main St Apt 4", "456 Oak Ave")
-  )
-
-  block <- new_separate_block(
-    col = "address",
-    into = c("number", "street"),
-    sep = " ",
-    extra = "drop"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result with extra="drop"
-      result <- session$returned$result()
-      expect_equal(result$number[1], "123")
-      expect_equal(result$street[1], "Main")
-    },
-    args = list(x = block, data = list(data = function() test_data))
-  )
-})
-
-test_that("separate - input fill changes handling of missing pieces - testServer", {
-  test_data <- data.frame(
-    name = c("John Doe Smith", "Jane")
-  )
-
-  block <- new_separate_block(
-    col = "name",
-    into = c("first", "middle", "last"),
-    sep = " ",
-    fill = "right"
-  )
-
-  testServer(
-    blockr.core:::get_s3_method("block_server", block),
-    {
-      expr <- session$makeScope("expr")
-      session$flushReact()
-
-      # Initial result with fill="right"
-      result <- session$returned$result()
-      expect_equal(result$first[2], "Jane")
-      expect_true(is.na(result$middle[2]))
-      expect_true(is.na(result$last[2]))
-
-      # Change fill to "left"
-      expr$setInputs(fill = "left")
-      session$flushReact()
-      result <- session$returned$result()
-      expect_true(is.na(result$first[2]))
-      expect_true(is.na(result$middle[2]))
-      expect_equal(result$last[2], "Jane")
-    },
-    args = list(x = block, data = list(data = function() test_data))
+      result2 <- eval_join(session$returned$expr())
+      expect_equal(nrow(result2), 4)  # full join: ids 1,2,3,4
+    }
   )
 })

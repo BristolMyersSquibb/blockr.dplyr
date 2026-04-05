@@ -1,0 +1,42 @@
+/* RenameBlock — rename block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.rename-block-container { width: 100%; }
+
+.rb-card { overflow: visible; }
+
+/* Column selectize wrapper */
+.rb-col-wrap {
+  width: 160px;
+  min-width: 120px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+/* Arrow separator */
+.rb-arrow {
+  flex-shrink: 0;
+  color: var(--blockr-grey-400, #9ca3af);
+  font-size: 14px;
+  padding: 0 2px;
+}
+
+/* New name text input */
+.rb-name-input {
+  flex: 1;
+  min-width: 80px;
+  height: 30px;
+  padding: 4px 10px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  background: transparent;
+  border: none;
+  color: var(--blockr-color-text-primary, #111827);
+  box-sizing: border-box;
+}
+
+.rb-name-input:focus { outline: none; }
+
+.rb-name-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}

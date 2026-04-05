@@ -1,0 +1,10 @@
+/* BindColsBlock — bind cols block specific styles */
+/* Shared row/pill styles come from blockr-blocks.css */
+
+.bind-cols-block-container { width: 100%; }
+
+.bcb-card {
+  overflow: visible;
+  padding: 4px 0;
+}
+

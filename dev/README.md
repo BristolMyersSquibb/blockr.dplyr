@@ -1,82 +1,19 @@
-# Developer Documentation
+# blockr.dplyr Developer Resources
 
-This folder contains internal developer documentation for blockr.dplyr. These files are **not** included in the package build (excluded via `.Rbuildignore`).
+## Guides
 
-## What's Here
+- **[js-block-guide.md](js-block-guide.md)** — How to build a JS-driven block (start here)
+- **[blockr-select-spec.md](blockr-select-spec.md)** — BlockrSelect component API
+- **[blockr-input-spec.md](blockr-input-spec.md)** — BlockrInput component API
+- **[testing-guide.md](testing-guide.md)** — Testing patterns
 
-### [blocks-core-guide.md](blocks-core-guide.md)
-**Universal guide to blockr block development (start here)**
+## Scripts
 
-Core concepts applicable to all blockr packages. Covers:
-- What is a block? (universal concept)
-- Block anatomy (UI, Server, Constructor)
-- Step-by-step block creation
-- Testing and validation
-- blockr.core vignette references
-
-**Use this when:**
-- New to blockr development
-- Understanding block fundamentals
-- Learning universal patterns
-- Creating blocks for any blockr package
-
-### [ui-guidelines.md](ui-guidelines.md)
-**UI development guidelines for dplyr blocks**
-
-Focused guide for building consistent block UIs for data manipulation. Covers:
-- Responsive layout system (auto 1-4 column grid)
-- Form patterns for filters and selectors
-- Table selection components
-- Color palette and styling (minimalist gray/white)
-
-**Use this when:**
-- Designing block UI
-- Implementing responsive layouts
-- Creating filter or selection interfaces
-- Ensuring consistent styling
-
-### [dplyr-technical-guide.md](dplyr-technical-guide.md)
-**Technical patterns and best practices for blockr.dplyr**
-
-Covers blockr.dplyr-specific technical details:
-- Block initialization pattern (critical for state management)
-- Dynamic UI timing issues and solutions
-- Error handling with `req()` and blockr.core framework
-- ACE editor integration and autocompletion
-- Package development workflow (roxygen2, Air formatter)
-- Screenshot validation with validation agent
-
-**Use this when:**
-- Debugging timing or state issues
-- Setting up ACE editors
-- Understanding framework error handling
-- Validating block implementations
-
-## Quick Start for Developers
-
-1. **Read** [blocks-core-guide.md](blocks-core-guide.md) to understand universal block concepts
-2. **Review** [ui-guidelines.md](ui-guidelines.md) for UI design patterns
-3. **Study** existing blocks in `../R/` directory (filter.R, mutate.R, select.R)
-4. **Test** your blocks thoroughly
-
-## Key Principles
-
-- **State Management:** Include ALL constructor parameters in state list
-- **Reactive Values:** Use reactiveVal() for all user-modifiable state
-- **Expression Building:** Build dplyr expressions that can be piped together
-
-## Related Resources
-
-- **Core concepts:** blockr.core vignettes (`create-block`, `extend-blockr`)
-- **Examples:** `../inst/examples/` directory
-- **Block code:** `../R/` directory (filter.R, mutate.R, select.R, arrange.R, etc.)
-
-## Documentation Structure
-
-Each guide contains:
-- Complete patterns and templates
-- Step-by-step instructions
-- Common pitfalls with solutions
-- Quick reference sections
-
-Start with the core guide to understand how blockr blocks work, then review the UI guidelines for implementing consistent interfaces for data manipulation blocks.
+| Script | Purpose |
+|--------|---------|
+| `preview-all-blocks.R` | Dock + DAG preview of all 14 blocks |
+| `test-ai-discovery.R` | AI discovery — basic prompts, all blocks |
+| `test-ai-discovery-v2.R` | AI discovery — harder prompts, verbose |
+| `test-ai-basic.R` | Shiny: filter → select → arrange → slice + AI |
+| `test-ai-expr.R` | Shiny: mutate → summarize → rename + AI |
+| `test-ai-reshape.R` | Shiny: pivot / unite / separate + AI |
