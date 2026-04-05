@@ -6,7 +6,7 @@
 \usage{
 new_slice_block(
   state = list(type = "head", n = 5L, prop = NULL, order_by = "", with_ties = TRUE,
-    weight_by = "", replace = FALSE, by = list()),
+    weight_by = "", replace = FALSE, rows = "1:5", by = list()),
   ...
 )
 }

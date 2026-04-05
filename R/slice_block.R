@@ -46,6 +46,7 @@ new_slice_block <- function(
     with_ties = TRUE,
     weight_by = "",
     replace = FALSE,
+    rows = "1:5",
     by = list()
   ),
   ...
@@ -100,6 +101,7 @@ new_slice_block <- function(
               s$with_ties %||% TRUE,
               s$weight_by %||% "",
               s$replace %||% FALSE,
+              s$rows %||% "1:5",
               s$by %||% list()
             )
           }),

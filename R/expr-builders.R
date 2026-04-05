@@ -449,7 +449,23 @@ make_rename_expr <- function(renames) {
 make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
                             order_by = "", with_ties = TRUE,
                             weight_by = "", replace = FALSE,
+                            rows = "1:5",
                             by = character()) {
+  # Custom positions: dplyr::slice(data, <rows>, .by = ...)
+  if (identical(type, "custom")) {
+    rows_str <- trimws(rows %||% "")
+    if (!nzchar(rows_str)) return(bbquote(.(data)))
+    rows_expr <- tryCatch(str2lang(rows_str), error = function(e) NULL)
+    if (is.null(rows_expr)) return(bbquote(.(data)))
+    expr <- as.call(list(quote(dplyr::slice), quote(.(data)), rows_expr))
+    if (length(by) > 0) {
+      by <- as.character(unlist(by))
+      by_syms <- lapply(by, as.name)
+      expr[[".by"]] <- as.call(c(quote(c), by_syms))
+    }
+    return(bbquote(.(expr), list(expr = expr)))
+  }
+
   fn_str <- switch(type,
     "head" = "dplyr::slice_head",
     "tail" = "dplyr::slice_tail",

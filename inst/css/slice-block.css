@@ -35,6 +35,12 @@
   border-color: rgba(37, 99, 235, 0.2) !important;
 }
 
+/* Rows text input (custom positions) — fills same space as n input */
+.slb-rows-wrap {
+  flex: 1;
+  min-width: 80px;
+}
+
 /* Gear button and popover styles are in blockr-blocks.css (shared) */
 
 /* --- Group by section (summarize pattern) --- */

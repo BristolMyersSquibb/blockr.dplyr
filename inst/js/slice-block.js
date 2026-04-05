@@ -11,7 +11,7 @@
 (() => {
   'use strict';
 
-  const SLICE_TYPES = ['head', 'tail', 'min', 'max', 'sample'];
+  const SLICE_TYPES = ['head', 'tail', 'min', 'max', 'sample', 'custom'];
 
   class SliceBlock {
     constructor(el) {
@@ -23,6 +23,7 @@
       this.with_ties = true;
       this.weight_by = '';
       this.replace = false;
+      this.rows = '1:5';
       this.by = [];
       this.columnNames = [];
       this._callback = null;
@@ -128,6 +129,22 @@
         this._autoSubmit();
       });
       topRow.appendChild(this._nModePill);
+
+      // Rows text input (custom positions — hidden by default)
+      this._rowsWrap = document.createElement('div');
+      this._rowsWrap.className = 'slb-rows-wrap';
+      this._rowsWrap.style.display = 'none';
+      this._rowsInput = document.createElement('input');
+      this._rowsInput.type = 'text';
+      this._rowsInput.className = 'blockr-num-input';
+      this._rowsInput.value = this.rows;
+      this._rowsInput.placeholder = '1:5, c(1,3,5), -c(2,4)';
+      this._rowsInput.addEventListener('input', () => {
+        this.rows = this._rowsInput.value;
+        this._autoSubmit();
+      });
+      this._rowsWrap.appendChild(this._rowsInput);
+      topRow.appendChild(this._rowsWrap);
 
       this.card.appendChild(topRow);
 
@@ -278,14 +295,20 @@
     _updatePopoverVisibility() {
       const isMinMax = this.type === 'min' || this.type === 'max';
       const isSample = this.type === 'sample';
+      const isCustom = this.type === 'custom';
       const hasOptions = isMinMax || isSample;
 
-      // Hide gear entirely when no advanced options apply (head/tail)
+      // Hide gear entirely when no advanced options apply
       if (this._gearHeader) {
         this._gearHeader.style.display = hasOptions ? '' : 'none';
       }
       // Close popover if we hid the gear
       if (!hasOptions && this._popoverOpen) this._closePopover();
+
+      // Toggle n input vs rows input
+      this._nInput.parentElement.style.display = isCustom ? 'none' : '';
+      this._nModePill.style.display = isCustom ? 'none' : '';
+      this._rowsWrap.style.display = isCustom ? '' : 'none';
 
       this._popOrderByWrap.style.display = isMinMax ? '' : 'none';
       this._popWeightByWrap.style.display = isSample ? '' : 'none';
@@ -313,6 +336,7 @@
         with_ties: this.with_ties,
         weight_by: this.weight_by,
         replace: this.replace,
+        rows: this.rows,
         by: this.by.slice()
       };
     }
@@ -335,6 +359,7 @@
       this.with_ties = state?.with_ties !== false;
       this.weight_by = state?.weight_by || '';
       this.replace = !!state?.replace;
+      this.rows = state?.rows || '1:5';
       const byRaw = state?.by || [];
       this.by = Array.isArray(byRaw) ? byRaw.slice() : [byRaw];
 
@@ -353,6 +378,11 @@
       } else {
         this._nInput.value = this.n ?? 5;
         this._nInput.placeholder = 'n';
+      }
+
+      // Update rows input
+      if (this._rowsInput) {
+        this._rowsInput.value = this.rows;
       }
 
       // Update column selects
