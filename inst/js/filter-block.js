@@ -430,6 +430,14 @@
           }
         }
       }
+      // Mark expression confirm buttons as confirmed (state is already applied)
+      for (const c of this.conditions) {
+        const btn = c.rowEl?.querySelector('.blockr-expr-confirm');
+        if (btn) {
+          btn.classList.add('confirmed');
+          btn.innerHTML = Blockr.icons.confirm;
+        }
+      }
       this._updateUI();
     }
 

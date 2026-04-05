@@ -472,6 +472,14 @@
           this._addExprRow(e || '');
         }
       }
+      // Mark expression confirm buttons as confirmed (state is already applied)
+      for (const e of this.exprRows) {
+        const btn = e.rowEl?.querySelector('.blockr-expr-confirm');
+        if (btn) {
+          btn.classList.add('confirmed');
+          btn.innerHTML = Blockr.icons.confirm;
+        }
+      }
       this._updateUI();
     }
 

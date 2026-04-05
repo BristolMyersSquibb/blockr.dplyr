@@ -381,6 +381,14 @@
           }
         }
       }
+      // Mark expression confirm buttons as confirmed (state is already applied)
+      for (const s of this.summaries) {
+        const btn = s.rowEl?.querySelector('.blockr-expr-confirm');
+        if (btn) {
+          btn.classList.add('confirmed');
+          btn.innerHTML = Blockr.icons.confirm;
+        }
+      }
 
       // Rebuild group by (ensure array — R may send scalar string)
       const byRaw = state?.by || [];
