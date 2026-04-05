@@ -7,9 +7,8 @@
 
 /* --- Name input — plain text field, left side with separator --- */
 .sb-name-input {
-  width: 120px;
-  min-width: 80px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 60px;
   height: 30px;
   padding: 4px 8px;
   font-size: var(--blockr-font-size-base, 0.875rem);
@@ -45,9 +44,8 @@
 
 /* --- Function selectize wrapper --- */
 .sb-func-wrap {
-  width: 110px;
-  min-width: 90px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 80px;
   border-right: 1px solid var(--blockr-color-border, #e5e7eb);
   padding-right: 8px;
 }
@@ -55,7 +53,7 @@
 /* --- Column selectize wrapper --- */
 .sb-col-wrap {
   flex: 1;
-  min-width: 100px;
+  min-width: 80px;
 }
 
 /* --- Expression row code area --- */
