@@ -5,7 +5,7 @@
 \title{Unite block (JS-driven)}
 \usage{
 new_unite_block(
-  state = list(col = "united", cols = list(), sep = "_", remove = TRUE, na.rm = FALSE),
+  state = list(col = "united", cols = list(), sep = "_", remove = TRUE, na_rm = FALSE),
   ...
 )
 }

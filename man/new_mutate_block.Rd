@@ -5,20 +5,20 @@
 \title{Mutate block (JS-driven)}
 \usage{
 new_mutate_block(
-  state = list(rows = list(list(name = "", expr = "")), by = list()),
+  state = list(mutations = list(list(name = "", expr = "")), by = list()),
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{rows} (array of objects with \code{name} and \code{expr}
+\item{state}{List with \code{mutations} (array of objects with \code{name} and \code{expr}
 strings) and optional \code{by} (array of grouping column names).
-Each row becomes a \code{dplyr::mutate()} argument.}
+Each mutation becomes a \code{dplyr::mutate()} argument.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
 \description{
-JS-driven mutate block with dynamic rows of name + expression pairs.
-Each row defines a new or modified column using an R expression.
+JS-driven mutate block with dynamic mutation rows of name + expression pairs.
+Each mutation defines a new or modified column using an R expression.
 }
 \examples{
 if (interactive()) {
@@ -26,7 +26,7 @@ if (interactive()) {
   serve(
     new_mutate_block(
       state = list(
-        rows = list(
+        mutations = list(
           list(name = "Sepal.Ratio", expr = "Sepal.Length / Sepal.Width")
         )
       )
