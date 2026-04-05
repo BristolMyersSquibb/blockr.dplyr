@@ -508,6 +508,9 @@
           er.exprInput.setColumns(allCols);
         }
       }
+
+      // Auto-submit now that columns are available
+      this._autoSubmit();
     }
   }
 
