@@ -21,6 +21,22 @@ JS-driven summarize block with two row types: simple (function + column)
 and expression (free R code). Includes a group-by section for grouped
 summaries.
 }
+\section{Extending available functions}{
+
+The list of available summary functions can be extended using the
+\code{blockr.dplyr.summary_functions} option. Set this option to a named
+character vector where names are display labels and values are function
+calls with proper namespacing:
+
+\preformatted{
+options(
+  blockr.dplyr.summary_functions = c(
+    "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+  )
+)
+}
+}
+
 \examples{
 if (interactive()) {
   library(blockr.core)
