@@ -11,8 +11,8 @@
 (() => {
   'use strict';
 
-  // Summary functions available in simple mode
-  const SUMMARY_FUNCS = [
+  // Default summary functions available in simple mode
+  const DEFAULT_SUMMARY_FUNCS = [
     'mean', 'median', 'sd', 'min', 'max', 'sum', 'n', 'n_distinct', 'first', 'last'
   ];
 
@@ -34,6 +34,9 @@
       this.nextId = 1;
       this.columnNames = [];
       this.byValues = [];
+      this.summaryFuncs = DEFAULT_SUMMARY_FUNCS.slice();
+      // Maps display label -> namespaced call (e.g. "paren_num" -> "blockr.topline::paren_num")
+      this._funcMap = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -111,7 +114,7 @@
         id,
         type: 'simple',
         name: name || '',
-        func: func || SUMMARY_FUNCS[0],
+        func: func || this.summaryFuncs[0],
         col: col || '',
         rowEl: null,
         _funcSelectize: null,
@@ -145,13 +148,16 @@
       eqSign.textContent = '=';
       row.appendChild(eqSign);
 
-      // Function selectize
+      // Function selectize — include custom funcs not in the predefined list
       const funcDiv = document.createElement('div');
       funcDiv.className = 'sb-func-wrap';
       row.appendChild(funcDiv);
+      const funcOptions = (func && !this.summaryFuncs.includes(func))
+        ? [...this.summaryFuncs, func]
+        : this.summaryFuncs;
       summary._funcSelectize = Blockr.Select.single(funcDiv, {
-        options: SUMMARY_FUNCS,
-        selected: func || SUMMARY_FUNCS[0],
+        options: funcOptions,
+        selected: func || this.summaryFuncs[0],
         placeholder: 'Function\u2026',
         onChange: (value) => {
           summary.func = value;
@@ -314,10 +320,12 @@
       const summaries = [];
       for (const s of this.summaries) {
         if (s.type === 'simple') {
-          const func = s.func || '';
-          if (!func) continue;
+          const funcLabel = s.func || '';
+          if (!funcLabel) continue;
+          // Resolve display label to namespaced call if mapped
+          const func = this._funcMap[funcLabel] || funcLabel;
           const col = s.col || '';
-          const isNoCol = NO_COL_FUNCS.includes(func);
+          const isNoCol = NO_COL_FUNCS.includes(funcLabel);
           if (!isNoCol && !col) continue;
           // Auto-generate name if empty
           let name = (s._nameInput ? s._nameInput.value.trim() : '') || '';
@@ -367,7 +375,9 @@
           if (s.type === 'expr') {
             this._addExprRow(s.name || '', s.expr || '');
           } else {
-            this._addSimpleRow(s.name || null, s.func || null, s.col || null);
+            // Resolve namespaced func to display label for the dropdown
+            const func = this._funcLabel(s.func || null);
+            this._addSimpleRow(s.name || null, func, s.col || null);
           }
         }
       }
@@ -385,6 +395,44 @@
       // Auto-submit if state has content
       if (summaries.length > 0 && !silent) {
         this._submit();
+      }
+    }
+
+    // Resolve a namespaced func value back to its display label
+    _funcLabel(func) {
+      if (!func) return func;
+      // Check if func is a namespaced value that has a label
+      for (const [label, value] of Object.entries(this._funcMap)) {
+        if (value === func) return label;
+      }
+      return func;
+    }
+
+    updateFunctions(funcs) {
+      if (!Array.isArray(funcs) || funcs.length === 0) return;
+
+      // funcs is an array of {value, label} objects from R
+      // Build the display list and mapping
+      const labels = [];
+      this._funcMap = {};
+      for (const f of funcs) {
+        labels.push(f.label);
+        // Map label -> namespaced value (only when they differ)
+        if (f.label !== f.value) {
+          this._funcMap[f.label] = f.value;
+        }
+      }
+      this.summaryFuncs = labels;
+
+      // Update function selectizes in existing simple rows
+      for (const s of this.summaries) {
+        if (s.type === 'simple' && s._funcSelectize) {
+          const current = s._funcSelectize.getValue();
+          const opts = (current && !this.summaryFuncs.includes(current))
+            ? [...this.summaryFuncs, current]
+            : this.summaryFuncs;
+          s._funcSelectize.setOptions(opts, current);
+        }
       }
     }
 
@@ -433,6 +481,10 @@
     },
     initialize: (el) => {
       el._block = new SummarizeBlock(el);
+      if (el._pendingFunctions) {
+        el._block.updateFunctions(el._pendingFunctions);
+        delete el._pendingFunctions;
+      }
       if (el._pendingColumns) {
         el._block.updateColumns(el._pendingColumns);
         delete el._pendingColumns;
@@ -448,6 +500,25 @@
   });
 
   Shiny.inputBindings.register(binding, 'blockr.summarize');
+
+  // Available functions handler (global — dispatches by msg.id)
+  Shiny.addCustomMessageHandler('summarize-functions', (msg) => {
+    const el = document.getElementById(msg.id);
+    if (el?._block) {
+      el._block.updateFunctions(msg.functions);
+    } else if (el) {
+      el._pendingFunctions = msg.functions;
+    } else {
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        const el2 = document.getElementById(msg.id);
+        if (el2?._block) { el2._block.updateFunctions(msg.functions); clearInterval(t); }
+        else if (el2) { el2._pendingFunctions = msg.functions; clearInterval(t); }
+        if (attempts > 50) clearInterval(t);
+      }, 100);
+    }
+  });
 
   // Column names handler (global — dispatches by msg.id)
   Shiny.addCustomMessageHandler('summarize-columns', (msg) => {

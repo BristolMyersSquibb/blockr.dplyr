@@ -1,8 +1,83 @@
+#' Get available summary functions for the summarize block
+#'
+#' Returns the list of summary functions available in simple mode.
+#' Merges built-in defaults with any custom functions registered via
+#' the `blockr.dplyr.summary_functions` option.
+#'
+#' @section Extending with custom functions:
+#' Set the `blockr.dplyr.summary_functions` option to a named character vector
+#' where names are display labels and values are namespaced function calls:
+#'
+#' \preformatted{
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num",
+#'     "first number (first_num)" = "blockr.topline::first_num"
+#'   )
+#' )
+#' }
+#'
+#' @return A named character vector where names are short function names
+#'   (for display) and values are fully qualified function calls.
+#' @noRd
+get_summary_functions <- function() {
+  default_funcs <- c(
+    "mean" = "mean",
+    "median" = "stats::median",
+    "sd" = "stats::sd",
+    "min" = "min",
+    "max" = "max",
+    "sum" = "sum",
+    "n" = "dplyr::n",
+    "n_distinct" = "dplyr::n_distinct",
+    "first" = "dplyr::first",
+    "last" = "dplyr::last"
+  )
+
+  custom_funcs <- blockr_option("dplyr.summary_functions", NULL)
+
+  if (is.null(custom_funcs) || !is.character(custom_funcs)) {
+    return(default_funcs)
+  }
+
+  # Extract short names from namespaced values (e.g. "blockr.topline::paren_num" -> "paren_num")
+  short_names <- sub(".*::", "", custom_funcs)
+
+  # Use user-provided labels if available, otherwise use short names
+  if (!is.null(names(custom_funcs))) {
+    labels <- ifelse(
+      names(custom_funcs) == "" | is.na(names(custom_funcs)),
+      short_names,
+      names(custom_funcs)
+    )
+  } else {
+    labels <- short_names
+  }
+
+  custom <- stats::setNames(custom_funcs, labels)
+
+  c(default_funcs, custom[!custom %in% default_funcs])
+}
+
 #' Summarize block (JS-driven)
 #'
 #' JS-driven summarize block with two row types: simple (function + column)
 #' and expression (free R code). Includes a group-by section for grouped
 #' summaries.
+#'
+#' @section Extending available functions:
+#' The list of available summary functions can be extended using the
+#' \code{blockr.dplyr.summary_functions} option. Set this option to a named
+#' character vector where names are display labels and values are function
+#' calls with proper namespacing:
+#'
+#' \preformatted{
+#' options(
+#'   blockr.dplyr.summary_functions = c(
+#'     "extract parentheses (paren_num)" = "blockr.topline::paren_num"
+#'   )
+#' )
+#' }
 #'
 #' @param state List with `summaries` (array of summary objects) and `by`
 #'   (character vector of grouping columns). Summary types:
@@ -46,6 +121,16 @@ new_summarize_block <- function(
         # Bidirectional sync: self_write tracks UI-initiated changes
         self_write <- new.env(parent = emptyenv())
         self_write$active <- FALSE
+
+        # Send available summary functions to JS on init
+        all_funcs <- get_summary_functions()
+        func_info <- lapply(names(all_funcs), function(label) {
+          list(value = unname(all_funcs[[label]]), label = label)
+        })
+        session$sendCustomMessage(
+          "summarize-functions",
+          list(id = ns("summarize_input"), functions = func_info)
+        )
 
         # Send column names (character vector) to JS when data changes
         observeEvent(data(), {
