@@ -68,8 +68,10 @@
     searchInput.setAttribute('spellcheck', 'false');
     if (mode === 'multi') {
       searchInput.setAttribute('placeholder', placeholder);
+      tagsEl.appendChild(searchInput);
+    } else {
+      control.appendChild(searchInput);
     }
-    control.appendChild(searchInput);
 
     if (mode === 'single') {
       const arrow = document.createElement('span');
@@ -153,7 +155,8 @@
 
     const renderTags = () => {
       if (mode !== 'multi') return;
-      tagsEl.innerHTML = '';
+      // Remove only tag elements, preserve the search input
+      tagsEl.querySelectorAll('.blockr-select__tag').forEach(t => t.remove());
       for (let i = 0; i < selected.length; i++) {
         const val = selected[i];
         const tag = document.createElement('span');
@@ -174,7 +177,7 @@
         removeBtn.innerHTML = Blockr.icons.remove;
         tag.appendChild(removeBtn);
 
-        tagsEl.appendChild(tag);
+        tagsEl.insertBefore(tag, searchInput);
       }
       searchInput.setAttribute('placeholder', selected.length === 0 ? placeholder : '');
     };

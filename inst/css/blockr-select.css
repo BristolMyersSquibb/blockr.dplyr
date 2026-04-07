@@ -101,6 +101,7 @@
   color: var(--blockr-grey-400, #9ca3af);
 }
 
+
 /* In single mode when closed, collapse the search input */
 .blockr-select--single:not(.blockr-select--open) .blockr-select__search {
   width: 0;
