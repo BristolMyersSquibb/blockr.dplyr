@@ -116,6 +116,10 @@
       });
       rowEl.appendChild(rmBtn);
 
+      // Sync row.oldCol with the select's actual value — the select may
+      // auto-pick the first option when oldCol is null/empty.
+      row.oldCol = row._colSelect.getValue() || '';
+
       this.listEl.appendChild(rowEl);
       this.rows.push(row);
       this._updateUI();
