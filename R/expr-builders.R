@@ -696,10 +696,10 @@ build_column_meta <- function(df) {
     if (type %in% c("numeric", "integer")) {
       info$min <- min(vals, na.rm = TRUE)
       info$max <- max(vals, na.rm = TRUE)
-      info$uniqueValues <- sort(unique(vals[!is.na(vals)]))
+      info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
     } else {
       uv <- sort(unique(as.character(vals[!is.na(vals)])))
-      info$values <- uv
+      info$values <- as.list(uv)
       info$hasEmpty <- any(vals == "", na.rm = TRUE)
     }
     info
