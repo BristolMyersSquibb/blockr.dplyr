@@ -4,14 +4,8 @@ template:
 
 navbar:
   structure:
-    left: [intro, reference, articles, news]
+    left: [intro, reference, news]
     right: [search, github]
-  components:
-    articles:
-      text: Articles
-      menu:
-      - text: Expression Helpers
-        href: articles/expression-helpers.html
 
 reference:
 - title: Column Selection & Renaming
@@ -23,7 +17,6 @@ reference:
   desc: Filter rows with simple value selection or advanced expressions
   contents:
   - new_filter_block
-  - new_filter_expr_block
 
 - title: Sorting & Slicing
   contents:
@@ -33,13 +26,12 @@ reference:
 - title: Creating Columns
   desc: Create new columns with advanced expressions
   contents:
-  - new_mutate_expr_block
+  - new_mutate_block
 
 - title: Summarizing Data
   desc: Aggregate data with simple dropdowns or advanced expressions
   contents:
   - new_summarize_block
-  - new_summarize_expr_block
 
 - title: Combining Data
   contents:
@@ -53,9 +45,3 @@ reference:
   - new_pivot_wider_block
   - new_unite_block
   - new_separate_block
-
-articles:
-- title: Getting Started
-  navbar: ~
-  contents:
-  - expression-helpers
