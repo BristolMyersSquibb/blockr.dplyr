@@ -240,3 +240,12 @@ test_that("build_column_meta returns correct structure", {
   expect_equal(meta[[1]]$name, "Sepal.Length")
   expect_equal(meta[[1]]$type, "numeric")
 })
+
+test_that("build_column_meta values are lists (auto-unbox safe)", {
+  df <- data.frame(id = rep("ONLY", 3), x = rep(42, 3))
+  meta <- build_column_meta(df)
+  # Character column: values must be a list, not a character vector
+  expect_type(meta[[1]]$values, "list")
+  # Numeric column: uniqueValues must be a list
+  expect_type(meta[[2]]$uniqueValues, "list")
+})

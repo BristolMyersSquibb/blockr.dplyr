@@ -47,7 +47,7 @@ new_mutate_block <- function(
         observeEvent(data(), {
           session$sendCustomMessage(
             "mutate-columns",
-            list(id = ns("mutate_input"), columns = colnames(data()))
+            list(id = ns("mutate_input"), columns = as.list(colnames(data())))
           )
         })
 

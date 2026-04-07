@@ -59,8 +59,8 @@ new_join_block <- function(
             "join-columns",
             list(
               id = ns("join_input"),
-              xColumns = colnames(x()),
-              yColumns = colnames(y())
+              xColumns = as.list(colnames(x())),
+              yColumns = as.list(colnames(y()))
             )
           )
         })

@@ -54,7 +54,7 @@ new_pivot_longer_block <- function(
 
         # Send column names to JS when data changes
         observeEvent(data(), {
-          col_names <- colnames(data())
+          col_names <- as.list(colnames(data()))
           session$sendCustomMessage(
             "pivot-longer-columns",
             list(id = ns("pivot_longer_input"), columns = col_names)

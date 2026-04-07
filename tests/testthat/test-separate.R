@@ -125,19 +125,19 @@ test_that("separate block: state change updates separator and column names", {
     expect_equal(result1$year, c("2024", "2024"))
     expect_equal(result1$day, c("15", "20"))
 
-    # Change to separate into 2 columns with different sep
+    # Change to separate into 3 columns with different names
     session$returned$state$state(list(
       col = "data",
-      into = c("part1", "part2"),
+      into = c("y", "m", "d"),
       sep = "_",
       remove = TRUE,
       convert = FALSE
     ))
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
-    expect_equal(ncol(result2), 2)
-    expect_true("part1" %in% colnames(result2))
-    expect_true("part2" %in% colnames(result2))
+    expect_equal(ncol(result2), 3)
+    expect_true("y" %in% colnames(result2))
+    expect_true("d" %in% colnames(result2))
   })
 })
 

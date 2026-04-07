@@ -597,3 +597,42 @@ test_that("bind_cols: default", {
   # Both inputs are mtcars (32 rows, 11 cols each) = 22 cols
   expect_equal(ncol(res), 22)
 })
+
+# ===========================================================================
+# AUTO-UNBOX REGRESSION (2 tests)
+# ===========================================================================
+
+test_that("auto-unbox: single-column data has correct JS columnNames", {
+  # When data has 1 column, colnames() is length-1 and auto_unbox would
+  # turn it into a scalar string. JS must still see an array.
+  app$wait_for_idle()
+  col_names_json <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_select_single-expr-select_input');
+       if (!el || !el._block) return null;
+       return JSON.stringify(el._block.columnNames);
+     })();"
+  )
+  skip_if(is.null(col_names_json), "select_single block not initialized")
+  parsed <- jsonlite::fromJSON(col_names_json)
+  expect_equal(parsed, "x")
+  expect_length(parsed, 1)
+})
+
+test_that("auto-unbox: single unique value has correct JS filter meta", {
+  # When a column has 1 unique value, the values array would be auto-unboxed
+  # to a scalar string, causing the dropdown to show individual characters.
+  app$wait_for_idle()
+  vals_json <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_single-expr-filter_input');
+       if (!el || !el._block) return null;
+       var meta = el._block.columnMeta['id'];
+       return JSON.stringify(meta ? meta.values : null);
+     })();"
+  )
+  skip_if(is.null(vals_json), "filter_single block not initialized")
+  parsed <- jsonlite::fromJSON(vals_json)
+  expect_equal(parsed, "ONLY")
+  expect_length(parsed, 1)
+})

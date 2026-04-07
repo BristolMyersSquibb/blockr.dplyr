@@ -64,7 +64,7 @@ new_slice_block <- function(
 
         # Send column names to JS when data changes
         observeEvent(data(), {
-          col_names <- colnames(data())
+          col_names <- as.list(colnames(data()))
           session$sendCustomMessage(
             "slice-columns",
             list(id = ns("slice_input"), columns = col_names)

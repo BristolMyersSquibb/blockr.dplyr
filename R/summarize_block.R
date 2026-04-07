@@ -136,7 +136,7 @@ new_summarize_block <- function(
         observeEvent(data(), {
           session$sendCustomMessage(
             "summarize-columns",
-            list(id = ns("summarize_input"), columns = colnames(data()))
+            list(id = ns("summarize_input"), columns = as.list(colnames(data())))
           )
         })
 

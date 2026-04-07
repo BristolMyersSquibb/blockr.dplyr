@@ -55,7 +55,7 @@ new_unite_block <- function(
 
         # Send column names to JS when data changes
         observeEvent(data(), {
-          col_names <- colnames(data())
+          col_names <- as.list(colnames(data()))
           session$sendCustomMessage(
             "unite-columns",
             list(id = ns("unite_input"), columns = col_names)

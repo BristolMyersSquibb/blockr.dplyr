@@ -457,7 +457,7 @@
       el: root,
 
       setOptions(opts, sel) {
-        options = opts || [];
+        options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
         if (mode === 'single') {
           if (sel != null && options.indexOf(sel) >= 0) {
             selected = sel;

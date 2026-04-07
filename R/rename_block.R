@@ -42,7 +42,7 @@ new_rename_block <- function(
 
         # Send column names to JS when data changes
         observeEvent(data(), {
-          col_names <- colnames(data())
+          col_names <- as.list(colnames(data()))
           session$sendCustomMessage(
             "rename-columns",
             list(id = ns("rename_input"), columns = col_names)
