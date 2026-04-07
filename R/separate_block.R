@@ -71,13 +71,12 @@ new_separate_block <- function(
         observeEvent(input$separate_input, {
           self_write$active <- TRUE
           r_state(input$separate_input)
-          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            # Skip: change originated from JS input
+            self_write$active <- FALSE
           } else {
             session$sendCustomMessage(
               "separate-block-update",

@@ -64,13 +64,12 @@ new_mutate_block <- function(
         observeEvent(input$mutate_input, {
           self_write$active <- TRUE
           r_state(input$mutate_input)
-          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            # Skip: change originated from JS input, no need to echo back
+            self_write$active <- FALSE
           } else {
             session$sendCustomMessage(
               "mutate-block-update",

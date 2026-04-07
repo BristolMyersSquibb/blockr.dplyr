@@ -69,13 +69,12 @@ new_join_block <- function(
         observeEvent(input$join_input, {
           self_write$active <- TRUE
           r_state(input$join_input)
-          self_write$active <- FALSE
         })
 
         # R -> JS: external control changed the state
         observeEvent(r_state(), {
           if (self_write$active) {
-            # Skip: change originated from JS input
+            self_write$active <- FALSE
           } else {
             session$sendCustomMessage(
               "join-block-update",
