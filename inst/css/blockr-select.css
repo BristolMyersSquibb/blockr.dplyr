@@ -257,6 +257,14 @@
   background: var(--blockr-grey-50, #f9fafb);
 }
 
+/* --- Option label (muted description next to value) --- */
+.blockr-select__opt-label {
+  font-size: 0.8em;
+  color: var(--blockr-grey-400, #9ca3af);
+  margin-left: 6px;
+  font-weight: 400;
+}
+
 /* --- Empty state --- */
 .blockr-select__empty {
   padding: 8px 10px;

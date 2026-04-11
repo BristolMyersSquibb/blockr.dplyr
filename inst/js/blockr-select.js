@@ -11,6 +11,23 @@
 (() => {
   'use strict';
 
+  // Helpers for {value, label} option objects
+  const optValue = (o) => typeof o === 'object' && o !== null ? o.value : o;
+  const optLabel = (o) => typeof o === 'object' && o !== null ? (o.label || '') : '';
+  const findOpt = (opts, val) => opts.find(o => optValue(o) === val);
+  const fillOptContent = (el, o) => {
+    el.textContent = '';
+    const val = optValue(o);
+    const lbl = optLabel(o);
+    el.appendChild(document.createTextNode(val));
+    if (lbl) {
+      const span = document.createElement('span');
+      span.className = 'blockr-select__opt-label';
+      span.textContent = lbl;
+      el.appendChild(span);
+    }
+  };
+
   const createSelect = (container, config, mode) => {
     const id = Blockr.uid('bsel');
     const dropdownId = `${id}-lb`;
@@ -19,7 +36,7 @@
     let options = config.options || [];
     let selected = mode === 'multi'
       ? (config.selected || []).slice()
-      : (config.selected != null ? config.selected : (options.length > 0 ? options[0] : ''));
+      : (config.selected != null ? config.selected : (options.length > 0 ? optValue(options[0]) : ''));
     const placeholder = config.placeholder || '';
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
@@ -96,8 +113,13 @@
       const result = [];
       for (let i = 0; i < options.length; i++) {
         const opt = options[i];
-        if (mode === 'multi' && selected.indexOf(opt) >= 0) continue;
-        if (q && opt.toLowerCase().indexOf(q) < 0) continue;
+        const val = optValue(opt);
+        if (mode === 'multi' && selected.indexOf(val) >= 0) continue;
+        if (q) {
+          const matchVal = val.toLowerCase().indexOf(q) >= 0;
+          const matchLabel = optLabel(opt).toLowerCase().indexOf(q) >= 0;
+          if (!matchVal && !matchLabel) continue;
+        }
         result.push(opt);
       }
       return result;
@@ -123,15 +145,16 @@
 
       for (let i = 0; i < filtered.length; i++) {
         const opt = filtered[i];
+        const val = optValue(opt);
         const div = document.createElement('div');
         div.className = 'blockr-select__option';
         if (i === highlightIdx) div.className += ' blockr-select__option--highlighted';
-        if (mode === 'single' && opt === selected) div.className += ' blockr-select__option--selected';
+        if (mode === 'single' && val === selected) div.className += ' blockr-select__option--selected';
         div.setAttribute('role', 'option');
         div.setAttribute('id', `${id}-opt-${i}`);
-        div.setAttribute('aria-selected', (mode === 'single' && opt === selected) ? 'true' : 'false');
-        div.setAttribute('data-value', opt);
-        div.textContent = opt;
+        div.setAttribute('aria-selected', (mode === 'single' && val === selected) ? 'true' : 'false');
+        div.setAttribute('data-value', val);
+        fillOptContent(div, opt);
         dropdown.appendChild(div);
       }
 
@@ -143,7 +166,8 @@
     const renderValue = () => {
       if (mode !== 'single') return;
       if (selected) {
-        valueEl.textContent = selected;
+        const opt = findOpt(options, selected);
+        if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = selected; }
         valueEl.classList.remove('blockr-select__value--placeholder');
         searchInput.setAttribute('placeholder', '');
       } else {
@@ -328,7 +352,7 @@
           e.preventDefault();
           if (!isOpen) { open(); return; }
           if (highlightIdx >= 0 && highlightIdx < filtered.length) {
-            selectOption(filtered[highlightIdx]);
+            selectOption(optValue(filtered[highlightIdx]));
           }
           break;
         case 'Escape':
@@ -461,19 +485,20 @@
 
       setOptions(opts, sel) {
         options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
+        const vals = options.map(optValue);
         if (mode === 'single') {
-          if (sel != null && options.indexOf(sel) >= 0) {
+          if (sel != null && vals.indexOf(sel) >= 0) {
             selected = sel;
           } else if (options.length > 0) {
-            selected = options[0];
+            selected = optValue(options[0]);
           } else {
             selected = '';
           }
         } else {
           if (sel != null) {
-            selected = sel.filter(v => options.indexOf(v) >= 0);
+            selected = sel.filter(v => vals.indexOf(v) >= 0);
           } else {
-            selected = selected.filter(v => options.indexOf(v) >= 0);
+            selected = selected.filter(v => vals.indexOf(v) >= 0);
           }
         }
         render();
