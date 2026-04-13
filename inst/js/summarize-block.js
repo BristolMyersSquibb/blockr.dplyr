@@ -447,13 +447,14 @@
     updateColumns(columns) {
       this.columnNames = columns || [];
 
-      // Update column selectizes in simple rows
+      // Refresh simple-row column pickers, but do not auto-assign a default
+      // column to a row that legitimately has none (e.g. func = "n"), and
+      // only clear the stored column if it has actually been removed.
       for (const s of this.summaries) {
         if (s.type === 'simple' && s._colSelectize) {
-          const current = s._colSelectize.getValue();
-          s._colSelectize.setOptions(this.columnNames, current);
-          if (!s.col && this.columnNames.length > 0) {
-            s.col = s._colSelectize.getValue();
+          s._colSelectize.setOptions(this.columnNames, s.col || null);
+          if (s.col && !this.columnNames.includes(s.col)) {
+            s.col = "";
           }
         }
         if (s.exprInput) {
@@ -461,10 +462,12 @@
         }
       }
 
-      // Update group by selectize
+      // Refresh group-by selectize and drop removed columns from model
       if (this._bySelectize) {
-        const currentBy = this._bySelectize.getValue();
-        this._bySelectize.setOptions(this.columnNames, currentBy);
+        this._bySelectize.setOptions(this.columnNames, this.byValues);
+        this.byValues = (this.byValues || []).filter(
+          c => this.columnNames.includes(c)
+        );
       }
 
       // Auto-submit now that columns are available

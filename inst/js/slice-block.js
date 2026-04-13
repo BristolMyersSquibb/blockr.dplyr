@@ -407,19 +407,24 @@
 
     updateColumns(names) {
       this.columnNames = names || [];
+      // Refresh options but keep the model state authoritative: a single
+      // selectize picks a default when passed null, which would silently
+      // commit a column the user never chose (breaks save/restore).
       if (this._orderBySelect) {
-        const currentOb = this._orderBySelect.getValue();
-        this._orderBySelect.setOptions(this.columnNames, currentOb);
-        this.order_by = this._orderBySelect.getValue();
+        this._orderBySelect.setOptions(this.columnNames, this.order_by || null);
+        if (this.order_by && !this.columnNames.includes(this.order_by)) {
+          this.order_by = "";
+        }
       }
       if (this._weightBySelect) {
-        const currentWb = this._weightBySelect.getValue();
-        this._weightBySelect.setOptions(this.columnNames, currentWb);
-        this.weight_by = this._weightBySelect.getValue();
+        this._weightBySelect.setOptions(this.columnNames, this.weight_by || null);
+        if (this.weight_by && !this.columnNames.includes(this.weight_by)) {
+          this.weight_by = "";
+        }
       }
       if (this._bySelect) {
         this._bySelect.setOptions(this.columnNames, this.by);
-        this.by = this._bySelect.getValue();
+        this.by = (this.by || []).filter(c => this.columnNames.includes(c));
       }
     }
   }

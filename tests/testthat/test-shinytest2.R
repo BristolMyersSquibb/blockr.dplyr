@@ -294,6 +294,35 @@ test_that("summarize: three summaries (simple + simple + expr) with multi group-
   expect_true(all(res$hp_range >= 0))
 })
 
+# Regression: updateColumns with unchanged metadata must not reset a
+# summary row's col to the first column (breaks func = "n" which has no col).
+test_that("summarize: col='' survives updateColumns (restore race)", {
+  set_block_state(app, "summarize", "summarize_input", list(
+    summaries = list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg"),
+      list(type = "simple", name = "n_cars", func = "n", col = "")
+    ),
+    by = list("cyl")
+  ))
+  baseline <- get_block_result(app, "summarize")
+
+  fid <- "board-block_summarize-expr-summarize_input"
+  app$run_js(sprintf(
+    "(function(){var el=document.getElementById('%s');
+       el._block.updateColumns(el._block.columnNames);
+       el._block._submit();})();", fid))
+  app$wait_for_idle()
+
+  cols <- jsonlite::fromJSON(app$get_js(sprintf(
+    "JSON.stringify(document.getElementById('%s')._block.summaries
+       .map(function(s){return s.col;}))", fid)), simplifyVector = FALSE)
+  expect_equal(cols[[1]], "mpg")
+  expect_equal(cols[[2]], "")
+
+  res <- get_block_result(app, "summarize")
+  expect_equal(res, baseline)
+})
+
 # ===========================================================================
 # ARRANGE (3 tests)
 # ===========================================================================
@@ -410,6 +439,35 @@ test_that("slice: sample with group-by", {
   for (g in unique(res$cyl)) {
     expect_equal(sum(res$cyl == g), 2)
   }
+})
+
+# Regression: updateColumns with unchanged metadata must not default
+# weight_by / order_by to the first column when the user left them unset.
+test_that("slice: empty weight_by survives updateColumns (restore race)", {
+  set_block_state(app, "slice", "slice_input", list(
+    type = "min", n = 3L, order_by = "mpg", with_ties = FALSE,
+    by = list("cyl")
+  ))
+  baseline <- get_block_result(app, "slice")
+
+  fid <- "board-block_slice-expr-slice_input"
+  app$run_js(sprintf(
+    "(function(){var el=document.getElementById('%s');
+       el._block.updateColumns(el._block.columnNames);
+       el._block._submit();})();", fid))
+  app$wait_for_idle()
+
+  st <- jsonlite::fromJSON(app$get_js(sprintf(
+    "JSON.stringify({order_by:document.getElementById('%s')._block.order_by,
+       weight_by:document.getElementById('%s')._block.weight_by,
+       by:document.getElementById('%s')._block.by})", fid, fid, fid)),
+    simplifyVector = FALSE)
+  expect_equal(st$order_by, "mpg")
+  expect_equal(st$weight_by, "")
+  expect_equal(st$by, list("cyl"))
+
+  res <- get_block_result(app, "slice")
+  expect_equal(res, baseline)
 })
 
 # ===========================================================================
