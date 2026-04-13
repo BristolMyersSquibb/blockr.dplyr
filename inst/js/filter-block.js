@@ -454,7 +454,13 @@
           c._colSelectize.setOptions(this.columnNames, current);
           const col = c._colSelectize.getValue();
           if (col && this.columnMeta[col]) {
-            this._onColumnChange(c, col);
+            // Preserve existing values/op: column metadata refreshing must
+            // not clobber user- or setState-provided condition values.
+            this._onColumnChange(c, col, {
+              values: c.values,
+              numValue: c.numValue,
+              op: c.op
+            });
           }
         }
         if (c.exprInput) {

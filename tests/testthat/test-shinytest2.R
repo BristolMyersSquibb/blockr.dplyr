@@ -121,6 +121,45 @@ test_that("filter: three conditions with OR (values + numeric + expr)", {
   expect_true(nrow(res) > 0)
 })
 
+# Regression: on board restore the server fires both `filter-block-update`
+# (state) and `filter-columns` (metadata) custom messages. If metadata
+# arrives after state, `updateColumns` must not clobber restored values.
+# See filter-block.js `_onColumnChange` / `updateColumns`.
+test_that("filter: values survive a subsequent updateColumns (restore race)", {
+  set_block_state(app, "filter", "filter_input", list(
+    conditions = list(
+      list(type = "values", column = "cyl",
+           values = list("4", "6"), mode = "include"),
+      list(type = "numeric", column = "mpg", op = ">=", value = 20)
+    ),
+    operator = "&"
+  ))
+  baseline <- get_block_result(app, "filter")
+
+  fid <- "board-block_filter-expr-filter_input"
+  app$run_js(sprintf(
+    "(function(){
+       var el = document.getElementById('%s');
+       el._block.updateColumns(Object.values(el._block.columnMeta));
+       el._block._submit();
+     })();", fid))
+  app$wait_for_idle()
+
+  after_json <- app$get_js(sprintf(
+    "JSON.stringify(document.getElementById('%s')._block.conditions
+       .map(function(c){
+         return {values: c.values, numValue: c.numValue, op: c.op};
+       }))", fid))
+  after <- jsonlite::fromJSON(after_json, simplifyVector = FALSE)
+  expect_equal(after[[1]]$values, list("4", "6"))
+  expect_equal(after[[1]]$op, "is")
+  expect_equal(after[[2]]$numValue, 20)
+  expect_equal(after[[2]]$op, ">=")
+
+  res <- get_block_result(app, "filter")
+  expect_equal(res, baseline)
+})
+
 # ===========================================================================
 # SELECT (3 tests)
 # ===========================================================================
