@@ -670,15 +670,16 @@ make_bind_cols_expr <- function(arg_names = character()) {
 # Shared utilities
 # =========================================================================
 
-#' Build column metadata for JS
+#' Build lightweight column summary for JS (names + types only)
 #'
-#' Computes type, range (numeric), unique values, and NA/empty presence
-#' for each column in a data frame. Result is sent to JS via sendCustomMessage.
+#' Returns name, type, and hasNA for each column — no unique values.
+#' Sent on data arrival so the filter UI can render column dropdowns instantly.
+#' Unique values are fetched on-demand via [build_column_values()].
 #'
 #' @param df A data frame
-#' @return A list of column info objects
+#' @return A list of column summary objects
 #' @noRd
-build_column_meta <- function(df) {
+build_column_summary <- function(df) {
   lapply(colnames(df), function(col) {
     vals <- df[[col]]
     type <- if (is.numeric(vals)) {
@@ -690,18 +691,57 @@ build_column_meta <- function(df) {
     } else {
       "character"
     }
+    list(name = col, type = type, hasNA = anyNA(vals))
+  })
+}
 
-    info <- list(name = col, type = type, hasNA = anyNA(vals))
+#' Build full column metadata for a single column
+#'
+#' Computes type, range (numeric), unique values, and NA/empty presence
+#' for one column. Called on-demand when the user selects a column in the
+#' filter block.
+#'
+#' @param df A data frame
+#' @param col Column name (character)
+#' @return A column info object (list)
+#' @noRd
+build_column_values <- function(df, col) {
+  vals <- df[[col]]
+  type <- if (is.numeric(vals)) {
+    "numeric"
+  } else if (is.integer(vals)) {
+    "integer"
+  } else if (is.logical(vals)) {
+    "logical"
+  } else {
+    "character"
+  }
 
-    if (type %in% c("numeric", "integer")) {
-      info$min <- min(vals, na.rm = TRUE)
-      info$max <- max(vals, na.rm = TRUE)
-      info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
-    } else {
-      uv <- sort(unique(as.character(vals[!is.na(vals)])))
-      info$values <- as.list(uv)
-      info$hasEmpty <- any(vals == "", na.rm = TRUE)
-    }
-    info
+  info <- list(name = col, type = type, hasNA = anyNA(vals))
+
+  if (type %in% c("numeric", "integer")) {
+    info$min <- min(vals, na.rm = TRUE)
+    info$max <- max(vals, na.rm = TRUE)
+    info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
+  } else {
+    uv <- sort(unique(as.character(vals[!is.na(vals)])))
+    info$values <- as.list(uv)
+    info$hasEmpty <- any(vals == "", na.rm = TRUE)
+  }
+  info
+}
+
+#' Build column metadata for JS (all columns, eager)
+#'
+#' Computes type, range (numeric), unique values, and NA/empty presence
+#' for each column in a data frame. Kept for backward compatibility.
+#' Prefer [build_column_summary()] + [build_column_values()] for lazy loading.
+#'
+#' @param df A data frame
+#' @return A list of column info objects
+#' @noRd
+build_column_meta <- function(df) {
+  lapply(colnames(df), function(col) {
+    build_column_values(df, col)
   })
 }
