@@ -726,7 +726,14 @@ build_column_values <- function(df, col) {
   } else {
     uv <- sort(unique(as.character(vals[!is.na(vals)])))
     info$values <- as.list(uv)
-    info$hasEmpty <- any(vals == "", na.rm = TRUE)
+    # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
+    # to the column class. Only run the empty-string probe on actual
+    # character/factor data where "" is a meaningful value.
+    info$hasEmpty <- if (is.character(vals) || is.factor(vals)) {
+      any(vals == "", na.rm = TRUE)
+    } else {
+      FALSE
+    }
   }
   info
 }
