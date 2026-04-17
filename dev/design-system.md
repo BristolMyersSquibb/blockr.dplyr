@@ -73,6 +73,27 @@ Rows have a fixed-width left column (150-160px) for the "key" (column name), a s
 .blockr-popover      — absolute positioned panel, 8px radius, shadow
 ```
 
+### Responsive layout
+
+Blocks have no fixed width — they stretch to fill their stack/card slot, which can range from ~300px (narrow sidebar) to the full workspace width. Input rows must reflow: horizontal when wide, stacked when narrow.
+
+**Use flex-wrap, not grid auto-fit and not media queries.** The idiom is a wrapping flex row with each field claiming an equal share above a soft minimum:
+
+```css
+.xxb-grid  { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 12px; }
+.xxb-field { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; }
+```
+
+Rules:
+- `flex: 1 1 160px` — fields grow equally, shrink to the ~160px soft minimum, then wrap. Tune the basis per block (shorter labels can go ~120px; long inputs need 200px+).
+- `min-width: 0` is mandatory on flex children that contain `Blockr.Select` or other overflowing content — otherwise the intrinsic content width prevents shrinking.
+- `align-items: flex-end` keeps inputs bottom-aligned when labels span two lines on one field but not another.
+- For a field that should always occupy its own row (e.g. a multi-select with many tags), add a `--full` modifier: `.xxb-field--full { flex: 1 1 100%; }`.
+
+Never use `@media` or `@container` queries for block internals — block width is unknown at author time and can change at runtime as the user resizes panels.
+
+Canonical examples: `pivot-longer-block.css` (`.plb-input-row` / `.plb-field`), `summary-table-block.css` in blockr.bi (`.stb-grid` / `.stb-field` / `.stb-field--full`).
+
 ## Shared JS Components
 
 ### Blockr.Select (single + multi)
