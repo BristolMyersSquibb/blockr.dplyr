@@ -65,11 +65,15 @@ stopifnot(
     file.exists(file.path(LIB_FIX, "blockr.dplyr", "DESCRIPTION"))
 )
 
-# -- 2. YOUR_DATA: replace this with the data your real app loads --------------
+# -- 2. YOUR_DATA — *** REPLACE THIS *** ---------------------------------------
+# *** If you leave this default in place you will just re-create the numbers
+# *** Christoph already has from his benchmark. The point of this script is to
+# *** measure YOUR data on YOUR machine, so swap this for the actual dataset
+# *** you load when you see the slowdown — readRDS("...") / load() / dbReadTable() / ...
+
+CUSTOMIZED_DATA <- FALSE  # set to TRUE once you've replaced the body below
 
 make_data <- function() {
-  # Default: 50K-row synthetic dataset with one high-cardinality column.
-  # Replace with: readRDS("~/path/to/your.rds")  — or anything else.
   set.seed(42)
   n <- 50000L
   data.frame(
@@ -83,11 +87,13 @@ make_data <- function() {
   )
 }
 
-# -- 3. YOUR_BOARD: replace with your real board layout ------------------------
+# -- 3. YOUR_BOARD — *** REPLACE THIS *** --------------------------------------
+# *** The default board is just static_block + filter_block. If your real app
+# *** uses dock + DAG + multiple blocks, those costs will not show up here.
+# *** Mirror your real layout to capture any non-filter regressions.
 
-# IMPORTANT: this needs to use the CURRENTLY loaded blockr.dplyr namespace.
-# `lib_path` is set externally before sourcing this file, so just call the
-# blockr functions directly.
+CUSTOMIZED_BOARD <- FALSE  # set to TRUE once you've replaced the body below
+
 make_board <- function() {
   blockr.core::new_board(
     blocks = list(
@@ -96,6 +102,21 @@ make_board <- function() {
     ),
     links = blockr.core::links(from = "data", to = "filter")
   )
+}
+
+# -- Sanity check: warn if the user is about to send back our own numbers ------
+
+if (!CUSTOMIZED_DATA || !CUSTOMIZED_BOARD) {
+  cat("\n",
+      "============================================================\n",
+      "WARNING — running with the default data/board.\n",
+      "Customize make_data() and make_board() to match YOUR real app,\n",
+      "then set CUSTOMIZED_DATA <- TRUE and CUSTOMIZED_BOARD <- TRUE.\n",
+      "Otherwise the output is just the synthetic-50K reprex Christoph\n",
+      "already ran and won't tell us anything new.\n",
+      "============================================================\n\n",
+      sep = "")
+  Sys.sleep(3)
 }
 
 # =============================================================================
