@@ -310,8 +310,9 @@ run_startup(LIB_CRAN, "cran")
 run_startup(LIB_FIX,  "fix")
 
 cat("\n===== Browser-side: time-to-filter-columns =====\n")
-run_browser(LIB_CRAN, "cran", 7860L)
+# Pick uncommon ports to avoid clashing with anything else on the machine.
+run_browser(LIB_CRAN, "cran", 18860L)
 Sys.sleep(2)
-run_browser(LIB_FIX,  "fix",  7861L)
+run_browser(LIB_FIX,  "fix",  18861L)
 
 cat("\n=====\nDONE — please send the full output back.\n")
