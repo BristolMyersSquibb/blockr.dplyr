@@ -19,6 +19,8 @@
       this.remove = true;
       this.convert = false;
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -45,7 +47,7 @@
       colLabel.textContent = 'Column';
       colWrap.appendChild(colLabel);
       this._colSelect = Blockr.Select.single(colWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: null,
         placeholder: 'Select column\u2026',
         onChange: (value) => {
@@ -167,7 +169,7 @@
 
       // Update column select
       if (this._colSelect) {
-        this._colSelect.setOptions(this.columnNames, this.col || null);
+        this._colSelect.setOptions(this.columnOptions, this.col || null);
       }
 
       // Update text inputs
@@ -181,11 +183,18 @@
       this._convertToggle.classList.toggle('sb-toggle-active', this.convert);
     }
 
-    updateColumns(names) {
-      this.columnNames = names || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       if (this._colSelect) {
         const current = this._colSelect.getValue();
-        this._colSelect.setOptions(this.columnNames, current);
+        this._colSelect.setOptions(this.columnOptions, current);
         this.col = this._colSelect.getValue();
       }
     }

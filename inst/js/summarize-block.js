@@ -33,6 +33,8 @@
       this.summaries = [];
       this.nextId = 1;
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this.byValues = [];
       this.summaryFuncs = DEFAULT_SUMMARY_FUNCS.slice();
       // Maps display label -> namespaced call (e.g. "paren_num" -> "blockr.topline::paren_num")
@@ -95,7 +97,7 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelectize = Blockr.Select.multi(byWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
         reorderable: true,
@@ -179,7 +181,7 @@
       row.appendChild(colWrap);
       summary._colWrap = colWrap;
       summary._colSelectize = Blockr.Select.single(colWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: col,
         placeholder: 'Column\u2026',
         onChange: (value) => {
@@ -395,7 +397,7 @@
       const by = Array.isArray(byRaw) ? byRaw.slice() : [byRaw];
       this.byValues = by;
       if (this._bySelectize) {
-        this._bySelectize.setOptions(this.columnNames, by);
+        this._bySelectize.setOptions(this.columnOptions, by);
       }
 
       this._updateUI();
@@ -444,15 +446,22 @@
       }
     }
 
-    updateColumns(columns) {
-      this.columnNames = columns || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
 
       // Refresh simple-row column pickers, but do not auto-assign a default
       // column to a row that legitimately has none (e.g. func = "n"), and
       // only clear the stored column if it has actually been removed.
       for (const s of this.summaries) {
         if (s.type === 'simple' && s._colSelectize) {
-          s._colSelectize.setOptions(this.columnNames, s.col || null);
+          s._colSelectize.setOptions(this.columnOptions, s.col || null);
           if (s.col && !this.columnNames.includes(s.col)) {
             s.col = "";
           }
@@ -464,7 +473,7 @@
 
       // Refresh group-by selectize and drop removed columns from model
       if (this._bySelectize) {
-        this._bySelectize.setOptions(this.columnNames, this.byValues);
+        this._bySelectize.setOptions(this.columnOptions, this.byValues);
         this.byValues = (this.byValues || []).filter(
           c => this.columnNames.includes(c)
         );

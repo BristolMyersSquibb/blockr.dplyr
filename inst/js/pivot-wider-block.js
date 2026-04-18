@@ -22,6 +22,8 @@
       this.names_prefix = '';
       this.values_fn = '';
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -66,7 +68,7 @@
       namesFromLabel.textContent = 'Names from';
       namesFromWrap.appendChild(namesFromLabel);
       this._namesFromSelect = Blockr.Select.multi(namesFromWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
         reorderable: false,
@@ -85,7 +87,7 @@
       valuesFromLabel.textContent = 'Values from';
       valuesFromWrap.appendChild(valuesFromLabel);
       this._valuesFromSelect = Blockr.Select.multi(valuesFromWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
         reorderable: false,
@@ -104,7 +106,7 @@
       idColsLabel.textContent = 'ID columns (optional)';
       idColsWrap.appendChild(idColsLabel);
       this._idColsSelect = Blockr.Select.multi(idColsWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
         reorderable: false,
@@ -279,28 +281,35 @@
 
       // Update multi-selects
       if (this._namesFromSelect) {
-        this._namesFromSelect.setOptions(this.columnNames, this.names_from);
+        this._namesFromSelect.setOptions(this.columnOptions, this.names_from);
       }
       if (this._valuesFromSelect) {
-        this._valuesFromSelect.setOptions(this.columnNames, this.values_from);
+        this._valuesFromSelect.setOptions(this.columnOptions, this.values_from);
       }
       if (this._idColsSelect) {
-        this._idColsSelect.setOptions(this.columnNames, this.id_cols);
+        this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
       }
     }
 
-    updateColumns(names) {
-      this.columnNames = names || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       if (this._namesFromSelect) {
-        this._namesFromSelect.setOptions(this.columnNames, this.names_from);
+        this._namesFromSelect.setOptions(this.columnOptions, this.names_from);
         this.names_from = this._namesFromSelect.getValue();
       }
       if (this._valuesFromSelect) {
-        this._valuesFromSelect.setOptions(this.columnNames, this.values_from);
+        this._valuesFromSelect.setOptions(this.columnOptions, this.values_from);
         this.values_from = this._valuesFromSelect.getValue();
       }
       if (this._idColsSelect) {
-        this._idColsSelect.setOptions(this.columnNames, this.id_cols);
+        this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
         this.id_cols = this._idColsSelect.getValue();
       }
     }

@@ -43,11 +43,12 @@ new_mutate_block <- function(
         self_write <- new.env(parent = emptyenv())
         self_write$active <- FALSE
 
-        # Send column names to JS when data changes
+        # Send column summary (name + label + type) to JS when data changes
         observeEvent(data(), {
+          meta <- build_column_picker_meta(data())
           session$sendCustomMessage(
             "mutate-columns",
-            list(id = ns("mutate_input"), columns = as.list(colnames(data())))
+            list(id = ns("mutate_input"), columns = meta)
           )
         })
 

@@ -16,6 +16,8 @@
       this.rows = [];
       this.nextId = 1;
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -71,7 +73,7 @@
       colDiv.className = 'ab-col-wrap';
       rowEl.appendChild(colDiv);
       row._colSelect = Blockr.Select.single(colDiv, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: column,
         placeholder: 'Column\u2026',
         onChange: (value) => {
@@ -173,12 +175,19 @@
       this._updateUI();
     }
 
-    updateColumns(names) {
-      this.columnNames = names || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       for (const r of this.rows) {
         if (r._colSelect) {
           const current = r._colSelect.getValue();
-          r._colSelect.setOptions(this.columnNames, current);
+          r._colSelect.setOptions(this.columnOptions, current);
           r.column = r._colSelect.getValue();
         }
       }

@@ -16,6 +16,8 @@
       this.exclude = false;
       this.distinct = false;
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -40,7 +42,7 @@
       this.card.appendChild(pickerWrap);
 
       this._multiSelect = Blockr.Select.multi(pickerWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
         reorderable: true,
@@ -113,14 +115,21 @@
       this._distinctToggle.classList.toggle('sb-toggle-active', this.distinct);
 
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnNames, this.columns);
+        this._multiSelect.setOptions(this.columnOptions, this.columns);
       }
     }
 
-    updateColumns(names) {
-      this.columnNames = names || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnNames, this.columns);
+        this._multiSelect.setOptions(this.columnOptions, this.columns);
         this.columns = this._multiSelect.getValue();
       }
     }

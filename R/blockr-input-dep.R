@@ -1,5 +1,10 @@
-#' HTML dependency for blockr-input component
-#' @noRd
+#' HTML dependency for blockr-input component (code autocomplete)
+#'
+#' Exported for reuse by other blockr packages that embed the shared
+#' expression-input component.
+#'
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @export
 blockr_input_dep <- function() {
   htmltools::tagList(
     blockr_core_js_dep(),

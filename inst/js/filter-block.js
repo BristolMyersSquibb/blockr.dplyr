@@ -41,6 +41,7 @@
       this.nextId = 1;
       this.columnMeta = {};
       this.columnNames = [];
+      this.columnOptions = [];
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -169,7 +170,7 @@
       colDiv.className = 'fb-col-wrap';
       row.appendChild(colDiv);
       cond._colSelectize = Blockr.Select.single(colDiv, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: column,
         placeholder: 'Column\u2026',
         onChange: (value) => this._onColumnChange(cond, value)
@@ -463,15 +464,17 @@
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
+      this.columnOptions = [];
       this._pendingValueRequests = new Set();
       for (const col of (meta || [])) {
         this.columnMeta[col.name] = col;
         this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       for (const c of this.conditions) {
         if (c._colSelectize) {
           const current = c._colSelectize.getValue();
-          c._colSelectize.setOptions(this.columnNames, current);
+          c._colSelectize.setOptions(this.columnOptions, current);
           const col = c._colSelectize.getValue();
           if (col && this.columnMeta[col]) {
             // Preserve existing values/op: column metadata refreshing must

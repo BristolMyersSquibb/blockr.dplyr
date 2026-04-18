@@ -94,6 +94,29 @@ Never use `@media` or `@container` queries for block internals — block width i
 
 Canonical examples: `pivot-longer-block.css` (`.plb-input-row` / `.plb-field`), `summary-table-block.css` in blockr.bi (`.stb-grid` / `.stb-field` / `.stb-field--full`).
 
+## Column labels in pickers
+
+Column options in `Blockr.Select` may carry an optional human-readable label
+alongside the raw column name. Typical source: `attr(col, "label")` on ADaM
+or other annotated datasets.
+
+- **Option shape:** `{ value: "AVAL", label: "Analysis Value" }` (bare strings
+  still work for unlabelled columns).
+- **Slot:** `.blockr-select__opt-label` — a span appended by
+  `fillOptContent()` next to the value in both dropdown options and the
+  single-mode selected-value display. Multi-mode tag pills stay value-only.
+- **Style:** grey-500, `--blockr-font-size-sm`, 8px left margin.
+- **Truncation is CSS-only.** No R-side character counting. The parent
+  `.blockr-select__value` is `white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;`, so the label (which sits after the value)
+  ellipsizes when space runs out. The value is always preserved.
+- **Tooltip:** native browser tooltip via `title` attribute. No custom
+  mouseover listeners — the browser handles timing, positioning, and
+  cleanup reliably.
+
+The same slot is reused by consumers outside blockr.dplyr (e.g. blockr.dm's
+table pickers for dm table labels).
+
 ## Shared JS Components
 
 ### Blockr.Select (single + multi)
@@ -101,6 +124,7 @@ Canonical examples: `pivot-longer-block.css` (`.plb-input-row` / `.plb-field`), 
 - Multi: tag pills, drag-to-reorder, backspace to remove last
 - API: `Blockr.Select.single(container, config)` / `.multi(container, config)`
 - Config: `{ options, selected, placeholder, reorderable, onChange }`
+- Options: `string[]` or `{value, label}[]` — labels render via `.blockr-select__opt-label`.
 
 ### Blockr.Input (code autocomplete)
 - Lightweight code editor with token-based autocomplete

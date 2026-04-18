@@ -146,7 +146,12 @@ normalize_filter_state_for_js <- function(state) {
 }
 
 #' HTML dependency for filter block JS + CSS
-#' @noRd
+#'
+#' Exported for reuse by blockr packages that embed the filter block's JS UI
+#' (e.g. blockr.dm's dm filter block).
+#'
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @export
 filter_block_dep <- function() {
   htmltools::tagList(
     htmltools::htmlDependency(

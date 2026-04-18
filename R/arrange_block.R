@@ -42,12 +42,12 @@ new_arrange_block <- function(
         self_write <- new.env(parent = emptyenv())
         self_write$active <- FALSE
 
-        # Send column names to JS when data changes
+        # Send column summary (name + label + type) to JS when data changes
         observeEvent(data(), {
-          col_names <- as.list(colnames(data()))
+          meta <- build_column_picker_meta(data())
           session$sendCustomMessage(
             "arrange-columns",
-            list(id = ns("arrange_input"), columns = col_names)
+            list(id = ns("arrange_input"), columns = meta)
           )
         })
 
