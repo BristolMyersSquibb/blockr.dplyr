@@ -9,11 +9,15 @@ NULL
 
 #' Build a dplyr::filter expression from JS conditions
 #'
+#' Exported as part of the public API so other blockr packages (e.g.
+#' blockr.dm) can reuse the same filter-condition → expression protocol.
+#'
 #' @param conditions List of condition objects from JS. Each has a `type`
 #'   ("values", "numeric", or "expr") and type-specific fields.
 #' @param operator Global operator: "&" or "|"
+#' @param preserve_order Reserved; currently unused at this layer.
 #' @return A language object like `dplyr::filter(.(data), ...)`
-#' @noRd
+#' @export
 make_filter_expr <- function(conditions,
                              operator = "&",
                              preserve_order = FALSE) {
@@ -670,15 +674,22 @@ make_bind_cols_expr <- function(arg_names = character()) {
 # Shared utilities
 # =========================================================================
 
-#' Build column metadata for JS
+#' Build lightweight column summary for JS (names + types only)
 #'
-#' Computes type, range (numeric), unique values, and NA/empty presence
-#' for each column in a data frame. Result is sent to JS via sendCustomMessage.
+#' Returns `name`, `type`, `hasNA`, and `label` for each column — no unique
+#' values. Sent on data arrival so the filter UI can render column dropdowns
+#' instantly. Unique values are fetched on-demand via [build_column_values()].
+#'
+#' `label` is read from `attr(col, "label")` (e.g. ADaM datasets). It is
+#' an empty string when the attribute is missing or not a length-1 character.
+#'
+#' Exported as part of the public API so other blockr packages (e.g.
+#' blockr.dm) can reuse the same column-metadata protocol.
 #'
 #' @param df A data frame
-#' @return A list of column info objects
-#' @noRd
-build_column_meta <- function(df) {
+#' @return A list of column summary objects
+#' @export
+build_column_summary <- function(df) {
   lapply(colnames(df), function(col) {
     vals <- df[[col]]
     type <- if (is.numeric(vals)) {
@@ -690,18 +701,106 @@ build_column_meta <- function(df) {
     } else {
       "character"
     }
+    list(
+      name = col,
+      type = type,
+      hasNA = anyNA(vals),
+      label = col_label(vals)
+    )
+  })
+}
 
-    info <- list(name = col, type = type, hasNA = anyNA(vals))
+#' Build a lightweight column summary for pickers (name + label)
+#'
+#' Returns one entry per column: `list(name, label)`. Skips the `type`
+#' detection and `anyNA()` sweep that [build_column_summary()] does — those
+#' are only needed by the filter block's type-aware condition UI. All other
+#' picker blocks only need the name for the option value and the optional
+#' label for the secondary text slot, so this helper is the lean path.
+#'
+#' `label` is read from `attr(col, "label")` (e.g. ADaM datasets). It is
+#' an empty string when the attribute is missing or not a length-1 character.
+#'
+#' @param df A data frame
+#' @return A list of `list(name, label)` entries, one per column.
+#' @export
+build_column_picker_meta <- function(df) {
+  lapply(colnames(df), function(col) {
+    list(name = col, label = col_label(df[[col]]))
+  })
+}
 
-    if (type %in% c("numeric", "integer")) {
-      info$min <- min(vals, na.rm = TRUE)
-      info$max <- max(vals, na.rm = TRUE)
-      info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
+#' Read a column label attribute, normalized to a single string
+#' @param x A column vector
+#' @return A character scalar — the label or "" if missing / invalid.
+#' @noRd
+col_label <- function(x) {
+  lbl <- attr(x, "label")
+  if (is.character(lbl) && length(lbl) == 1L && !is.na(lbl)) lbl else ""
+}
+
+#' Build full column metadata for a single column
+#'
+#' Computes type, range (numeric), unique values, NA/empty presence, and
+#' label for one column. Called on-demand when the user selects a column in
+#' the filter block.
+#'
+#' Exported as part of the public API so other blockr packages (e.g.
+#' blockr.dm) can reuse the same column-metadata protocol.
+#'
+#' @param df A data frame
+#' @param col Column name (character)
+#' @return A column info object (list)
+#' @export
+build_column_values <- function(df, col) {
+  vals <- df[[col]]
+  type <- if (is.numeric(vals)) {
+    "numeric"
+  } else if (is.integer(vals)) {
+    "integer"
+  } else if (is.logical(vals)) {
+    "logical"
+  } else {
+    "character"
+  }
+
+  info <- list(
+    name = col,
+    type = type,
+    hasNA = anyNA(vals),
+    label = col_label(vals)
+  )
+
+  if (type %in% c("numeric", "integer")) {
+    info$min <- min(vals, na.rm = TRUE)
+    info$max <- max(vals, na.rm = TRUE)
+    info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
+  } else {
+    uv <- sort(unique(as.character(vals[!is.na(vals)])))
+    info$values <- as.list(uv)
+    # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
+    # to the column class. Only run the empty-string probe on actual
+    # character/factor data where "" is a meaningful value.
+    info$hasEmpty <- if (is.character(vals) || is.factor(vals)) {
+      any(vals == "", na.rm = TRUE)
     } else {
-      uv <- sort(unique(as.character(vals[!is.na(vals)])))
-      info$values <- as.list(uv)
-      info$hasEmpty <- any(vals == "", na.rm = TRUE)
+      FALSE
     }
-    info
+  }
+  info
+}
+
+#' Build column metadata for JS (all columns, eager)
+#'
+#' Computes type, range (numeric), unique values, and NA/empty presence
+#' for each column in a data frame. Kept for backward compatibility.
+#' Prefer [build_column_summary()] + [build_column_values()] for lazy loading.
+#'
+#' @param df A data frame
+#' @return A list of column info objects
+#' @noRd
+build_column_meta <- function(df) {
+  lapply(colnames(df), function(col) {
+    build_column_values(df, col)
   })
 }

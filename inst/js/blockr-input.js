@@ -62,8 +62,31 @@
     popup.setAttribute('role', 'listbox');
 
     root.appendChild(field);
-    root.appendChild(popup);
     container.appendChild(root);
+
+    // Portal: popup lives on document.body while open so it escapes any
+    // clipping / paint-containment / stacking-context ancestors (Dockview
+    // panels, offcanvas, modals, …). Same pattern as Blockr.Select.
+
+    const computePopupPosition = () => {
+      const r = root.getBoundingClientRect();
+      const popupH = popup.offsetHeight || 200;
+      const spaceBelow = window.innerHeight - r.bottom - 8;
+      const flipAbove = spaceBelow < popupH && r.top > popupH;
+
+      popup.style.position = 'fixed';
+      popup.style.width    = r.width + 'px';
+      popup.style.left     = r.left + 'px';
+      popup.style.bottom   = 'auto';
+
+      if (flipAbove) {
+        popup.style.top = (r.top - popupH - 2) + 'px';
+      } else {
+        popup.style.top = (r.bottom + 2) + 'px';
+      }
+    };
+
+    const onScrollOrResize = () => { if (popupOpen) computePopupPosition(); };
 
     // --- Completion list building ---
 
@@ -171,12 +194,26 @@
     const openPopup = () => {
       if (popupOpen || destroyed) return;
       popupOpen = true;
+
+      if (popup.parentElement !== document.body) {
+        document.body.appendChild(popup);
+      }
+      popup.style.display = 'block';
+
       root.classList.add('blockr-input--popup-open');
+      computePopupPosition();
+      window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
+      window.addEventListener('resize', onScrollOrResize, { passive: true });
     };
 
     const closePopup = () => {
       if (!popupOpen) return;
       popupOpen = false;
+
+      window.removeEventListener('scroll', onScrollOrResize, { capture: true });
+      window.removeEventListener('resize', onScrollOrResize);
+
+      popup.style.display = '';
       root.classList.remove('blockr-input--popup-open');
       popup.innerHTML = '';
       highlightIdx = 0;
@@ -264,12 +301,16 @@
     };
 
     const onDocumentClick = (e) => {
-      if (!root.contains(e.target)) closePopup();
+      if (root.contains(e.target) || popup.contains(e.target)) return;
+      closePopup();
     };
 
     const onFieldBlur = () => {
       setTimeout(() => {
-        if (!root.contains(document.activeElement)) closePopup();
+        if (!root.contains(document.activeElement) &&
+            !popup.contains(document.activeElement)) {
+          closePopup();
+        }
       }, 150);
     };
 
@@ -302,6 +343,11 @@
         if (destroyed) return;
         destroyed = true;
         closePopup();
+
+        if (popup.parentElement === document.body) {
+          popup.remove();
+        }
+
         field.removeEventListener('input', onFieldInput);
         field.removeEventListener('keydown', onFieldKeydown);
         field.removeEventListener('blur', onFieldBlur);

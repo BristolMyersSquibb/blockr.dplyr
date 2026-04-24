@@ -53,14 +53,14 @@ new_join_block <- function(
         self_write <- new.env(parent = emptyenv())
         self_write$active <- FALSE
 
-        # Send column metadata to JS when either data input changes
+        # Send column summary (name + label + type) when either input changes
         observeEvent(list(x(), y()), {
           session$sendCustomMessage(
             "join-columns",
             list(
               id = ns("join_input"),
-              xColumns = as.list(colnames(x())),
-              yColumns = as.list(colnames(y()))
+              xColumns = build_column_picker_meta(x()),
+              yColumns = build_column_picker_meta(y())
             )
           )
         })

@@ -26,6 +26,8 @@
       this.rows = '1:5';
       this.by = [];
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
@@ -165,7 +167,7 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelect = Blockr.Select.multi(byWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
         reorderable: false,
@@ -206,7 +208,7 @@
       orderBySelectWrap.className = 'blockr-popover-select-wrap';
       this._popOrderByWrap.appendChild(orderBySelectWrap);
       this._orderBySelect = Blockr.Select.single(orderBySelectWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: null,
         placeholder: 'Column\u2026',
         onChange: (value) => {
@@ -227,7 +229,7 @@
       weightBySelectWrap.className = 'blockr-popover-select-wrap';
       this._popWeightByWrap.appendChild(weightBySelectWrap);
       this._weightBySelect = Blockr.Select.single(weightBySelectWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: null,
         placeholder: 'Column (optional)\u2026',
         onChange: (value) => {
@@ -387,13 +389,13 @@
 
       // Update column selects
       if (this._orderBySelect) {
-        this._orderBySelect.setOptions(this.columnNames, this.order_by || null);
+        this._orderBySelect.setOptions(this.columnOptions, this.order_by || null);
       }
       if (this._weightBySelect) {
-        this._weightBySelect.setOptions(this.columnNames, this.weight_by || null);
+        this._weightBySelect.setOptions(this.columnOptions, this.weight_by || null);
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnNames, this.by);
+        this._bySelect.setOptions(this.columnOptions, this.by);
       }
 
       // Update toggles
@@ -405,25 +407,32 @@
       this._updatePopoverVisibility();
     }
 
-    updateColumns(names) {
-      this.columnNames = names || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       // Refresh options but keep the model state authoritative: a single
       // selectize picks a default when passed null, which would silently
       // commit a column the user never chose (breaks save/restore).
       if (this._orderBySelect) {
-        this._orderBySelect.setOptions(this.columnNames, this.order_by || null);
+        this._orderBySelect.setOptions(this.columnOptions, this.order_by || null);
         if (this.order_by && !this.columnNames.includes(this.order_by)) {
           this.order_by = "";
         }
       }
       if (this._weightBySelect) {
-        this._weightBySelect.setOptions(this.columnNames, this.weight_by || null);
+        this._weightBySelect.setOptions(this.columnOptions, this.weight_by || null);
         if (this.weight_by && !this.columnNames.includes(this.weight_by)) {
           this.weight_by = "";
         }
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnNames, this.by);
+        this._bySelect.setOptions(this.columnOptions, this.by);
         this.by = (this.by || []).filter(c => this.columnNames.includes(c));
       }
     }

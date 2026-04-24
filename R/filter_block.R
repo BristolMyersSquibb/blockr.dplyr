@@ -47,13 +47,25 @@ new_filter_block <- function(
         self_write <- new.env(parent = emptyenv())
         self_write$active <- FALSE
 
-        # Send column metadata to JS when data changes
+        # Send lightweight column summary (names + types) on data change
         observeEvent(data(), {
-          meta <- build_column_meta(data())
+          meta <- build_column_summary(data())
           session$sendCustomMessage(
             "filter-columns",
             list(id = ns("filter_input"), columns = meta)
           )
+        })
+
+        # On-demand: JS requests unique values for a specific column
+        observeEvent(input$filter_input_request_values, {
+          col <- input$filter_input_request_values
+          if (!is.null(col) && col %in% colnames(data())) {
+            meta <- build_column_values(data(), col)
+            session$sendCustomMessage(
+              "filter-column-values",
+              list(id = ns("filter_input"), column = meta)
+            )
+          }
         })
 
         # JS -> R: user changed the filter
@@ -69,7 +81,10 @@ new_filter_block <- function(
           } else {
             session$sendCustomMessage(
               "filter-block-update",
-              list(id = ns("filter_input"), state = r_state())
+              list(
+                id = ns("filter_input"),
+                state = normalize_filter_state_for_js(r_state())
+              )
             )
           }
         })
@@ -112,8 +127,31 @@ new_filter_block <- function(
   )
 }
 
-#' HTML dependency for filter block JS + CSS
+#' Normalize filter state before sending to JS
+#'
+#' Shiny's `sendCustomMessage` serializes with `auto_unbox = TRUE`, which
+#' flattens length-1 character vectors to JSON scalars. The JS filter block
+#' then treats a scalar `values` as an iterable string and renders one chip
+#' per character. Wrap `values` in `as.list()` so JSON always emits an array,
+#' regardless of length.
 #' @noRd
+normalize_filter_state_for_js <- function(state) {
+  if (is.null(state)) return(state)
+  conds <- state$conditions %||% list()
+  state$conditions <- lapply(conds, function(cond) {
+    if (!is.null(cond$values)) cond$values <- as.list(cond$values)
+    cond
+  })
+  state
+}
+
+#' HTML dependency for filter block JS + CSS
+#'
+#' Exported for reuse by blockr packages that embed the filter block's JS UI
+#' (e.g. blockr.dm's dm filter block).
+#'
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @export
 filter_block_dep <- function() {
   htmltools::tagList(
     htmltools::htmlDependency(

@@ -1,5 +1,10 @@
 #' HTML dependency for blockr-core.js (namespace + shared utilities)
-#' @noRd
+#'
+#' Exported for reuse by other blockr packages that build on the shared
+#' JS namespace (e.g. blockr.dm).
+#'
+#' @return An `htmltools::htmlDependency`.
+#' @export
 blockr_core_js_dep <- function() {
   htmltools::htmlDependency(
     name = "blockr-core-js",
@@ -10,7 +15,12 @@ blockr_core_js_dep <- function() {
 }
 
 #' HTML dependency for blockr-blocks.css (shared block layout styles)
-#' @noRd
+#'
+#' Exported for reuse by other blockr packages that reuse the shared
+#' block-container / row / popover styles.
+#'
+#' @return An `htmltools::htmlDependency`.
+#' @export
 blockr_blocks_css_dep <- function() {
   htmltools::htmlDependency(
     name = "blockr-blocks-css",

@@ -253,3 +253,33 @@ test_that("filter block state change propagates to expression", {
     }
   )
 })
+
+# --- Column summary label support ---
+
+test_that("build_column_summary reads attr(x, 'label')", {
+  df <- data.frame(age = 1:3, sex = c("M", "F", "M"), stringsAsFactors = FALSE)
+  attr(df$age, "label") <- "Age in years"
+  attr(df$sex, "label") <- "Sex"
+  summary <- build_column_summary(df)
+  labels <- vapply(summary, function(x) x$label, character(1))
+  expect_equal(labels, c("Age in years", "Sex"))
+})
+
+test_that("build_column_summary defaults label to empty string", {
+  summary <- build_column_summary(data.frame(a = 1:3, b = 4:6))
+  labels <- vapply(summary, function(x) x$label, character(1))
+  expect_equal(labels, c("", ""))
+})
+
+test_that("build_column_summary ignores non-character label attr", {
+  df <- data.frame(a = 1:3)
+  attr(df$a, "label") <- 42
+  expect_equal(build_column_summary(df)[[1]]$label, "")
+})
+
+test_that("build_column_values includes label", {
+  df <- data.frame(age = 1:5)
+  attr(df$age, "label") <- "Age"
+  info <- build_column_values(df, "age")
+  expect_equal(info$label, "Age")
+})

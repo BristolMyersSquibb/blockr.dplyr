@@ -132,11 +132,12 @@ new_summarize_block <- function(
           list(id = ns("summarize_input"), functions = func_info)
         )
 
-        # Send column names (character vector) to JS when data changes
+        # Send column summary (name + label + type) to JS when data changes
         observeEvent(data(), {
+          meta <- build_column_picker_meta(data())
           session$sendCustomMessage(
             "summarize-columns",
-            list(id = ns("summarize_input"), columns = as.list(colnames(data())))
+            list(id = ns("summarize_input"), columns = meta)
           )
         })
 

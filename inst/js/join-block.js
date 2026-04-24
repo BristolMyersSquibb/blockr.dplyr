@@ -49,6 +49,10 @@
       this.nextId = 1;
       this.xColumns = [];
       this.yColumns = [];
+      this.xColumnOptions = [];
+      this.yColumnOptions = [];
+      this.xColumnMeta = {};
+      this.yColumnMeta = {};
       this.joinTypeIdx = 0;
       this.joinType = JOIN_TYPES[0].value;
       this.suffixX = '.x';
@@ -240,7 +244,7 @@
       xDiv.className = 'jb-col-wrap jb-col-x';
       row.appendChild(xDiv);
       key._xSelectize = Blockr.Select.single(xDiv, {
-        options: this.xColumns,
+        options: this.xColumnOptions,
         selected: xCol,
         placeholder: 'x column\u2026',
         onChange: (value) => {
@@ -271,7 +275,7 @@
       yDiv.className = 'jb-col-wrap jb-col-y';
       row.appendChild(yDiv);
       key._ySelectize = Blockr.Select.single(yDiv, {
-        options: this.yColumns,
+        options: this.yColumnOptions,
         selected: yCol,
         placeholder: 'y column\u2026',
         onChange: (value) => {
@@ -483,20 +487,34 @@
       this._updateUI();
     }
 
-    updateColumns(xColumns, yColumns) {
-      this.xColumns = xColumns || [];
-      this.yColumns = yColumns || [];
+    updateColumns(xMeta, yMeta) {
+      this.xColumnMeta = {};
+      this.xColumns = [];
+      this.xColumnOptions = [];
+      for (const col of (xMeta || [])) {
+        this.xColumnMeta[col.name] = col;
+        this.xColumns.push(col.name);
+        this.xColumnOptions.push({ value: col.name, label: col.label || '' });
+      }
+      this.yColumnMeta = {};
+      this.yColumns = [];
+      this.yColumnOptions = [];
+      for (const col of (yMeta || [])) {
+        this.yColumnMeta[col.name] = col;
+        this.yColumns.push(col.name);
+        this.yColumnOptions.push({ value: col.name, label: col.label || '' });
+      }
 
       // Update key row selectizes
       for (const k of this.keys) {
         if (k._xSelectize) {
           const curX = k._xSelectize.getValue();
-          k._xSelectize.setOptions(this.xColumns, curX);
+          k._xSelectize.setOptions(this.xColumnOptions, curX);
           k.xCol = k._xSelectize.getValue();
         }
         if (k._ySelectize) {
           const curY = k._ySelectize.getValue();
-          k._ySelectize.setOptions(this.yColumns, curY);
+          k._ySelectize.setOptions(this.yColumnOptions, curY);
           k.yCol = k._ySelectize.getValue();
         }
       }

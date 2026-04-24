@@ -24,6 +24,7 @@
       const span = document.createElement('span');
       span.className = 'blockr-select__opt-label';
       span.textContent = lbl;
+      span.setAttribute('title', lbl);
       el.appendChild(span);
     }
   };
@@ -103,8 +104,33 @@
     dropdown.setAttribute('role', 'listbox');
 
     root.appendChild(control);
-    root.appendChild(dropdown);
     container.appendChild(root);
+
+    // Portal: dropdown lives on document.body while open so it escapes any
+    // clipping / paint-containment / stacking-context ancestors (Dockview
+    // panels, offcanvas, modals, …). See blockr.design/open/blockr-select-portal.
+
+    const computePosition = () => {
+      const r = root.getBoundingClientRect();
+      const dropH = dropdown.offsetHeight || 240;
+      const spaceBelow = window.innerHeight - r.bottom - 8;
+      const flipAbove = spaceBelow < dropH && r.top > dropH;
+
+      dropdown.style.position = 'fixed';
+      dropdown.style.width    = r.width + 'px';
+      dropdown.style.left     = r.left + 'px';
+      dropdown.style.bottom   = 'auto';
+
+      if (flipAbove) {
+        dropdown.style.top = (r.top - dropH - 4) + 'px';
+        root.classList.add('blockr-select--above');
+      } else {
+        dropdown.style.top = (r.bottom + 4) + 'px';
+        root.classList.remove('blockr-select--above');
+      }
+    };
+
+    const onScrollOrResize = () => { if (isOpen) computePosition(); };
 
     // --- Rendering ---
 
@@ -221,13 +247,12 @@
       searchInput.value = '';
       highlightIdx = 0;
 
-      const rect = root.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom - 8;
-      const dropMaxH = 240;
-      const openAbove = spaceBelow < dropMaxH && rect.top > dropMaxH;
+      if (dropdown.parentElement !== document.body) {
+        document.body.appendChild(dropdown);
+      }
+      dropdown.style.display = 'block';
 
       root.classList.add('blockr-select--open');
-      root.classList.toggle('blockr-select--above', openAbove);
       root.setAttribute('aria-expanded', 'true');
 
       if (mode === 'single') {
@@ -237,6 +262,9 @@
       }
 
       renderDropdown();
+      computePosition();
+      window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
+      window.addEventListener('resize', onScrollOrResize, { passive: true });
       searchInput.focus();
     };
 
@@ -245,6 +273,11 @@
       isOpen = false;
       searchQuery = '';
       searchInput.value = '';
+
+      window.removeEventListener('scroll', onScrollOrResize, { capture: true });
+      window.removeEventListener('resize', onScrollOrResize);
+
+      dropdown.style.display = '';
 
       root.classList.remove('blockr-select--open', 'blockr-select--above');
       root.setAttribute('aria-expanded', 'false');
@@ -377,7 +410,8 @@
     };
 
     const onDocumentClick = (e) => {
-      if (!root.contains(e.target)) close();
+      if (root.contains(e.target) || dropdown.contains(e.target)) return;
+      close();
     };
 
     const onRootKeydown = (e) => {
@@ -513,6 +547,11 @@
         if (destroyed) return;
         destroyed = true;
         close();
+
+        if (dropdown.parentElement === document.body) {
+          dropdown.remove();
+        }
+
         control.removeEventListener('click', onControlClick);
         dropdown.removeEventListener('click', onDropdownClick);
         searchInput.removeEventListener('input', onSearchInput);

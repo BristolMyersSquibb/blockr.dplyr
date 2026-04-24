@@ -309,7 +309,7 @@ test_that("summarize: col='' survives updateColumns (restore race)", {
   fid <- "board-block_summarize-expr-summarize_input"
   app$run_js(sprintf(
     "(function(){var el=document.getElementById('%s');
-       el._block.updateColumns(el._block.columnNames);
+       el._block.updateColumns(Object.values(el._block.columnMeta));
        el._block._submit();})();", fid))
   app$wait_for_idle()
 
@@ -453,7 +453,7 @@ test_that("slice: empty weight_by survives updateColumns (restore race)", {
   fid <- "board-block_slice-expr-slice_input"
   app$run_js(sprintf(
     "(function(){var el=document.getElementById('%s');
-       el._block.updateColumns(el._block.columnNames);
+       el._block.updateColumns(Object.values(el._block.columnMeta));
        el._block._submit();})();", fid))
   app$wait_for_idle()
 

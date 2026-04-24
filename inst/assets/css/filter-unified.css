@@ -1,0 +1,309 @@
+/* FilterUnified — Unified filter with auto-detecting column types */
+
+.filter-unified-container { width: 100%; }
+
+
+/* Unified click-through pill style */
+.fu-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  height: 24px;
+  min-width: 28px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--blockr-grey-500, #6b7280);
+  background: var(--blockr-grey-50, #f9fafb);
+  border: 1px solid var(--blockr-grey-200, #e5e7eb);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.fu-pill:hover {
+  background: var(--blockr-grey-100, #f3f4f6);
+  border-color: var(--blockr-grey-300, #d1d5db);
+  color: var(--blockr-grey-600, #4b5563);
+}
+
+.fu-op-toggle {
+  margin-left: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- Card (no border, transparent) --- */
+.fu-card {
+  overflow: visible;
+}
+
+/* --- Rows — all rows get a bordered input box --- */
+.fu-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.fu-row:focus-within {
+  background-color: #ffffff;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* --- Shared form control style (aligned with blockr.dock design system) --- */
+.fu-col-select,
+.fu-op-select,
+.fu-num-input {
+  height: 30px;
+  padding: 4px 10px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  background: transparent;
+  border: none;
+  color: var(--blockr-color-text-primary, #111827);
+}
+
+.fu-col-select:focus,
+.fu-op-select:focus,
+.fu-num-input:focus {
+  outline: none;
+}
+
+/* Column selectize wrapper */
+.fu-col-wrap {
+  width: 160px;
+  min-width: 120px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  padding-right: 8px;
+}
+
+/* Override selectize styles inside unified filter rows — no borders, transparent bg */
+.fu-row .selectize-control { font-size: var(--blockr-font-size-base, 0.875rem); }
+
+.fu-row .selectize-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 6px !important;
+  min-height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+/* Keep items and input same line height so height doesn't shift */
+.fu-row .selectize-input > * {
+  margin: 2px 2px !important;
+}
+
+.fu-row .selectize-input.focus {
+  box-shadow: none !important;
+}
+
+/* Replace selectize's filled triangle with a thin chevron */
+.fu-row .selectize-input::after {
+  border: none !important;
+  content: "" !important;
+  display: block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-right: 1.5px solid var(--blockr-grey-400, #9ca3af) !important;
+  border-bottom: 1.5px solid var(--blockr-grey-400, #9ca3af) !important;
+  transform: rotate(45deg) !important;
+  margin-top: -4px !important;
+  margin-right: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.fu-row .selectize-dropdown {
+  border: 1px solid var(--blockr-color-border, #e5e7eb) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+}
+
+.fu-row .selectize-dropdown-content .option {
+  padding: 6px 10px !important;
+}
+
+/* Value selectize — fill remaining space */
+.fu-row-content .selectize-control {
+  width: 100%;
+}
+
+/* Keep selectize items compact */
+.fu-row .selectize-input > .item {
+  padding: 1px 6px !important;
+  margin: 1px 2px !important;
+  line-height: 1.4 !important;
+}
+
+/* Operator cycle button — uses shared pill style */
+.fu-op-btn {
+  flex-shrink: 0;
+}
+
+/* Number input — fills remaining space */
+.fu-num-input {
+  flex: 1;
+  width: 100%;
+  min-width: 60px;
+  box-sizing: border-box;
+}
+
+.fu-num-input::placeholder {
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+/* Dynamic content area */
+.fu-row-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+
+/* Remove button — pushed to right edge */
+.fu-row-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--blockr-grey-400, #9ca3af);
+  cursor: pointer;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.fu-row:hover .fu-row-remove { opacity: 1; }
+.fu-row-remove:hover { color: var(--blockr-color-danger, #dc3545); background: rgba(220,53,69,0.08); }
+
+/* Add row */
+/* Add row: "+ Add condition" left, "R expression" button right */
+.fu-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  min-height: 30px;
+  font-size: 13px;
+  user-select: none;
+  color: var(--blockr-grey-400, #9ca3af);
+}
+
+.fu-add-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.fu-add-link:hover {
+  color: var(--blockr-color-primary, #2563eb);
+}
+
+.fu-add-sep { display: none; }
+
+.fu-add-link-expr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--blockr-grey-400, #9ca3af);
+  background: transparent;
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.fu-add-link-expr:hover {
+  color: var(--blockr-color-primary, #2563eb);
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.fu-add-icon { display: inline-flex; align-items: center; }
+
+/* --- Expression rows (inline in same list) --- */
+
+.fu-row-expr .fu-expr-code {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Confirm button: unconfirmed = attention-drawing, confirmed = subtle */
+.fu-expr-confirm {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  height: 24px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  border-radius: 4px;
+  color: var(--blockr-color-primary, #2563eb);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.fu-expr-confirm:hover {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.5);
+}
+
+.fu-expr-confirm.confirmed {
+  background: none;
+  border-color: transparent;
+  color: var(--blockr-grey-400, #9ca3af);
+  opacity: 0.5;
+}
+
+.fu-ace-editor {
+  height: 18px;
+  margin: 7px 4px;
+}
+
+.filter-unified-container .ace_editor {
+  font-size: 12px !important;
+  font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", monospace !important;
+}
+
+.filter-unified-container .ace_editor,
+.filter-unified-container .ace-tomorrow,
+.filter-unified-container .ace_scroller,
+.filter-unified-container .ace_content,
+.filter-unified-container .ace_gutter {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.filter-unified-container .ace_gutter { display: none !important; }
+.filter-unified-container .ace_editor .ace_cursor-layer { display: none; }
+.filter-unified-container .ace_editor.ace_focus .ace_cursor-layer { display: block; }

@@ -25,6 +25,8 @@
       this.rows = [];
       this.nextId = 1;
       this.columnNames = [];
+      this.columnOptions = [];
+      this.columnMeta = {};
       this.byValues = [];
       this._callback = null;
       this._submitted = false;
@@ -75,7 +77,7 @@
       bySection.appendChild(byWrap);
 
       this._bySelect = Blockr.Select.multi(byWrap, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
         reorderable: true,
@@ -247,19 +249,26 @@
       const by = state?.by || [];
       this.byValues = Array.isArray(by) ? by.slice() : [by];
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnNames, this.byValues);
+        this._bySelect.setOptions(this.columnOptions, this.byValues);
       }
 
       this._updateUI();
     }
 
-    updateColumns(cols) {
-      this.columnNames = cols || [];
+    updateColumns(meta) {
+      this.columnMeta = {};
+      this.columnNames = [];
+      this.columnOptions = [];
+      for (const col of (meta || [])) {
+        this.columnMeta[col.name] = col;
+        this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
+      }
       for (const r of this.rows) {
         r.exprInput?.setColumns(this.columnNames);
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnNames, this.byValues);
+        this._bySelect.setOptions(this.columnOptions, this.byValues);
       }
     }
   }

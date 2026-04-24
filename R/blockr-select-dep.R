@@ -1,5 +1,10 @@
 #' HTML dependency for blockr-select component
-#' @noRd
+#'
+#' Exported for reuse by other blockr packages that embed the shared
+#' select component (e.g. blockr.dm's table pickers).
+#'
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @export
 blockr_select_dep <- function() {
   htmltools::tagList(
     blockr_core_js_dep(),

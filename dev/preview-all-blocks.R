@@ -1,6 +1,8 @@
+pkgload::load_all("blockr.core")
 pkgload::load_all("blockr.dplyr")
 pkgload::load_all("blockr.ai")
 pkgload::load_all("blockr.dock")
+pkgload::load_all("blockr.dm")
 library(blockr.dag)
 library(blockr.extra)
 
@@ -10,14 +12,17 @@ options(
   "g6R.preserve_elements_position" = TRUE
 )
 
+# ADaM data via blockr.dm's example dataset — every column carries
+# attr(col, "label"), so migrated pickers should render secondary labels
+# alongside the column name (e.g. "USUBJID  Unique Subject Identifier").
 serve(
   new_dock_board(
     blocks = c(
-      data1 = new_dataset_block("mtcars"),
-      data2 = new_dataset_block("iris"),
-      data3 = new_dataset_block("mtcars"),
+      dm = new_dm_example_block(dataset = "pharmaverseadam"),
+      adsl = new_dm_pull_block(table = "adsl"),
+      adae = new_dm_pull_block(table = "adae"),
 
-      # Column-picker blocks
+      # Column-picker blocks — single ADSL input
       select = new_select_block(),
       arrange = new_arrange_block(),
       rename = new_rename_block(),
@@ -27,7 +32,7 @@ serve(
       mutate = new_mutate_block(),
       summarize = new_summarize_block(),
 
-      # Join (binary — needs two inputs)
+      # Join (binary — ADSL x ADAE)
       join = new_join_block(),
 
       # Reshape blocks
@@ -42,28 +47,33 @@ serve(
       bind_cols = new_bind_cols_block()
     ),
     links = list(
-      # data1 feeds most blocks
-      list(from = "data1", to = "select", input = "data"),
-      list(from = "data1", to = "arrange", input = "data"),
-      list(from = "data1", to = "rename", input = "data"),
-      list(from = "data1", to = "filter", input = "data"),
-      list(from = "data1", to = "mutate", input = "data"),
-      list(from = "data1", to = "summarize", input = "data"),
-      list(from = "data1", to = "slice", input = "data"),
-      list(from = "data1", to = "pivot_longer", input = "data"),
-      list(from = "data1", to = "pivot_wider", input = "data"),
-      list(from = "data1", to = "unite", input = "data"),
-      list(from = "data1", to = "separate", input = "data"),
+      list(from = "dm", to = "adsl", input = "data"),
+      list(from = "dm", to = "adae", input = "data"),
 
-      # Join gets both data sources
-      list(from = "data1", to = "join", input = "x"),
-      list(from = "data2", to = "join", input = "y"),
+      # adsl feeds most blocks
+      list(from = "adsl", to = "select", input = "data"),
+      list(from = "adsl", to = "arrange", input = "data"),
+      list(from = "adsl", to = "rename", input = "data"),
+      list(from = "adsl", to = "filter", input = "data"),
+      list(from = "adsl", to = "mutate", input = "data"),
+      list(from = "adsl", to = "summarize", input = "data"),
+      list(from = "adsl", to = "slice", input = "data"),
+      list(from = "adsl", to = "pivot_longer", input = "data"),
+      list(from = "adsl", to = "pivot_wider", input = "data"),
+      list(from = "adsl", to = "unite", input = "data"),
+      list(from = "adsl", to = "separate", input = "data"),
 
-      # Bind blocks get both sources (distinct input names)
-      list(from = "data1", to = "bind_rows", input = "x"),
-      list(from = "data2", to = "bind_rows", input = "y"),
-      list(from = "data1", to = "bind_cols", input = "x"),
-      list(from = "data3", to = "bind_cols", input = "y")
+      # Join: ADSL x ADAE
+      list(from = "adsl", to = "join", input = "x"),
+      list(from = "adae", to = "join", input = "y"),
+
+      # bind_rows: union of columns, row counts can differ
+      list(from = "adsl", to = "bind_rows", input = "x"),
+      list(from = "adae", to = "bind_rows", input = "y"),
+
+      # bind_cols: requires equal row counts — feed adsl on both sides
+      list(from = "adsl", to = "bind_cols", input = "x"),
+      list(from = "adsl", to = "bind_cols", input = "y")
     ),
     extensions = new_dag_extension()
   ),

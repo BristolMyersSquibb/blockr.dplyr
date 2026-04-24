@@ -41,10 +41,12 @@
       this.nextId = 1;
       this.columnMeta = {};
       this.columnNames = [];
+      this.columnOptions = [];
       this._callback = null;
       this._submitted = false;
       this._debounceTimer = null;
       this.preserveOrder = false;
+      this._pendingValueRequests = new Set();
 
       this._buildDOM();
       this._addValueRow(null, null);
@@ -168,7 +170,7 @@
       colDiv.className = 'fb-col-wrap';
       row.appendChild(colDiv);
       cond._colSelectize = Blockr.Select.single(colDiv, {
-        options: this.columnNames,
+        options: this.columnOptions,
         selected: column,
         placeholder: 'Column\u2026',
         onChange: (value) => this._onColumnChange(cond, value)
@@ -210,8 +212,11 @@
       const meta = this.columnMeta[colName];
 
       // Restore values/numValue from opts if provided (setState path),
-      // otherwise reset to empty (user interaction path)
-      cond.values = opts?.values || [];
+      // otherwise reset to empty (user interaction path).
+      // Coerce scalar → [scalar]: R → JSON auto-unboxing can flatten a
+      // length-1 character vector to a string, which would iterate per-char.
+      const rawVals = opts?.values;
+      cond.values = Array.isArray(rawVals) ? rawVals : (rawVals == null ? [] : [rawVals]);
       cond.numValue = opts?.numValue ?? null;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
@@ -245,8 +250,23 @@
       const op = cond.op;
 
       if (op === 'is' || op === 'is not') {
+        const isNumeric = meta.type === 'numeric' || meta.type === 'integer';
+        const hasValues = isNumeric
+          ? meta.uniqueValues !== undefined
+          : meta.values !== undefined;
+
+        if (!hasValues) {
+          // Values not loaded yet — request them and show placeholder
+          const loading = document.createElement('span');
+          loading.className = 'fb-loading';
+          loading.textContent = 'Loading\u2026';
+          container.appendChild(loading);
+          this._requestColumnValues(cond.column);
+          return;
+        }
+
         let allValues;
-        if (meta.type === 'numeric' || meta.type === 'integer') {
+        if (isNumeric) {
           allValues = (meta.uniqueValues || []).map(String);
         } else {
           allValues = (meta.values || []).slice();
@@ -444,14 +464,17 @@
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
+      this.columnOptions = [];
+      this._pendingValueRequests = new Set();
       for (const col of (meta || [])) {
         this.columnMeta[col.name] = col;
         this.columnNames.push(col.name);
+        this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       for (const c of this.conditions) {
         if (c._colSelectize) {
           const current = c._colSelectize.getValue();
-          c._colSelectize.setOptions(this.columnNames, current);
+          c._colSelectize.setOptions(this.columnOptions, current);
           const col = c._colSelectize.getValue();
           if (col && this.columnMeta[col]) {
             // Preserve existing values/op: column metadata refreshing must
@@ -465,6 +488,34 @@
         }
         if (c.exprInput) {
           c.exprInput.setColumns(this.columnNames);
+        }
+      }
+    }
+
+    _requestColumnValues(colName) {
+      if (this._pendingValueRequests.has(colName)) return;
+      this._pendingValueRequests.add(colName);
+      Shiny.setInputValue(
+        this.el.id + '_request_values',
+        colName,
+        { priority: 'event' }
+      );
+    }
+
+    receiveColumnValues(colMeta) {
+      this._pendingValueRequests.delete(colMeta.name);
+      // Merge full metadata into existing summary
+      const existing = this.columnMeta[colMeta.name];
+      if (existing) {
+        Object.assign(existing, colMeta);
+      } else {
+        this.columnMeta[colMeta.name] = colMeta;
+      }
+      // Re-render any conditions waiting for this column's values
+      for (const c of this.conditions) {
+        if (c.column === colMeta.name && c._meta) {
+          c._meta = this.columnMeta[colMeta.name];
+          this._renderDynamicContent(c);
         }
       }
     }
@@ -526,6 +577,21 @@
         else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
         if (attempts > 50) clearInterval(t);
       }, 100);
+    }
+  });
+
+  // On-demand column values handler (lazy loading)
+  Shiny.addCustomMessageHandler('filter-column-values', (msg) => {
+    const el = document.getElementById(msg.id);
+    if (el?._block) {
+      el._block.receiveColumnValues(msg.column);
+    } else if (el) {
+      // Merge into pending columns if block not initialized yet
+      if (!el._pendingColumns) el._pendingColumns = [];
+      const idx = el._pendingColumns.findIndex(c => c.name === msg.column.name);
+      if (idx >= 0) {
+        Object.assign(el._pendingColumns[idx], msg.column);
+      }
     }
   });
 

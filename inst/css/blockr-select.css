@@ -257,11 +257,15 @@
   background: var(--blockr-grey-50, #f9fafb);
 }
 
-/* --- Option label (muted description next to value) --- */
+/* --- Option label (muted description next to value) ---
+   Appears in both dropdown options and the selected-value display.
+   Truncation is handled by the parent via white-space: nowrap + overflow +
+   text-overflow: ellipsis. The inline label sits after the value, so the
+   parent ellipsizes the label first when space runs out. */
 .blockr-select__opt-label {
-  font-size: 0.8em;
-  color: var(--blockr-grey-400, #9ca3af);
-  margin-left: 6px;
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  color: var(--blockr-grey-500, #6b7280);
+  margin-left: 8px;
   font-weight: 400;
 }
 
