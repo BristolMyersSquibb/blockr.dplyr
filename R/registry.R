@@ -413,7 +413,7 @@ register_dplyr_blocks <- function() {
         character(),
         prompt = paste(
           "Place multiple tables side-by-side horizontally, matching row",
-          "positions. All inputs must have the same number of rows — if",
+          "positions. All inputs must have the same number of rows - if",
           "they don't, use join_block on a shared key instead. Takes no",
           "constructor parameters; the inputs come from multi-input",
           "wiring on the board."
