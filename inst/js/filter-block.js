@@ -148,11 +148,16 @@
 
     _addValueRow(column, opts) {
       const id = this.nextId++;
+      // Persist opts.op onto cond.op so it survives until column metadata
+      // arrives. updateColumns later replays _onColumnChange with
+      // { op: c.op } — if cond.op is left at the default 'is' here, an
+      // initial state of mode='exclude' (op='is not') gets clobbered the
+      // moment columns load. Same for numeric ops ('>', '<=', etc.).
       const cond = {
         id,
         filterType: 'none',
         column: column || '',
-        op: 'is',
+        op: opts?.op || 'is',
         values: opts?.values || [],
         numValue: opts?.numValue ?? null,
         multiSelect: null,
