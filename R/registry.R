@@ -519,12 +519,23 @@ register_dplyr_blocks <- function() {
           "\n\nUse n for count or prop",
           "(0-1) for proportion -- not both.",
           "order_by is required for min/max.",
-          "with_ties: include tied rows",
-          "(min/max only).",
-          "weight_by: weighted sampling",
+          "\n\nIMPORTANT -- with_ties defaults",
+          "to TRUE for type='min'/'max'.",
+          "That means slice(type='max', n=10)",
+          "can return MORE than 10 rows when",
+          "the 10th value is tied. Set",
+          "with_ties=FALSE for a strict 'top",
+          "exactly N' result.",
+          "\n\nweight_by: weighted sampling",
           "(sample only).",
           "\n\nPut grouping columns in 'by'",
-          "to slice within each group."
+          "to slice within each group.",
+          "\n\nFor 'top N by some column',",
+          "prefer this block (type='max',",
+          "order_by=COL, n=N) over",
+          "arrange_block + slice('head').",
+          "Symmetrically, type='min' for",
+          "bottom-N. Saves a block."
         )
       ),
       # pivot_longer_block:
