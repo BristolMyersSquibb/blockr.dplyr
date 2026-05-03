@@ -123,8 +123,15 @@
     }
 
     _createOpButton(cond, ops, initialOp) {
-      let idx = initialOp
-        ? Math.max(0, ops.findIndex(o => o.value === initialOp))
+      // Fall back to cond.op so the column-selectize's onChange path
+      // (which calls _onColumnChange WITHOUT opts) doesn't clobber an
+      // initial op set by setState (e.g. mode='exclude' → 'is not').
+      // updateColumns triggers setOptions → onChange before its own
+      // explicit _onColumnChange(c, col, { op: c.op }) runs, so we'd
+      // otherwise lose the saved op on every column-meta refresh.
+      const fallbackOp = initialOp || cond.op || null;
+      let idx = fallbackOp
+        ? Math.max(0, ops.findIndex(o => o.value === fallbackOp))
         : 0;
       cond.op = ops[idx].value;
 
