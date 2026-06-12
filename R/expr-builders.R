@@ -341,8 +341,10 @@ make_join_expr <- function(type = "left_join",
   has_exprs <- length(exprs) > 0
 
   if (length(keys) == 0 && !has_exprs) {
-    # No keys selected yet: pass through x until user configures
-    return(bbquote(.(x)))
+    # No keys selected yet: pass through x until user configures.
+    # quote() not bbquote(): codetools can't see that bbquote() doesn't
+    # evaluate `.(x)` and would flag x as an undefined global.
+    return(quote(.(x)))
   }
 
   expr <- as.call(list(join_fn, quote(.(x)), quote(.(y))))
