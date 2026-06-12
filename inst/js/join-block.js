@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * JoinBlock — JS-driven join block input binding.
  *
@@ -9,6 +10,49 @@
  *
  * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
+
+/**
+ * One join key, as exchanged with R (R: make_join_expr() `keys` in
+ * R/expr-builders.R). An `op` other than "==" makes R emit a
+ * dplyr::join_by() non-equi join.
+ * @typedef {Object} JoinKey
+ * @property {string} xCol Column in the x (left) input.
+ * @property {string} op   One of "==", ">", ">=", "<", "<=".
+ * @property {string} yCol Column in the y (right) input.
+ */
+
+/**
+ * Block state: what _compose() returns and setState() receives
+ * (R: make_join_expr(type, keys, exprs, suffix_x, suffix_y)).
+ * @typedef {Object} JoinState
+ * @property {string} type     Join type, e.g. "left_join" (see JOIN_TYPES).
+ * @property {JoinKey[]} keys
+ * @property {string[]} exprs  Free-form R expressions for dplyr::join_by().
+ * @property {string} suffix_x Suffix for duplicate x columns (default ".x").
+ * @property {string} suffix_y Suffix for duplicate y columns (default ".y").
+ */
+
+/**
+ * Internal key-row record: the key model plus its UI handles.
+ * @typedef {Object} JoinKeyRow
+ * @property {number} id
+ * @property {string} xCol
+ * @property {string} op
+ * @property {string} yCol
+ * @property {BlockrSelectSingleHandle | null} _xSelectize
+ * @property {BlockrSelectSingleHandle | null} _ySelectize
+ * @property {HTMLButtonElement} [_opBtn] Assigned right after row creation.
+ * @property {HTMLDivElement | null} rowEl
+ */
+
+/**
+ * Internal expression-row record.
+ * @typedef {Object} JoinExprRow
+ * @property {number} id
+ * @property {BlockrInputHandle} exprInput
+ * @property {HTMLDivElement} rowEl
+ */
+
 (() => {
   'use strict';
 
@@ -42,23 +86,34 @@
   ];
 
   class JoinBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {JoinKeyRow[]} */
       this.keys = [];
+      /** @type {JoinExprRow[]} */
       this.exprRows = [];
       this.nextId = 1;
+      /** @type {string[]} */
       this.xColumns = [];
+      /** @type {string[]} */
       this.yColumns = [];
+      /** @type {{ value: string, label: string }[]} */
       this.xColumnOptions = [];
+      /** @type {{ value: string, label: string }[]} */
       this.yColumnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.xColumnMeta = {};
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.yColumnMeta = {};
       this.joinTypeIdx = 0;
       this.joinType = JOIN_TYPES[0].value;
       this.suffixX = '.x';
       this.suffixY = '.y';
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
       this._popoverOpen = false;
 
@@ -67,7 +122,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -110,7 +165,7 @@
       this.joinTypePill.addEventListener('click', () => {
         this.joinTypeIdx = (this.joinTypeIdx + 1) % JOIN_TYPES.length;
         this.joinType = JOIN_TYPES[this.joinTypeIdx].value;
-        this.joinTypePill.textContent = JOIN_TYPES[this.joinTypeIdx].label;
+        /** @type {HTMLButtonElement} */ (this.joinTypePill).textContent = JOIN_TYPES[this.joinTypeIdx].label;
         this._autoSubmit();
       });
       header.appendChild(this.joinTypePill);
@@ -147,8 +202,8 @@
       // Close popover on outside click
       Blockr.onDocClick(this.el, (e) => {
         if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
+            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
+            !/** @type {HTMLButtonElement} */ (this.gearBtn).contains(/** @type {Node | null} */ (e.target))) {
           this._closePopover();
         }
       });
@@ -172,7 +227,7 @@
       this.suffixXInput.className = 'blockr-popover-input';
       this.suffixXInput.value = this.suffixX;
       this.suffixXInput.addEventListener('input', () => {
-        this.suffixX = this.suffixXInput.value;
+        this.suffixX = /** @type {HTMLInputElement} */ (this.suffixXInput).value;
         this._autoSubmit();
       });
       rowX.appendChild(labelX);
@@ -190,14 +245,14 @@
       this.suffixYInput.className = 'blockr-popover-input';
       this.suffixYInput.value = this.suffixY;
       this.suffixYInput.addEventListener('input', () => {
-        this.suffixY = this.suffixYInput.value;
+        this.suffixY = /** @type {HTMLInputElement} */ (this.suffixYInput).value;
         this._autoSubmit();
       });
       rowY.appendChild(labelY);
       rowY.appendChild(this.suffixYInput);
       this.popoverEl.appendChild(rowY);
 
-      this.card.appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
     }
 
     _togglePopover() {
@@ -209,21 +264,27 @@
     }
 
     _openPopover() {
-      this.popoverEl.style.display = 'block';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
       this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
     }
 
     _closePopover() {
-      this.popoverEl.style.display = 'none';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
       this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
     }
 
     // --- Key rows ---
 
+    /**
+     * @param {string | null} xCol
+     * @param {string | null} op
+     * @param {string | null} yCol
+     */
     _addKeyRow(xCol, op, yCol) {
       const id = this.nextId++;
+      /** @type {JoinKeyRow} */
       const key = {
         id,
         xCol: xCol || '',
@@ -236,16 +297,17 @@
 
       const row = document.createElement('div');
       row.className = 'blockr-row';
-      row.setAttribute('data-key-id', id);
+      row.setAttribute('data-key-id', /** @type {string} */ (/** @type {*} */ (id)));
       key.rowEl = row;
 
       // X column selectize
       const xDiv = document.createElement('div');
       xDiv.className = 'jb-col-wrap jb-col-x';
       row.appendChild(xDiv);
-      key._xSelectize = Blockr.Select.single(xDiv, {
+      key._xSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(xDiv, {
         options: this.xColumnOptions,
-        selected: xCol,
+        // null is handled by createSelect's `!= null` fallback-to-first-option
+        selected: /** @type {string} */ (xCol),
         placeholder: 'x column\u2026',
         onChange: (value) => {
           key.xCol = value;
@@ -274,9 +336,10 @@
       const yDiv = document.createElement('div');
       yDiv.className = 'jb-col-wrap jb-col-y';
       row.appendChild(yDiv);
-      key._ySelectize = Blockr.Select.single(yDiv, {
+      key._ySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(yDiv, {
         options: this.yColumnOptions,
-        selected: yCol,
+        // null is handled by createSelect's `!= null` fallback-to-first-option
+        selected: /** @type {string} */ (yCol),
         placeholder: 'y column\u2026',
         onChange: (value) => {
           key.yCol = value;
@@ -295,11 +358,12 @@
       });
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.keys.push(key);
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeKey(id) {
       const totalRows = this.keys.length + this.exprRows.length;
       if (totalRows <= 1) return;
@@ -317,12 +381,13 @@
 
     // --- Expression rows ---
 
+    /** @param {string} value */
     _addExprRow(value) {
       const id = this.nextId++;
 
       const row = document.createElement('div');
       row.className = 'blockr-row jb-row-expr';
-      row.setAttribute('data-expr-id', id);
+      row.setAttribute('data-expr-id', /** @type {string} */ (/** @type {*} */ (id)));
 
       const codeDiv = document.createElement('div');
       codeDiv.className = 'blockr-row-content jb-expr-code';
@@ -343,7 +408,7 @@
       confirmBtn.addEventListener('click', doConfirm);
 
       const allCols = this.xColumns.concat(this.yColumns);
-      const exprInput = Blockr.Input.create(codeDiv, {
+      const exprInput = /** @type {BlockrInputStatic} */ (Blockr.Input).create(codeDiv, {
         value,
         columns: allCols,
         categories: defaultCategories,
@@ -364,11 +429,12 @@
       rmBtn.addEventListener('click', () => this._removeExpr(id));
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.exprRows.push({ id, exprInput, rowEl: row });
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeExpr(id) {
       const totalRows = this.keys.length + this.exprRows.length;
       if (totalRows <= 1) return;
@@ -390,18 +456,20 @@
       const single = totalRows <= 1;
 
       for (const k of this.keys) {
-        const btn = k.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (k.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
       for (const er of this.exprRows) {
-        const btn = er.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (er.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
     }
 
     // --- Compose output ---
 
+    /** @returns {JoinState} */
     _compose() {
+      /** @type {JoinKey[]} */
       const keys = [];
       for (const k of this.keys) {
         if (k.xCol && k.yCol) {
@@ -409,6 +477,7 @@
         }
       }
 
+      /** @type {string[]} */
       const exprs = [];
       for (const er of this.exprRows) {
         if (er.exprInput) {
@@ -426,11 +495,16 @@
       };
     }
 
+    /** @returns {JoinState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<JoinState> | null | undefined} state
+     * @param {boolean} [silent] Unused here; kept for setState() symmetry.
+     */
     setState(state, silent) {
       // Clear existing keys
       while (this.keys.length > 0) {
@@ -454,13 +528,13 @@
       this.joinType = type;
       this.joinTypeIdx = JOIN_TYPES.findIndex(t => t.value === type);
       if (this.joinTypeIdx < 0) this.joinTypeIdx = 0;
-      this.joinTypePill.textContent = JOIN_TYPES[this.joinTypeIdx].label;
+      /** @type {HTMLButtonElement} */ (this.joinTypePill).textContent = JOIN_TYPES[this.joinTypeIdx].label;
 
       // Set suffixes
       this.suffixX = state?.suffix_x ?? '.x';
       this.suffixY = state?.suffix_y ?? '.y';
-      this.suffixXInput.value = this.suffixX;
-      this.suffixYInput.value = this.suffixY;
+      /** @type {HTMLInputElement} */ (this.suffixXInput).value = this.suffixX;
+      /** @type {HTMLInputElement} */ (this.suffixYInput).value = this.suffixY;
 
       // Rebuild keys
       const keys = state?.keys || [];
@@ -487,6 +561,10 @@
       this._updateUI();
     }
 
+    /**
+     * @param {BlockrPickerColumn[] | null | undefined} xMeta
+     * @param {BlockrPickerColumn[] | null | undefined} yMeta
+     */
     updateColumns(xMeta, yMeta) {
       this.xColumnMeta = {};
       this.xColumns = [];

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * FilterBlock — JS-driven filter block input binding.
  *
@@ -33,19 +34,67 @@
     { value: '<=', label: '\u2264' }
   ];
 
+  /**
+   * One entry of the cycling operator button's list (CAT_OPS / NUM_OPS).
+   * @typedef {{ value: string, label: string }} FilterOp
+   */
+
+  /**
+   * Restore-time options for a value/numeric row: a saved
+   * BlockrFilterCondition remapped onto row fields. `values` may arrive as
+   * a bare string (R -> JSON auto-unboxing); _onColumnChange normalizes.
+   * @typedef {Object} FilterRowOpts
+   * @property {string} [op]
+   * @property {string | string[] | null} [values]
+   * @property {number | null} [numValue]
+   * @property {BlockrColumnType | null} [colType]
+   */
+
+  /**
+   * Internal per-condition row record (UI state; composed into a
+   * BlockrFilterCondition by _compose()).
+   * @typedef {Object} FilterCondRow
+   * @property {number} id
+   * @property {'none' | 'values' | 'numeric' | 'expr'} filterType
+   * @property {string | null} column
+   * @property {string} [op]
+   * @property {string[] | null} values
+   * @property {number | null} numValue
+   * @property {BlockrColumnType | null} [_savedColType]
+   * @property {null} multiSelect
+   * @property {BlockrInputHandle | null} exprInput
+   * @property {HTMLDivElement | null} rowEl
+   * @property {BlockrSelectSingleHandle} [_colSelectize]
+   * @property {BlockrSelectMultiHandle | null} [_valueSelectize]
+   * @property {HTMLSpanElement} [_opBtnSlot]
+   * @property {HTMLDivElement} [_contentDiv]
+   * @property {BlockrColumnValues} [_meta]
+   * @property {HTMLButtonElement} [_opBtn]
+   * @property {FilterOp[]} [_opList]
+   */
+
   class FilterBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {FilterCondRow[]} */
       this.conditions = [];
+      /** @type {'&' | '|'} */
       this.operator = '&';
       this.nextId = 1;
+      /** @type {Record<string, BlockrColumnValues>} */
       this.columnMeta = {};
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
       this.preserveOrder = false;
+      /** @type {Set<string>} */
       this._pendingValueRequests = new Set();
 
       this._buildDOM();
@@ -53,7 +102,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -91,7 +140,7 @@
       this.opToggle.style.visibility = 'hidden';
       this.opToggle.addEventListener('click', () => {
         this.operator = this.operator === '&' ? '|' : '&';
-        this.opToggle.textContent = this.operator === '&' ? 'AND' : 'OR';
+        /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
         this._autoSubmit();
       });
       addRow.appendChild(this.opToggle);
@@ -107,8 +156,8 @@
       this.preserveBtn.title = 'Toggle between original data order and the order you picked values';
       this.preserveBtn.addEventListener('click', () => {
         this.preserveOrder = !this.preserveOrder;
-        this.preserveBtn.textContent = this.preserveOrder ? 'pick order' : 'data order';
-        this.preserveBtn.classList.toggle('fb-preserve-active', this.preserveOrder);
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).textContent = this.preserveOrder ? 'pick order' : 'data order';
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).classList.toggle('fb-preserve-active', this.preserveOrder);
         // Re-render value selects so reorderable state updates
         for (const c of this.conditions) {
           if (c.filterType === 'values' || c.filterType === 'numeric') {
@@ -122,6 +171,12 @@
       this.card.appendChild(addRow);
     }
 
+    /**
+     * @param {FilterCondRow} cond
+     * @param {FilterOp[]} ops
+     * @param {string | null} initialOp
+     * @returns {HTMLButtonElement}
+     */
     _createOpButton(cond, ops, initialOp) {
       // Fall back to cond.op so the column-selectize's onChange path
       // (which calls _onColumnChange WITHOUT opts) doesn't clobber an
@@ -153,6 +208,10 @@
       return btn;
     }
 
+    /**
+     * @param {string | null | undefined} column
+     * @param {FilterRowOpts | null | undefined} opts
+     */
     _addValueRow(column, opts) {
       const id = this.nextId++;
       // Persist opts.op onto cond.op so it survives until column metadata
@@ -160,12 +219,13 @@
       // { op: c.op } — if cond.op is left at the default 'is' here, an
       // initial state of mode='exclude' (op='is not') gets clobbered the
       // moment columns load. Same for numeric ops ('>', '<=', etc.).
+      /** @type {FilterCondRow} */
       const cond = {
         id,
         filterType: 'none',
         column: column || '',
         op: opts?.op || 'is',
-        values: opts?.values || [],
+        values: /** @type {string[]} */ (opts?.values || []),
         numValue: opts?.numValue ?? null,
         // Saved colType from a restored state — used by _compose until live
         // column metadata arrives and takes precedence.
@@ -177,16 +237,16 @@
 
       const row = document.createElement('div');
       row.className = 'blockr-row';
-      row.setAttribute('data-cond-id', id);
+      row.setAttribute('data-cond-id', /** @type {any} */ (id));
       cond.rowEl = row;
 
       // Column dropdown
       const colDiv = document.createElement('div');
       colDiv.className = 'fb-col-wrap';
       row.appendChild(colDiv);
-      cond._colSelectize = Blockr.Select.single(colDiv, {
+      cond._colSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colDiv, {
         options: this.columnOptions,
-        selected: column,
+        selected: /** @type {string | undefined} */ (column),
         placeholder: 'Column\u2026',
         onChange: (value) => this._onColumnChange(cond, value)
       });
@@ -212,7 +272,7 @@
       });
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.conditions.push(cond);
       this._updateUI();
 
@@ -222,6 +282,11 @@
       }
     }
 
+    /**
+     * @param {FilterCondRow} cond
+     * @param {string} colName
+     * @param {FilterRowOpts | null} [opts]
+     */
     _onColumnChange(cond, colName, opts) {
       cond.column = colName;
       const meta = this.columnMeta[colName];
@@ -235,8 +300,8 @@
       cond.numValue = opts?.numValue ?? null;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
-      cond._contentDiv.innerHTML = '';
-      cond._opBtnSlot.innerHTML = '';
+      /** @type {HTMLDivElement} */ (cond._contentDiv).innerHTML = '';
+      /** @type {HTMLSpanElement} */ (cond._opBtnSlot).innerHTML = '';
 
       if (!meta) { cond.filterType = 'none'; return; }
 
@@ -248,13 +313,14 @@
       const ops = isNumeric ? NUM_OPS : CAT_OPS;
       const initialOp = opts?.op || null;
       const btn = this._createOpButton(cond, ops, initialOp);
-      cond._opBtnSlot.appendChild(btn);
+      /** @type {HTMLSpanElement} */ (cond._opBtnSlot).appendChild(btn);
 
       this._renderDynamicContent(cond);
     }
 
+    /** @param {FilterCondRow} cond */
     _renderDynamicContent(cond) {
-      const container = cond._contentDiv;
+      const container = /** @type {HTMLDivElement} */ (cond._contentDiv);
       const meta = cond._meta;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
@@ -274,13 +340,13 @@
         // A preconfigured board must not pay for a high-cardinality column's
         // unique values (50K ids ~ 289KB) that nobody may ever look at; saved
         // chips render from cond.values without the option list.
-        cond._valueSelectize = Blockr.Select.multi(container, {
+        cond._valueSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(container, {
           options: this._buildValueOptions(meta),
           selected: cond.values || [],
           placeholder: 'Select values\u2026',
           reorderable: this.preserveOrder,
           loading: !hasValues,
-          onOpen: () => this._requestColumnValues(cond.column),
+          onOpen: () => this._requestColumnValues(/** @type {string} */ (cond.column)),
           onChange: (selected) => {
             cond.values = selected;
             this._autoSubmit();
@@ -292,7 +358,7 @@
         numInput.className = 'blockr-num-input';
         numInput.step = 'any';
         numInput.placeholder = 'Enter value\u2026';
-        if (cond.numValue != null) numInput.value = cond.numValue;
+        if (cond.numValue != null) numInput.value = /** @type {any} */ (cond.numValue);
         numInput.addEventListener('input', () => {
           cond.numValue = numInput.value === '' ? null : parseFloat(numInput.value);
           this._autoSubmit();
@@ -301,8 +367,13 @@
       }
     }
 
+    /**
+     * @param {BlockrColumnValues} meta
+     * @returns {string[]}
+     */
     _buildValueOptions(meta) {
       const isNumeric = meta.type === 'numeric' || meta.type === 'integer';
+      /** @type {string[]} */
       let allValues;
       if (isNumeric) {
         allValues = (meta.uniqueValues || []).map(String);
@@ -314,12 +385,13 @@
       return allValues;
     }
 
+    /** @param {string} value */
     _addExprRow(value) {
       const id = this.nextId++;
 
       const row = document.createElement('div');
       row.className = 'blockr-row fb-row-expr';
-      row.setAttribute('data-cond-id', id);
+      row.setAttribute('data-cond-id', /** @type {any} */ (id));
 
       const codeDiv = document.createElement('div');
       codeDiv.className = 'blockr-row-content fb-expr-code';
@@ -338,7 +410,7 @@
       };
       confirmBtn.addEventListener('click', doConfirm);
 
-      const exprInput = Blockr.Input.create(codeDiv, {
+      const exprInput = /** @type {BlockrInputStatic} */ (Blockr.Input).create(codeDiv, {
         value,
         columns: this.columnNames,
         categories: defaultCategories,
@@ -358,7 +430,7 @@
       rmBtn.addEventListener('click', () => this._removeCondition(id));
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.conditions.push({
         id,
         filterType: 'expr',
@@ -372,6 +444,7 @@
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeCondition(id) {
       if (this.conditions.length <= 1) return;
 
@@ -389,32 +462,34 @@
 
     _updateUI() {
       const single = this.conditions.length <= 1;
-      this.opToggle.style.visibility = single ? 'hidden' : 'visible';
+      /** @type {HTMLButtonElement} */ (this.opToggle).style.visibility = single ? 'hidden' : 'visible';
       for (const c of this.conditions) {
-        const btn = c.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (c.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
     }
 
+    /** @returns {BlockrFilterState} */
     _compose() {
+      /** @type {BlockrFilterCondition[]} */
       const conditions = [];
       for (const c of this.conditions) {
         if (!c.column && c.filterType !== 'expr') continue;
 
         const op = c.op;
         if ((c.filterType === 'values' || c.filterType === 'numeric') && (op === 'is' || op === 'is not')) {
-          if (c.values?.length > 0) {
+          if (/** @type {string[]} */ (c.values)?.length > 0) {
             conditions.push({
-              type: 'values', column: c.column, values: c.values,
+              type: 'values', column: /** @type {string} */ (c.column), values: /** @type {string[]} */ (c.values),
               mode: op === 'is' ? 'include' : 'exclude',
               // Column type tag: lets R convert the string values back to
               // the column's type instead of guessing by coercibility
               // ("007" on a character column must stay "007", not become 7).
-              colType: this.columnMeta[c.column]?.type || c._savedColType || null
+              colType: this.columnMeta[/** @type {string} */ (c.column)]?.type || c._savedColType || null
             });
           }
         } else if (c.filterType === 'numeric' && c.numValue != null) {
-          conditions.push({ type: 'numeric', column: c.column, op, value: c.numValue });
+          conditions.push({ type: 'numeric', column: /** @type {string} */ (c.column), op, value: c.numValue });
         } else if (c.filterType === 'expr' && c.exprInput) {
           const val = c.exprInput.getValue();
           if (val) conditions.push({ type: 'expr', expr: val });
@@ -433,6 +508,10 @@
       return this._compose();
     }
 
+    /**
+     * @param {BlockrFilterState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       // Clear existing conditions
       while (this.conditions.length > 0) {
@@ -446,7 +525,7 @@
 
       // Set operator
       this.operator = state?.operator || '&';
-      this.opToggle.textContent = this.operator === '&' ? 'AND' : 'OR';
+      /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
 
       // Rebuild from state
       const conditions = state?.conditions || [];
@@ -481,6 +560,7 @@
       this._updateUI();
     }
 
+    /** @param {BlockrColumnSummary[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -512,6 +592,7 @@
       }
     }
 
+    /** @param {string} colName */
     _requestColumnValues(colName) {
       const meta = this.columnMeta[colName];
       const loaded = meta &&
@@ -526,6 +607,7 @@
       );
     }
 
+    /** @param {BlockrColumnValues} colMeta */
     receiveColumnValues(colMeta) {
       this._pendingValueRequests.delete(colMeta.name);
       // Merge full metadata into existing summary

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * PivotWiderBlock — JS-driven pivot_wider block input binding.
  *
@@ -11,24 +12,50 @@
 (() => {
   'use strict';
 
+  /**
+   * Block state as exchanged with R — mirrors the parameters of
+   * make_pivot_wider_expr() in R/expr-builders.R (what _compose()
+   * sends and setState() receives).
+   * @typedef {Object} PivotWiderState
+   * @property {string[]} names_from Columns whose values become new column names
+   * @property {string[]} values_from Columns whose values fill the new columns
+   * @property {string[]} id_cols ID columns (optional; R excludes names/values_from)
+   * @property {string | null} values_fill Fill value for missing cells (null = none)
+   * @property {string} names_sep Separator joining names_from values (default "_")
+   * @property {string} names_prefix Prefix for new column names ("" = none)
+   * @property {string | null} values_fn Aggregation function for duplicates (null = none)
+   */
+
   class PivotWiderBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {string[]} */
       this.names_from = [];
+      /** @type {string[]} */
       this.values_from = [];
+      /** @type {string[]} */
       this.id_cols = [];
       this.values_fill = '';
       this.names_sep = '_';
       this.names_prefix = '';
       this.values_fn = '';
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {BlockrSelectOption[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._namesFromSelect = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._valuesFromSelect = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._idColsSelect = null;
       this._popoverOpen = false;
 
@@ -36,7 +63,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -67,7 +94,7 @@
       namesFromLabel.className = 'blockr-label';
       namesFromLabel.textContent = 'Names from';
       namesFromWrap.appendChild(namesFromLabel);
-      this._namesFromSelect = Blockr.Select.multi(namesFromWrap, {
+      this._namesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(namesFromWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -86,7 +113,7 @@
       valuesFromLabel.className = 'blockr-label';
       valuesFromLabel.textContent = 'Values from';
       valuesFromWrap.appendChild(valuesFromLabel);
-      this._valuesFromSelect = Blockr.Select.multi(valuesFromWrap, {
+      this._valuesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(valuesFromWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -105,7 +132,7 @@
       idColsLabel.className = 'blockr-label';
       idColsLabel.textContent = 'ID columns (optional)';
       idColsWrap.appendChild(idColsLabel);
-      this._idColsSelect = Blockr.Select.multi(idColsWrap, {
+      this._idColsSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(idColsWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -123,8 +150,8 @@
       // Close popover on outside click
       Blockr.onDocClick(this.el, (e) => {
         if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
+            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
+            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
           this._closePopover();
         }
       });
@@ -150,7 +177,7 @@
       this._fillInput.value = this.values_fill;
       this._fillInput.placeholder = '(optional)';
       this._fillInput.addEventListener('input', () => {
-        this.values_fill = this._fillInput.value;
+        this.values_fill = /** @type {HTMLInputElement} */ (this._fillInput).value;
         this._autoSubmit();
       });
       fillRow.appendChild(this._fillInput);
@@ -169,7 +196,7 @@
       this._sepInput.value = this.names_sep;
       this._sepInput.placeholder = '_';
       this._sepInput.addEventListener('input', () => {
-        this.names_sep = this._sepInput.value;
+        this.names_sep = /** @type {HTMLInputElement} */ (this._sepInput).value;
         this._autoSubmit();
       });
       sepRow.appendChild(this._sepInput);
@@ -188,7 +215,7 @@
       this._prefixInput.value = this.names_prefix;
       this._prefixInput.placeholder = '(optional)';
       this._prefixInput.addEventListener('input', () => {
-        this.names_prefix = this._prefixInput.value;
+        this.names_prefix = /** @type {HTMLInputElement} */ (this._prefixInput).value;
         this._autoSubmit();
       });
       prefixRow.appendChild(this._prefixInput);
@@ -205,7 +232,7 @@
       fnWrap.className = 'blockr-popover-select-wrap';
       fnRow.appendChild(fnWrap);
       const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
-      this._valuesFnSelect = Blockr.Select.single(fnWrap, {
+      this._valuesFnSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(fnWrap, {
         options: fnOptions,
         selected: this.values_fn || '',
         placeholder: '(none)',
@@ -216,7 +243,7 @@
       });
       this.popoverEl.appendChild(fnRow);
 
-      this.card.appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
     }
 
     _togglePopover() {
@@ -228,17 +255,18 @@
     }
 
     _openPopover() {
-      this.popoverEl.style.display = 'block';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
       this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
     }
 
     _closePopover() {
-      this.popoverEl.style.display = 'none';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
       this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
     }
 
+    /** @returns {PivotWiderState} */
     _compose() {
       return {
         names_from: this.names_from.slice(),
@@ -256,11 +284,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {PivotWiderState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<PivotWiderState> | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.names_from = (state?.names_from || []).slice();
       this.values_from = (state?.values_from || []).slice();
@@ -271,9 +304,9 @@
       this.values_fn = state?.values_fn || '';
 
       // Update popover text inputs
-      this._fillInput.value = this.values_fill;
-      this._sepInput.value = this.names_sep;
-      this._prefixInput.value = this.names_prefix;
+      /** @type {HTMLInputElement} */ (this._fillInput).value = this.values_fill;
+      /** @type {HTMLInputElement} */ (this._sepInput).value = this.names_sep;
+      /** @type {HTMLInputElement} */ (this._prefixInput).value = this.names_prefix;
       if (this._valuesFnSelect) {
         const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
         this._valuesFnSelect.setOptions(fnOptions, this.values_fn);
@@ -291,6 +324,7 @@
       }
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];

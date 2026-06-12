@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SummarizeBlock — JS-driven summarize block input binding.
  *
@@ -8,6 +9,47 @@
  *
  * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
+
+/**
+ * One summary, as exchanged with R (R: make_summarize_expr() `summaries`
+ * in R/expr-builders.R).
+ * @typedef {Object} SummarizeSummary
+ * @property {'simple' | 'expr'} type
+ * @property {string} name   Output column name (auto-generated when blank).
+ * @property {string} [func] simple rows: summary function, possibly
+ *   namespaced (e.g. "stats::median"; R maps short names via
+ *   summarize_func_map()).
+ * @property {string} [col]  simple rows: input column ("" for n()).
+ * @property {string} [expr] expr rows: free-form R expression.
+ */
+
+/**
+ * Block state: what _compose() returns and setState() receives
+ * (R: make_summarize_expr(summaries, by)).
+ * @typedef {Object} SummarizeState
+ * @property {SummarizeSummary[]} summaries
+ * @property {string | string[]} by Grouping columns for `.by` (jsonlite
+ *   may deliver a single column as a scalar string).
+ */
+
+/**
+ * Internal row record: the summary model plus its UI handles. Simple rows
+ * carry func/col and the two selectizes; expr rows carry exprInput.
+ * @typedef {Object} SummarizeRow
+ * @property {number} id
+ * @property {'simple' | 'expr'} type
+ * @property {string} name
+ * @property {string} [func]
+ * @property {string} [col]
+ * @property {HTMLDivElement | null} rowEl
+ * @property {BlockrInputHandle} [exprInput]
+ * @property {BlockrSelectSingleHandle | null} [_funcSelectize]
+ * @property {BlockrSelectSingleHandle | null} [_colSelectize]
+ * @property {HTMLDivElement | null} [_colWrap]
+ * @property {HTMLInputElement | null} [_nameInput]
+ * @property {HTMLSpanElement | null} [_ofLabel]
+ */
+
 (() => {
   'use strict';
 
@@ -28,20 +70,30 @@
   };
 
   class SummarizeBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {SummarizeRow[]} */
       this.summaries = [];
       this.nextId = 1;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {{ value: string, label: string }[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {string[]} */
       this.byValues = [];
       this.summaryFuncs = DEFAULT_SUMMARY_FUNCS.slice();
       // Maps display label -> namespaced call (e.g. "paren_num" -> "blockr.topline::paren_num")
+      /** @type {Record<string, string>} */
       this._funcMap = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._bySelectize = null;
 
       this._buildDOM();
@@ -49,7 +101,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -96,7 +148,7 @@
       byWrap.className = 'sb-by-wrap';
       this.bySection.appendChild(byWrap);
 
-      this._bySelectize = Blockr.Select.multi(byWrap, {
+      this._bySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
@@ -110,8 +162,14 @@
 
     // --- Simple rows: [name] = [func] of [col] [x] ---
 
+    /**
+     * @param {string | null} name
+     * @param {string | null} func
+     * @param {string | null} col
+     */
     _addSimpleRow(name, func, col) {
       const id = this.nextId++;
+      /** @type {SummarizeRow} */
       const summary = {
         id,
         type: 'simple',
@@ -128,7 +186,7 @@
 
       const row = document.createElement('div');
       row.className = 'blockr-row sb-row-simple';
-      row.setAttribute('data-summary-id', id);
+      row.setAttribute('data-summary-id', /** @type {string} */ (/** @type {*} */ (id)));
       summary.rowEl = row;
 
       // Name input
@@ -157,7 +215,7 @@
       const funcOptions = (func && !this.summaryFuncs.includes(func))
         ? [...this.summaryFuncs, func]
         : this.summaryFuncs;
-      summary._funcSelectize = Blockr.Select.single(funcDiv, {
+      summary._funcSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(funcDiv, {
         options: funcOptions,
         selected: func || this.summaryFuncs[0],
         placeholder: 'Function\u2026',
@@ -180,9 +238,10 @@
       colWrap.className = 'sb-col-wrap';
       row.appendChild(colWrap);
       summary._colWrap = colWrap;
-      summary._colSelectize = Blockr.Select.single(colWrap, {
+      summary._colSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colWrap, {
         options: this.columnOptions,
-        selected: col,
+        // null is handled by createSelect's `!= null` fallback-to-first-option
+        selected: /** @type {string} */ (col),
         placeholder: 'Column\u2026',
         onChange: (value) => {
           summary.col = value;
@@ -201,15 +260,16 @@
       });
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.summaries.push(summary);
       this._updateUI();
       this._updateColVisibility(summary);
     }
 
     // Hide column selectize when function is n()
+    /** @param {SummarizeRow} summary a simple row (func always set) */
     _updateColVisibility(summary) {
-      const isNoCol = NO_COL_FUNCS.includes(summary.func);
+      const isNoCol = NO_COL_FUNCS.includes(/** @type {string} */ (summary.func));
       if (summary._colWrap) {
         summary._colWrap.style.display = isNoCol ? 'none' : '';
       }
@@ -220,12 +280,16 @@
 
     // --- Expression rows: [name] = [Blockr.Input] [confirm] [x] ---
 
+    /**
+     * @param {string} name
+     * @param {string} value
+     */
     _addExprRow(name, value) {
       const id = this.nextId++;
 
       const row = document.createElement('div');
       row.className = 'blockr-row sb-row-expr';
-      row.setAttribute('data-summary-id', id);
+      row.setAttribute('data-summary-id', /** @type {string} */ (/** @type {*} */ (id)));
 
       // Name input
       const nameInput = document.createElement('input');
@@ -260,7 +324,7 @@
       };
       confirmBtn.addEventListener('click', doConfirm);
 
-      const exprInput = Blockr.Input.create(codeDiv, {
+      const exprInput = /** @type {BlockrInputStatic} */ (Blockr.Input).create(codeDiv, {
         value: value || '',
         columns: this.columnNames,
         categories: defaultCategories,
@@ -281,7 +345,7 @@
       rmBtn.addEventListener('click', () => this._removeSummary(id));
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.summaries.push({
         id,
         type: 'expr',
@@ -295,6 +359,7 @@
 
     // --- Shared ---
 
+    /** @param {number} id */
     _removeSummary(id) {
       if (this.summaries.length <= 1) return;
 
@@ -313,12 +378,14 @@
     _updateUI() {
       const single = this.summaries.length <= 1;
       for (const s of this.summaries) {
-        const btn = s.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (s.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
     }
 
+    /** @returns {SummarizeState} */
     _compose() {
+      /** @type {SummarizeSummary[]} */
       const summaries = [];
       for (const s of this.summaries) {
         if (s.type === 'simple') {
@@ -352,11 +419,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {SummarizeState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<SummarizeState> | null | undefined} state
+     * @param {boolean} [silent] Suppress the auto-submit after restoring.
+     */
     setState(state, silent) {
       // Clear existing summaries
       while (this.summaries.length > 0) {
@@ -409,6 +481,10 @@
     }
 
     // Resolve a namespaced func value back to its display label
+    /**
+     * @param {string | null} func
+     * @returns {string | null}
+     */
     _funcLabel(func) {
       if (!func) return func;
       // Check if func is a namespaced value that has a label
@@ -418,11 +494,13 @@
       return func;
     }
 
+    /** @param {{ value: string, label: string }[]} funcs */
     updateFunctions(funcs) {
       if (!Array.isArray(funcs) || funcs.length === 0) return;
 
       // funcs is an array of {value, label} objects from R
       // Build the display list and mapping
+      /** @type {string[]} */
       const labels = [];
       this._funcMap = {};
       for (const f of funcs) {
@@ -446,6 +524,7 @@
       }
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];

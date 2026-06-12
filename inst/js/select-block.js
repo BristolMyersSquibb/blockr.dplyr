@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SelectBlock — JS-driven column select block input binding.
  *
@@ -9,25 +10,41 @@
 (() => {
   'use strict';
 
+  /**
+   * Select-block state, mirroring make_select_expr() in R/expr-builders.R.
+   * @typedef {Object} SelectBlockState
+   * @property {string[]} [columns]
+   * @property {boolean} [exclude]
+   * @property {boolean} [distinct]
+   */
+
   class SelectBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {string[]} */
       this.columns = [];
       this.exclude = false;
       this.distinct = false;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrColumnSummary>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
 
       this._buildDOM();
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -41,7 +58,7 @@
       pickerWrap.className = 'sb-picker-wrap';
       this.card.appendChild(pickerWrap);
 
-      this._multiSelect = Blockr.Select.multi(pickerWrap, {
+      this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -64,8 +81,8 @@
       this.excludeBtn.title = 'Toggle between keeping or removing the selected columns';
       this.excludeBtn.addEventListener('click', () => {
         this.exclude = !this.exclude;
-        this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
-        this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
+        /** @type {HTMLButtonElement} */ (this.excludeBtn).textContent = this.exclude ? 'exclude' : 'include';
+        /** @type {HTMLButtonElement} */ (this.excludeBtn).classList.toggle('sb-toggle-active', this.exclude);
         this._autoSubmit();
       });
       toggleBar.appendChild(this.excludeBtn);
@@ -77,8 +94,8 @@
       this._distinctToggle.title = 'Toggle deduplication of rows based on selected columns';
       this._distinctToggle.addEventListener('click', () => {
         this.distinct = !this.distinct;
-        this._distinctToggle.textContent = this.distinct ? 'distinct rows' : 'all rows';
-        this._distinctToggle.classList.toggle('sb-toggle-active', this.distinct);
+        /** @type {HTMLButtonElement} */ (this._distinctToggle).textContent = this.distinct ? 'distinct rows' : 'all rows';
+        /** @type {HTMLButtonElement} */ (this._distinctToggle).classList.toggle('sb-toggle-active', this.distinct);
         this._autoSubmit();
       });
       toggleBar.appendChild(this._distinctToggle);
@@ -86,6 +103,7 @@
       this.card.appendChild(toggleBar);
     }
 
+    /** @returns {SelectBlockState} */
     _compose() {
       return {
         columns: this.columns.slice(),
@@ -104,21 +122,26 @@
       return this._compose();
     }
 
+    /**
+     * @param {SelectBlockState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.columns = (state?.columns || []).slice();
       this.exclude = !!state?.exclude;
       this.distinct = !!state?.distinct;
 
-      this.excludeBtn.textContent = this.exclude ? 'exclude' : 'include';
-      this.excludeBtn.classList.toggle('sb-toggle-active', this.exclude);
-      this._distinctToggle.textContent = this.distinct ? 'distinct rows' : 'all rows';
-      this._distinctToggle.classList.toggle('sb-toggle-active', this.distinct);
+      /** @type {HTMLButtonElement} */ (this.excludeBtn).textContent = this.exclude ? 'exclude' : 'include';
+      /** @type {HTMLButtonElement} */ (this.excludeBtn).classList.toggle('sb-toggle-active', this.exclude);
+      /** @type {HTMLButtonElement} */ (this._distinctToggle).textContent = this.distinct ? 'distinct rows' : 'all rows';
+      /** @type {HTMLButtonElement} */ (this._distinctToggle).classList.toggle('sb-toggle-active', this.distinct);
 
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnOptions, this.columns);
       }
     }
 
+    /** @param {BlockrColumnSummary[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];

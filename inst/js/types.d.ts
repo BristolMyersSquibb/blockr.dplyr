@@ -88,8 +88,8 @@ interface BlockrSelectConfigBase {
 }
 
 interface BlockrSelectSingleConfig extends BlockrSelectConfigBase {
-  /** Initial value; defaults to the first option (or '' if none). */
-  selected?: string;
+  /** Initial value (null/undefined: first option, or '' if none). */
+  selected?: string | null;
   onChange?: (value: string) => void;
 }
 
@@ -104,7 +104,7 @@ interface BlockrSelectMultiConfig extends BlockrSelectConfigBase {
 
 /** Internal union as consumed by createSelect (mode picks the shape). */
 interface BlockrSelectConfig extends BlockrSelectConfigBase {
-  selected?: string | string[];
+  selected?: string | string[] | null;
   reorderable?: boolean;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;

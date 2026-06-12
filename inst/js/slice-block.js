@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SliceBlock — JS-driven dplyr::slice_* block input binding.
  *
@@ -13,27 +14,56 @@
 
   const SLICE_TYPES = ['head', 'tail', 'min', 'max', 'sample', 'custom'];
 
+  /**
+   * Block state as exchanged with R — mirrors the parameters of
+   * make_slice_expr() in R/expr-builders.R (what _compose() sends and
+   * setState() receives).
+   * @typedef {Object} SliceState
+   * @property {string} type One of 'head' | 'tail' | 'min' | 'max' | 'sample' | 'custom'
+   * @property {number | null} n Number of rows (null when prop is used)
+   * @property {number | null} prop Proportion 0..1 (null when n is used)
+   * @property {string} order_by Column for min/max ('' = none)
+   * @property {boolean} with_ties Keep tied values (min/max)
+   * @property {string} weight_by Column for weighted sampling ('' = none)
+   * @property {boolean} replace Sample with replacement
+   * @property {string} rows Row positions expression for type 'custom' (e.g. "1:5")
+   * @property {string[] | string} by Grouping columns (jsonlite may send a lone string)
+   */
+
   class SliceBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
       this.type = 'head';
+      /** @type {number | null} */
       this.n = 5;
+      /** @type {number | null} */
       this.prop = null;
       this.order_by = '';
       this.with_ties = true;
       this.weight_by = '';
       this.replace = false;
       this.rows = '1:5';
+      /** @type {string[]} */
       this.by = [];
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {BlockrSelectOption[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectSingleHandle | null} */
       this._typeSelect = null;
+      /** @type {BlockrSelectSingleHandle | null} */
       this._orderBySelect = null;
+      /** @type {BlockrSelectSingleHandle | null} */
       this._weightBySelect = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._bySelect = null;
       this._popoverOpen = false;
 
@@ -42,7 +72,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -74,7 +104,7 @@
       // Type selector
       const typeWrap = document.createElement('div');
       typeWrap.className = 'slb-type-wrap';
-      this._typeSelect = Blockr.Select.single(typeWrap, {
+      this._typeSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(typeWrap, {
         options: SLICE_TYPES,
         selected: this.type,
         placeholder: 'Type\u2026',
@@ -93,7 +123,7 @@
       this._nInput = document.createElement('input');
       this._nInput.type = 'number';
       this._nInput.className = 'blockr-num-input';
-      this._nInput.value = this.n;
+      this._nInput.value = /** @type {string} */ (/** @type {*} */ (this.n));
       this._nInput.min = '1';
       this._nInput.placeholder = 'n';
       this._nInput.addEventListener('input', () => {
@@ -112,20 +142,20 @@
       this._nModePill.title = 'Toggle between selecting a fixed number of rows (n) or a percentage (%)';
       this._nModePill.addEventListener('click', () => {
         this._usesProp = !this._usesProp;
-        this._nModePill.textContent = this._usesProp ? '%' : 'n';
-        this._nModePill.classList.toggle('slb-mode-active', this._usesProp);
+        /** @type {HTMLButtonElement} */ (this._nModePill).textContent = this._usesProp ? '%' : 'n';
+        /** @type {HTMLButtonElement} */ (this._nModePill).classList.toggle('slb-mode-active', this._usesProp);
         if (this._usesProp) {
-          this._nInput.min = '0';
-          this._nInput.max = '100';
-          this._nInput.step = '1';
-          this._nInput.placeholder = '%';
-          this._nInput.value = '10';
+          /** @type {HTMLInputElement} */ (this._nInput).min = '0';
+          /** @type {HTMLInputElement} */ (this._nInput).max = '100';
+          /** @type {HTMLInputElement} */ (this._nInput).step = '1';
+          /** @type {HTMLInputElement} */ (this._nInput).placeholder = '%';
+          /** @type {HTMLInputElement} */ (this._nInput).value = '10';
         } else {
-          this._nInput.min = '1';
-          this._nInput.removeAttribute('max');
-          this._nInput.step = '1';
-          this._nInput.placeholder = 'n';
-          this._nInput.value = '5';
+          /** @type {HTMLInputElement} */ (this._nInput).min = '1';
+          /** @type {HTMLInputElement} */ (this._nInput).removeAttribute('max');
+          /** @type {HTMLInputElement} */ (this._nInput).step = '1';
+          /** @type {HTMLInputElement} */ (this._nInput).placeholder = 'n';
+          /** @type {HTMLInputElement} */ (this._nInput).value = '5';
         }
         this._updateNValue();
         this._autoSubmit();
@@ -142,7 +172,7 @@
       this._rowsInput.value = this.rows;
       this._rowsInput.placeholder = '1:5, c(1,3,5), -c(2,4)';
       this._rowsInput.addEventListener('input', () => {
-        this.rows = this._rowsInput.value;
+        this.rows = /** @type {HTMLInputElement} */ (this._rowsInput).value;
         this._autoSubmit();
       });
       this._rowsWrap.appendChild(this._rowsInput);
@@ -166,7 +196,7 @@
       byWrap.className = 'slb-by-wrap';
       this.bySection.appendChild(byWrap);
 
-      this._bySelect = Blockr.Select.multi(byWrap, {
+      this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
@@ -183,8 +213,8 @@
       // Close popover on outside click
       Blockr.onDocClick(this.el, (e) => {
         if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
+            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
+            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
           this._closePopover();
         }
       });
@@ -207,9 +237,9 @@
       const orderBySelectWrap = document.createElement('div');
       orderBySelectWrap.className = 'blockr-popover-select-wrap';
       this._popOrderByWrap.appendChild(orderBySelectWrap);
-      this._orderBySelect = Blockr.Select.single(orderBySelectWrap, {
+      this._orderBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(orderBySelectWrap, {
         options: this.columnOptions,
-        selected: null,
+        selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         placeholder: 'Column\u2026',
         onChange: (value) => {
           this.order_by = value;
@@ -228,9 +258,9 @@
       const weightBySelectWrap = document.createElement('div');
       weightBySelectWrap.className = 'blockr-popover-select-wrap';
       this._popWeightByWrap.appendChild(weightBySelectWrap);
-      this._weightBySelect = Blockr.Select.single(weightBySelectWrap, {
+      this._weightBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(weightBySelectWrap, {
         options: this.columnOptions,
-        selected: null,
+        selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         placeholder: 'Column (optional)\u2026',
         onChange: (value) => {
           this.weight_by = value;
@@ -248,8 +278,8 @@
       this._withTiesToggle.title = 'Toggle whether rows with equal values are all included or cut off at n';
       this._withTiesToggle.addEventListener('click', () => {
         this.with_ties = !this.with_ties;
-        this._withTiesToggle.textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
-        this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
+        /** @type {HTMLButtonElement} */ (this._withTiesToggle).textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
+        /** @type {HTMLButtonElement} */ (this._withTiesToggle).classList.toggle('blockr-popover-toggle-active', this.with_ties);
         this._autoSubmit();
       });
       this._popWithTiesWrap.appendChild(this._withTiesToggle);
@@ -264,14 +294,14 @@
       this._replaceToggle.title = 'Toggle whether sampled rows can be picked more than once';
       this._replaceToggle.addEventListener('click', () => {
         this.replace = !this.replace;
-        this._replaceToggle.textContent = this.replace ? 'With replacement' : 'No replacement';
-        this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
+        /** @type {HTMLButtonElement} */ (this._replaceToggle).textContent = this.replace ? 'With replacement' : 'No replacement';
+        /** @type {HTMLButtonElement} */ (this._replaceToggle).classList.toggle('blockr-popover-toggle-active', this.replace);
         this._autoSubmit();
       });
       this._popReplaceWrap.appendChild(this._replaceToggle);
       this.popoverEl.appendChild(this._popReplaceWrap);
 
-      this.card.appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
     }
 
     _togglePopover() {
@@ -283,15 +313,15 @@
     }
 
     _openPopover() {
-      this.popoverEl.style.display = 'block';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
       this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
     }
 
     _closePopover() {
-      this.popoverEl.style.display = 'none';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
       this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
     }
 
     _updatePopoverVisibility() {
@@ -308,18 +338,18 @@
       if (!hasOptions && this._popoverOpen) this._closePopover();
 
       // Toggle n input vs rows input
-      this._nInput.parentElement.style.display = isCustom ? 'none' : '';
-      this._nModePill.style.display = isCustom ? 'none' : '';
-      this._rowsWrap.style.display = isCustom ? '' : 'none';
+      /** @type {HTMLElement} */ (/** @type {HTMLInputElement} */ (this._nInput).parentElement).style.display = isCustom ? 'none' : '';
+      /** @type {HTMLButtonElement} */ (this._nModePill).style.display = isCustom ? 'none' : '';
+      /** @type {HTMLDivElement} */ (this._rowsWrap).style.display = isCustom ? '' : 'none';
 
-      this._popOrderByWrap.style.display = isMinMax ? '' : 'none';
-      this._popWeightByWrap.style.display = isSample ? '' : 'none';
-      this._popWithTiesWrap.style.display = isMinMax ? '' : 'none';
-      this._popReplaceWrap.style.display = isSample ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._popOrderByWrap).style.display = isMinMax ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._popWeightByWrap).style.display = isSample ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._popWithTiesWrap).style.display = isMinMax ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._popReplaceWrap).style.display = isSample ? '' : 'none';
     }
 
     _updateNValue() {
-      const raw = parseFloat(this._nInput.value);
+      const raw = parseFloat(/** @type {HTMLInputElement} */ (this._nInput).value);
       if (this._usesProp) {
         this.prop = isNaN(raw) ? null : raw / 100;
         this.n = null;
@@ -329,6 +359,7 @@
       }
     }
 
+    /** @returns {SliceState} */
     _compose() {
       return {
         type: this.type,
@@ -348,11 +379,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {SliceState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {SliceState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.type = state?.type || 'head';
       this.n = state?.n ?? 5;
@@ -372,14 +408,14 @@
 
       // Update n/prop mode
       this._usesProp = this.prop != null && this.prop > 0;
-      this._nModePill.textContent = this._usesProp ? '%' : 'n';
-      this._nModePill.classList.toggle('slb-mode-active', this._usesProp);
+      /** @type {HTMLButtonElement} */ (this._nModePill).textContent = this._usesProp ? '%' : 'n';
+      /** @type {HTMLButtonElement} */ (this._nModePill).classList.toggle('slb-mode-active', this._usesProp);
       if (this._usesProp) {
-        this._nInput.value = Math.round(this.prop * 100);
-        this._nInput.placeholder = '%';
+        /** @type {HTMLInputElement} */ (this._nInput).value = /** @type {string} */ (/** @type {*} */ (Math.round(/** @type {number} */ (this.prop) * 100)));
+        /** @type {HTMLInputElement} */ (this._nInput).placeholder = '%';
       } else {
-        this._nInput.value = this.n ?? 5;
-        this._nInput.placeholder = 'n';
+        /** @type {HTMLInputElement} */ (this._nInput).value = /** @type {string} */ (/** @type {*} */ (this.n ?? 5));
+        /** @type {HTMLInputElement} */ (this._nInput).placeholder = 'n';
       }
 
       // Update rows input
@@ -399,14 +435,15 @@
       }
 
       // Update toggles
-      this._withTiesToggle.textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
-      this._withTiesToggle.classList.toggle('blockr-popover-toggle-active', this.with_ties);
-      this._replaceToggle.textContent = this.replace ? 'With replacement' : 'No replacement';
-      this._replaceToggle.classList.toggle('blockr-popover-toggle-active', this.replace);
+      /** @type {HTMLButtonElement} */ (this._withTiesToggle).textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
+      /** @type {HTMLButtonElement} */ (this._withTiesToggle).classList.toggle('blockr-popover-toggle-active', this.with_ties);
+      /** @type {HTMLButtonElement} */ (this._replaceToggle).textContent = this.replace ? 'With replacement' : 'No replacement';
+      /** @type {HTMLButtonElement} */ (this._replaceToggle).classList.toggle('blockr-popover-toggle-active', this.replace);
 
       this._updatePopoverVisibility();
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
