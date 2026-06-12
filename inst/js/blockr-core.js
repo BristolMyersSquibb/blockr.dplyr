@@ -19,6 +19,107 @@ Blockr.removeNode = (node) => {
   node?.parentNode?.removeChild(node);
 };
 
+/**
+ * Document-click registry — one document-level listener for all blocks.
+ *
+ * Per-instance `document.addEventListener('click', ...)` calls leak: the
+ * closure retains the block and its detached DOM forever once the block is
+ * removed from the board. Entries here are dropped automatically when their
+ * anchor element leaves the document, so removed blocks become collectable.
+ *
+ * Blockr.onDocClick(anchorEl, cb) -> calls cb(event) for every document
+ * click while `anchorEl` is connected. The callback does its own
+ * containment checks (e.g. close a popover unless the click hit it).
+ */
+Blockr._docClick = new Set();
+document.addEventListener('click', (e) => {
+  for (const entry of Blockr._docClick) {
+    if (!entry.el.isConnected) {
+      Blockr._docClick.delete(entry);
+    } else {
+      entry.cb(e);
+    }
+  }
+});
+Blockr.onDocClick = (el, cb) => {
+  Blockr._docClick.add({ el, cb });
+};
+
+/**
+ * Messages that arrived before their target element was created/bound.
+ * Keyed by element id; replayed in arrival order on initialize. Entries
+ * expire after 30s so messages to never-rendered blocks don't accumulate.
+ */
+Blockr._pending = new Map();
+Blockr._enqueue = (id, fn) => {
+  const now = Date.now();
+  for (const [key, queue] of Blockr._pending) {
+    if (now - queue.t > 30000) Blockr._pending.delete(key);
+  }
+  const queue = Blockr._pending.get(id) || { t: now, fns: [] };
+  queue.t = now;
+  queue.fns.push(fn);
+  Blockr._pending.set(id, queue);
+};
+Blockr._replayPending = (el) => {
+  const queue = Blockr._pending.get(el.id);
+  if (!queue) return;
+  Blockr._pending.delete(el.id);
+  for (const fn of queue.fns) fn(el._block);
+};
+
+/**
+ * Register a JS-driven block: input binding + custom message handlers.
+ *
+ * The block class must implement:
+ *   getValue()           -> state JSON after first submit, else null
+ *   setState(state)      -> rebuild UI from state, never fires the callback
+ * and exposes user changes by calling `this._callback?.(true)` (a `_submit`).
+ *
+ * config:
+ *   name           kebab-case block name; binding id `blockr.<name>`,
+ *                  container class `<name>-block-container`
+ *   Block          the block class, constructed as `new Block(el)`
+ *   messages       { 'msg-name': (block, msg) => ... } — handlers are
+ *                  dispatched by msg.id and queued until the element binds
+ */
+Blockr.registerBlock = ({ name, Block, messages = {} }) => {
+  const containerClass = `${name}-block-container`;
+
+  const binding = new Shiny.InputBinding();
+  Object.assign(binding, {
+    find: (scope) => $(scope).find(`.${containerClass}`),
+    getId: (el) => el.id || null,
+    getValue: (el) => el._block?.getValue() ?? null,
+    setValue: (el, value) => el._block?.setState(value),
+    receiveMessage: (el, data) => {
+      if (data.state) el._block?.setState(data.state);
+    },
+    subscribe: (el, callback) => {
+      if (el._block) el._block._callback = () => callback(true);
+    },
+    unsubscribe: (el) => {
+      if (el._block) el._block._callback = null;
+    },
+    initialize: (el) => {
+      if (!el._block) el._block = new Block(el);
+      Blockr._replayPending(el);
+    }
+  });
+  Shiny.inputBindings.register(binding, `blockr.${name}`);
+
+  for (const [msgName, handler] of Object.entries(messages)) {
+    Shiny.addCustomMessageHandler(msgName, (msg) => {
+      const el = document.getElementById(msg.id);
+      if (el?._block) {
+        handler(el._block, msg);
+      } else {
+        Blockr._enqueue(msg.id, (block) => handler(block, msg));
+      }
+    });
+  }
+};
+
 Blockr.icons = {
   chevron:
     '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" ' +

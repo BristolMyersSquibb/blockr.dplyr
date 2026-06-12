@@ -43,20 +43,7 @@ new_bind_cols_block <- function(...) {
       })
     },
     # -- ui -------------------------------------------------------------------
-    function(id) {
-      tagList(
-        blockr_core_js_dep(),
-        blockr_blocks_css_dep(),
-        bind_cols_block_dep(),
-        div(
-          class = "block-container",
-          div(
-            id = NS(id, "bind_cols_input"),
-            class = "bind-cols-block-container"
-          )
-        )
-      )
-    },
+    js_block_ui("bind-cols", character(0)),
     dat_valid = function(...args) { # nolint: object_name_linter.
       stopifnot(length(...args) >= 1L)
     },
@@ -64,24 +51,5 @@ new_bind_cols_block <- function(...) {
     expr_type = "bquoted",
     allow_empty_state = TRUE,
     ...
-  )
-}
-
-#' HTML dependency for bind cols block JS + CSS
-#' @noRd
-bind_cols_block_dep <- function() {
-  htmltools::tagList(
-    htmltools::htmlDependency(
-      name = "bind-cols-block-js",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("js", package = "blockr.dplyr"),
-      script = "bind-cols-block.js"
-    ),
-    htmltools::htmlDependency(
-      name = "bind-cols-block-css",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("css", package = "blockr.dplyr"),
-      stylesheet = "bind-cols-block.css"
-    )
   )
 }

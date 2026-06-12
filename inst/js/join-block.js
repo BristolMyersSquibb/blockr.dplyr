@@ -145,7 +145,7 @@
       this.card.appendChild(addRow);
 
       // Close popover on outside click
-      document.addEventListener('click', (e) => {
+      Blockr.onDocClick(this.el, (e) => {
         if (this._popoverOpen && this.popoverEl &&
             !this.popoverEl.contains(e.target) &&
             !this.gearBtn.contains(e.target)) {
@@ -532,83 +532,14 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.join-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new JoinBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(
-          el._pendingColumns.xColumns,
-          el._pendingColumns.yColumns
-        );
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.join');
-
-  // Column metadata handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('join-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.xColumns, msg.yColumns);
-    } else if (el) {
-      el._pendingColumns = { xColumns: msg.xColumns, yColumns: msg.yColumns };
-    } else {
-      // Element not yet in DOM — poll briefly
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) {
-          el2._block.updateColumns(msg.xColumns, msg.yColumns);
-          clearInterval(t);
-        } else if (el2) {
-          el2._pendingColumns = { xColumns: msg.xColumns, yColumns: msg.yColumns };
-          clearInterval(t);
-        }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('join-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState(msg.state, true); clearInterval(t); }
-        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
+  Blockr.registerBlock({
+    name: 'join',
+    Block: JoinBlock,
+    messages: {
+      'join-columns': (block, msg) => block.updateColumns(msg.xColumns, msg.yColumns),
+      'join-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

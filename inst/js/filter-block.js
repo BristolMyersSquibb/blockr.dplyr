@@ -552,96 +552,15 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.filter-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new FilterBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.filter');
-
-  // Per-instance message handlers are registered dynamically.
-  // The R server sends messages named "filter-columns-<ns_id>" and
-  // "block-update-<ns_id>". We use a single handler prefix pattern
-  // via a MutationObserver to register handlers when filter elements
-  // appear in the DOM.
-
-  // Column metadata handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('filter-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      // Element not yet in DOM — poll briefly
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // On-demand column values handler (lazy loading)
-  Shiny.addCustomMessageHandler('filter-column-values', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.receiveColumnValues(msg.column);
-    } else if (el) {
-      // Merge into pending columns if block not initialized yet
-      if (!el._pendingColumns) el._pendingColumns = [];
-      const idx = el._pendingColumns.findIndex(c => c.name === msg.column.name);
-      if (idx >= 0) {
-        Object.assign(el._pendingColumns[idx], msg.column);
-      }
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('filter-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState(msg.state, true); clearInterval(t); }
-        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
+  Blockr.registerBlock({
+    name: 'filter',
+    Block: FilterBlock,
+    messages: {
+      'filter-columns': (block, msg) => block.updateColumns(msg.columns),
+      'filter-column-values': (block, msg) => block.receiveColumnValues(msg.column),
+      'filter-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

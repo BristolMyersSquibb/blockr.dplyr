@@ -111,106 +111,28 @@ new_summarize_block <- function(
   state = list(summaries = list(), by = list()),
   ...
 ) {
-  new_transform_block(
-    # -- server ---------------------------------------------------------------
-    function(id, data) {
-      moduleServer(id, function(input, output, session) {
-        ns <- session$ns
-        r_state <- reactiveVal(state)
-
-        # Bidirectional sync: self_write tracks UI-initiated changes
-        self_write <- new.env(parent = emptyenv())
-        self_write$active <- FALSE
-
-        # Send available summary functions to JS on init
-        all_funcs <- get_summary_functions()
-        func_info <- lapply(names(all_funcs), function(label) {
-          list(value = unname(all_funcs[[label]]), label = label)
-        })
-        session$sendCustomMessage(
-          "summarize-functions",
-          list(id = ns("summarize_input"), functions = func_info)
-        )
-
-        # Send column summary (name + label + type) to JS when data changes
-        observeEvent(data(), {
-          meta <- build_column_picker_meta(data())
-          session$sendCustomMessage(
-            "summarize-columns",
-            list(id = ns("summarize_input"), columns = meta)
-          )
-        })
-
-        # JS -> R: user changed the summarize config
-        observeEvent(input$summarize_input, {
-          self_write$active <- TRUE
-          r_state(input$summarize_input)
-        })
-
-        # R -> JS: external control changed the state
-        observeEvent(r_state(), {
-          if (self_write$active) {
-            self_write$active <- FALSE
-          } else {
-            session$sendCustomMessage(
-              "summarize-block-update",
-              list(id = ns("summarize_input"), state = r_state())
-            )
-          }
-        })
-
-        list(
-          expr = reactive({
-            s <- r_state()
-            make_summarize_expr(
-              s$summaries %||% list(),
-              s$by %||% character()
-            )
-          }),
-          state = list(state = r_state)
-        )
-      })
-    },
-    # -- ui -------------------------------------------------------------------
-    function(id) {
-      tagList(
-        blockr_core_js_dep(),
-        blockr_blocks_css_dep(),
-        blockr_select_dep(),
-        blockr_input_dep(),
-        summarize_block_dep(),
-        div(
-          class = "block-container",
-          div(
-            id = NS(id, "summarize_input"),
-            class = "summarize-block-container"
-          )
-        )
+  new_js_transform_block(
+    class = "summarize_block",
+    name = "summarize",
+    state = state,
+    expr_fn = function(s) {
+      make_summarize_expr(
+        s$summaries %||% list(),
+        s$by %||% character()
       )
     },
-    class = "summarize_block",
-    expr_type = "bquoted",
-    external_ctrl = TRUE,
-    allow_empty_state = "state",
+    setup = function(input, session, ns, data, input_name) {
+      # Send available summary functions to JS on init
+      all_funcs <- get_summary_functions()
+      func_info <- lapply(names(all_funcs), function(label) {
+        list(value = unname(all_funcs[[label]]), label = label)
+      })
+      session$sendCustomMessage(
+        "summarize-functions",
+        list(id = ns(input_name), functions = func_info)
+      )
+    },
+    shared_deps = c("select", "input"),
     ...
-  )
-}
-
-#' HTML dependency for summarize block JS + CSS
-#' @noRd
-summarize_block_dep <- function() {
-  htmltools::tagList(
-    htmltools::htmlDependency(
-      name = "summarize-block-js",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("js", package = "blockr.dplyr"),
-      script = "summarize-block.js"
-    ),
-    htmltools::htmlDependency(
-      name = "summarize-block-css",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("css", package = "blockr.dplyr"),
-      stylesheet = "summarize-block.css"
-    )
   )
 }
