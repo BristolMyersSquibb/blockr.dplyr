@@ -265,13 +265,14 @@ make_summarize_expr <- function(summaries, by = character()) {
 
     if (identical(s$type, "simple")) {
       func_full <- summarize_func_map(s$func %||% "")
+      func_lang <- tryCatch(str2lang(func_full), error = function(e) NULL)
       col <- s$col %||% ""
-      if (func_full == "dplyr::n") {
-        call_expr <- str2lang(paste0(func_full, "()"))
+      if (is.null(func_lang)) {
+        next
+      } else if (func_full == "dplyr::n") {
+        call_expr <- as.call(list(func_lang))
       } else if (nzchar(col)) {
-        call_expr <- str2lang(paste0(
-          func_full, "(", backtick_if_needed(col), ")"
-        ))
+        call_expr <- as.call(list(func_lang, as.name(col)))
       } else {
         next
       }
@@ -313,58 +314,59 @@ make_join_expr <- function(type = "left_join",
                            exprs = character(),
                            suffix_x = ".x",
                            suffix_y = ".y") {
-  join_fn <- paste0("dplyr::", type)
+  join_types <- c(
+    "left_join", "inner_join", "right_join", "full_join",
+    "semi_join", "anti_join"
+  )
+  if (!type %in% join_types) type <- "left_join"
+  join_fn <- str2lang(paste0("dplyr::", type))
 
-  has_non_equi <- any(vapply(keys, function(k) k$op != "==", logical(1)))
+  key_ops <- c("==", ">", ">=", "<", "<=")
+  ops <- vapply(
+    keys,
+    function(k) if ((k$op %||% "==") %in% key_ops) k$op else "==",
+    character(1)
+  )
+
+  exprs <- trimws(exprs)
+  exprs <- exprs[nzchar(exprs)]
+
+  has_non_equi <- any(ops != "==")
   has_exprs <- length(exprs) > 0
 
-  if (has_non_equi || has_exprs) {
-    # Use dplyr::join_by()
-    jb_parts <- character()
-    for (k in keys) {
-      x <- backtick_if_needed(k$xCol)
-      y <- backtick_if_needed(k$yCol)
-      jb_parts <- c(jb_parts, paste0(x, " ", k$op, " ", y))
-    }
-    for (e in exprs) {
-      if (nzchar(trimws(e))) jb_parts <- c(jb_parts, trimws(e))
-    }
-
-    if (length(jb_parts) == 0) {
-      # Natural join (no by argument)
-      text <- paste0(join_fn, "(.(x), .(y))")
-    } else {
-      jb_text <- paste(jb_parts, collapse = ", ")
-      text <- paste0(
-        join_fn, "(.(x), .(y), by = dplyr::join_by(",
-        jb_text, "))"
-      )
-    }
-  } else if (length(keys) > 0) {
-    # Equi-join with named character vector
-    by_parts <- vapply(keys, function(k) {
-      paste0(backtick_if_needed(k$xCol), ' = "', k$yCol, '"')
-    }, character(1))
-    by_text <- paste(by_parts, collapse = ", ")
-    text <- paste0(join_fn, "(.(x), .(y), by = c(", by_text, "))")
-  } else {
+  if (length(keys) == 0 && !has_exprs) {
     # No keys selected yet: pass through x until user configures
     return(bbquote(.(x)))
   }
 
-  # Add suffix for non-semi/anti joins
-  if (!type %in% c("semi_join", "anti_join") &&
-        (suffix_x != ".x" || suffix_y != ".y")) {
-    text <- sub(
-      "\\)$",
-      paste0(', suffix = c("', suffix_x, '", "', suffix_y, '"))'),
-      text
+  expr <- as.call(list(join_fn, quote(.(x)), quote(.(y))))
+
+  if (has_non_equi || has_exprs) {
+    # dplyr::join_by(xCol == yCol, ..., <user exprs>)
+    jb_args <- Map(
+      function(k, op) call(op, as.name(k$xCol), as.name(k$yCol)),
+      keys, ops
     )
+    parsed <- lapply(exprs, function(e) {
+      tryCatch(str2lang(e), error = function(err) NULL)
+    })
+    jb_args <- c(unname(jb_args), Filter(Negate(is.null), parsed))
+    if (length(jb_args) > 0) {
+      expr[["by"]] <- as.call(c(str2lang("dplyr::join_by"), jb_args))
+    }
+  } else {
+    # Equi-join: by = c(xCol = "yCol", ...)
+    by_vec <- vapply(keys, function(k) k$yCol, character(1))
+    names(by_vec) <- vapply(keys, function(k) k$xCol, character(1))
+    expr[["by"]] <- by_vec
   }
 
-  parsed <- tryCatch(str2lang(text), error = function(e) NULL)
-  if (is.null(parsed)) return(bbquote(dplyr::left_join(.(x), .(y))))
-  parsed
+  if (!type %in% c("semi_join", "anti_join") &&
+        (suffix_x != ".x" || suffix_y != ".y")) {
+    expr[["suffix"]] <- c(suffix_x, suffix_y)
+  }
+
+  expr
 }
 
 # =========================================================================

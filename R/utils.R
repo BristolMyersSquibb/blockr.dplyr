@@ -5,30 +5,6 @@
 #' @noRd
 #' @name utils
 
-#' Check if names need backticks for dplyr operations (vectorized)
-#'
-#' @param names Character vector of names to check
-#' @return Logical vector indicating if backticks are needed
-#' @noRd
-needs_backticks <- function(names) {
-  # Check which names are non-syntactic
-  needs_bt <- make.names(names) != names
-  # Empty or NA names don't need backticks (handled separately)
-  needs_bt[is.na(names) | names == ""] <- FALSE
-  needs_bt
-}
-
-#' Wrap names in backticks if needed (vectorized)
-#'
-#' @param names Character vector of names to potentially wrap
-#' @return Character vector with non-syntactic names wrapped in backticks
-#' @noRd
-backtick_if_needed <- function(names) {
-  needs_bt <- needs_backticks(names)
-  names[needs_bt] <- sprintf("`%s`", names[needs_bt])
-  names
-}
-
 #' Clean names from variadic ...args (strips numeric-only names)
 #' @noRd
 dot_args_names <- function(x) {

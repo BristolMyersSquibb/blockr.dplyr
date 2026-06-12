@@ -339,3 +339,69 @@ test_that("exclude mode respects colType on character columns", {
   result <- eval_bquoted(make_filter_expr(conds, "&"), df)
   expect_equal(result$id, "001")
 })
+
+# --- Join / summarize with non-syntactic column names ---
+
+test_that("make_join_expr handles non-syntactic and quote-bearing names", {
+  x <- data.frame(`my id` = c(1, 2), v = c("a", "b"), check.names = FALSE)
+  y <- data.frame(`their "id"` = c(2, 3), w = c("X", "Y"), check.names = FALSE)
+
+  keys <- list(list(xCol = "my id", op = "==", yCol = 'their "id"'))
+  expr <- make_join_expr("inner_join", keys)
+  resolved <- do.call(
+    bquote,
+    list(expr, list(x = as.name("x"), y = as.name("y")))
+  )
+  result <- eval(resolved, envir = list(x = x, y = y))
+  expect_equal(result$w, "X")
+})
+
+test_that("make_join_expr non-equi join builds join_by()", {
+  keys <- list(list(xCol = "a", op = ">=", yCol = "b"))
+  expr <- make_join_expr("left_join", keys)
+  expect_match(deparse1(expr), "join_by", fixed = TRUE)
+  x <- data.frame(a = c(1, 5))
+  y <- data.frame(b = c(2, 4), tag = c("lo", "hi"))
+  resolved <- do.call(
+    bquote,
+    list(expr, list(x = as.name("x"), y = as.name("y")))
+  )
+  result <- eval(resolved, envir = list(x = x, y = y))
+  expect_equal(result$tag, c(NA, "lo", "hi"))
+})
+
+test_that("make_join_expr custom suffixes survive special characters", {
+  x <- data.frame(id = 1, v = "x")
+  y <- data.frame(id = 1, v = "y")
+  expr <- make_join_expr(
+    "left_join",
+    list(list(xCol = "id", op = "==", yCol = "id")),
+    suffix_x = '_l"', suffix_y = "_r"
+  )
+  resolved <- do.call(
+    bquote,
+    list(expr, list(x = as.name("x"), y = as.name("y")))
+  )
+  result <- eval(resolved, envir = list(x = x, y = y))
+  expect_true('v_l"' %in% names(result))
+})
+
+test_that("make_join_expr rejects unknown join types and operators", {
+  expr <- make_join_expr(
+    "system_join",
+    list(list(xCol = "id", op = "%in%", yCol = "id"))
+  )
+  txt <- deparse1(expr)
+  expect_match(txt, "left_join", fixed = TRUE)
+  expect_false(grepl("%in%", txt, fixed = TRUE))
+})
+
+test_that("make_summarize_expr handles non-syntactic column names", {
+  df <- data.frame(`my value` = c(1, 2, 3), check.names = FALSE)
+  summaries <- list(list(
+    type = "simple", name = "avg", func = "mean", col = "my value"
+  ))
+  expr <- make_summarize_expr(summaries)
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$avg, 2)
+})
