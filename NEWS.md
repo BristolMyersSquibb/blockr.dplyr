@@ -18,6 +18,11 @@
 - Filter block supports value, numeric, and expression conditions, plus
   a `preserveOrder` option. Column values load lazily on dropdown-open,
   so large data arrives instantly.
+- High-cardinality columns use server-side value search: the dropdown
+  shows the first page plus a total count, and typing queries R for
+  matching values instead of shipping the full unique-value list to the
+  browser. Threshold via `options(blockr.dplyr.max_filter_values = )`
+  (default 1000).
 - Summarize block extensible via the `blockr.dplyr.summary_functions`
   option.
 - Filter conditions carry the column type, so values picked from

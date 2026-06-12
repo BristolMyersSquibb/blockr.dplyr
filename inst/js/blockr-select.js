@@ -57,10 +57,18 @@
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
     const onOpen = config.onOpen || null;
+    const onSearch = config.onSearch || null;
     // Cap how many options get DOM nodes per render. The full list stays
     // searchable; rendering 50K divs froze the tab on every open/keystroke.
     const maxRendered = config.maxRendered || 200;
     let truncated = 0;
+    // Server-search mode (high-cardinality columns): the option list is a
+    // server-truncated page; typing re-queries via onSearch instead of
+    // relying on client-side filtering alone. Activated by setSearchInfo.
+    let serverTruncated = false;
+    let serverTotal = 0;
+    /** @type {ReturnType<typeof setTimeout> | null} */
+    let searchTimer = null;
     let loading = !!config.loading;
     let isOpen = false;
     let searchQuery = '';
@@ -224,7 +232,12 @@
         dropdown.appendChild(div);
       }
 
-      if (truncated > 0) {
+      if (serverTruncated) {
+        const more = document.createElement('div');
+        more.className = 'blockr-select__empty';
+        more.textContent = `${serverTotal.toLocaleString()} values — type to search`;
+        dropdown.appendChild(more);
+      } else if (truncated > 0) {
         const more = document.createElement('div');
         more.className = 'blockr-select__empty';
         more.textContent = `+${truncated.toLocaleString()} more — type to narrow`;
@@ -416,6 +429,13 @@
       highlightIdx = 0;
       if (!isOpen) open();
       else renderDropdown();
+      // Server-search mode: re-query after the user pauses typing. The
+      // client-side filter above gives instant feedback on the loaded page;
+      // the server response then replaces the option list via updateOptions.
+      if (serverTruncated && onSearch) {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => onSearch(searchQuery), 250);
+      }
     };
 
     /** @param {KeyboardEvent} e */
@@ -623,9 +643,20 @@
         if (isOpen) renderDropdown();
       },
 
+      // Enter/leave server-search mode from a column-values response.
+      // `truncated` means the full value list exceeds the server's limit
+      // (sticky across queries); `total` is the full distinct count.
+      /** @param {{ total?: number, truncated?: boolean } | null | undefined} info */
+      setSearchInfo(info) {
+        serverTruncated = !!(info && info.truncated);
+        serverTotal = (info && info.total) || 0;
+        if (isOpen) renderDropdown();
+      },
+
       destroy() {
         if (destroyed) return;
         destroyed = true;
+        if (searchTimer) clearTimeout(searchTimer);
         close();
 
         if (dropdown.parentElement === document.body) {

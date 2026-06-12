@@ -347,11 +347,16 @@
           reorderable: this.preserveOrder,
           loading: !hasValues,
           onOpen: () => this._requestColumnValues(/** @type {string} */ (cond.column)),
+          // Only fires while the component is in server-search mode
+          // (setSearchInfo with truncated=true): high-cardinality columns
+          // whose value list the server capped.
+          onSearch: (query) => this._searchColumnValues(/** @type {string} */ (cond.column), query),
           onChange: (selected) => {
             cond.values = selected;
             this._autoSubmit();
           }
         });
+        cond._valueSelectize.setSearchInfo(meta);
       } else {
         const numInput = document.createElement('input');
         numInput.type = 'number';
@@ -597,12 +602,33 @@
       const meta = this.columnMeta[colName];
       const loaded = meta &&
         (meta.values !== undefined || meta.uniqueValues !== undefined);
-      if (loaded) return;
+      if (loaded) {
+        // Server-truncated column: the stored page may be a stale search
+        // result — fetch a fresh unfiltered page on every open (cheap, the
+        // server caps it).
+        if (meta.truncated) this._searchColumnValues(colName, '');
+        return;
+      }
       if (this._pendingValueRequests.has(colName)) return;
       this._pendingValueRequests.add(colName);
       Shiny.setInputValue(
         this.el.id + '_request_values',
         colName,
+        { priority: 'event' }
+      );
+    }
+
+    /**
+     * Ask R for the value page matching `query` (server-search mode on
+     * high-cardinality columns). Responses arrive in order via the
+     * filter-column-values message, so the last one wins.
+     * @param {string} colName
+     * @param {string} query
+     */
+    _searchColumnValues(colName, query) {
+      Shiny.setInputValue(
+        this.el.id + '_search_values',
+        { column: colName, query: query },
         { priority: 'event' }
       );
     }
@@ -625,6 +651,7 @@
           c._meta = this.columnMeta[colMeta.name];
           if (c._valueSelectize) {
             c._valueSelectize.updateOptions(this._buildValueOptions(c._meta));
+            c._valueSelectize.setSearchInfo(c._meta);
             c._valueSelectize.setLoading(false);
           } else {
             this._renderDynamicContent(c);

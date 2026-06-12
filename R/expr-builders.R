@@ -785,15 +785,25 @@ col_label <- function(x) {
 #' label for one column. Called on-demand when the user selects a column in
 #' the filter block.
 #'
+#' With `limit`, high-cardinality columns switch to server-side search: at
+#' most `limit` unique values are returned, `total` reports the full
+#' distinct count, and `truncated` marks the column as server-searched.
+#' `query` filters values by case-insensitive substring before the cap.
+#' `truncated` is deliberately sticky — it reflects whether the *full*
+#' value list exceeds the limit, not the current query's match count, so
+#' the client stays in search mode while narrowing.
+#'
 #' Exported as part of the public API so other blockr packages (e.g.
 #' blockr.dm) can reuse the same column-metadata protocol.
 #'
 #' @param df A data frame
 #' @param col Column name (character)
+#' @param limit Maximum number of unique values to return (`NULL` = all)
+#' @param query Substring to filter values by (case-insensitive)
 #' @return A column info object (list)
 #' @keywords internal
 #' @export
-build_column_values <- function(df, col) {
+build_column_values <- function(df, col, limit = NULL, query = "") {
   vals <- df[[col]]
   type <- column_type(vals)
 
@@ -804,17 +814,27 @@ build_column_values <- function(df, col) {
     label = col_label(vals)
   )
 
+  cap_values <- function(uv) {
+    info$total <<- length(uv)
+    info$truncated <<- !is.null(limit) && length(uv) > limit
+    if (nzchar(query %||% "")) {
+      uv <- uv[grepl(tolower(query), tolower(as.character(uv)), fixed = TRUE)]
+    }
+    if (!is.null(limit) && length(uv) > limit) uv <- uv[seq_len(limit)]
+    uv
+  }
+
   if (type %in% c("numeric", "integer")) {
     non_na <- vals[!is.na(vals)]
     if (length(non_na) > 0) {
       info$min <- min(non_na)
       info$max <- max(non_na)
     }
-    info$uniqueValues <- as.list(sort(unique(non_na)))
+    info$uniqueValues <- as.list(cap_values(sort(unique(non_na))))
   } else {
     # sort() before as.character(): factors sort by level order, not
     # alphabetically, so ordered factors render in their natural order.
-    uv <- as.character(sort(unique(vals[!is.na(vals)])))
+    uv <- cap_values(as.character(sort(unique(vals[!is.na(vals)]))))
     info$values <- as.list(uv)
     # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
     # to the column class. Only run the empty-string probe on actual

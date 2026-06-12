@@ -10,6 +10,15 @@ pivot_data <- data.frame(
 )
 
 single_col_data <- data.frame(x = 1:5)
+
+# High-cardinality data for the server-side value search test: 500 distinct
+# ids against a deliberately low limit so the column goes into search mode.
+options(blockr.dplyr.max_filter_values = 100)
+big_id_data <- data.frame(
+  id = sprintf("ID%04d", 1:500),
+  val = seq_len(500),
+  stringsAsFactors = FALSE
+)
 single_val_data <- data.frame(id = rep("ONLY", 3), val = 1:3)
 
 serve(
@@ -21,6 +30,7 @@ serve(
       data_pivot = new_static_block(data = pivot_data),
       data_single = new_static_block(data = single_col_data),
       data_one_val = new_static_block(data = single_val_data),
+      data_big = new_static_block(data = big_id_data),
       filter = new_filter_block(),
       select = new_select_block(),
       mutate = new_mutate_block(),
@@ -36,7 +46,8 @@ serve(
       bind_rows = new_bind_rows_block(),
       bind_cols = new_bind_cols_block(),
       select_single = new_select_block(),
-      filter_single = new_filter_block()
+      filter_single = new_filter_block(),
+      filter_big = new_filter_block()
     ),
     links = c(
       new_link("data_mtcars", "filter", "data"),
@@ -57,7 +68,8 @@ serve(
       new_link("data_mtcars", "bind_cols", "x"),
       new_link("data_mtcars2", "bind_cols", "y"),
       new_link("data_single", "select_single", "data"),
-      new_link("data_one_val", "filter_single", "data")
+      new_link("data_one_val", "filter_single", "data"),
+      new_link("data_big", "filter_big", "data")
     )
   ),
   id = "board"

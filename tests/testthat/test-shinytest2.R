@@ -802,3 +802,116 @@ test_that("lazy values: opening the value dropdown loads values on demand", {
   )
   expect_setequal(jsonlite::fromJSON(opts_json), c("3", "5"))
 })
+
+# ===========================================================================
+# SERVER-SIDE VALUE SEARCH (4 tests)
+# ===========================================================================
+# data_big has 500 distinct ids and the app caps blockr.dplyr.max_filter_values
+# at 100, so the id column runs in server-search mode: a capped first page
+# plus total count, and typing re-queries R for a matching page.
+
+test_that("server search: first value page is capped and flagged truncated", {
+  app$wait_for_idle()
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (el && el._block) el._block._requestColumnValues('id');
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['id'];
+       return !!(meta && meta.values !== undefined);
+     })();"
+  )
+  meta_json <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (!el || !el._block) return null;
+       var meta = el._block.columnMeta['id'];
+       return JSON.stringify({
+         n: meta.values.length, total: meta.total, truncated: meta.truncated
+       });
+     })();"
+  )
+  skip_if(is.null(meta_json), "filter_big block not initialized")
+  parsed <- jsonlite::fromJSON(meta_json)
+  expect_equal(parsed$n, 100)
+  expect_equal(parsed$total, 500)
+  expect_true(parsed$truncated)
+})
+
+test_that("server search: querying fetches the matching value page", {
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (el && el._block) el._block._searchColumnValues('id', '0042');
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['id'];
+       return !!(meta && meta.values && meta.values.length === 1);
+     })();"
+  )
+  vals_json <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (!el || !el._block) return null;
+       var meta = el._block.columnMeta['id'];
+       return JSON.stringify({
+         values: meta.values, truncated: meta.truncated, total: meta.total
+       });
+     })();"
+  )
+  skip_if(is.null(vals_json), "filter_big block not initialized")
+  parsed <- jsonlite::fromJSON(vals_json)
+  expect_equal(parsed$values, "ID0042")
+  # truncated is sticky: the column stays in server-search mode
+  expect_true(parsed$truncated)
+  expect_equal(parsed$total, 500)
+})
+
+test_that("server search: a searched value filters correctly end-to-end", {
+  set_block_state(app, "filter_big", "filter_input", list(
+    conditions = list(
+      list(type = "values", column = "id", values = list("ID0042"),
+           mode = "include", colType = "character")
+    ),
+    operator = "&"
+  ))
+  res <- get_block_result(app, "filter_big")
+  expect_equal(nrow(res), 1)
+  expect_equal(res$val, 42)
+})
+
+test_that("server search: reopening the dropdown fetches a fresh page", {
+  # columnMeta still holds the 1-value search page; opening the dropdown
+  # must re-request an unfiltered page (stale search results would make the
+  # column look almost empty).
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       el.querySelector('.blockr-select--multi .blockr-select__control').click();
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['id'];
+       return !!(meta && meta.values && meta.values.length === 100);
+     })();"
+  )
+  n <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       return el._block.columnMeta['id'].values.length;
+     })();"
+  )
+  expect_equal(n, 100)
+})

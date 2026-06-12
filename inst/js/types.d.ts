@@ -25,11 +25,19 @@ interface BlockrColumnSummary {
 interface BlockrColumnValues extends BlockrColumnSummary {
   min?: number;
   max?: number;
-  /** numeric/integer columns */
+  /** numeric/integer columns; capped at the server's limit when truncated */
   uniqueValues?: Array<number | string>;
-  /** character-ish columns (factor order preserved by R) */
+  /** character-ish columns (factor order preserved by R); capped likewise */
   values?: string[];
   hasEmpty?: boolean;
+  /** Full distinct count (before query filter / cap). */
+  total?: number;
+  /**
+   * True when the full value list exceeds the server limit — the column is
+   * in server-search mode. Sticky: stays true even when the current query
+   * matches fewer than `limit` values.
+   */
+  truncated?: boolean;
 }
 
 /** Name + label pair used by picker-style blocks. */
@@ -81,6 +89,13 @@ interface BlockrSelectConfigBase {
   /** Fires on every dropdown open. */
   onOpen?: () => void;
   /**
+   * Server-search hook: fires (debounced 250ms) with the current query
+   * while the component is in server-search mode — i.e. after
+   * setSearchInfo({truncated: true}). The consumer fetches a matching
+   * option page and applies it via updateOptions + setSearchInfo.
+   */
+  onSearch?: (query: string) => void;
+  /**
    * Cap on options that get DOM nodes per render (default 200). The full
    * list stays searchable; a "+N more" row reports the overflow.
    */
@@ -129,6 +144,12 @@ interface BlockrSelectHandleBase {
   updateOptions(opts: BlockrSelectOption[] | BlockrSelectOption | null | undefined): void;
   /** Toggle the "Loading…" dropdown state. */
   setLoading(flag: boolean): void;
+  /**
+   * Enter/leave server-search mode from a column-values response:
+   * `truncated` activates the onSearch hook and the "N values — type to
+   * search" footer; `total` is the full distinct count.
+   */
+  setSearchInfo(info: { total?: number; truncated?: boolean } | null | undefined): void;
   destroy(): void;
 }
 

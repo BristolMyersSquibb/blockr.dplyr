@@ -458,3 +458,47 @@ test_that("make_bind_cols_expr binds columns", {
   result <- eval(expr, list(a = data.frame(x = 1), b = data.frame(y = 2)))
   expect_equal(names(result), c("x", "y"))
 })
+
+# --- Server-side value search (limit / query) ---
+
+test_that("build_column_values caps values and reports total/truncated", {
+  df <- data.frame(id = sprintf("ID%04d", 1:500), stringsAsFactors = FALSE)
+  info <- build_column_values(df, "id", limit = 100)
+  expect_length(info$values, 100)
+  expect_equal(info$total, 500)
+  expect_true(info$truncated)
+})
+
+test_that("build_column_values query filters case-insensitively", {
+  df <- data.frame(id = c(sprintf("ID%04d", 1:500), "special"),
+                   stringsAsFactors = FALSE)
+  info <- build_column_values(df, "id", limit = 100, query = "SPEC")
+  expect_equal(unlist(info$values), "special")
+  # truncated stays sticky even though the query matches < limit values
+  expect_true(info$truncated)
+  expect_equal(info$total, 501)
+})
+
+test_that("build_column_values below the limit is not truncated", {
+  df <- data.frame(g = letters[1:5], stringsAsFactors = FALSE)
+  info <- build_column_values(df, "g", limit = 100)
+  expect_false(info$truncated)
+  expect_equal(info$total, 5)
+  expect_length(info$values, 5)
+})
+
+test_that("build_column_values caps numeric uniqueValues too", {
+  df <- data.frame(x = 1:500)
+  info <- build_column_values(df, "x", limit = 50)
+  expect_length(info$uniqueValues, 50)
+  expect_true(info$truncated)
+  # range still reflects the full column
+  expect_equal(info$max, 500)
+})
+
+test_that("build_column_values without limit keeps legacy shape", {
+  df <- data.frame(g = c("a", "b"), stringsAsFactors = FALSE)
+  info <- build_column_values(df, "g")
+  expect_false(info$truncated)
+  expect_length(info$values, 2)
+})

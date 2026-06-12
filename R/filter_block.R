@@ -50,16 +50,31 @@ new_filter_block <- function(
     # Lightweight summary (names + types); unique values load on demand
     columns_meta = build_column_summary,
     setup = function(input, session, ns, data, input_name) {
-      # On-demand: JS requests unique values for a specific column
-      observeEvent(input[[paste0(input_name, "_request_values")]], {
-        col <- input[[paste0(input_name, "_request_values")]]
+      # Columns with more distinct values than this switch to server-side
+      # search: the dropdown gets the first `limit` values plus a total
+      # count, and typing re-queries R instead of filtering client-side.
+      limit <- blockr_option("dplyr.max_filter_values", 1000)
+
+      send_values <- function(col, query = "") {
         if (!is.null(col) && col %in% colnames(data())) {
-          meta <- build_column_values(data(), col)
+          meta <- build_column_values(data(), col, limit = limit,
+                                      query = query)
           session$sendCustomMessage(
             "filter-column-values",
             list(id = ns(input_name), column = meta)
           )
         }
+      }
+
+      # On-demand: JS requests unique values for a specific column
+      observeEvent(input[[paste0(input_name, "_request_values")]], {
+        send_values(input[[paste0(input_name, "_request_values")]])
+      })
+
+      # Server-side search on truncated (high-cardinality) columns
+      observeEvent(input[[paste0(input_name, "_search_values")]], {
+        req_ <- input[[paste0(input_name, "_search_values")]]
+        send_values(req_$column, req_$query %||% "")
       })
     },
     normalize_state = normalize_filter_state_for_js,
