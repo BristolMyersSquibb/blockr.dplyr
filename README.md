@@ -1,7 +1,7 @@
 # blockr.dplyr
 
 <!-- badges: start -->
-[![check](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml/badge.svg)](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/check.yaml)
+[![ci](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/ci.yaml/badge.svg)](https://github.com/BristolMyersSquibb/blockr.dplyr/actions/workflows/ci.yaml)
 [![coverage](https://codecov.io/gh/BristolMyersSquibb/blockr.dplyr/graph/badge.svg?token=VoOPRU65KA)](https://app.codecov.io/gh/BristolMyersSquibb/blockr.dplyr)
 <!-- badges: end -->
 
