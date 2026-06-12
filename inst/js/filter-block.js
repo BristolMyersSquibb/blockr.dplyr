@@ -167,6 +167,9 @@
         op: opts?.op || 'is',
         values: opts?.values || [],
         numValue: opts?.numValue ?? null,
+        // Saved colType from a restored state — used by _compose until live
+        // column metadata arrives and takes precedence.
+        _savedColType: opts?.colType || null,
         multiSelect: null,
         exprInput: null,
         rowEl: null
@@ -403,7 +406,11 @@
           if (c.values?.length > 0) {
             conditions.push({
               type: 'values', column: c.column, values: c.values,
-              mode: op === 'is' ? 'include' : 'exclude'
+              mode: op === 'is' ? 'include' : 'exclude',
+              // Column type tag: lets R convert the string values back to
+              // the column's type instead of guessing by coercibility
+              // ("007" on a character column must stay "007", not become 7).
+              colType: this.columnMeta[c.column]?.type || c._savedColType || null
             });
           }
         } else if (c.filterType === 'numeric' && c.numValue != null) {
@@ -452,7 +459,8 @@
           } else if (cond.type === 'values') {
             this._addValueRow(cond.column, {
               values: cond.values || [],
-              op: cond.mode === 'exclude' ? 'is not' : 'is'
+              op: cond.mode === 'exclude' ? 'is not' : 'is',
+              colType: cond.colType || null
             });
           } else if (cond.type === 'numeric') {
             this._addValueRow(cond.column, {

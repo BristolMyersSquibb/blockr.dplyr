@@ -60,8 +60,7 @@ make_filter_expr <- function(conditions,
   vals <- vals[!vals %in% c("<NA>", "<empty>")]
   if (length(vals) == 0) return(filter_expr)
 
-  nums <- suppressWarnings(as.numeric(vals))
-  val_vec <- if (all(!is.na(nums))) nums else vals
+  val_vec <- convert_filter_values(vals, vc$colType)
 
   match_expr <- call("match", col_sym, val_vec)
   as.call(list(
@@ -79,6 +78,27 @@ make_filter_part <- function(cond) {
     "numeric" = make_numeric_part(cond),
     "expr" = make_expr_part(cond),
     NULL
+  )
+}
+
+#' Convert filter values (JSON strings) to the column's R type
+#'
+#' JS sends picked values as strings. `col_type` is the column type tag the
+#' JS condition carries (from the column summary). Without it (legacy saved
+#' states), fall back to coerce-if-everything-parses — which is wrong for
+#' character columns of numeric-looking codes ("007" became 7), hence the
+#' explicit tag.
+#' @noRd
+convert_filter_values <- function(values, col_type = NULL) {
+  if (is.null(col_type) || !nzchar(col_type %||% "")) {
+    nums <- suppressWarnings(as.numeric(values))
+    return(if (all(!is.na(nums))) nums else values)
+  }
+  switch(col_type,
+    numeric = ,
+    integer = suppressWarnings(as.numeric(values)),
+    logical = as.logical(values),
+    values
   )
 }
 
@@ -102,9 +122,7 @@ make_values_part <- function(cond) {
   parts <- list()
 
   if (length(regular) > 0) {
-    # Attempt numeric coercion
-    nums <- suppressWarnings(as.numeric(regular))
-    val_vec <- if (all(!is.na(nums))) nums else regular
+    val_vec <- convert_filter_values(regular, cond$colType)
 
     in_expr <- call("%in%", col_sym, val_vec)
     if (!include) in_expr <- call("!", in_expr)

@@ -249,3 +249,93 @@ test_that("build_column_meta values are lists (auto-unbox safe)", {
   # Numeric column: uniqueValues must be a list
   expect_type(meta[[2]]$uniqueValues, "list")
 })
+
+# --- Filter value type conversion (colType tag) ---
+
+test_that("values condition keeps character values on character columns", {
+  df <- data.frame(
+    USUBJID = c("001", "007", "100"),
+    x = 1:3,
+    stringsAsFactors = FALSE
+  )
+  conds <- list(list(
+    type = "values", column = "USUBJID", values = list("007"),
+    mode = "include", colType = "character"
+  ))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$USUBJID, "007")
+})
+
+test_that("values condition coerces to numeric on numeric columns", {
+  df <- data.frame(cyl = c(4, 6, 8))
+  conds <- list(list(
+    type = "values", column = "cyl", values = list("4", "6"),
+    mode = "include", colType = "numeric"
+  ))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$cyl, c(4, 6))
+})
+
+test_that("values condition converts logical columns", {
+  df <- data.frame(flag = c(TRUE, FALSE, TRUE))
+  conds <- list(list(
+    type = "values", column = "flag", values = list("TRUE"),
+    mode = "include", colType = "logical"
+  ))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$flag, c(TRUE, TRUE))
+})
+
+test_that("values condition on factor columns matches as character", {
+  df <- data.frame(Species = factor(c("setosa", "virginica", "setosa")))
+  conds <- list(list(
+    type = "values", column = "Species", values = list("setosa"),
+    mode = "include", colType = "character"
+  ))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, df)
+  expect_equal(nrow(result), 2)
+})
+
+test_that("values condition without colType falls back to coercion heuristic", {
+  # Legacy saved states carry no colType: all-numeric-looking values coerce
+  df <- data.frame(cyl = c(4, 6, 8))
+  conds <- list(list(
+    type = "values", column = "cyl", values = list("4"), mode = "include"
+  ))
+  expr <- make_filter_expr(conds, "&")
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$cyl, 4)
+
+  # ... and mixed values stay character
+  df2 <- data.frame(g = c("a", "b"), stringsAsFactors = FALSE)
+  conds2 <- list(list(
+    type = "values", column = "g", values = list("a"), mode = "include"
+  ))
+  result2 <- eval_bquoted(make_filter_expr(conds2, "&"), df2)
+  expect_equal(result2$g, "a")
+})
+
+test_that("preserveOrder match() respects colType", {
+  df <- data.frame(id = c("001", "010", "007"), stringsAsFactors = FALSE)
+  conds <- list(list(
+    type = "values", column = "id", values = list("007", "001"),
+    mode = "include", colType = "character"
+  ))
+  expr <- make_filter_expr(conds, "&", preserve_order = TRUE)
+  result <- eval_bquoted(expr, df)
+  expect_equal(result$id, c("007", "001"))
+})
+
+test_that("exclude mode respects colType on character columns", {
+  df <- data.frame(id = c("001", "007"), stringsAsFactors = FALSE)
+  conds <- list(list(
+    type = "values", column = "id", values = list("007"),
+    mode = "exclude", colType = "character"
+  ))
+  result <- eval_bquoted(make_filter_expr(conds, "&"), df)
+  expect_equal(result$id, "001")
+})
