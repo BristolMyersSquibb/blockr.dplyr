@@ -5,8 +5,12 @@
  * Depends on blockr-core.js (Blockr namespace, icons, utilities).
  *
  * API:
- *   Blockr.Select.single(container, config) -> { el, setOptions, getValue, destroy }
- *   Blockr.Select.multi(container, config)  -> { el, setOptions, getValue, destroy }
+ *   Blockr.Select.single(container, config) -> { el, setOptions, getValue, updateOptions, setLoading, destroy }
+ *   Blockr.Select.multi(container, config)  -> { el, setOptions, getValue, updateOptions, setLoading, destroy }
+ *
+ * config.onOpen fires on every dropdown-open; with config.loading = true the
+ * dropdown shows "Loading…" until setLoading(false). Together these support
+ * lazily fetching the option list on first open (see filter-block.js).
  */
 (() => {
   'use strict';
@@ -41,6 +45,8 @@
     const placeholder = config.placeholder || '';
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
+    const onOpen = config.onOpen || null;
+    let loading = !!config.loading;
     let isOpen = false;
     let searchQuery = '';
     let highlightIdx = -1;
@@ -155,6 +161,15 @@
       const filtered = getFiltered();
       dropdown.innerHTML = '';
 
+      if (loading) {
+        const empty = document.createElement('div');
+        empty.className = 'blockr-select__empty';
+        empty.textContent = 'Loading…';
+        dropdown.appendChild(empty);
+        highlightIdx = -1;
+        return;
+      }
+
       if (filtered.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'blockr-select__empty';
@@ -266,6 +281,8 @@
       window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
       window.addEventListener('resize', onScrollOrResize, { passive: true });
       searchInput.focus();
+
+      if (onOpen) onOpen();
     };
 
     const close = () => {
@@ -541,6 +558,20 @@
 
       getValue() {
         return mode === 'single' ? (selected || '') : selected.slice();
+      },
+
+      // Swap the option list without touching the current selection (setOptions
+      // filters selected against the new options, which would drop chips whose
+      // value list hasn't arrived yet). Used by lazy value loading.
+      updateOptions(opts) {
+        options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
+        render();
+        if (isOpen) computePosition();
+      },
+
+      setLoading(flag) {
+        loading = !!flag;
+        if (isOpen) renderDropdown();
       },
 
       destroy() {

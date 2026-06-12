@@ -720,6 +720,21 @@ test_that("auto-unbox: single unique value has correct JS filter meta", {
   # When a column has 1 unique value, the values array would be auto-unboxed
   # to a scalar string, causing the dropdown to show individual characters.
   app$wait_for_idle()
+  # Values load lazily (on dropdown-open); trigger the request directly.
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_single-expr-filter_input');
+       if (el && el._block) el._block._requestColumnValues('id');
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_single-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['id'];
+       return !!(meta && meta.values !== undefined);
+     })();"
+  )
   vals_json <- app$get_js(
     "(function() {
        var el = document.getElementById('board-block_filter_single-expr-filter_input');
