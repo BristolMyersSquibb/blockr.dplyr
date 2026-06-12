@@ -438,3 +438,23 @@ test_that("build_column_values survives all-NA numeric columns", {
   expect_null(info$min)
   expect_equal(length(info$uniqueValues), 0)
 })
+
+# --- Bind rows / cols ---
+
+test_that("make_bind_rows_expr builds variadic call with .id", {
+  expr <- make_bind_rows_expr("source", c(a = "a", b = "b"))
+  result <- eval(expr, list(a = data.frame(x = 1), b = data.frame(x = 2)))
+  expect_equal(result$x, c(1, 2))
+  expect_equal(result$source, c("a", "b"))
+})
+
+test_that("make_bind_rows_expr without id has no .id argument", {
+  expr <- make_bind_rows_expr("", c(a = "a", b = "b"))
+  expect_false(".id" %in% names(as.list(expr)))
+})
+
+test_that("make_bind_cols_expr binds columns", {
+  expr <- make_bind_cols_expr(c(a = "a", b = "b"))
+  result <- eval(expr, list(a = data.frame(x = 1), b = data.frame(y = 2)))
+  expect_equal(names(result), c("x", "y"))
+})
