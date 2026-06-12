@@ -248,7 +248,10 @@
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (column),
         placeholder: 'Column\u2026',
-        onChange: (value) => this._onColumnChange(cond, value)
+        onChange: (value) => {
+          this._onColumnChange(cond, value);
+          this._syncColWidth();
+        }
       });
 
       // Operator button slot
@@ -472,6 +475,29 @@
         const btn = /** @type {HTMLElement | null | undefined} */ (c.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
+      this._syncColWidth();
+    }
+
+    /**
+     * Size the shared column track to the widest selected value across
+     * condition rows. Sets --fb-col-w on the conditions list;
+     * filter-block.css clamps it via min-width / max-width, so all rows
+     * stay aligned and long column names get room instead of a fixed
+     * 160px.
+     */
+    _syncColWidth() {
+      let max = 0;
+      for (const c of this.conditions) {
+        const v = c.rowEl?.querySelector('.fb-col-wrap .blockr-select__value');
+        if (v) max = Math.max(max, Blockr.contentWidth(v));
+      }
+      const listEl = /** @type {HTMLDivElement} */ (this.listEl);
+      if (max > 0) {
+        // + control padding (12) + gap (3) + arrow (16) + wrap padding (8)
+        listEl.style.setProperty('--fb-col-w', `${max + 39}px`);
+      } else {
+        listEl.style.removeProperty('--fb-col-w');
+      }
     }
 
     /** @returns {BlockrFilterState} */
@@ -595,6 +621,7 @@
           c.exprInput.setColumns(this.columnNames);
         }
       }
+      this._syncColWidth();
     }
 
     /** @param {string} colName */

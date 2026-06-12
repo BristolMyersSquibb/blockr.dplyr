@@ -311,6 +311,7 @@
         placeholder: 'x column\u2026',
         onChange: (value) => {
           key.xCol = value;
+          this._syncColWidth();
           this._autoSubmit();
         }
       });
@@ -463,6 +464,28 @@
         const btn = /** @type {HTMLElement | null | undefined} */ (er.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
+      this._syncColWidth();
+    }
+
+    /**
+     * Size the shared x-column track to the widest selected value across
+     * key rows. Sets --jb-col-w on the keys list; join-block.css clamps
+     * it via min-width / max-width, so key rows stay aligned and long
+     * column names get room instead of a fixed 140px.
+     */
+    _syncColWidth() {
+      let max = 0;
+      for (const k of this.keys) {
+        const v = k.rowEl?.querySelector('.jb-col-x .blockr-select__value');
+        if (v) max = Math.max(max, Blockr.contentWidth(v));
+      }
+      const listEl = /** @type {HTMLDivElement} */ (this.listEl);
+      if (max > 0) {
+        // + control padding (12) + gap (3) + arrow (16) + wrap padding (8)
+        listEl.style.setProperty('--jb-col-w', `${max + 39}px`);
+      } else {
+        listEl.style.removeProperty('--jb-col-w');
+      }
     }
 
     // --- Compose output ---
@@ -604,6 +627,8 @@
           er.exprInput.setColumns(allCols);
         }
       }
+
+      this._syncColWidth();
 
       // Auto-submit now that columns are available
       this._autoSubmit();

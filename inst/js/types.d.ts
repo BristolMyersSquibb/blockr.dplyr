@@ -252,6 +252,8 @@ interface BlockrNamespace {
   uid(prefix?: string): string;
   escapeHtml(s: string): string;
   removeNode(node: Node | null | undefined): void;
+  contentWidth(el: Element): number;
+  _measureEl?: HTMLDivElement;
   icons: Record<string, string>;
   onDocClick(el: Element, cb: (e: MouseEvent) => void): void;
   registerBlock(config: BlockrRegisterConfig): void;

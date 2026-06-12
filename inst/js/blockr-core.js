@@ -21,6 +21,39 @@ Blockr.removeNode = (node) => {
 };
 
 /**
+ * Natural (nowrap, unconstrained) width of an element's rendered content.
+ *
+ * Clones the element's innerHTML into a hidden shrink-wrapped measurer in
+ * the document, so class-based styles (e.g. .blockr-select__opt-label)
+ * still apply. Row factories use this to size a shared left column to the
+ * widest committed value instead of a fixed pixel width — the source
+ * element itself is usually ellipsized (flex: 1 + overflow: hidden), so
+ * its own scrollWidth can't be trusted for shrinking.
+ *
+ * @param {Element} el
+ * @returns {number}
+ */
+Blockr.contentWidth = (el) => {
+  let m = Blockr._measureEl;
+  if (!m || !m.isConnected) {
+    m = document.createElement('div');
+    m.style.cssText =
+      'position:absolute;left:-9999px;top:0;visibility:hidden;' +
+      'white-space:nowrap;width:auto;pointer-events:none;';
+    document.body.appendChild(m);
+    Blockr._measureEl = m;
+  }
+  const cs = window.getComputedStyle(el);
+  m.style.fontFamily = cs.fontFamily;
+  m.style.fontSize = cs.fontSize;
+  m.style.fontWeight = cs.fontWeight;
+  m.innerHTML = el.innerHTML;
+  const w = Math.ceil(m.getBoundingClientRect().width);
+  m.innerHTML = '';
+  return w;
+};
+
+/**
  * Document-click registry — one document-level listener for all blocks.
  *
  * Per-instance `document.addEventListener('click', ...)` calls leak: the
