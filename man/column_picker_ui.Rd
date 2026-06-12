@@ -30,3 +30,4 @@ returns a reactive holding the current selection.
 Simple selectize-based column picker module used by downstream packages
 (e.g. blockr.extra).
 }
+\keyword{internal}

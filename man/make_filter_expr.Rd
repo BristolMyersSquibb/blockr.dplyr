@@ -21,3 +21,4 @@ A language object like \code{dplyr::filter(.(data), ...)}
 Exported as part of the public API so other blockr packages (e.g.
 blockr.dm) can reuse the same filter-condition → expression protocol.
 }
+\keyword{internal}

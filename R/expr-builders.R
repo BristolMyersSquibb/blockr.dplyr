@@ -17,6 +17,7 @@ NULL
 #' @param operator Global operator: "&" or "|"
 #' @param preserve_order Reserved; currently unused at this layer.
 #' @return A language object like `dplyr::filter(.(data), ...)`
+#' @keywords internal
 #' @export
 make_filter_expr <- function(conditions,
                              operator = "&",
@@ -688,6 +689,7 @@ make_bind_cols_expr <- function(arg_names = character()) {
 #'
 #' @param df A data frame
 #' @return A list of column summary objects
+#' @keywords internal
 #' @export
 build_column_summary <- function(df) {
   lapply(colnames(df), function(col) {
@@ -723,6 +725,7 @@ build_column_summary <- function(df) {
 #'
 #' @param df A data frame
 #' @return A list of `list(name, label)` entries, one per column.
+#' @keywords internal
 #' @export
 build_column_picker_meta <- function(df) {
   lapply(colnames(df), function(col) {
@@ -751,6 +754,7 @@ col_label <- function(x) {
 #' @param df A data frame
 #' @param col Column name (character)
 #' @return A column info object (list)
+#' @keywords internal
 #' @export
 build_column_values <- function(df, col) {
   vals <- df[[col]]

@@ -4,6 +4,7 @@
 #' select component (e.g. blockr.dm's table pickers).
 #'
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @keywords internal
 #' @export
 blockr_select_dep <- function() {
   htmltools::tagList(

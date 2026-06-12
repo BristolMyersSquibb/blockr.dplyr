@@ -11,6 +11,7 @@
 #' @return `column_picker_ui` returns a `tagList`; `column_picker_server`
 #'   returns a reactive holding the current selection.
 #'
+#' @keywords internal
 #' @export
 column_picker_ui <- function(id, label = "Columns", choices = NULL,
                              selected = NULL) {

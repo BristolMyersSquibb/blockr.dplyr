@@ -24,3 +24,4 @@ an empty string when the attribute is missing or not a length-1 character.
 Exported as part of the public API so other blockr packages (e.g.
 blockr.dm) can reuse the same column-metadata protocol.
 }
+\keyword{internal}

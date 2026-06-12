@@ -151,6 +151,7 @@ normalize_filter_state_for_js <- function(state) {
 #' (e.g. blockr.dm's dm filter block).
 #'
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @keywords internal
 #' @export
 filter_block_dep <- function() {
   htmltools::tagList(

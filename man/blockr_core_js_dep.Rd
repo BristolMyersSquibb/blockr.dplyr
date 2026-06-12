@@ -13,3 +13,4 @@ An \code{htmltools::htmlDependency}.
 Exported for reuse by other blockr packages that build on the shared
 JS namespace (e.g. blockr.dm).
 }
+\keyword{internal}
