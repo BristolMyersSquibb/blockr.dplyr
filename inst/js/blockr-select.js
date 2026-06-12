@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Blockr.Select — lightweight select component (single + multi)
  *
@@ -16,9 +17,13 @@
   'use strict';
 
   // Helpers for {value, label} option objects
+  /** @param {BlockrSelectOption} o @returns {string} */
   const optValue = (o) => typeof o === 'object' && o !== null ? o.value : o;
+  /** @param {BlockrSelectOption} o @returns {string} */
   const optLabel = (o) => typeof o === 'object' && o !== null ? (o.label || '') : '';
+  /** @param {BlockrSelectOption[]} opts @param {string} val */
   const findOpt = (opts, val) => opts.find(o => optValue(o) === val);
+  /** @param {HTMLElement} el @param {BlockrSelectOption} o */
   const fillOptContent = (el, o) => {
     el.textContent = '';
     const val = optValue(o);
@@ -33,12 +38,18 @@
     }
   };
 
+  /**
+   * @param {HTMLElement} container
+   * @param {BlockrSelectConfig} config
+   * @param {'single' | 'multi'} mode
+   */
   const createSelect = (container, config, mode) => {
     const id = Blockr.uid('bsel');
     const dropdownId = `${id}-lb`;
 
     // State
     let options = config.options || [];
+    /** @type {string | string[]} string in 'single' mode, string[] in 'multi' */
     let selected = mode === 'multi'
       ? (config.selected || []).slice()
       : (config.selected != null ? config.selected : (options.length > 0 ? optValue(options[0]) : ''));
@@ -57,8 +68,11 @@
     let destroyed = false;
 
     // Drag state (multi only)
+    /** @type {string | null} */
     let dragValue = null;
+    /** @type {Element | null} */
     let dragOverTag = null;
+    /** @type {'before' | 'after' | null} */
     let dragSide = null;
 
     // DOM
@@ -72,8 +86,12 @@
     const control = document.createElement('div');
     control.className = 'blockr-select__control';
 
-    let tagsEl = null;
-    let valueEl = null;
+    // Mode-correlated: tagsEl is set iff mode === 'multi', valueEl iff
+    // 'single'; every use is behind the matching mode check.
+    /** @type {HTMLDivElement} */
+    let tagsEl = /** @type {any} */ (null);
+    /** @type {HTMLSpanElement} */
+    let valueEl = /** @type {any} */ (null);
 
     if (mode === 'multi') {
       tagsEl = document.createElement('div');
@@ -146,6 +164,7 @@
 
     const getFiltered = () => {
       const q = searchQuery.toLowerCase();
+      /** @type {BlockrSelectOption[]} */
       const result = [];
       truncated = 0;
       for (let i = 0; i < options.length; i++) {
@@ -220,8 +239,8 @@
     const renderValue = () => {
       if (mode !== 'single') return;
       if (selected) {
-        const opt = findOpt(options, selected);
-        if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = selected; }
+        const opt = findOpt(options, /** @type {string} */ (selected));
+        if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = /** @type {string} */ (selected); }
         valueEl.classList.remove('blockr-select__value--placeholder');
         searchInput.setAttribute('placeholder', '');
       } else {
@@ -286,7 +305,7 @@
       if (mode === 'single') {
         valueEl.style.display = 'none';
         searchInput.style.width = '';
-        searchInput.setAttribute('placeholder', selected || placeholder);
+        searchInput.setAttribute('placeholder', /** @type {string} */ (selected) || placeholder);
       }
 
       renderDropdown();
@@ -326,6 +345,7 @@
 
     // --- Selection ---
 
+    /** @param {string} value */
     const selectOption = (value) => {
       if (mode === 'single') {
         const changed = selected !== value;
@@ -335,7 +355,7 @@
         if (changed && onChange) onChange(selected);
       } else {
         if (selected.indexOf(value) < 0) {
-          selected.push(value);
+          /** @type {string[]} */ (selected).push(value);
           searchQuery = '';
           searchInput.value = '';
           highlightIdx = 0;
@@ -346,10 +366,11 @@
       }
     };
 
+    /** @param {string} value */
     const removeTag = (value) => {
       const idx = selected.indexOf(value);
       if (idx >= 0) {
-        selected.splice(idx, 1);
+        /** @type {string[]} */ (selected).splice(idx, 1);
         render();
         if (isOpen) renderDropdown();
         if (onChange) onChange(selected.slice());
@@ -358,8 +379,9 @@
 
     // --- Event handlers ---
 
+    /** @param {MouseEvent} e */
     const onControlClick = (e) => {
-      if (e.target.closest('.blockr-select__tag-remove')) return;
+      if (/** @type {Element} */ (e.target).closest('.blockr-select__tag-remove')) return;
       if (mode === 'single') {
         toggle();
       } else {
@@ -368,16 +390,18 @@
       }
     };
 
+    /** @param {MouseEvent} e */
     const onDropdownClick = (e) => {
-      const optEl = e.target.closest('.blockr-select__option');
+      const optEl = /** @type {Element} */ (e.target).closest('.blockr-select__option');
       if (optEl) {
         const val = optEl.getAttribute('data-value');
         if (val != null) selectOption(val);
       }
     };
 
+    /** @param {MouseEvent} e */
     const onTagRemoveClick = (e) => {
-      const btn = e.target.closest('.blockr-select__tag-remove');
+      const btn = /** @type {Element} */ (e.target).closest('.blockr-select__tag-remove');
       if (!btn) return;
       const tag = btn.closest('.blockr-select__tag');
       if (tag) {
@@ -394,6 +418,7 @@
       else renderDropdown();
     };
 
+    /** @param {KeyboardEvent} e */
     const onSearchKeydown = (e) => {
       const filtered = getFiltered();
       switch (e.key) {
@@ -439,11 +464,13 @@
         ?.scrollIntoView({ block: 'nearest' });
     };
 
+    /** @param {MouseEvent} e */
     const onDocumentClick = (e) => {
-      if (root.contains(e.target) || dropdown.contains(e.target)) return;
+      if (root.contains(/** @type {Node | null} */ (e.target)) || dropdown.contains(/** @type {Node | null} */ (e.target))) return;
       close();
     };
 
+    /** @param {KeyboardEvent} e */
     const onRootKeydown = (e) => {
       if (e.target === root && !isOpen) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -461,21 +488,23 @@
         .forEach(el => el.classList.remove('blockr-select__tag--drop-before', 'blockr-select__tag--drop-after'));
     };
 
+    /** @param {DragEvent} e */
     const onDragStart = (e) => {
-      const tag = e.target.closest('.blockr-select__tag');
+      const tag = /** @type {Element} */ (e.target).closest('.blockr-select__tag');
       if (!tag) return;
       dragValue = tag.getAttribute('data-value');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', dragValue);
+      /** @type {DataTransfer} */ (e.dataTransfer).effectAllowed = 'move';
+      /** @type {DataTransfer} */ (e.dataTransfer).setData('text/plain', /** @type {string} */ (dragValue));
       tag.classList.add('blockr-select__tag--dragging');
     };
 
+    /** @param {DragEvent} e */
     const onDragOver = (e) => {
       if (dragValue == null) return;
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+      /** @type {DataTransfer} */ (e.dataTransfer).dropEffect = 'move';
 
-      const tag = e.target.closest('.blockr-select__tag');
+      const tag = /** @type {Element} */ (e.target).closest('.blockr-select__tag');
       if (!tag || tag.getAttribute('data-value') === dragValue) {
         clearDropIndicators();
         return;
@@ -502,19 +531,20 @@
       dragSide = null;
     };
 
+    /** @param {DragEvent} e */
     const onDrop = (e) => {
       e.preventDefault();
       if (dragValue == null || !dragOverTag) { onDragEnd(); return; }
 
-      const targetVal = dragOverTag.getAttribute('data-value');
+      const targetVal = /** @type {string} */ (dragOverTag.getAttribute('data-value'));
       const fromIdx = selected.indexOf(dragValue);
       let toIdx = selected.indexOf(targetVal);
       if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) { onDragEnd(); return; }
 
-      selected.splice(fromIdx, 1);
+      /** @type {string[]} */ (selected).splice(fromIdx, 1);
       toIdx = selected.indexOf(targetVal);
       const insertIdx = dragSide === 'after' ? toIdx + 1 : toIdx;
-      selected.splice(insertIdx, 0, dragValue);
+      /** @type {string[]} */ (selected).splice(insertIdx, 0, dragValue);
 
       onDragEnd();
       render();
@@ -547,11 +577,15 @@
     return {
       el: root,
 
+      /**
+       * @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts
+       * @param {string | string[] | null} [sel]
+       */
       setOptions(opts, sel) {
         options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
         const vals = options.map(optValue);
         if (mode === 'single') {
-          if (sel != null && vals.indexOf(sel) >= 0) {
+          if (sel != null && vals.indexOf(/** @type {string} */ (sel)) >= 0) {
             selected = sel;
           } else if (options.length > 0) {
             selected = optValue(options[0]);
@@ -560,9 +594,9 @@
           }
         } else {
           if (sel != null) {
-            selected = sel.filter(v => vals.indexOf(v) >= 0);
+            selected = /** @type {string[]} */ (sel).filter(v => vals.indexOf(v) >= 0);
           } else {
-            selected = selected.filter(v => vals.indexOf(v) >= 0);
+            selected = /** @type {string[]} */ (selected).filter(v => vals.indexOf(v) >= 0);
           }
         }
         render();
@@ -576,12 +610,14 @@
       // Swap the option list without touching the current selection (setOptions
       // filters selected against the new options, which would drop chips whose
       // value list hasn't arrived yet). Used by lazy value loading.
+      /** @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts */
       updateOptions(opts) {
         options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
         render();
         if (isOpen) computePosition();
       },
 
+      /** @param {boolean} flag */
       setLoading(flag) {
         loading = !!flag;
         if (isOpen) renderDropdown();
@@ -619,7 +655,7 @@
   };
 
   Blockr.Select = {
-    single: (container, config) => createSelect(container, config, 'single'),
-    multi: (container, config) => createSelect(container, config, 'multi')
+    single: (container, config) => /** @type {BlockrSelectSingleHandle} */ (createSelect(container, config, 'single')),
+    multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi'))
   };
 })();

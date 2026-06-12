@@ -1,8 +1,9 @@
+// @ts-check
 /**
  * Blockr — shared namespace and utilities for blockr JS components.
  * Must be loaded before any component files (blockr-select.js, etc.).
  */
-window.Blockr = window.Blockr || {};
+window.Blockr = window.Blockr || /** @type {BlockrNamespace} */ ({});
 
 Blockr.uid = (() => {
   let counter = 0;
@@ -88,19 +89,27 @@ Blockr.registerBlock = ({ name, Block, messages = {} }) => {
 
   const binding = new Shiny.InputBinding();
   Object.assign(binding, {
+    /** @param {HTMLElement} scope */
     find: (scope) => $(scope).find(`.${containerClass}`),
+    /** @param {BlockrBlockHost} el */
     getId: (el) => el.id || null,
+    /** @param {BlockrBlockHost} el */
     getValue: (el) => el._block?.getValue() ?? null,
+    /** @param {BlockrBlockHost} el @param {unknown} value */
     setValue: (el, value) => el._block?.setState(value),
+    /** @param {BlockrBlockHost} el @param {{state?: unknown}} data */
     receiveMessage: (el, data) => {
       if (data.state) el._block?.setState(data.state);
     },
+    /** @param {BlockrBlockHost} el @param {(value: boolean) => void} callback */
     subscribe: (el, callback) => {
       if (el._block) el._block._callback = () => callback(true);
     },
+    /** @param {BlockrBlockHost} el */
     unsubscribe: (el) => {
       if (el._block) el._block._callback = null;
     },
+    /** @param {BlockrBlockHost} el */
     initialize: (el) => {
       if (!el._block) el._block = new Block(el);
       Blockr._replayPending(el);
@@ -110,7 +119,9 @@ Blockr.registerBlock = ({ name, Block, messages = {} }) => {
 
   for (const [msgName, handler] of Object.entries(messages)) {
     Shiny.addCustomMessageHandler(msgName, (msg) => {
-      const el = document.getElementById(msg.id);
+      const el = /** @type {BlockrBlockHost | null} */ (
+        document.getElementById(msg.id)
+      );
       if (el?._block) {
         handler(el._block, msg);
       } else {
