@@ -405,3 +405,36 @@ test_that("make_summarize_expr handles non-syntactic column names", {
   result <- eval_bquoted(expr, df)
   expect_equal(result$avg, 2)
 })
+
+# --- Empty-state pass-through and column metadata ---
+
+test_that("empty filter and summarize states pass data through unchanged", {
+  expect_identical(eval_bquoted(make_filter_expr(list(), "&"), mtcars), mtcars)
+  expect_identical(eval_bquoted(make_summarize_expr(list()), mtcars), mtcars)
+  # summaries present but all invalid (no name yet) also pass through
+  invalid <- list(list(type = "simple", name = "", func = "mean", col = "mpg"))
+  expect_identical(eval_bquoted(make_summarize_expr(invalid), mtcars), mtcars)
+})
+
+test_that("column_type detects integer and logical correctly", {
+  expect_equal(column_type(1L), "integer")
+  expect_equal(column_type(1.5), "numeric")
+  expect_equal(column_type(TRUE), "logical")
+  expect_equal(column_type("a"), "character")
+  expect_equal(column_type(factor("a")), "character")
+})
+
+test_that("build_column_values keeps factor level order", {
+  df <- data.frame(
+    sev = factor(c("HIGH", "LOW", "MED"), levels = c("LOW", "MED", "HIGH"))
+  )
+  info <- build_column_values(df, "sev")
+  expect_equal(unlist(info$values), c("LOW", "MED", "HIGH"))
+})
+
+test_that("build_column_values survives all-NA numeric columns", {
+  df <- data.frame(x = c(NA_real_, NA_real_))
+  expect_no_warning(info <- build_column_values(df, "x"))
+  expect_null(info$min)
+  expect_equal(length(info$uniqueValues), 0)
+})

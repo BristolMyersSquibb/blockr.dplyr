@@ -4,7 +4,7 @@ eval_bquoted <- function(expr, df) {
   eval(resolved, envir = list(data = df))
 }
 
-test_that("summarize block: empty summaries return zero-column summary", {
+test_that("summarize block: empty summaries pass data through unchanged", {
   blk <- new_summarize_block(
     state = list(summaries = list(), by = list())
   )
@@ -12,8 +12,9 @@ test_that("summarize block: empty summaries return zero-column summary", {
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
     session$flushReact()
     result <- eval_bquoted(session$returned$expr(), mtcars)
-    # With no summaries and no groups, dplyr::summarize returns 1 row
-    expect_equal(nrow(result), 1)
+    # An unconfigured block is a no-op: it must not collapse the data
+    # to a 1-row summary and wreck everything downstream.
+    expect_identical(result, mtcars)
   })
 })
 

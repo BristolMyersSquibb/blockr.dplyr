@@ -23,14 +23,14 @@ make_filter_expr <- function(conditions,
                              operator = "&",
                              preserve_order = FALSE) {
   if (length(conditions) == 0) {
-    return(bbquote(dplyr::filter(.(data), TRUE)))
+    return(bbquote(.(data)))
   }
 
   parts <- lapply(conditions, make_filter_part)
   parts <- Filter(Negate(is.null), parts)
 
   if (length(parts) == 0) {
-    return(bbquote(dplyr::filter(.(data), TRUE)))
+    return(bbquote(.(data)))
   }
 
   combined <- Reduce(
@@ -254,7 +254,7 @@ summarize_func_map <- function(func) {
 #' @noRd
 make_summarize_expr <- function(summaries, by = character()) {
   if (length(summaries) == 0) {
-    return(bbquote(dplyr::summarize(.(data))))
+    return(bbquote(.(data)))
   }
 
   expr <- quote(dplyr::summarize(.(data)))
@@ -286,6 +286,12 @@ make_summarize_expr <- function(summaries, by = character()) {
     }
 
     expr[[nm]] <- call_expr
+  }
+
+  # All summaries invalid (e.g. names still empty while typing) and no
+  # grouping: pass through instead of collapsing the data to one row.
+  if (length(expr) < 3 && length(by) == 0) {
+    return(bbquote(.(data)))
   }
 
   # Add .by if grouping columns
@@ -714,22 +720,31 @@ make_bind_cols_expr <- function(arg_names = character()) {
 build_column_summary <- function(df) {
   lapply(colnames(df), function(col) {
     vals <- df[[col]]
-    type <- if (is.numeric(vals)) {
-      "numeric"
-    } else if (is.integer(vals)) {
-      "integer"
-    } else if (is.logical(vals)) {
-      "logical"
-    } else {
-      "character"
-    }
     list(
       name = col,
-      type = type,
+      type = column_type(vals),
       hasNA = anyNA(vals),
       label = col_label(vals)
     )
   })
+}
+
+#' Classify a column for the JS protocol
+#'
+#' Order matters: logical before numeric (is.numeric(TRUE) is FALSE but be
+#' explicit), integer before numeric (is.numeric() is TRUE for integers).
+#' Factors and dates report as "character" — they filter by value, not range.
+#' @noRd
+column_type <- function(vals) {
+  if (is.logical(vals)) {
+    "logical"
+  } else if (is.integer(vals)) {
+    "integer"
+  } else if (is.numeric(vals)) {
+    "numeric"
+  } else {
+    "character"
+  }
 }
 
 #' Build a lightweight column summary for pickers (name + label)
@@ -778,15 +793,7 @@ col_label <- function(x) {
 #' @export
 build_column_values <- function(df, col) {
   vals <- df[[col]]
-  type <- if (is.numeric(vals)) {
-    "numeric"
-  } else if (is.integer(vals)) {
-    "integer"
-  } else if (is.logical(vals)) {
-    "logical"
-  } else {
-    "character"
-  }
+  type <- column_type(vals)
 
   info <- list(
     name = col,
@@ -796,11 +803,16 @@ build_column_values <- function(df, col) {
   )
 
   if (type %in% c("numeric", "integer")) {
-    info$min <- min(vals, na.rm = TRUE)
-    info$max <- max(vals, na.rm = TRUE)
-    info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
+    non_na <- vals[!is.na(vals)]
+    if (length(non_na) > 0) {
+      info$min <- min(non_na)
+      info$max <- max(non_na)
+    }
+    info$uniqueValues <- as.list(sort(unique(non_na)))
   } else {
-    uv <- sort(unique(as.character(vals[!is.na(vals)])))
+    # sort() before as.character(): factors sort by level order, not
+    # alphabetically, so ordered factors render in their natural order.
+    uv <- as.character(sort(unique(vals[!is.na(vals)])))
     info$values <- as.list(uv)
     # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
     # to the column class. Only run the empty-string probe on actual
