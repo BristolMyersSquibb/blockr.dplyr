@@ -4,6 +4,7 @@
 #' JS namespace (e.g. blockr.dm).
 #'
 #' @return An `htmltools::htmlDependency`.
+#' @keywords internal
 #' @export
 blockr_core_js_dep <- function() {
   htmltools::htmlDependency(
@@ -20,6 +21,7 @@ blockr_core_js_dep <- function() {
 #' block-container / row / popover styles.
 #'
 #' @return An `htmltools::htmlDependency`.
+#' @keywords internal
 #' @export
 blockr_blocks_css_dep <- function() {
   htmltools::htmlDependency(

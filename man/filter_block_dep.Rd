@@ -13,3 +13,4 @@ An \code{htmltools::tagList} of \code{htmlDependency} objects.
 Exported for reuse by blockr packages that embed the filter block's JS UI
 (e.g. blockr.dm's dm filter block).
 }
+\keyword{internal}

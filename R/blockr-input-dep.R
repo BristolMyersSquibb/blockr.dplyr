@@ -4,6 +4,7 @@
 #' expression-input component.
 #'
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
+#' @keywords internal
 #' @export
 blockr_input_dep <- function() {
   htmltools::tagList(

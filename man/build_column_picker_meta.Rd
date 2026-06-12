@@ -23,3 +23,4 @@ label for the secondary text slot, so this helper is the lean path.
 \code{label} is read from \code{attr(col, "label")} (e.g. ADaM datasets). It is
 an empty string when the attribute is missing or not a length-1 character.
 }
+\keyword{internal}

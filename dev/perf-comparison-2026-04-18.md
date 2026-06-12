@@ -189,3 +189,42 @@ done
 
 Raw outputs from this run are committed to
 `/tmp/blockr-bench/results/{r_time,startup,first_load,inspect3}.txt`.
+
+---
+
+## 2026-06-12 follow-up: eager value-load at startup (fixed)
+
+Re-validation on 2026-06-11 (David, `main` `d82e619`) confirmed the original
+`build_column_meta` fix still holds (summary 424 B, filter usable at ~0.5 s) but
+surfaced a *second* regression from the `f-auto-click` churn: the widget
+requested the auto-selected first column's **full unique-value list** at render
+time, with no user interaction. On a 50K-unique `id` column that is a single
+**289 KB** `filter-column-values` message that blocks the R thread; on a real
+dock board it pushed board-fully-set-up from ~1.32 s (CRAN) to ~2.71 s.
+
+**Fix (`fix/filter-lazy-value-open`):** values now load on first
+*dropdown-open*, never at render time.
+
+- `blockr-select.js` grew `onOpen` / `loading` config plus `updateOptions()` /
+  `setLoading()` (in-place option swap that keeps the open dropdown open and
+  never filters existing chips).
+- `filter-block.js` renders the values multi-select immediately (saved chips
+  come from `cond.values`, no option list needed) with `loading: !hasValues`
+  and `onOpen` → `_requestColumnValues` (no-op once values are loaded).
+- High-cardinality capping / server-side search was considered and **dropped**:
+  ≤50K uniques is fine to ship on demand with client-side search; remote-DB
+  tables need a separate design if they ever arrive.
+
+Verified with a chromote message trace (50K×6 `static→filter`, plain
+`new_filter_block()`):
+
+| | pre-fix `main` | fix |
+| --- | --- | --- |
+| `filter-columns` (summary) | 531 ms, 424 B | 514 ms, 424 B |
+| `filter-column-values` at startup | **1744 ms, 289,049 B** | **none** |
+| after dropdown-open | (already loaded) | 289,049 B on demand, dropdown fills in place |
+
+A preconfigured board (saved `category is A|B` filter) renders its chips and
+filters downstream (3,792/50,000 rows) with **no** value fetch at startup.
+shinytest2 suite: 115/115 (the auto-unbox single-value test now triggers the
+lazy request explicitly).

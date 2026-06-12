@@ -13,3 +13,4 @@ An \code{htmltools::tagList} of \code{htmlDependency} objects.
 Exported for reuse by other blockr packages that embed the shared
 expression-input component.
 }
+\keyword{internal}

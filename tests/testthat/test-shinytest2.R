@@ -720,6 +720,21 @@ test_that("auto-unbox: single unique value has correct JS filter meta", {
   # When a column has 1 unique value, the values array would be auto-unboxed
   # to a scalar string, causing the dropdown to show individual characters.
   app$wait_for_idle()
+  # Values load lazily (on dropdown-open); trigger the request directly.
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_single-expr-filter_input');
+       if (el && el._block) el._block._requestColumnValues('id');
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter_single-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['id'];
+       return !!(meta && meta.values !== undefined);
+     })();"
+  )
   vals_json <- app$get_js(
     "(function() {
        var el = document.getElementById('board-block_filter_single-expr-filter_input');
@@ -732,4 +747,58 @@ test_that("auto-unbox: single unique value has correct JS filter meta", {
   parsed <- jsonlite::fromJSON(vals_json)
   expect_equal(parsed, "ONLY")
   expect_length(parsed, 1)
+})
+
+# ===========================================================================
+# LAZY VALUE LOADING (2 tests)
+# ===========================================================================
+# A column's unique-value list must only ever travel on dropdown-open. A
+# values condition (saved state or startup auto-select — same render path)
+# shows its chips and filters from cond.values alone; eagerly fetching the
+# list at render time shipped ~289KB at startup for a 50K-unique column.
+
+test_that("lazy values: a values condition filters without fetching the value list", {
+  set_block_state(app, "filter", "filter_input", list(
+    conditions = list(
+      list(type = "values", column = "gear", values = list("4"), mode = "include")
+    ),
+    operator = "&"
+  ))
+  res <- get_block_result(app, "filter")
+  expect_true(all(res$gear == 4))
+
+  loaded <- app$get_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter-expr-filter_input');
+       if (!el || !el._block) return null;
+       var meta = el._block.columnMeta['gear'];
+       return !!(meta && (meta.uniqueValues !== undefined || meta.values !== undefined));
+     })();"
+  )
+  skip_if(is.null(loaded), "filter block not initialized")
+  expect_false(loaded)
+})
+
+test_that("lazy values: opening the value dropdown loads values on demand", {
+  app$run_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter-expr-filter_input');
+       el.querySelector('.blockr-select--multi .blockr-select__control').click();
+     })();"
+  )
+  app$wait_for_js(
+    "(function() {
+       var el = document.getElementById('board-block_filter-expr-filter_input');
+       if (!el || !el._block) return true;
+       var meta = el._block.columnMeta['gear'];
+       return !!(meta && meta.uniqueValues !== undefined);
+     })();"
+  )
+  # The open dropdown fills in place: gear's uniques are 3/4/5, and multi
+  # mode hides the already-selected chip "4" from the option list.
+  opts_json <- app$get_js(
+    "JSON.stringify(Array.from(document.querySelectorAll(
+       '.blockr-select__dropdown .blockr-select__option')).map(e => e.textContent));"
+  )
+  expect_setequal(jsonlite::fromJSON(opts_json), c("3", "5"))
 })

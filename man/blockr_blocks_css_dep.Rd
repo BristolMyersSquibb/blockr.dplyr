@@ -13,3 +13,4 @@ An \code{htmltools::htmlDependency}.
 Exported for reuse by other blockr packages that reuse the shared
 block-container / row / popover styles.
 }
+\keyword{internal}

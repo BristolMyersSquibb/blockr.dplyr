@@ -267,30 +267,17 @@
           ? meta.uniqueValues !== undefined
           : meta.values !== undefined;
 
-        if (!hasValues) {
-          // Values not loaded yet — request them and show placeholder
-          const loading = document.createElement('span');
-          loading.className = 'fb-loading';
-          loading.textContent = 'Loading\u2026';
-          container.appendChild(loading);
-          this._requestColumnValues(cond.column);
-          return;
-        }
-
-        let allValues;
-        if (isNumeric) {
-          allValues = (meta.uniqueValues || []).map(String);
-        } else {
-          allValues = (meta.values || []).slice();
-          if (meta.hasEmpty) allValues.push('<empty>');
-        }
-        if (meta.hasNA) allValues.push('<NA>');
-
+        // Values load lazily, on first dropdown-open — never at render time.
+        // A preconfigured board must not pay for a high-cardinality column's
+        // unique values (50K ids ~ 289KB) that nobody may ever look at; saved
+        // chips render from cond.values without the option list.
         cond._valueSelectize = Blockr.Select.multi(container, {
-          options: allValues,
+          options: this._buildValueOptions(meta),
           selected: cond.values || [],
           placeholder: 'Select values\u2026',
           reorderable: this.preserveOrder,
+          loading: !hasValues,
+          onOpen: () => this._requestColumnValues(cond.column),
           onChange: (selected) => {
             cond.values = selected;
             this._autoSubmit();
@@ -309,6 +296,19 @@
         });
         container.appendChild(numInput);
       }
+    }
+
+    _buildValueOptions(meta) {
+      const isNumeric = meta.type === 'numeric' || meta.type === 'integer';
+      let allValues;
+      if (isNumeric) {
+        allValues = (meta.uniqueValues || []).map(String);
+      } else {
+        allValues = (meta.values || []).slice();
+        if (meta.hasEmpty) allValues.push('<empty>');
+      }
+      if (meta.hasNA) allValues.push('<NA>');
+      return allValues;
     }
 
     _addExprRow(value) {
@@ -505,6 +505,10 @@
     }
 
     _requestColumnValues(colName) {
+      const meta = this.columnMeta[colName];
+      const loaded = meta &&
+        (meta.values !== undefined || meta.uniqueValues !== undefined);
+      if (loaded) return;
       if (this._pendingValueRequests.has(colName)) return;
       this._pendingValueRequests.add(colName);
       Shiny.setInputValue(
@@ -523,11 +527,18 @@
       } else {
         this.columnMeta[colMeta.name] = colMeta;
       }
-      // Re-render any conditions waiting for this column's values
+      // Refresh conditions waiting for this column's values. In place when
+      // the select exists: a re-render would destroy it and snap the dropdown
+      // the user just opened shut.
       for (const c of this.conditions) {
         if (c.column === colMeta.name && c._meta) {
           c._meta = this.columnMeta[colMeta.name];
-          this._renderDynamicContent(c);
+          if (c._valueSelectize) {
+            c._valueSelectize.updateOptions(this._buildValueOptions(c._meta));
+            c._valueSelectize.setLoading(false);
+          } else {
+            this._renderDynamicContent(c);
+          }
         }
       }
     }

@@ -420,7 +420,7 @@ register_dplyr_blocks <- function() {
           "NOT chain multiple filter_blocks",
           "to AND together independent",
           "predicates on the same upstream",
-          "data — one block with",
+          "data -- one block with",
           "conditions: [c1, c2, c3] +",
           "operator: '&' is clearer,",
           "faster, and surfaces all the",

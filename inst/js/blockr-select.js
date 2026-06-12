@@ -5,8 +5,12 @@
  * Depends on blockr-core.js (Blockr namespace, icons, utilities).
  *
  * API:
- *   Blockr.Select.single(container, config) -> { el, setOptions, getValue, destroy }
- *   Blockr.Select.multi(container, config)  -> { el, setOptions, getValue, destroy }
+ *   Blockr.Select.single(container, config) -> { el, setOptions, getValue, updateOptions, setLoading, destroy }
+ *   Blockr.Select.multi(container, config)  -> { el, setOptions, getValue, updateOptions, setLoading, destroy }
+ *
+ * config.onOpen fires on every dropdown-open; with config.loading = true the
+ * dropdown shows "Loading…" until setLoading(false). Together these support
+ * lazily fetching the option list on first open (see filter-block.js).
  */
 (() => {
   'use strict';
@@ -41,6 +45,12 @@
     const placeholder = config.placeholder || '';
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
+    const onOpen = config.onOpen || null;
+    // Cap how many options get DOM nodes per render. The full list stays
+    // searchable; rendering 50K divs froze the tab on every open/keystroke.
+    const maxRendered = config.maxRendered || 200;
+    let truncated = 0;
+    let loading = !!config.loading;
     let isOpen = false;
     let searchQuery = '';
     let highlightIdx = -1;
@@ -137,6 +147,7 @@
     const getFiltered = () => {
       const q = searchQuery.toLowerCase();
       const result = [];
+      truncated = 0;
       for (let i = 0; i < options.length; i++) {
         const opt = options[i];
         const val = optValue(opt);
@@ -146,7 +157,8 @@
           const matchLabel = optLabel(opt).toLowerCase().indexOf(q) >= 0;
           if (!matchVal && !matchLabel) continue;
         }
-        result.push(opt);
+        if (result.length < maxRendered) result.push(opt);
+        else truncated++;
       }
       return result;
     };
@@ -154,6 +166,15 @@
     const renderDropdown = () => {
       const filtered = getFiltered();
       dropdown.innerHTML = '';
+
+      if (loading) {
+        const empty = document.createElement('div');
+        empty.className = 'blockr-select__empty';
+        empty.textContent = 'Loading…';
+        dropdown.appendChild(empty);
+        highlightIdx = -1;
+        return;
+      }
 
       if (filtered.length === 0) {
         const empty = document.createElement('div');
@@ -182,6 +203,13 @@
         div.setAttribute('data-value', val);
         fillOptContent(div, opt);
         dropdown.appendChild(div);
+      }
+
+      if (truncated > 0) {
+        const more = document.createElement('div');
+        more.className = 'blockr-select__empty';
+        more.textContent = `+${truncated.toLocaleString()} more — type to narrow`;
+        dropdown.appendChild(more);
       }
 
       if (highlightIdx >= 0) {
@@ -266,6 +294,8 @@
       window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
       window.addEventListener('resize', onScrollOrResize, { passive: true });
       searchInput.focus();
+
+      if (onOpen) onOpen();
     };
 
     const close = () => {
@@ -541,6 +571,20 @@
 
       getValue() {
         return mode === 'single' ? (selected || '') : selected.slice();
+      },
+
+      // Swap the option list without touching the current selection (setOptions
+      // filters selected against the new options, which would drop chips whose
+      // value list hasn't arrived yet). Used by lazy value loading.
+      updateOptions(opts) {
+        options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
+        render();
+        if (isOpen) computePosition();
+      },
+
+      setLoading(flag) {
+        loading = !!flag;
+        if (isOpen) renderDropdown();
       },
 
       destroy() {
