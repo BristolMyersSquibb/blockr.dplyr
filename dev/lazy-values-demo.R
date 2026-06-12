@@ -52,4 +52,4 @@ app <- serve(
   )
 )
 
-shiny::runApp(app, port = 3838, host = "127.0.0.1", launch.browser = FALSE)
+shiny::runApp(app, port = 3838, host = "0.0.0.0", launch.browser = FALSE)
