@@ -10,6 +10,11 @@
 # - "filter saved" was restored with `category is A|B`: the chips and the
 #   filtered result (~3.8K rows) are there from state alone; its value list
 #   also only loads if you open the dropdown.
+# - "filter group" is the low-cardinality comparison: open its dropdown and
+#   the 100 group values pop in with no perceptible wait — same lazy path,
+#   payload just doesn't matter at this size.
+# - In the id dropdown, only the first 200 matches get DOM nodes
+#   ("+49,xxx more — type to narrow"); search covers the full list.
 
 pkgload::load_all("blockr.core", quiet = TRUE)
 pkgload::load_all("blockr.dock", quiet = TRUE)
@@ -43,11 +48,21 @@ app <- serve(
           ),
           operator = "&"
         )
+      ),
+      filter_group = new_filter_block(
+        state = list(
+          conditions = list(
+            list(type = "values", column = "group",
+                 values = list("Group_1"), mode = "include")
+          ),
+          operator = "&"
+        )
       )
     ),
     links = c(
       new_link("data", "filter_id", "data"),
-      new_link("data", "filter_saved", "data")
+      new_link("data", "filter_saved", "data"),
+      new_link("data", "filter_group", "data")
     )
   )
 )

@@ -46,6 +46,10 @@
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
     const onOpen = config.onOpen || null;
+    // Cap how many options get DOM nodes per render. The full list stays
+    // searchable; rendering 50K divs froze the tab on every open/keystroke.
+    const maxRendered = config.maxRendered || 200;
+    let truncated = 0;
     let loading = !!config.loading;
     let isOpen = false;
     let searchQuery = '';
@@ -143,6 +147,7 @@
     const getFiltered = () => {
       const q = searchQuery.toLowerCase();
       const result = [];
+      truncated = 0;
       for (let i = 0; i < options.length; i++) {
         const opt = options[i];
         const val = optValue(opt);
@@ -152,7 +157,8 @@
           const matchLabel = optLabel(opt).toLowerCase().indexOf(q) >= 0;
           if (!matchVal && !matchLabel) continue;
         }
-        result.push(opt);
+        if (result.length < maxRendered) result.push(opt);
+        else truncated++;
       }
       return result;
     };
@@ -197,6 +203,13 @@
         div.setAttribute('data-value', val);
         fillOptContent(div, opt);
         dropdown.appendChild(div);
+      }
+
+      if (truncated > 0) {
+        const more = document.createElement('div');
+        more.className = 'blockr-select__empty';
+        more.textContent = `+${truncated.toLocaleString()} more — type to narrow`;
+        dropdown.appendChild(more);
       }
 
       if (highlightIdx >= 0) {
