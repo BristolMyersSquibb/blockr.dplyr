@@ -4,12 +4,16 @@
 \alias{build_column_values}
 \title{Build full column metadata for a single column}
 \usage{
-build_column_values(df, col)
+build_column_values(df, col, limit = NULL, query = "")
 }
 \arguments{
 \item{df}{A data frame}
 
 \item{col}{Column name (character)}
+
+\item{limit}{Maximum number of unique values to return (\code{NULL} = all)}
+
+\item{query}{Substring to filter values by (case-insensitive)}
 }
 \value{
 A column info object (list)
@@ -20,6 +24,14 @@ label for one column. Called on-demand when the user selects a column in
 the filter block.
 }
 \details{
+With \code{limit}, high-cardinality columns switch to server-side search: at
+most \code{limit} unique values are returned, \code{total} reports the full
+distinct count, and \code{truncated} marks the column as server-searched.
+\code{query} filters values by case-insensitive substring before the cap.
+\code{truncated} is deliberately sticky — it reflects whether the \emph{full}
+value list exceeds the limit, not the current query's match count, so
+the client stays in search mode while narrowing.
+
 Exported as part of the public API so other blockr packages (e.g.
 blockr.dm) can reuse the same column-metadata protocol.
 }
