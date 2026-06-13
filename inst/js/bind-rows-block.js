@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * BindRowsBlock — JS-driven dplyr::bind_rows block input binding.
  *
@@ -10,19 +11,30 @@
 (() => {
   'use strict';
 
+  /**
+   * Block state as exchanged with R — mirrors make_bind_rows_expr() in
+   * R/expr-builders.R (what _compose() sends and setState() receives;
+   * arg_names is supplied R-side).
+   * @typedef {Object} BindRowsState
+   * @property {string} id_name Optional .id column name ('' = none)
+   */
+
   class BindRowsBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
       this.id_name = '';
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
 
       this._buildDOM();
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -45,13 +57,14 @@
       this._idInput.value = '';
       this._idInput.placeholder = 'e.g. source';
       this._idInput.addEventListener('input', () => {
-        this.id_name = this._idInput.value;
+        this.id_name = /** @type {HTMLInputElement} */ (this._idInput).value;
         this._autoSubmit();
       });
       fieldWrap.appendChild(this._idInput);
       this.card.appendChild(fieldWrap);
     }
 
+    /** @returns {BindRowsState} */
     _compose() {
       return {
         id_name: this.id_name
@@ -63,53 +76,29 @@
       this._callback?.(true);
     }
 
+    /** @returns {BindRowsState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {BindRowsState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.id_name = state?.id_name || '';
-      this._idInput.value = this.id_name;
+      /** @type {HTMLInputElement} */ (this._idInput).value = this.id_name;
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.bind-rows-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new BindRowsBlock(el);
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.bind-rows');
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('bind-rows-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'bind-rows',
+    Block: BindRowsBlock,
+    messages: {
+      'bind-rows-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

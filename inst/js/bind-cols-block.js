@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * BindColsBlock — JS-driven dplyr::bind_cols block input binding.
  *
@@ -9,9 +10,19 @@
 (() => {
   'use strict';
 
+  /**
+   * Block state as exchanged with R — mirrors make_bind_cols_expr() in
+   * R/expr-builders.R, which takes no JS-driven parameters (arg_names is
+   * supplied R-side). _compose() sends and setState() receives an empty
+   * object.
+   * @typedef {{}} BindColsState
+   */
+
   class BindColsBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
 
@@ -31,6 +42,7 @@
       this.card.appendChild(label);
     }
 
+    /** @returns {BindColsState} */
     _compose() {
       return {};
     }
@@ -40,48 +52,28 @@
       this._callback?.(true);
     }
 
+    /** @returns {BindColsState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {BindColsState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       // No state to set
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.bind-cols-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new BindColsBlock(el);
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.bind-cols');
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('bind-cols-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'bind-cols',
+    Block: BindColsBlock,
+    messages: {
+      'bind-cols-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

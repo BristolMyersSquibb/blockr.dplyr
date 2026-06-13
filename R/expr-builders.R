@@ -23,14 +23,14 @@ make_filter_expr <- function(conditions,
                              operator = "&",
                              preserve_order = FALSE) {
   if (length(conditions) == 0) {
-    return(bbquote(dplyr::filter(.(data), TRUE)))
+    return(bbquote(.(data)))
   }
 
   parts <- lapply(conditions, make_filter_part)
   parts <- Filter(Negate(is.null), parts)
 
   if (length(parts) == 0) {
-    return(bbquote(dplyr::filter(.(data), TRUE)))
+    return(bbquote(.(data)))
   }
 
   combined <- Reduce(
@@ -60,8 +60,7 @@ make_filter_expr <- function(conditions,
   vals <- vals[!vals %in% c("<NA>", "<empty>")]
   if (length(vals) == 0) return(filter_expr)
 
-  nums <- suppressWarnings(as.numeric(vals))
-  val_vec <- if (all(!is.na(nums))) nums else vals
+  val_vec <- convert_filter_values(vals, vc$colType)
 
   match_expr <- call("match", col_sym, val_vec)
   as.call(list(
@@ -79,6 +78,27 @@ make_filter_part <- function(cond) {
     "numeric" = make_numeric_part(cond),
     "expr" = make_expr_part(cond),
     NULL
+  )
+}
+
+#' Convert filter values (JSON strings) to the column's R type
+#'
+#' JS sends picked values as strings. `col_type` is the column type tag the
+#' JS condition carries (from the column summary). Without it (legacy saved
+#' states), fall back to coerce-if-everything-parses — which is wrong for
+#' character columns of numeric-looking codes ("007" became 7), hence the
+#' explicit tag.
+#' @noRd
+convert_filter_values <- function(values, col_type = NULL) {
+  if (is.null(col_type) || !nzchar(col_type %||% "")) {
+    nums <- suppressWarnings(as.numeric(values))
+    return(if (all(!is.na(nums))) nums else values)
+  }
+  switch(col_type,
+    numeric = ,
+    integer = suppressWarnings(as.numeric(values)),
+    logical = as.logical(values),
+    values
   )
 }
 
@@ -102,9 +122,7 @@ make_values_part <- function(cond) {
   parts <- list()
 
   if (length(regular) > 0) {
-    # Attempt numeric coercion
-    nums <- suppressWarnings(as.numeric(regular))
-    val_vec <- if (all(!is.na(nums))) nums else regular
+    val_vec <- convert_filter_values(regular, cond$colType)
 
     in_expr <- call("%in%", col_sym, val_vec)
     if (!include) in_expr <- call("!", in_expr)
@@ -236,7 +254,7 @@ summarize_func_map <- function(func) {
 #' @noRd
 make_summarize_expr <- function(summaries, by = character()) {
   if (length(summaries) == 0) {
-    return(bbquote(dplyr::summarize(.(data))))
+    return(bbquote(.(data)))
   }
 
   expr <- quote(dplyr::summarize(.(data)))
@@ -247,13 +265,14 @@ make_summarize_expr <- function(summaries, by = character()) {
 
     if (identical(s$type, "simple")) {
       func_full <- summarize_func_map(s$func %||% "")
+      func_lang <- tryCatch(str2lang(func_full), error = function(e) NULL)
       col <- s$col %||% ""
-      if (func_full == "dplyr::n") {
-        call_expr <- str2lang(paste0(func_full, "()"))
+      if (is.null(func_lang)) {
+        next
+      } else if (func_full == "dplyr::n") {
+        call_expr <- as.call(list(func_lang))
       } else if (nzchar(col)) {
-        call_expr <- str2lang(paste0(
-          func_full, "(", backtick_if_needed(col), ")"
-        ))
+        call_expr <- as.call(list(func_lang, as.name(col)))
       } else {
         next
       }
@@ -267,6 +286,12 @@ make_summarize_expr <- function(summaries, by = character()) {
     }
 
     expr[[nm]] <- call_expr
+  }
+
+  # All summaries invalid (e.g. names still empty while typing) and no
+  # grouping: pass through instead of collapsing the data to one row.
+  if (length(expr) < 3 && length(by) == 0) {
+    return(bbquote(.(data)))
   }
 
   # Add .by if grouping columns
@@ -295,58 +320,61 @@ make_join_expr <- function(type = "left_join",
                            exprs = character(),
                            suffix_x = ".x",
                            suffix_y = ".y") {
-  join_fn <- paste0("dplyr::", type)
+  join_types <- c(
+    "left_join", "inner_join", "right_join", "full_join",
+    "semi_join", "anti_join"
+  )
+  if (!type %in% join_types) type <- "left_join"
+  join_fn <- str2lang(paste0("dplyr::", type))
 
-  has_non_equi <- any(vapply(keys, function(k) k$op != "==", logical(1)))
+  key_ops <- c("==", ">", ">=", "<", "<=")
+  ops <- vapply(
+    keys,
+    function(k) if ((k$op %||% "==") %in% key_ops) k$op else "==",
+    character(1)
+  )
+
+  exprs <- trimws(exprs)
+  exprs <- exprs[nzchar(exprs)]
+
+  has_non_equi <- any(ops != "==")
   has_exprs <- length(exprs) > 0
 
-  if (has_non_equi || has_exprs) {
-    # Use dplyr::join_by()
-    jb_parts <- character()
-    for (k in keys) {
-      x <- backtick_if_needed(k$xCol)
-      y <- backtick_if_needed(k$yCol)
-      jb_parts <- c(jb_parts, paste0(x, " ", k$op, " ", y))
-    }
-    for (e in exprs) {
-      if (nzchar(trimws(e))) jb_parts <- c(jb_parts, trimws(e))
-    }
-
-    if (length(jb_parts) == 0) {
-      # Natural join (no by argument)
-      text <- paste0(join_fn, "(.(x), .(y))")
-    } else {
-      jb_text <- paste(jb_parts, collapse = ", ")
-      text <- paste0(
-        join_fn, "(.(x), .(y), by = dplyr::join_by(",
-        jb_text, "))"
-      )
-    }
-  } else if (length(keys) > 0) {
-    # Equi-join with named character vector
-    by_parts <- vapply(keys, function(k) {
-      paste0(backtick_if_needed(k$xCol), ' = "', k$yCol, '"')
-    }, character(1))
-    by_text <- paste(by_parts, collapse = ", ")
-    text <- paste0(join_fn, "(.(x), .(y), by = c(", by_text, "))")
-  } else {
-    # No keys selected yet: pass through x until user configures
-    return(bbquote(.(x)))
+  if (length(keys) == 0 && !has_exprs) {
+    # No keys selected yet: pass through x until user configures.
+    # quote() not bbquote(): codetools can't see that bbquote() doesn't
+    # evaluate `.(x)` and would flag x as an undefined global.
+    return(quote(.(x)))
   }
 
-  # Add suffix for non-semi/anti joins
+  expr <- as.call(list(join_fn, quote(.(x)), quote(.(y))))
+
+  if (has_non_equi || has_exprs) {
+    # dplyr::join_by(xCol == yCol, ..., <user exprs>)
+    jb_args <- Map(
+      function(k, op) call(op, as.name(k$xCol), as.name(k$yCol)),
+      keys, ops
+    )
+    parsed <- lapply(exprs, function(e) {
+      tryCatch(str2lang(e), error = function(err) NULL)
+    })
+    jb_args <- c(unname(jb_args), Filter(Negate(is.null), parsed))
+    if (length(jb_args) > 0) {
+      expr[["by"]] <- as.call(c(str2lang("dplyr::join_by"), jb_args))
+    }
+  } else {
+    # Equi-join: by = c(xCol = "yCol", ...)
+    by_vec <- vapply(keys, function(k) k$yCol, character(1))
+    names(by_vec) <- vapply(keys, function(k) k$xCol, character(1))
+    expr[["by"]] <- by_vec
+  }
+
   if (!type %in% c("semi_join", "anti_join") &&
         (suffix_x != ".x" || suffix_y != ".y")) {
-    text <- sub(
-      "\\)$",
-      paste0(', suffix = c("', suffix_x, '", "', suffix_y, '"))'),
-      text
-    )
+    expr[["suffix"]] <- c(suffix_x, suffix_y)
   }
 
-  parsed <- tryCatch(str2lang(text), error = function(e) NULL)
-  if (is.null(parsed)) return(bbquote(dplyr::left_join(.(x), .(y))))
-  parsed
+  expr
 }
 
 # =========================================================================
@@ -694,22 +722,31 @@ make_bind_cols_expr <- function(arg_names = character()) {
 build_column_summary <- function(df) {
   lapply(colnames(df), function(col) {
     vals <- df[[col]]
-    type <- if (is.numeric(vals)) {
-      "numeric"
-    } else if (is.integer(vals)) {
-      "integer"
-    } else if (is.logical(vals)) {
-      "logical"
-    } else {
-      "character"
-    }
     list(
       name = col,
-      type = type,
+      type = column_type(vals),
       hasNA = anyNA(vals),
       label = col_label(vals)
     )
   })
+}
+
+#' Classify a column for the JS protocol
+#'
+#' Order matters: logical before numeric (is.numeric(TRUE) is FALSE but be
+#' explicit), integer before numeric (is.numeric() is TRUE for integers).
+#' Factors and dates report as "character" — they filter by value, not range.
+#' @noRd
+column_type <- function(vals) {
+  if (is.logical(vals)) {
+    "logical"
+  } else if (is.integer(vals)) {
+    "integer"
+  } else if (is.numeric(vals)) {
+    "numeric"
+  } else {
+    "character"
+  }
 }
 
 #' Build a lightweight column summary for pickers (name + label)
@@ -748,25 +785,27 @@ col_label <- function(x) {
 #' label for one column. Called on-demand when the user selects a column in
 #' the filter block.
 #'
+#' With `limit`, high-cardinality columns switch to server-side search: at
+#' most `limit` unique values are returned, `total` reports the full
+#' distinct count, and `truncated` marks the column as server-searched.
+#' `query` filters values by case-insensitive substring before the cap.
+#' `truncated` is deliberately sticky — it reflects whether the *full*
+#' value list exceeds the limit, not the current query's match count, so
+#' the client stays in search mode while narrowing.
+#'
 #' Exported as part of the public API so other blockr packages (e.g.
 #' blockr.dm) can reuse the same column-metadata protocol.
 #'
 #' @param df A data frame
 #' @param col Column name (character)
+#' @param limit Maximum number of unique values to return (`NULL` = all)
+#' @param query Substring to filter values by (case-insensitive)
 #' @return A column info object (list)
 #' @keywords internal
 #' @export
-build_column_values <- function(df, col) {
+build_column_values <- function(df, col, limit = NULL, query = "") {
   vals <- df[[col]]
-  type <- if (is.numeric(vals)) {
-    "numeric"
-  } else if (is.integer(vals)) {
-    "integer"
-  } else if (is.logical(vals)) {
-    "logical"
-  } else {
-    "character"
-  }
+  type <- column_type(vals)
 
   info <- list(
     name = col,
@@ -775,12 +814,27 @@ build_column_values <- function(df, col) {
     label = col_label(vals)
   )
 
+  cap_values <- function(uv) {
+    info$total <<- length(uv)
+    info$truncated <<- !is.null(limit) && length(uv) > limit
+    if (nzchar(query %||% "")) {
+      uv <- uv[grepl(tolower(query), tolower(as.character(uv)), fixed = TRUE)]
+    }
+    if (!is.null(limit) && length(uv) > limit) uv <- uv[seq_len(limit)]
+    uv
+  }
+
   if (type %in% c("numeric", "integer")) {
-    info$min <- min(vals, na.rm = TRUE)
-    info$max <- max(vals, na.rm = TRUE)
-    info$uniqueValues <- as.list(sort(unique(vals[!is.na(vals)])))
+    non_na <- vals[!is.na(vals)]
+    if (length(non_na) > 0) {
+      info$min <- min(non_na)
+      info$max <- max(non_na)
+    }
+    info$uniqueValues <- as.list(cap_values(sort(unique(non_na))))
   } else {
-    uv <- sort(unique(as.character(vals[!is.na(vals)])))
+    # sort() before as.character(): factors sort by level order, not
+    # alphabetically, so ordered factors render in their natural order.
+    uv <- cap_values(as.character(sort(unique(vals[!is.na(vals)]))))
     info$values <- as.list(uv)
     # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
     # to the column class. Only run the empty-string probe on actual

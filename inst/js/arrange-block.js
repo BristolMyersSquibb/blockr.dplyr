@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * ArrangeBlock — JS-driven arrange/sort block input binding.
  *
@@ -10,16 +11,47 @@
 (() => {
   'use strict';
 
+  /**
+   * One sort criterion, as exchanged with R.
+   * @typedef {Object} ArrangeColumn
+   * @property {string} column Column name to sort by
+   * @property {'asc' | 'desc'} direction Sort direction
+   */
+
+  /**
+   * Block state as exchanged with R — mirrors make_arrange_expr() in
+   * R/expr-builders.R (what _compose() sends and setState() receives).
+   * @typedef {{columns: ArrangeColumn[]}} ArrangeState
+   */
+
+  /**
+   * Internal per-row UI record.
+   * @typedef {Object} ArrangeRow
+   * @property {number} id
+   * @property {string} column
+   * @property {'asc' | 'desc'} direction
+   * @property {BlockrSelectSingleHandle | null} _colSelect
+   * @property {HTMLDivElement | null} rowEl
+   * @property {HTMLButtonElement} [_dirBtn]
+   */
+
   class ArrangeBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {ArrangeRow[]} */
       this.rows = [];
       this.nextId = 1;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {BlockrSelectOption[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
 
       this._buildDOM();
@@ -27,7 +59,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -53,8 +85,13 @@
       this.card.appendChild(addRow);
     }
 
+    /**
+     * @param {string | null} column
+     * @param {'asc' | 'desc'} direction
+     */
     _addRow(column, direction) {
       const id = this.nextId++;
+      /** @type {ArrangeRow} */
       const row = {
         id,
         column: column || '',
@@ -65,16 +102,16 @@
 
       const rowEl = document.createElement('div');
       rowEl.className = 'blockr-row';
-      rowEl.setAttribute('data-row-id', id);
+      rowEl.setAttribute('data-row-id', /** @type {string} */ (/** @type {*} */ (id)));
       row.rowEl = rowEl;
 
       // Column dropdown
       const colDiv = document.createElement('div');
       colDiv.className = 'ab-col-wrap';
       rowEl.appendChild(colDiv);
-      row._colSelect = Blockr.Select.single(colDiv, {
+      row._colSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colDiv, {
         options: this.columnOptions,
-        selected: column,
+        selected: /** @type {string | undefined} */ (/** @type {*} */ (column)),
         placeholder: 'Column\u2026',
         onChange: (value) => {
           row.column = value;
@@ -109,11 +146,12 @@
       });
       rowEl.appendChild(rmBtn);
 
-      this.listEl.appendChild(rowEl);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(rowEl);
       this.rows.push(row);
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeRow(id) {
       if (this.rows.length <= 1) return;
 
@@ -130,12 +168,14 @@
     _updateUI() {
       const single = this.rows.length <= 1;
       for (const r of this.rows) {
-        const btn = r.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (r.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
     }
 
+    /** @returns {ArrangeState} */
     _compose() {
+      /** @type {ArrangeColumn[]} */
       const columns = [];
       for (const r of this.rows) {
         if (!r.column) continue;
@@ -149,11 +189,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {ArrangeState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {ArrangeState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       // Clear existing rows
       while (this.rows.length > 0) {
@@ -175,6 +220,7 @@
       this._updateUI();
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -194,65 +240,14 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.arrange-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new ArrangeBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.arrange');
-
-  // Column names handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('arrange-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('arrange-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'arrange',
+    Block: ArrangeBlock,
+    messages: {
+      'arrange-columns': (block, msg) => block.updateColumns(msg.columns),
+      'arrange-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

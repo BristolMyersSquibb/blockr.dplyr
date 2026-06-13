@@ -36,93 +36,49 @@ new_filter_block <- function(
   state = list(conditions = list(), operator = "&"),
   ...
 ) {
-  new_transform_block(
-    # -- server ---------------------------------------------------------------
-    function(id, data) {
-      moduleServer(id, function(input, output, session) {
-        ns <- session$ns
-        r_state <- reactiveVal(state)
-
-        # Bidirectional sync: self_write tracks UI-initiated changes
-        self_write <- new.env(parent = emptyenv())
-        self_write$active <- FALSE
-
-        # Send lightweight column summary (names + types) on data change
-        observeEvent(data(), {
-          meta <- build_column_summary(data())
-          session$sendCustomMessage(
-            "filter-columns",
-            list(id = ns("filter_input"), columns = meta)
-          )
-        })
-
-        # On-demand: JS requests unique values for a specific column
-        observeEvent(input$filter_input_request_values, {
-          col <- input$filter_input_request_values
-          if (!is.null(col) && col %in% colnames(data())) {
-            meta <- build_column_values(data(), col)
-            session$sendCustomMessage(
-              "filter-column-values",
-              list(id = ns("filter_input"), column = meta)
-            )
-          }
-        })
-
-        # JS -> R: user changed the filter
-        observeEvent(input$filter_input, {
-          self_write$active <- TRUE
-          r_state(input$filter_input)
-        })
-
-        # R -> JS: external control changed the state
-        observeEvent(r_state(), {
-          if (self_write$active) {
-            self_write$active <- FALSE
-          } else {
-            session$sendCustomMessage(
-              "filter-block-update",
-              list(
-                id = ns("filter_input"),
-                state = normalize_filter_state_for_js(r_state())
-              )
-            )
-          }
-        })
-
-        list(
-          expr = reactive({
-            s <- r_state()
-            make_filter_expr(
-              s$conditions %||% list(),
-              s$operator %||% "&",
-              isTRUE(s$preserveOrder)
-            )
-          }),
-          state = list(state = r_state)
-        )
-      })
-    },
-    # -- ui -------------------------------------------------------------------
-    function(id) {
-      tagList(
-        blockr_core_js_dep(),
-        blockr_blocks_css_dep(),
-        blockr_select_dep(),
-        blockr_input_dep(),
-        filter_block_dep(),
-        div(
-          class = "block-container",
-          div(
-            id = NS(id, "filter_input"),
-            class = "filter-block-container"
-          )
-        )
+  new_js_transform_block(
+    class = "filter_block",
+    name = "filter",
+    state = state,
+    expr_fn = function(s) {
+      make_filter_expr(
+        s$conditions %||% list(),
+        s$operator %||% "&",
+        isTRUE(s$preserveOrder)
       )
     },
-    class = "filter_block",
-    expr_type = "bquoted",
-    external_ctrl = TRUE,
-    allow_empty_state = "state",
+    # Lightweight summary (names + types); unique values load on demand
+    columns_meta = build_column_summary,
+    setup = function(input, session, ns, data, input_name) {
+      # Columns with more distinct values than this switch to server-side
+      # search: the dropdown gets the first `limit` values plus a total
+      # count, and typing re-queries R instead of filtering client-side.
+      limit <- blockr_option("dplyr.max_filter_values", 1000)
+
+      send_values <- function(col, query = "") {
+        if (!is.null(col) && col %in% colnames(data())) {
+          meta <- build_column_values(data(), col, limit = limit,
+                                      query = query)
+          session$sendCustomMessage(
+            "filter-column-values",
+            list(id = ns(input_name), column = meta)
+          )
+        }
+      }
+
+      # On-demand: JS requests unique values for a specific column
+      observeEvent(input[[paste0(input_name, "_request_values")]], {
+        send_values(input[[paste0(input_name, "_request_values")]])
+      })
+
+      # Server-side search on truncated (high-cardinality) columns
+      observeEvent(input[[paste0(input_name, "_search_values")]], {
+        req_ <- input[[paste0(input_name, "_search_values")]]
+        send_values(req_$column, req_$query %||% "")
+      })
+    },
+    normalize_state = normalize_filter_state_for_js,
+    shared_deps = c("select", "input"),
     ...
   )
 }
@@ -154,18 +110,5 @@ normalize_filter_state_for_js <- function(state) {
 #' @keywords internal
 #' @export
 filter_block_dep <- function() {
-  htmltools::tagList(
-    htmltools::htmlDependency(
-      name = "filter-block-js",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("js", package = "blockr.dplyr"),
-      script = "filter-block.js"
-    ),
-    htmltools::htmlDependency(
-      name = "filter-block-css",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("css", package = "blockr.dplyr"),
-      stylesheet = "filter-block.css"
-    )
-  )
+  js_block_dep("filter")
 }

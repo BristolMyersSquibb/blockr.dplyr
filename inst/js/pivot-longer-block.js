@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * PivotLongerBlock — JS-driven pivot_longer block input binding.
  *
@@ -10,20 +11,40 @@
 (() => {
   'use strict';
 
+  /**
+   * Block state as exchanged with R — mirrors the parameters of
+   * make_pivot_longer_expr() in R/expr-builders.R (what _compose()
+   * sends and setState() receives).
+   * @typedef {Object} PivotLongerState
+   * @property {string[]} cols Columns to pivot into longer format
+   * @property {string} names_to Name of the new names column (default "name")
+   * @property {string} values_to Name of the new values column (default "value")
+   * @property {boolean} values_drop_na Drop rows whose value is NA
+   * @property {string} names_prefix Prefix stripped from column names ("" = none)
+   */
+
   class PivotLongerBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {string[]} */
       this.cols = [];
       this.names_to = 'name';
       this.values_to = 'value';
       this.values_drop_na = false;
       this.names_prefix = '';
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {BlockrSelectOption[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
       this._popoverOpen = false;
 
@@ -31,7 +52,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -64,7 +85,7 @@
       pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
 
-      this._multiSelect = Blockr.Select.multi(pickerWrap, {
+      this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -92,7 +113,7 @@
       this._namesToInput.value = this.names_to;
       this._namesToInput.placeholder = 'name';
       this._namesToInput.addEventListener('input', () => {
-        this.names_to = this._namesToInput.value;
+        this.names_to = /** @type {HTMLInputElement} */ (this._namesToInput).value;
         this._autoSubmit();
       });
       namesToWrap.appendChild(this._namesToInput);
@@ -111,7 +132,7 @@
       this._valuesToInput.value = this.values_to;
       this._valuesToInput.placeholder = 'value';
       this._valuesToInput.addEventListener('input', () => {
-        this.values_to = this._valuesToInput.value;
+        this.values_to = /** @type {HTMLInputElement} */ (this._valuesToInput).value;
         this._autoSubmit();
       });
       valuesToWrap.appendChild(this._valuesToInput);
@@ -123,10 +144,10 @@
       this._buildPopover();
 
       // Close popover on outside click
-      document.addEventListener('click', (e) => {
+      Blockr.onDocClick(this.el, (e) => {
         if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(e.target) &&
-            !this.gearBtn.contains(e.target)) {
+            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
+            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
           this._closePopover();
         }
       });
@@ -147,8 +168,8 @@
       this._dropNaToggle.title = 'Toggle whether rows with NA values are dropped from the result';
       this._dropNaToggle.addEventListener('click', () => {
         this.values_drop_na = !this.values_drop_na;
-        this._dropNaToggle.textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
-        this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
+        /** @type {HTMLButtonElement} */ (this._dropNaToggle).textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
+        /** @type {HTMLButtonElement} */ (this._dropNaToggle).classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
         this._autoSubmit();
       });
       this.popoverEl.appendChild(this._dropNaToggle);
@@ -166,13 +187,13 @@
       this._prefixInput.value = this.names_prefix;
       this._prefixInput.placeholder = '(optional)';
       this._prefixInput.addEventListener('input', () => {
-        this.names_prefix = this._prefixInput.value;
+        this.names_prefix = /** @type {HTMLInputElement} */ (this._prefixInput).value;
         this._autoSubmit();
       });
       prefixRow.appendChild(this._prefixInput);
       this.popoverEl.appendChild(prefixRow);
 
-      this.card.appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
     }
 
     _togglePopover() {
@@ -184,17 +205,18 @@
     }
 
     _openPopover() {
-      this.popoverEl.style.display = 'block';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
       this._popoverOpen = true;
-      this.gearBtn.classList.add('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
     }
 
     _closePopover() {
-      this.popoverEl.style.display = 'none';
+      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
       this._popoverOpen = false;
-      this.gearBtn.classList.remove('blockr-gear-active');
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
     }
 
+    /** @returns {PivotLongerState} */
     _compose() {
       return {
         cols: this.cols.slice(),
@@ -210,11 +232,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {PivotLongerState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<PivotLongerState> | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.cols = (state?.cols || []).slice();
       this.names_to = state?.names_to || 'name';
@@ -223,13 +250,13 @@
       this.names_prefix = state?.names_prefix || '';
 
       // Update text inputs
-      this._namesToInput.value = this.names_to;
-      this._valuesToInput.value = this.values_to;
+      /** @type {HTMLInputElement} */ (this._namesToInput).value = this.names_to;
+      /** @type {HTMLInputElement} */ (this._valuesToInput).value = this.values_to;
 
       // Update popover controls
-      this._prefixInput.value = this.names_prefix;
-      this._dropNaToggle.textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
-      this._dropNaToggle.classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
+      /** @type {HTMLInputElement} */ (this._prefixInput).value = this.names_prefix;
+      /** @type {HTMLButtonElement} */ (this._dropNaToggle).textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
+      /** @type {HTMLButtonElement} */ (this._dropNaToggle).classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
 
       // Update multi-select
       if (this._multiSelect) {
@@ -237,6 +264,7 @@
       }
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -253,65 +281,14 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.pivot-longer-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new PivotLongerBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.pivot-longer');
-
-  // Column names handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('pivot-longer-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('pivot-longer-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'pivot-longer',
+    Block: PivotLongerBlock,
+    messages: {
+      'pivot-longer-columns': (block, msg) => block.updateColumns(msg.columns),
+      'pivot-longer-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

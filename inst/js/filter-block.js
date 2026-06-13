@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * FilterBlock — JS-driven filter block input binding.
  *
@@ -33,19 +34,67 @@
     { value: '<=', label: '\u2264' }
   ];
 
+  /**
+   * One entry of the cycling operator button's list (CAT_OPS / NUM_OPS).
+   * @typedef {{ value: string, label: string }} FilterOp
+   */
+
+  /**
+   * Restore-time options for a value/numeric row: a saved
+   * BlockrFilterCondition remapped onto row fields. `values` may arrive as
+   * a bare string (R -> JSON auto-unboxing); _onColumnChange normalizes.
+   * @typedef {Object} FilterRowOpts
+   * @property {string} [op]
+   * @property {string | string[] | null} [values]
+   * @property {number | null} [numValue]
+   * @property {BlockrColumnType | null} [colType]
+   */
+
+  /**
+   * Internal per-condition row record (UI state; composed into a
+   * BlockrFilterCondition by _compose()).
+   * @typedef {Object} FilterCondRow
+   * @property {number} id
+   * @property {'none' | 'values' | 'numeric' | 'expr'} filterType
+   * @property {string | null} column
+   * @property {string} [op]
+   * @property {string[] | null} values
+   * @property {number | null} numValue
+   * @property {BlockrColumnType | null} [_savedColType]
+   * @property {null} multiSelect
+   * @property {BlockrInputHandle | null} exprInput
+   * @property {HTMLDivElement | null} rowEl
+   * @property {BlockrSelectSingleHandle} [_colSelectize]
+   * @property {BlockrSelectMultiHandle | null} [_valueSelectize]
+   * @property {HTMLSpanElement} [_opBtnSlot]
+   * @property {HTMLDivElement} [_contentDiv]
+   * @property {BlockrColumnValues} [_meta]
+   * @property {HTMLButtonElement} [_opBtn]
+   * @property {FilterOp[]} [_opList]
+   */
+
   class FilterBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {FilterCondRow[]} */
       this.conditions = [];
+      /** @type {'&' | '|'} */
       this.operator = '&';
       this.nextId = 1;
+      /** @type {Record<string, BlockrColumnValues>} */
       this.columnMeta = {};
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
       this.preserveOrder = false;
+      /** @type {Set<string>} */
       this._pendingValueRequests = new Set();
 
       this._buildDOM();
@@ -53,7 +102,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -91,7 +140,7 @@
       this.opToggle.style.visibility = 'hidden';
       this.opToggle.addEventListener('click', () => {
         this.operator = this.operator === '&' ? '|' : '&';
-        this.opToggle.textContent = this.operator === '&' ? 'AND' : 'OR';
+        /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
         this._autoSubmit();
       });
       addRow.appendChild(this.opToggle);
@@ -107,8 +156,8 @@
       this.preserveBtn.title = 'Toggle between original data order and the order you picked values';
       this.preserveBtn.addEventListener('click', () => {
         this.preserveOrder = !this.preserveOrder;
-        this.preserveBtn.textContent = this.preserveOrder ? 'pick order' : 'data order';
-        this.preserveBtn.classList.toggle('fb-preserve-active', this.preserveOrder);
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).textContent = this.preserveOrder ? 'pick order' : 'data order';
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).classList.toggle('fb-preserve-active', this.preserveOrder);
         // Re-render value selects so reorderable state updates
         for (const c of this.conditions) {
           if (c.filterType === 'values' || c.filterType === 'numeric') {
@@ -122,6 +171,12 @@
       this.card.appendChild(addRow);
     }
 
+    /**
+     * @param {FilterCondRow} cond
+     * @param {FilterOp[]} ops
+     * @param {string | null} initialOp
+     * @returns {HTMLButtonElement}
+     */
     _createOpButton(cond, ops, initialOp) {
       // Fall back to cond.op so the column-selectize's onChange path
       // (which calls _onColumnChange WITHOUT opts) doesn't clobber an
@@ -153,6 +208,10 @@
       return btn;
     }
 
+    /**
+     * @param {string | null | undefined} column
+     * @param {FilterRowOpts | null | undefined} opts
+     */
     _addValueRow(column, opts) {
       const id = this.nextId++;
       // Persist opts.op onto cond.op so it survives until column metadata
@@ -160,13 +219,17 @@
       // { op: c.op } — if cond.op is left at the default 'is' here, an
       // initial state of mode='exclude' (op='is not') gets clobbered the
       // moment columns load. Same for numeric ops ('>', '<=', etc.).
+      /** @type {FilterCondRow} */
       const cond = {
         id,
         filterType: 'none',
         column: column || '',
         op: opts?.op || 'is',
-        values: opts?.values || [],
+        values: /** @type {string[]} */ (opts?.values || []),
         numValue: opts?.numValue ?? null,
+        // Saved colType from a restored state — used by _compose until live
+        // column metadata arrives and takes precedence.
+        _savedColType: opts?.colType || null,
         multiSelect: null,
         exprInput: null,
         rowEl: null
@@ -174,18 +237,21 @@
 
       const row = document.createElement('div');
       row.className = 'blockr-row';
-      row.setAttribute('data-cond-id', id);
+      row.setAttribute('data-cond-id', /** @type {any} */ (id));
       cond.rowEl = row;
 
       // Column dropdown
       const colDiv = document.createElement('div');
       colDiv.className = 'fb-col-wrap';
       row.appendChild(colDiv);
-      cond._colSelectize = Blockr.Select.single(colDiv, {
+      cond._colSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colDiv, {
         options: this.columnOptions,
-        selected: column,
+        selected: /** @type {string | undefined} */ (column),
         placeholder: 'Column\u2026',
-        onChange: (value) => this._onColumnChange(cond, value)
+        onChange: (value) => {
+          this._onColumnChange(cond, value);
+          this._syncColWidth();
+        }
       });
 
       // Operator button slot
@@ -209,7 +275,7 @@
       });
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.conditions.push(cond);
       this._updateUI();
 
@@ -219,6 +285,11 @@
       }
     }
 
+    /**
+     * @param {FilterCondRow} cond
+     * @param {string} colName
+     * @param {FilterRowOpts | null} [opts]
+     */
     _onColumnChange(cond, colName, opts) {
       cond.column = colName;
       const meta = this.columnMeta[colName];
@@ -232,8 +303,8 @@
       cond.numValue = opts?.numValue ?? null;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
-      cond._contentDiv.innerHTML = '';
-      cond._opBtnSlot.innerHTML = '';
+      /** @type {HTMLDivElement} */ (cond._contentDiv).innerHTML = '';
+      /** @type {HTMLSpanElement} */ (cond._opBtnSlot).innerHTML = '';
 
       if (!meta) { cond.filterType = 'none'; return; }
 
@@ -245,13 +316,14 @@
       const ops = isNumeric ? NUM_OPS : CAT_OPS;
       const initialOp = opts?.op || null;
       const btn = this._createOpButton(cond, ops, initialOp);
-      cond._opBtnSlot.appendChild(btn);
+      /** @type {HTMLSpanElement} */ (cond._opBtnSlot).appendChild(btn);
 
       this._renderDynamicContent(cond);
     }
 
+    /** @param {FilterCondRow} cond */
     _renderDynamicContent(cond) {
-      const container = cond._contentDiv;
+      const container = /** @type {HTMLDivElement} */ (cond._contentDiv);
       const meta = cond._meta;
 
       if (cond._valueSelectize) { cond._valueSelectize.destroy(); cond._valueSelectize = null; }
@@ -271,25 +343,30 @@
         // A preconfigured board must not pay for a high-cardinality column's
         // unique values (50K ids ~ 289KB) that nobody may ever look at; saved
         // chips render from cond.values without the option list.
-        cond._valueSelectize = Blockr.Select.multi(container, {
+        cond._valueSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(container, {
           options: this._buildValueOptions(meta),
           selected: cond.values || [],
           placeholder: 'Select values\u2026',
           reorderable: this.preserveOrder,
           loading: !hasValues,
-          onOpen: () => this._requestColumnValues(cond.column),
+          onOpen: () => this._requestColumnValues(/** @type {string} */ (cond.column)),
+          // Only fires while the component is in server-search mode
+          // (setSearchInfo with truncated=true): high-cardinality columns
+          // whose value list the server capped.
+          onSearch: (query) => this._searchColumnValues(/** @type {string} */ (cond.column), query),
           onChange: (selected) => {
             cond.values = selected;
             this._autoSubmit();
           }
         });
+        cond._valueSelectize.setSearchInfo(meta);
       } else {
         const numInput = document.createElement('input');
         numInput.type = 'number';
         numInput.className = 'blockr-num-input';
         numInput.step = 'any';
         numInput.placeholder = 'Enter value\u2026';
-        if (cond.numValue != null) numInput.value = cond.numValue;
+        if (cond.numValue != null) numInput.value = /** @type {any} */ (cond.numValue);
         numInput.addEventListener('input', () => {
           cond.numValue = numInput.value === '' ? null : parseFloat(numInput.value);
           this._autoSubmit();
@@ -298,8 +375,13 @@
       }
     }
 
+    /**
+     * @param {BlockrColumnValues} meta
+     * @returns {string[]}
+     */
     _buildValueOptions(meta) {
       const isNumeric = meta.type === 'numeric' || meta.type === 'integer';
+      /** @type {string[]} */
       let allValues;
       if (isNumeric) {
         allValues = (meta.uniqueValues || []).map(String);
@@ -311,12 +393,13 @@
       return allValues;
     }
 
+    /** @param {string} value */
     _addExprRow(value) {
       const id = this.nextId++;
 
       const row = document.createElement('div');
       row.className = 'blockr-row fb-row-expr';
-      row.setAttribute('data-cond-id', id);
+      row.setAttribute('data-cond-id', /** @type {any} */ (id));
 
       const codeDiv = document.createElement('div');
       codeDiv.className = 'blockr-row-content fb-expr-code';
@@ -335,7 +418,7 @@
       };
       confirmBtn.addEventListener('click', doConfirm);
 
-      const exprInput = Blockr.Input.create(codeDiv, {
+      const exprInput = /** @type {BlockrInputStatic} */ (Blockr.Input).create(codeDiv, {
         value,
         columns: this.columnNames,
         categories: defaultCategories,
@@ -355,7 +438,7 @@
       rmBtn.addEventListener('click', () => this._removeCondition(id));
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.conditions.push({
         id,
         filterType: 'expr',
@@ -369,6 +452,7 @@
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeCondition(id) {
       if (this.conditions.length <= 1) return;
 
@@ -386,28 +470,57 @@
 
     _updateUI() {
       const single = this.conditions.length <= 1;
-      this.opToggle.style.visibility = single ? 'hidden' : 'visible';
+      /** @type {HTMLButtonElement} */ (this.opToggle).style.visibility = single ? 'hidden' : 'visible';
       for (const c of this.conditions) {
-        const btn = c.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (c.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
+      }
+      this._syncColWidth();
+    }
+
+    /**
+     * Size the shared column track to the widest selected value across
+     * condition rows. Sets --fb-col-w on the conditions list;
+     * filter-block.css clamps it via min-width / max-width, so all rows
+     * stay aligned and long column names get room instead of a fixed
+     * 160px.
+     */
+    _syncColWidth() {
+      let max = 0;
+      for (const c of this.conditions) {
+        const v = c.rowEl?.querySelector('.fb-col-wrap .blockr-select__value');
+        if (v) max = Math.max(max, Blockr.contentWidth(v));
+      }
+      const listEl = /** @type {HTMLDivElement} */ (this.listEl);
+      if (max > 0) {
+        // + control padding (12) + gap (3) + arrow (16) + wrap padding (8)
+        listEl.style.setProperty('--fb-col-w', `${max + 39}px`);
+      } else {
+        listEl.style.removeProperty('--fb-col-w');
       }
     }
 
+    /** @returns {BlockrFilterState} */
     _compose() {
+      /** @type {BlockrFilterCondition[]} */
       const conditions = [];
       for (const c of this.conditions) {
         if (!c.column && c.filterType !== 'expr') continue;
 
         const op = c.op;
         if ((c.filterType === 'values' || c.filterType === 'numeric') && (op === 'is' || op === 'is not')) {
-          if (c.values?.length > 0) {
+          if (/** @type {string[]} */ (c.values)?.length > 0) {
             conditions.push({
-              type: 'values', column: c.column, values: c.values,
-              mode: op === 'is' ? 'include' : 'exclude'
+              type: 'values', column: /** @type {string} */ (c.column), values: /** @type {string[]} */ (c.values),
+              mode: op === 'is' ? 'include' : 'exclude',
+              // Column type tag: lets R convert the string values back to
+              // the column's type instead of guessing by coercibility
+              // ("007" on a character column must stay "007", not become 7).
+              colType: this.columnMeta[/** @type {string} */ (c.column)]?.type || c._savedColType || null
             });
           }
         } else if (c.filterType === 'numeric' && c.numValue != null) {
-          conditions.push({ type: 'numeric', column: c.column, op, value: c.numValue });
+          conditions.push({ type: 'numeric', column: /** @type {string} */ (c.column), op, value: c.numValue });
         } else if (c.filterType === 'expr' && c.exprInput) {
           const val = c.exprInput.getValue();
           if (val) conditions.push({ type: 'expr', expr: val });
@@ -426,6 +539,10 @@
       return this._compose();
     }
 
+    /**
+     * @param {BlockrFilterState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       // Clear existing conditions
       while (this.conditions.length > 0) {
@@ -439,7 +556,7 @@
 
       // Set operator
       this.operator = state?.operator || '&';
-      this.opToggle.textContent = this.operator === '&' ? 'AND' : 'OR';
+      /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
 
       // Rebuild from state
       const conditions = state?.conditions || [];
@@ -452,7 +569,8 @@
           } else if (cond.type === 'values') {
             this._addValueRow(cond.column, {
               values: cond.values || [],
-              op: cond.mode === 'exclude' ? 'is not' : 'is'
+              op: cond.mode === 'exclude' ? 'is not' : 'is',
+              colType: cond.colType || null
             });
           } else if (cond.type === 'numeric') {
             this._addValueRow(cond.column, {
@@ -473,6 +591,7 @@
       this._updateUI();
     }
 
+    /** @param {BlockrColumnSummary[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -502,13 +621,21 @@
           c.exprInput.setColumns(this.columnNames);
         }
       }
+      this._syncColWidth();
     }
 
+    /** @param {string} colName */
     _requestColumnValues(colName) {
       const meta = this.columnMeta[colName];
       const loaded = meta &&
         (meta.values !== undefined || meta.uniqueValues !== undefined);
-      if (loaded) return;
+      if (loaded) {
+        // Server-truncated column: the stored page may be a stale search
+        // result — fetch a fresh unfiltered page on every open (cheap, the
+        // server caps it).
+        if (meta.truncated) this._searchColumnValues(colName, '');
+        return;
+      }
       if (this._pendingValueRequests.has(colName)) return;
       this._pendingValueRequests.add(colName);
       Shiny.setInputValue(
@@ -518,6 +645,22 @@
       );
     }
 
+    /**
+     * Ask R for the value page matching `query` (server-search mode on
+     * high-cardinality columns). Responses arrive in order via the
+     * filter-column-values message, so the last one wins.
+     * @param {string} colName
+     * @param {string} query
+     */
+    _searchColumnValues(colName, query) {
+      Shiny.setInputValue(
+        this.el.id + '_search_values',
+        { column: colName, query: query },
+        { priority: 'event' }
+      );
+    }
+
+    /** @param {BlockrColumnValues} colMeta */
     receiveColumnValues(colMeta) {
       this._pendingValueRequests.delete(colMeta.name);
       // Merge full metadata into existing summary
@@ -535,6 +678,7 @@
           c._meta = this.columnMeta[colMeta.name];
           if (c._valueSelectize) {
             c._valueSelectize.updateOptions(this._buildValueOptions(c._meta));
+            c._valueSelectize.setSearchInfo(c._meta);
             c._valueSelectize.setLoading(false);
           } else {
             this._renderDynamicContent(c);
@@ -544,96 +688,15 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.filter-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new FilterBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.filter');
-
-  // Per-instance message handlers are registered dynamically.
-  // The R server sends messages named "filter-columns-<ns_id>" and
-  // "block-update-<ns_id>". We use a single handler prefix pattern
-  // via a MutationObserver to register handlers when filter elements
-  // appear in the DOM.
-
-  // Column metadata handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('filter-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      // Element not yet in DOM — poll briefly
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // On-demand column values handler (lazy loading)
-  Shiny.addCustomMessageHandler('filter-column-values', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.receiveColumnValues(msg.column);
-    } else if (el) {
-      // Merge into pending columns if block not initialized yet
-      if (!el._pendingColumns) el._pendingColumns = [];
-      const idx = el._pendingColumns.findIndex(c => c.name === msg.column.name);
-      if (idx >= 0) {
-        Object.assign(el._pendingColumns[idx], msg.column);
-      }
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('filter-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState(msg.state, true); clearInterval(t); }
-        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
+  Blockr.registerBlock({
+    name: 'filter',
+    Block: FilterBlock,
+    messages: {
+      'filter-columns': (block, msg) => block.updateColumns(msg.columns),
+      'filter-column-values': (block, msg) => block.receiveColumnValues(msg.column),
+      'filter-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

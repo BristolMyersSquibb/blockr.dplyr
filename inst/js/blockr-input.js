@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Blockr.Input — lightweight code input with autocomplete
  *
@@ -12,9 +13,23 @@
 
   const BOUNDARY = /[(\s,+\-*/><!=&|~^%:[\]{}]/;
 
+  /** @param {string} n */
   const backtickIfNeeded = (n) =>
     /^[a-zA-Z.][a-zA-Z0-9._]*$/.test(n) ? n : '`' + n + '`';
 
+  /**
+   * @typedef {Object} BlockrInputCompletion
+   * @property {string} text Display text (columns arrive pre-backticked).
+   * @property {string} insertText Inserted text (functions get a trailing "()").
+   * @property {string} meta Right-aligned tag: 'column' or the category name.
+   * @property {boolean} isFunc Cursor lands between the parens when true.
+   * @property {number} score Sort rank (columns above functions).
+   */
+
+  /**
+   * @param {HTMLElement} container
+   * @param {BlockrInputConfig} config
+   */
   const createInput = (container, config) => {
     const id = Blockr.uid('binp');
     const popupId = `${id}-popup`;
@@ -29,7 +44,9 @@
     let destroyed = false;
 
     // Autocomplete state
+    /** @type {BlockrInputCompletion[]} */
     let completions = [];
+    /** @type {BlockrInputCompletion[]} */
     let filtered = [];
     let highlightIdx = -1;
     let popupOpen = false;
@@ -133,6 +150,7 @@
 
     // --- Popup rendering ---
 
+    /** @param {string} token */
     const filterCompletions = (token) => {
       if (!token) { filtered = []; return; }
       let q = token.toLowerCase();
@@ -163,7 +181,7 @@
         item.className = 'blockr-input__item';
         if (i === highlightIdx) item.className += ' blockr-input__item--highlighted';
         item.setAttribute('role', 'option');
-        item.setAttribute('data-idx', i);
+        item.setAttribute('data-idx', /** @type {any} */ (i));
 
         const textSpan = document.createElement('span');
         textSpan.className = 'blockr-input__item-text';
@@ -221,6 +239,7 @@
 
     // --- Completion insertion ---
 
+    /** @param {number} idx */
     const acceptCompletion = (idx) => {
       if (idx < 0 || idx >= filtered.length) return;
       const c = filtered[idx];
@@ -254,6 +273,7 @@
       if (onChange) onChange();
     };
 
+    /** @param {KeyboardEvent} e */
     const onFieldKeydown = (e) => {
       if (popupOpen) {
         switch (e.key) {
@@ -288,10 +308,11 @@
       }
     };
 
+    /** @param {MouseEvent} e */
     const onPopupClick = (e) => {
-      const item = e.target.closest('.blockr-input__item');
+      const item = /** @type {Element} */ (e.target).closest('.blockr-input__item');
       if (item) {
-        const idx = parseInt(item.getAttribute('data-idx'), 10);
+        const idx = parseInt(/** @type {string} */ (item.getAttribute('data-idx')), 10);
         if (!isNaN(idx)) {
           getCurrentToken();
           acceptCompletion(idx);
@@ -300,8 +321,9 @@
       }
     };
 
+    /** @param {MouseEvent} e */
     const onDocumentClick = (e) => {
-      if (root.contains(e.target) || popup.contains(e.target)) return;
+      if (root.contains(/** @type {Node | null} */ (e.target)) || popup.contains(/** @type {Node | null} */ (e.target))) return;
       closePopup();
     };
 
@@ -317,7 +339,9 @@
     // --- Bind events ---
 
     field.addEventListener('input', onFieldInput);
-    field.addEventListener('keydown', onFieldKeydown);
+    // Cast: the textarea|input union resolves addEventListener to the bare
+    // EventListener overload; HTMLElement restores the KeyboardEvent typing.
+    /** @type {HTMLElement} */ (field).addEventListener('keydown', onFieldKeydown);
     field.addEventListener('blur', onFieldBlur);
     popup.addEventListener('mousedown', (e) => e.preventDefault());
     popup.addEventListener('click', onPopupClick);
@@ -330,8 +354,10 @@
 
       getValue() { return field.value.trim(); },
 
+      /** @param {string | null | undefined} v */
       setValue(v) { field.value = v || ''; },
 
+      /** @param {string[] | null | undefined} cols */
       setColumns(cols) {
         columns = (cols || []).slice();
         rebuildCompletions();
@@ -349,7 +375,7 @@
         }
 
         field.removeEventListener('input', onFieldInput);
-        field.removeEventListener('keydown', onFieldKeydown);
+        /** @type {HTMLElement} */ (field).removeEventListener('keydown', onFieldKeydown);
         field.removeEventListener('blur', onFieldBlur);
         popup.removeEventListener('click', onPopupClick);
         document.removeEventListener('click', onDocumentClick, true);

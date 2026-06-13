@@ -1,7 +1,8 @@
 /* JoinBlock — join block specific styles */
 /* Shared row/pill/confirm/add-row styles come from blockr-blocks.css */
 
-.join-block-container { width: 100%; }
+/* Container for the narrow-layout @container query below */
+.join-block-container { width: 100%; container-type: inline-size; }
 
 /* --- Card (no border, transparent) --- */
 .jb-card {
@@ -31,12 +32,18 @@
 
 /* --- Column selectize wrappers --- */
 .jb-col-wrap {
-  width: 140px;
   min-width: 100px;
   flex-shrink: 0;
 }
 
+/* The x side follows the widest selected value: the JS factory measures
+   committed values and sets --jb-col-w on the keys list; the clamp below
+   keeps narrow panels and absurd labels in check. Fallback 140px until
+   the first measurement lands. */
 .jb-col-x {
+  width: var(--jb-col-w, 140px);
+  max-width: min(50%, 360px);
+  transition: width 120ms ease;
   border-right: 1px solid var(--blockr-color-border, #e5e7eb);
   padding-right: 8px;
 }
@@ -50,4 +57,24 @@
 .jb-row-expr .jb-expr-code {
   flex: 1;
   min-width: 0;
+}
+
+/* --- Narrow panels: stack the x column above the key pair ---
+   Same pattern as filter-block.css: below 480px the key row wraps, the
+   x-column select takes a full-width line with a divider, and the
+   operator + y-column select follow on the next line. */
+@container (max-width: 479px) {
+  .jb-keys-list .blockr-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .jb-col-x {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+    padding-right: 0;
+    padding-bottom: 2px;
+  }
 }

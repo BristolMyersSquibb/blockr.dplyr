@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * MutateBlock — JS-driven mutate block input binding.
  *
@@ -6,6 +7,35 @@
  *
  * Depends on: blockr-core.js, blockr-input.js
  */
+
+/**
+ * One mutation, as exchanged with R (R: make_mutate_expr() `mutations`
+ * in R/expr-builders.R). Rows with a blank name or expr are filtered out
+ * on the R side.
+ * @typedef {Object} MutateMutation
+ * @property {string} name New (or overwritten) column name.
+ * @property {string} expr Free-form R expression string.
+ */
+
+/**
+ * Block state: what _compose() returns and setState() receives
+ * (R: make_mutate_expr(mutations, by)).
+ * @typedef {Object} MutateState
+ * @property {MutateMutation[]} mutations
+ * @property {string | string[]} by Grouping columns for `.by` (jsonlite
+ *   may deliver a single column as a scalar string).
+ */
+
+/**
+ * Internal row record: the mutation's UI handles.
+ * @typedef {Object} MutateRow
+ * @property {number} id
+ * @property {HTMLInputElement} nameInput
+ * @property {BlockrInputHandle | null} exprInput
+ * @property {HTMLButtonElement} confirmBtn
+ * @property {HTMLDivElement} rowEl
+ */
+
 (() => {
   'use strict';
 
@@ -20,17 +50,26 @@
   };
 
   class MutateBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {MutateRow[]} */
       this.rows = [];
       this.nextId = 1;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {{ value: string, label: string }[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {string[]} */
       this.byValues = [];
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._bySelect = null;
 
       this._buildDOM();
@@ -38,7 +77,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -76,7 +115,7 @@
       byWrap.className = 'mb-by-wrap';
       bySection.appendChild(byWrap);
 
-      this._bySelect = Blockr.Select.multi(byWrap, {
+      this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select grouping columns\u2026',
@@ -91,12 +130,16 @@
       this.el.appendChild(bySection);
     }
 
+    /**
+     * @param {string} name
+     * @param {string} expr
+     */
     _addRow(name, expr) {
       const id = this.nextId++;
 
       const row = document.createElement('div');
       row.className = 'blockr-row';
-      row.setAttribute('data-row-id', id);
+      row.setAttribute('data-row-id', /** @type {string} */ (/** @type {*} */ (id)));
 
       // Name input
       const nameWrap = document.createElement('div');
@@ -127,6 +170,7 @@
       confirmBtn.innerHTML = 'Enter \u21B5';
       confirmBtn.title = 'Apply expression';
 
+      /** @type {MutateRow} */
       const rowData = {
         id,
         nameInput,
@@ -143,7 +187,7 @@
       confirmBtn.addEventListener('click', doConfirm);
 
       // Blockr.Input — on change reset confirm state; Enter confirms
-      const exprInput = Blockr.Input.create(codeDiv, {
+      const exprInput = /** @type {BlockrInputStatic} */ (Blockr.Input).create(codeDiv, {
         value: expr,
         columns: this.columnNames,
         categories: defaultCategories,
@@ -158,9 +202,10 @@
       row.appendChild(confirmBtn);
 
       // Name input: debounced auto-submit on change (300ms)
+      /** @type {ReturnType<typeof setTimeout> | null} */
       let nameTimer = null;
       nameInput.addEventListener('input', () => {
-        clearTimeout(nameTimer);
+        clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (nameTimer));
         nameTimer = setTimeout(() => this._submit(), 300);
       });
 
@@ -175,11 +220,12 @@
       });
       row.appendChild(rmBtn);
 
-      this.listEl.appendChild(row);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
       this.rows.push(rowData);
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeRow(id) {
       if (this.rows.length <= 1) return;
 
@@ -196,12 +242,14 @@
     _updateUI() {
       const single = this.rows.length <= 1;
       for (const r of this.rows) {
-        const btn = r.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (r.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
       }
     }
 
+    /** @returns {MutateState} */
     _compose() {
+      /** @type {MutateMutation[]} */
       const mutations = [];
       for (const r of this.rows) {
         const name = (r.nameInput.value || '').trim();
@@ -216,11 +264,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {MutateState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<MutateState> | null | undefined} state
+     * @param {boolean} [silent] Suppress the auto-submit after restoring.
+     */
     setState(state, silent) {
       // Clear existing rows
       while (this.rows.length > 0) {
@@ -255,6 +308,7 @@
       this._updateUI();
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -273,94 +327,14 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.mutate-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new MutateBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.mutate');
-
-  // Column names handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('mutate-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // Set initial mutations handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('mutate-set-mutations', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState({ mutations: msg.mutations });
-    } else if (el) {
-      el._pendingState = { mutations: msg.mutations };
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState({ mutations: msg.mutations }); clearInterval(t); }
-        else if (el2) { el2._pendingState = { mutations: msg.mutations }; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  // silent=true: R already has the state, don't echo back via _submit()
-  Shiny.addCustomMessageHandler('mutate-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.setState(msg.state); clearInterval(t); }
-        else if (el2) { el2._pendingState = msg.state; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
+  Blockr.registerBlock({
+    name: 'mutate',
+    Block: MutateBlock,
+    messages: {
+      'mutate-columns': (block, msg) => block.updateColumns(msg.columns),
+      'mutate-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

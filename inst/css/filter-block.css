@@ -1,15 +1,21 @@
 /* FilterBlock — filter block specific styles */
 /* Shared row/pill/confirm styles come from blockr-blocks.css */
 
-.filter-block-container { width: 100%; }
+/* Container for the narrow-layout @container query below */
+.filter-block-container { width: 100%; container-type: inline-size; }
 
 .fb-card { overflow: visible; }
 
-/* Column selectize wrapper */
+/* Column selectize wrapper. Width follows the widest selected value:
+   the JS factory measures committed values and sets --fb-col-w on the
+   conditions list; the clamp below keeps narrow panels and absurd labels
+   in check. Fallback 160px until the first measurement lands. */
 .fb-col-wrap {
-  width: 160px;
+  width: var(--fb-col-w, 160px);
   min-width: 120px;
+  max-width: min(55%, 360px);
   flex-shrink: 0;
+  transition: width 120ms ease;
   border-right: 1px solid var(--blockr-color-border, #e5e7eb);
   padding-right: 8px;
 }
@@ -37,4 +43,26 @@
 .fb-row-expr .fb-expr-code {
   flex: 1;
   min-width: 0;
+}
+
+/* --- Narrow panels: stack the column select above the condition ---
+   Below 480px there is no horizontal split that leaves both the column
+   name and the value control readable, so the row wraps: column select
+   on its own full-width line (divider below, like a label), operator +
+   value + remove on the next line. Container query, not media query —
+   block width is set by the dock panel, not the viewport. */
+@container (max-width: 479px) {
+  .fb-conditions .blockr-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .fb-col-wrap {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+    padding-right: 0;
+    padding-bottom: 2px;
+  }
 }

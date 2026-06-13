@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * UniteBlock — JS-driven tidyr::unite block input binding.
  *
@@ -10,27 +11,47 @@
 (() => {
   'use strict';
 
+  /**
+   * Block state as exchanged with R — mirrors the parameters of
+   * make_unite_expr() in R/expr-builders.R (what _compose() sends
+   * and setState() receives).
+   * @typedef {Object} UniteState
+   * @property {string} col Name of the new united column (default "united")
+   * @property {string[]} cols Columns to unite, in order
+   * @property {string} sep Separator between values (default "_")
+   * @property {boolean} remove Remove the source columns after uniting
+   * @property {boolean} na_rm Remove NA values before pasting (R: na.rm)
+   */
+
   class UniteBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
       this.col = 'united';
+      /** @type {string[]} */
       this.cols = [];
       this.sep = '_';
       this.remove = true;
       this.na_rm = false;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {BlockrSelectOption[]} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrPickerColumn>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
+      /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
 
       this._buildDOM();
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -56,7 +77,7 @@
       this._colInput.value = this.col;
       this._colInput.placeholder = 'united';
       this._colInput.addEventListener('input', () => {
-        this.col = this._colInput.value;
+        this.col = /** @type {HTMLInputElement} */ (this._colInput).value;
         this._autoSubmit();
       });
       colWrap.appendChild(this._colInput);
@@ -75,7 +96,7 @@
       this._sepInput.value = this.sep;
       this._sepInput.placeholder = '_';
       this._sepInput.addEventListener('input', () => {
-        this.sep = this._sepInput.value;
+        this.sep = /** @type {HTMLInputElement} */ (this._sepInput).value;
         this._autoSubmit();
       });
       sepWrap.appendChild(this._sepInput);
@@ -92,7 +113,7 @@
       pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
 
-      this._multiSelect = Blockr.Select.multi(pickerWrap, {
+      this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -114,8 +135,8 @@
       this._removeToggle.title = 'Toggle whether the source columns are removed after uniting';
       this._removeToggle.addEventListener('click', () => {
         this.remove = !this.remove;
-        this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
-        this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
+        /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
+        /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
         this._autoSubmit();
       });
       toggleBar.appendChild(this._removeToggle);
@@ -127,8 +148,8 @@
       this._naRmToggle.title = 'Toggle whether NA values are removed before pasting columns together';
       this._naRmToggle.addEventListener('click', () => {
         this.na_rm = !this.na_rm;
-        this._naRmToggle.textContent = this.na_rm ? 'drop NA' : 'keep NA';
-        this._naRmToggle.classList.toggle('sb-toggle-active', this.na_rm);
+        /** @type {HTMLButtonElement} */ (this._naRmToggle).textContent = this.na_rm ? 'drop NA' : 'keep NA';
+        /** @type {HTMLButtonElement} */ (this._naRmToggle).classList.toggle('sb-toggle-active', this.na_rm);
         this._autoSubmit();
       });
       toggleBar.appendChild(this._naRmToggle);
@@ -136,6 +157,7 @@
       this.card.appendChild(toggleBar);
     }
 
+    /** @returns {UniteState} */
     _compose() {
       return {
         col: this.col || 'united',
@@ -151,11 +173,16 @@
       this._callback?.(true);
     }
 
+    /** @returns {UniteState | null} */
     getValue() {
       if (!this._submitted) return null;
       return this._compose();
     }
 
+    /**
+     * @param {Partial<UniteState> | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       this.col = state?.col || 'united';
       this.cols = (state?.cols || []).slice();
@@ -164,14 +191,14 @@
       this.na_rm = !!state?.na_rm;
 
       // Update text inputs
-      this._colInput.value = this.col;
-      this._sepInput.value = this.sep;
+      /** @type {HTMLInputElement} */ (this._colInput).value = this.col;
+      /** @type {HTMLInputElement} */ (this._sepInput).value = this.sep;
 
       // Update toggles
-      this._removeToggle.textContent = this.remove ? 'remove original' : 'keep original';
-      this._removeToggle.classList.toggle('sb-toggle-active', this.remove);
-      this._naRmToggle.textContent = this.na_rm ? 'drop NA' : 'keep NA';
-      this._naRmToggle.classList.toggle('sb-toggle-active', this.na_rm);
+      /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
+      /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
+      /** @type {HTMLButtonElement} */ (this._naRmToggle).textContent = this.na_rm ? 'drop NA' : 'keep NA';
+      /** @type {HTMLButtonElement} */ (this._naRmToggle).classList.toggle('sb-toggle-active', this.na_rm);
 
       // Update multi-select
       if (this._multiSelect) {
@@ -179,6 +206,7 @@
       }
     }
 
+    /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -195,65 +223,14 @@
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.unite-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new UniteBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.unite');
-
-  // Column names handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('unite-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('unite-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'unite',
+    Block: UniteBlock,
+    messages: {
+      'unite-columns': (block, msg) => block.updateColumns(msg.columns),
+      'unite-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();

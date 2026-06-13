@@ -49,10 +49,6 @@ new_join_block <- function(
         ns <- session$ns
         r_state <- reactiveVal(state)
 
-        # Bidirectional sync: self_write tracks UI-initiated changes
-        self_write <- new.env(parent = emptyenv())
-        self_write$active <- FALSE
-
         # Send column summary (name + label + type) when either input changes
         observeEvent(list(x(), y()), {
           session$sendCustomMessage(
@@ -65,23 +61,7 @@ new_join_block <- function(
           )
         })
 
-        # JS -> R: user changed the join config
-        observeEvent(input$join_input, {
-          self_write$active <- TRUE
-          r_state(input$join_input)
-        })
-
-        # R -> JS: external control changed the state
-        observeEvent(r_state(), {
-          if (self_write$active) {
-            self_write$active <- FALSE
-          } else {
-            session$sendCustomMessage(
-              "join-block-update",
-              list(id = ns("join_input"), state = r_state())
-            )
-          }
-        })
+        js_block_sync(input, session, "join", "join_input", r_state)
 
         list(
           expr = reactive({
@@ -99,22 +79,7 @@ new_join_block <- function(
       })
     },
     # -- ui -------------------------------------------------------------------
-    function(id) {
-      tagList(
-        blockr_core_js_dep(),
-        blockr_blocks_css_dep(),
-        blockr_select_dep(),
-        blockr_input_dep(),
-        join_block_dep(),
-        div(
-          class = "block-container",
-          div(
-            id = NS(id, "join_input"),
-            class = "join-block-container"
-          )
-        )
-      )
-    },
+    js_block_ui("join", c("select", "input")),
     dat_valid = function(x, y) {
       stopifnot(is.data.frame(x), is.data.frame(y))
     },
@@ -123,24 +88,5 @@ new_join_block <- function(
     external_ctrl = TRUE,
     allow_empty_state = "state",
     ...
-  )
-}
-
-#' HTML dependency for join block JS + CSS
-#' @noRd
-join_block_dep <- function() {
-  htmltools::tagList(
-    htmltools::htmlDependency(
-      name = "join-block-js",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("js", package = "blockr.dplyr"),
-      script = "join-block.js"
-    ),
-    htmltools::htmlDependency(
-      name = "join-block-css",
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("css", package = "blockr.dplyr"),
-      stylesheet = "join-block.css"
-    )
   )
 }

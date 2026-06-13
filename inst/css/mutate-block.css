@@ -1,14 +1,20 @@
 /* MutateBlock — mutate block specific styles */
 /* Shared row/pill/confirm styles come from blockr-blocks.css */
 
-.mutate-block-container { width: 100%; }
+/* Container for the narrow-layout @container query below */
+.mutate-block-container { width: 100%; container-type: inline-size; }
 
 .mb-card { overflow: visible; }
 
-/* --- Name input area: ~150px, transparent bg, border-right separator --- */
+/* --- Name input area: transparent bg, border-right separator ---
+   Fixed width on purpose: a text input has no reliable intrinsic
+   content width (unlike the select-based rename/join left columns,
+   which content-size via --rb-col-w / --jb-col-w), so we use a
+   generous default instead. */
 .mb-name-wrap {
-  width: 150px;
+  width: 200px;
   min-width: 100px;
+  max-width: 40%;
   flex-shrink: 0;
   border-right: 1px solid var(--blockr-color-border, #e5e7eb);
   padding-right: 8px;
@@ -61,4 +67,24 @@
 .mb-by-wrap {
   flex: 1;
   min-width: 0;
+}
+
+/* --- Narrow panels: stack the name input above the expression ---
+   Same pattern as filter-block.css: below 480px the row wraps, the
+   name input takes a full-width line with a divider, and the
+   "=" + expression editor follow on the next line. */
+@container (max-width: 479px) {
+  .mb-rows .blockr-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .mb-name-wrap {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+    padding-right: 0;
+    padding-bottom: 2px;
+  }
 }

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * RenameBlock — JS-driven column rename block input binding.
  *
@@ -11,16 +12,41 @@
 (() => {
   'use strict';
 
+  /**
+   * Rename-block state, mirroring make_rename_expr() in R/expr-builders.R:
+   * `renames` maps new_name -> old_name.
+   * @typedef {Object} RenameBlockState
+   * @property {Record<string, string>} [renames]
+   */
+
+  /**
+   * Internal per-row UI record.
+   * @typedef {Object} RenameRow
+   * @property {number} id
+   * @property {string} oldCol
+   * @property {string} newName
+   * @property {BlockrSelectSingleHandle | null} _colSelect
+   * @property {HTMLDivElement | null} rowEl
+   * @property {HTMLInputElement} [_nameInput]
+   */
+
   class RenameBlock {
+    /** @param {HTMLElement} el */
     constructor(el) {
       this.el = el;
+      /** @type {RenameRow[]} */
       this.rows = [];
       this.nextId = 1;
+      /** @type {string[]} */
       this.columnNames = [];
+      /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
+      /** @type {Record<string, BlockrColumnSummary>} */
       this.columnMeta = {};
+      /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
       this._debounceTimer = null;
 
       this._buildDOM();
@@ -28,7 +54,7 @@
     }
 
     _autoSubmit() {
-      clearTimeout(this._debounceTimer);
+      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
       this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
@@ -54,8 +80,13 @@
       this.card.appendChild(addRow);
     }
 
+    /**
+     * @param {string | null} oldCol
+     * @param {string} newName
+     */
     _addRow(oldCol, newName) {
       const id = this.nextId++;
+      /** @type {RenameRow} */
       const row = {
         id,
         oldCol: oldCol || '',
@@ -66,24 +97,25 @@
 
       const rowEl = document.createElement('div');
       rowEl.className = 'blockr-row';
-      rowEl.setAttribute('data-row-id', id);
+      rowEl.setAttribute('data-row-id', /** @type {any} */ (id));
       row.rowEl = rowEl;
 
       // Old column dropdown
       const colDiv = document.createElement('div');
       colDiv.className = 'rb-col-wrap';
       rowEl.appendChild(colDiv);
-      row._colSelect = Blockr.Select.single(colDiv, {
+      row._colSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colDiv, {
         options: this.columnOptions,
-        selected: oldCol,
+        selected: /** @type {string | undefined} */ (oldCol),
         placeholder: 'Column\u2026',
         onChange: (value) => {
           row.oldCol = value;
           // Auto-populate new name if empty
           if (!row.newName && value) {
             row.newName = value;
-            row._nameInput.value = value;
+            /** @type {HTMLInputElement} */ (row._nameInput).value = value;
           }
+          this._syncColWidth();
           this._autoSubmit();
         }
       });
@@ -122,11 +154,12 @@
       // auto-pick the first option when oldCol is null/empty.
       row.oldCol = row._colSelect.getValue() || '';
 
-      this.listEl.appendChild(rowEl);
+      /** @type {HTMLDivElement} */ (this.listEl).appendChild(rowEl);
       this.rows.push(row);
       this._updateUI();
     }
 
+    /** @param {number} id */
     _removeRow(id) {
       if (this.rows.length <= 1) return;
 
@@ -143,12 +176,36 @@
     _updateUI() {
       const single = this.rows.length <= 1;
       for (const r of this.rows) {
-        const btn = r.rowEl?.querySelector('.blockr-row-remove');
+        const btn = /** @type {HTMLElement | null | undefined} */ (r.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
+      }
+      this._syncColWidth();
+    }
+
+    /**
+     * Size the shared old-column track to the widest selected value across
+     * rows. Sets --rb-col-w on the rows container; rename-block.css clamps
+     * it via min-width / max-width, so all rows stay aligned and long
+     * column names get room instead of a fixed 160px.
+     */
+    _syncColWidth() {
+      let max = 0;
+      for (const r of this.rows) {
+        const v = r.rowEl?.querySelector('.blockr-select__value');
+        if (v) max = Math.max(max, Blockr.contentWidth(v));
+      }
+      const listEl = /** @type {HTMLDivElement} */ (this.listEl);
+      if (max > 0) {
+        // + control padding (12) + gap (3) + arrow (16) + wrap padding (8)
+        listEl.style.setProperty('--rb-col-w', `${max + 39}px`);
+      } else {
+        listEl.style.removeProperty('--rb-col-w');
       }
     }
 
+    /** @returns {RenameBlockState} */
     _compose() {
+      /** @type {Record<string, string>} */
       const renames = {};
       for (const r of this.rows) {
         if (!r.oldCol || !r.newName) continue;
@@ -168,6 +225,10 @@
       return this._compose();
     }
 
+    /**
+     * @param {RenameBlockState | null | undefined} state
+     * @param {boolean} [silent]
+     */
     setState(state, silent) {
       // Clear existing rows
       while (this.rows.length > 0) {
@@ -190,6 +251,7 @@
       this._updateUI();
     }
 
+    /** @param {BlockrColumnSummary[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -206,68 +268,18 @@
           r.oldCol = r._colSelect.getValue();
         }
       }
+      this._syncColWidth();
     }
   }
 
-  // --- Shiny input binding ---
+  // --- Shiny wiring (binding + message handlers via shared factory) ---
 
-  const binding = new Shiny.InputBinding();
-
-  Object.assign(binding, {
-    find: (scope) => $(scope).find('.rename-block-container'),
-    getId: (el) => el.id || null,
-    getValue: (el) => el._block?.getValue() ?? null,
-    setValue: (el, value) => el._block?.setState(value),
-    subscribe: (el, callback) => {
-      if (el._block) el._block._callback = () => callback(true);
-    },
-    unsubscribe: (el) => {
-      if (el._block) el._block._callback = null;
-    },
-    initialize: (el) => {
-      el._block = new RenameBlock(el);
-      if (el._pendingColumns) {
-        el._block.updateColumns(el._pendingColumns);
-        delete el._pendingColumns;
-      }
-      if (el._pendingState) {
-        el._block.setState(el._pendingState);
-        delete el._pendingState;
-      }
-    },
-    receiveMessage: (el, data) => {
-      if (data.state) el._block?.setState(data.state);
-    }
-  });
-
-  Shiny.inputBindings.register(binding, 'blockr.rename');
-
-  // Column names handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('rename-columns', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.updateColumns(msg.columns);
-    } else if (el) {
-      el._pendingColumns = msg.columns;
-    } else {
-      let attempts = 0;
-      const t = setInterval(() => {
-        attempts++;
-        const el2 = document.getElementById(msg.id);
-        if (el2?._block) { el2._block.updateColumns(msg.columns); clearInterval(t); }
-        else if (el2) { el2._pendingColumns = msg.columns; clearInterval(t); }
-        if (attempts > 50) clearInterval(t);
-      }, 100);
-    }
-  });
-
-  // External control state update handler (global — dispatches by msg.id)
-  Shiny.addCustomMessageHandler('rename-block-update', (msg) => {
-    const el = document.getElementById(msg.id);
-    if (el?._block) {
-      el._block.setState(msg.state, true);
-    } else if (el) {
-      el._pendingState = msg.state;
+  Blockr.registerBlock({
+    name: 'rename',
+    Block: RenameBlock,
+    messages: {
+      'rename-columns': (block, msg) => block.updateColumns(msg.columns),
+      'rename-block-update': (block, msg) => block.setState(msg.state)
     }
   });
 })();
