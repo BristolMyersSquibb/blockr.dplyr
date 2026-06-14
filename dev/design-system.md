@@ -92,7 +92,7 @@ Rules:
 
 Never use `@media` or `@container` queries for block internals — block width is unknown at author time and can change at runtime as the user resizes panels.
 
-Canonical examples: `pivot-longer-block.css` (`.plb-input-row` / `.plb-field`), `summary-table-block.css` in blockr.bi (`.stb-grid` / `.stb-field` / `.stb-field--full`).
+Canonical examples: `pivot-longer-block.css` (`.plb-input-row` / `.plb-field`), `summary-table-block.css` in blockr.viz (`.stb-grid` / `.stb-field` / `.stb-field--full`).
 
 ## Column labels in pickers
 
