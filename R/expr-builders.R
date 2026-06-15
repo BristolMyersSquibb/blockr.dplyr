@@ -48,7 +48,7 @@ make_filter_expr <- function(conditions,
   # Build arrange(match(col, c(v1, v2, ...))) for pick order
   val_cond <- Filter(
     function(c) {
-      identical(c$type, "values") && length(c$values) > 0
+      is.list(c) && identical(c$type, "values") && length(c$values) > 0
     },
     conditions
   )
@@ -73,6 +73,14 @@ make_filter_expr <- function(conditions,
 #' Dispatch a single filter condition to the appropriate builder
 #' @noRd
 make_filter_part <- function(cond) {
+  # Conditions can arrive malformed -- a bare scalar instead of a
+  # `{type, ...}` record -- from a bad restore or an LLM-built block. Degrade
+  # to "no part" rather than erroring (`$` on an atomic vector throws). The
+  # expr path is contained by blockr.core's per-block boundary, but a clean
+  # skip yields an empty filter instead of a block error.
+  if (!is.list(cond) || is.null(cond$type)) {
+    return(NULL)
+  }
   switch(cond$type,
     "values" = make_values_part(cond),
     "numeric" = make_numeric_part(cond),
