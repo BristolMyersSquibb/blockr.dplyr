@@ -6,7 +6,7 @@ eval_bquoted <- function(expr, df) {
 
 test_that("mutate block: empty mutations pass data through", {
   blk <- new_mutate_block(
-    state = list(mutations = list(list(name = "", expr = "")), by = list())
+    mutations = list(list(name = "", expr = "")), by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -18,12 +18,10 @@ test_that("mutate block: empty mutations pass data through", {
 
 test_that("mutate block: add a new computed column", {
   blk <- new_mutate_block(
-    state = list(
-      mutations = list(
-        list(name = "kpl", expr = "mpg * 0.425144")
-      ),
-      by = list()
-    )
+    mutations = list(
+      list(name = "kpl", expr = "mpg * 0.425144")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -36,13 +34,11 @@ test_that("mutate block: add a new computed column", {
 
 test_that("mutate block: add multiple columns", {
   blk <- new_mutate_block(
-    state = list(
-      mutations = list(
-        list(name = "hp_per_cyl", expr = "hp / cyl"),
-        list(name = "wt_kg", expr = "wt * 453.592")
-      ),
-      by = list()
-    )
+    mutations = list(
+      list(name = "hp_per_cyl", expr = "hp / cyl"),
+      list(name = "wt_kg", expr = "wt * 453.592")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -57,12 +53,10 @@ test_that("mutate block: add multiple columns", {
 
 test_that("mutate block: grouped mutate with .by", {
   blk <- new_mutate_block(
-    state = list(
-      mutations = list(
-        list(name = "mean_mpg", expr = "mean(mpg)")
-      ),
-      by = list("cyl")
-    )
+    mutations = list(
+      list(name = "mean_mpg", expr = "mean(mpg)")
+    ),
+    by = list("cyl")
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -82,12 +76,10 @@ test_that("mutate block: grouped mutate with .by", {
 
 test_that("mutate block: state change adds different column", {
   blk <- new_mutate_block(
-    state = list(
-      mutations = list(
-        list(name = "col_a", expr = "mpg * 2")
-      ),
-      by = list()
-    )
+    mutations = list(
+      list(name = "col_a", expr = "mpg * 2")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -96,12 +88,10 @@ test_that("mutate block: state change adds different column", {
     expect_true("col_a" %in% colnames(result1))
 
     # Change to different mutation
-    session$returned$state$state(list(
-      mutations = list(
-        list(name = "col_b", expr = "hp + wt")
-      ),
-      by = list()
+    session$returned$state$mutations(list(
+      list(name = "col_b", expr = "hp + wt")
     ))
+    session$returned$state$by(list())
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), mtcars)
     expect_true("col_b" %in% colnames(result2))

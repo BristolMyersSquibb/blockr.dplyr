@@ -6,7 +6,7 @@ eval_bquoted <- function(expr, df) {
 
 test_that("summarize block: empty summaries pass data through unchanged", {
   blk <- new_summarize_block(
-    state = list(summaries = list(), by = list())
+    summaries = list(), by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -20,12 +20,10 @@ test_that("summarize block: empty summaries pass data through unchanged", {
 
 test_that("summarize block: simple mean produces correct value", {
   blk <- new_summarize_block(
-    state = list(
-      summaries = list(
-        list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
-      ),
-      by = list()
-    )
+    summaries = list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -39,12 +37,10 @@ test_that("summarize block: simple mean produces correct value", {
 
 test_that("summarize block: grouped summary produces correct groups", {
   blk <- new_summarize_block(
-    state = list(
-      summaries = list(
-        list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
-      ),
-      by = list("cyl")
-    )
+    summaries = list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
+    ),
+    by = list("cyl")
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -64,12 +60,10 @@ test_that("summarize block: grouped summary produces correct groups", {
 
 test_that("summarize block: expr mode works", {
   blk <- new_summarize_block(
-    state = list(
-      summaries = list(
-        list(type = "expr", name = "mpg_range", expr = "max(mpg) - min(mpg)")
-      ),
-      by = list()
-    )
+    summaries = list(
+      list(type = "expr", name = "mpg_range", expr = "max(mpg) - min(mpg)")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -83,14 +77,12 @@ test_that("summarize block: expr mode works", {
 
 test_that("summarize block: multiple summaries", {
   blk <- new_summarize_block(
-    state = list(
-      summaries = list(
-        list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg"),
-        list(type = "simple", name = "max_hp", func = "max", col = "hp"),
-        list(type = "simple", name = "count", func = "n", col = "")
-      ),
-      by = list()
-    )
+    summaries = list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg"),
+      list(type = "simple", name = "max_hp", func = "max", col = "hp"),
+      list(type = "simple", name = "count", func = "n", col = "")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -105,12 +97,10 @@ test_that("summarize block: multiple summaries", {
 
 test_that("summarize block: state change from ungrouped to grouped", {
   blk <- new_summarize_block(
-    state = list(
-      summaries = list(
-        list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
-      ),
-      by = list()
-    )
+    summaries = list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
+    ),
+    by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -119,12 +109,10 @@ test_that("summarize block: state change from ungrouped to grouped", {
     expect_equal(nrow(result1), 1)
 
     # Add grouping
-    session$returned$state$state(list(
-      summaries = list(
-        list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
-      ),
-      by = list("cyl")
+    session$returned$state$summaries(list(
+      list(type = "simple", name = "avg_mpg", func = "mean", col = "mpg")
     ))
+    session$returned$state$by(list("cyl"))
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), mtcars)
     expect_equal(nrow(result2), length(unique(mtcars$cyl)))

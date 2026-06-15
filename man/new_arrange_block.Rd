@@ -4,11 +4,11 @@
 \alias{new_arrange_block}
 \title{Arrange block (JS-driven)}
 \usage{
-new_arrange_block(state = list(columns = list()), ...)
+new_arrange_block(columns = list(), ...)
 }
 \arguments{
-\item{state}{List with \code{columns} (list of objects with \code{column} and
-\code{direction} fields, where direction is "asc" or "desc").}
+\item{columns}{List of objects with \code{column} and \code{direction} fields, where
+direction is "asc" or "desc". Each entry sorts by one column.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -21,10 +21,8 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_arrange_block(
-      state = list(
-        columns = list(
-          list(column = "Sepal.Length", direction = "desc")
-        )
+      columns = list(
+        list(column = "Sepal.Length", direction = "desc")
       )
     ),
     data = list(data = iris)

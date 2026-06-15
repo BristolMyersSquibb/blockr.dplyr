@@ -4,11 +4,11 @@
 \alias{new_rename_block}
 \title{Rename block (JS-driven)}
 \usage{
-new_rename_block(state = list(renames = list()), ...)
+new_rename_block(renames = list(), ...)
 }
 \arguments{
-\item{state}{List with \code{renames} (named list where names are new column
-names and values are old column names).}
+\item{renames}{Named list where names are new column names and values are
+old column names.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -21,9 +21,7 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_rename_block(
-      state = list(
-        renames = list(sepal_len = "Sepal.Length")
-      )
+      renames = list(sepal_len = "Sepal.Length")
     ),
     data = list(data = iris)
   )

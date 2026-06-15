@@ -4,14 +4,14 @@
 \alias{new_select_block}
 \title{Select block (JS-driven)}
 \usage{
-new_select_block(
-  state = list(columns = list(), exclude = FALSE, distinct = FALSE),
-  ...
-)
+new_select_block(columns = list(), exclude = FALSE, distinct = FALSE, ...)
 }
 \arguments{
-\item{state}{List with \code{columns} (character vector of column names),
-\code{exclude} (logical), and \code{distinct} (logical).}
+\item{columns}{Character vector of column names to select (or reorder).}
+
+\item{exclude}{If \code{TRUE}, the listed \code{columns} are dropped instead of kept.}
+
+\item{distinct}{If \code{TRUE}, return only distinct rows of the selection.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -24,11 +24,9 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_select_block(
-      state = list(
-        columns = list("Sepal.Length", "Species"),
-        exclude = FALSE,
-        distinct = FALSE
-      )
+      columns = list("Sepal.Length", "Species"),
+      exclude = FALSE,
+      distinct = FALSE
     ),
     data = list(data = iris)
   )

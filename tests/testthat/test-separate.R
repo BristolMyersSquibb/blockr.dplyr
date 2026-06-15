@@ -6,11 +6,9 @@ eval_bquoted <- function(expr, df) {
 
 test_that("separate block: empty col passes data through", {
   blk <- new_separate_block(
-    state = list(
-      col = "", into = list(),
-      sep = "[^[:alnum:]]+", remove = TRUE,
-      convert = FALSE, extra = "warn", fill = "warn"
-    )
+    col = "", into = list(),
+    sep = "[^[:alnum:]]+", remove = TRUE,
+    convert = FALSE, extra = "warn", fill = "warn"
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -27,15 +25,13 @@ test_that("separate block: splits column into multiple", {
   )
 
   blk <- new_separate_block(
-    state = list(
-      col = "x",
-      into = c("letter", "number"),
-      sep = "-",
-      remove = TRUE,
-      convert = FALSE,
-      extra = "warn",
-      fill = "warn"
-    )
+    col = "x",
+    into = c("letter", "number"),
+    sep = "-",
+    remove = TRUE,
+    convert = FALSE,
+    extra = "warn",
+    fill = "warn"
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -56,15 +52,13 @@ test_that("separate block: convert converts types", {
   )
 
   blk <- new_separate_block(
-    state = list(
-      col = "x",
-      into = c("letter", "number"),
-      sep = "-",
-      remove = TRUE,
-      convert = TRUE,
-      extra = "warn",
-      fill = "warn"
-    )
+    col = "x",
+    into = c("letter", "number"),
+    sep = "-",
+    remove = TRUE,
+    convert = TRUE,
+    extra = "warn",
+    fill = "warn"
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -82,15 +76,13 @@ test_that("separate block: remove = FALSE keeps original column", {
   )
 
   blk <- new_separate_block(
-    state = list(
-      col = "x",
-      into = c("letter", "number"),
-      sep = "-",
-      remove = FALSE,
-      convert = FALSE,
-      extra = "warn",
-      fill = "warn"
-    )
+    col = "x",
+    into = c("letter", "number"),
+    sep = "-",
+    remove = FALSE,
+    convert = FALSE,
+    extra = "warn",
+    fill = "warn"
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -109,13 +101,11 @@ test_that("separate block: state change updates separator and column names", {
   )
 
   blk <- new_separate_block(
-    state = list(
-      col = "data",
-      into = c("year", "month", "day"),
-      sep = "_",
-      remove = TRUE,
-      convert = FALSE
-    )
+    col = "data",
+    into = c("year", "month", "day"),
+    sep = "_",
+    remove = TRUE,
+    convert = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -126,13 +116,11 @@ test_that("separate block: state change updates separator and column names", {
     expect_equal(result1$day, c("15", "20"))
 
     # Change to separate into 3 columns with different names
-    session$returned$state$state(list(
-      col = "data",
-      into = c("y", "m", "d"),
-      sep = "_",
-      remove = TRUE,
-      convert = FALSE
-    ))
+    session$returned$state$col("data")
+    session$returned$state$into(c("y", "m", "d"))
+    session$returned$state$sep("_")
+    session$returned$state$remove(TRUE)
+    session$returned$state$convert(FALSE)
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
     expect_equal(ncol(result2), 3)
@@ -152,10 +140,8 @@ test_that("join block: empty keys passes through x", {
                      stringsAsFactors = FALSE)
 
   blk <- new_join_block(
-    state = list(
-      type = "left_join", keys = list(), exprs = list(),
-      suffix_x = ".x", suffix_y = ".y"
-    )
+    type = "left_join", keys = list(), exprs = list(),
+    suffix_x = ".x", suffix_y = ".y"
   )
 
   testServer(
@@ -184,12 +170,10 @@ test_that("join block: equi-join with key", {
                      stringsAsFactors = FALSE)
 
   blk <- new_join_block(
-    state = list(
-      type = "inner_join",
-      keys = list(list(xCol = "id", op = "==", yCol = "id")),
-      exprs = list(),
-      suffix_x = ".x", suffix_y = ".y"
-    )
+    type = "inner_join",
+    keys = list(list(xCol = "id", op = "==", yCol = "id")),
+    exprs = list(),
+    suffix_x = ".x", suffix_y = ".y"
   )
 
   testServer(
@@ -217,12 +201,10 @@ test_that("join block: state change switches join type", {
                      stringsAsFactors = FALSE)
 
   blk <- new_join_block(
-    state = list(
-      type = "inner_join",
-      keys = list(list(xCol = "id", op = "==", yCol = "id")),
-      exprs = list(),
-      suffix_x = ".x", suffix_y = ".y"
-    )
+    type = "inner_join",
+    keys = list(list(xCol = "id", op = "==", yCol = "id")),
+    exprs = list(),
+    suffix_x = ".x", suffix_y = ".y"
   )
 
   eval_join <- function(expr_val) {
@@ -242,12 +224,11 @@ test_that("join block: state change switches join type", {
       expect_equal(nrow(result1), 2)  # inner join
 
       # Switch to full join
-      session$returned$state$state(list(
-        type = "full_join",
-        keys = list(list(xCol = "id", op = "==", yCol = "id")),
-        exprs = list(),
-        suffix_x = ".x", suffix_y = ".y"
-      ))
+      session$returned$state$type("full_join")
+      session$returned$state$keys(list(list(xCol = "id", op = "==", yCol = "id")))
+      session$returned$state$exprs(list())
+      session$returned$state$suffix_x(".x")
+      session$returned$state$suffix_y(".y")
       session$flushReact()
       result2 <- eval_join(session$returned$expr())
       expect_equal(nrow(result2), 4)  # full join: ids 1,2,3,4

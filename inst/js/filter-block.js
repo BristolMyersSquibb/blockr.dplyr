@@ -526,7 +526,7 @@
           if (val) conditions.push({ type: 'expr', expr: val });
         }
       }
-      return { conditions, operator: this.operator, preserveOrder: this.preserveOrder };
+      return { conditions, operator: this.operator, preserve_order: this.preserveOrder };
     }
 
     _submit() {
@@ -557,6 +557,13 @@
       // Set operator
       this.operator = state?.operator || '&';
       /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
+
+      // Restore "preserve order" toggle
+      this.preserveOrder = !!state?.preserve_order;
+      if (this.preserveBtn) {
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).textContent = this.preserveOrder ? 'pick order' : 'data order';
+        /** @type {HTMLButtonElement} */ (this.preserveBtn).classList.toggle('fb-preserve-active', this.preserveOrder);
+      }
 
       // Rebuild from state
       const conditions = state?.conditions || [];

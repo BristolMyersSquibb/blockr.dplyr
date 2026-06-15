@@ -79,10 +79,11 @@ get_summary_functions <- function() {
 #' )
 #' }
 #'
-#' @param state List with `summaries` (array of summary objects) and `by`
-#'   (character vector of grouping columns). Summary types:
+#' @param summaries Array of summary objects. Summary types:
 #'   - `simple`: name, func (e.g. "mean"), col (column name)
 #'   - `expr`: name, expr (R expression string)
+#' @param by Character vector (or array) of grouping columns for grouped
+#'   summaries.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -90,13 +91,11 @@ get_summary_functions <- function() {
 #'   library(blockr.core)
 #'   serve(
 #'     new_summarize_block(
-#'       state = list(
-#'         summaries = list(
-#'           list(type = "simple", name = "avg_sl", func = "mean",
-#'                col = "Sepal.Length")
-#'         ),
-#'         by = list("Species")
-#'       )
+#'       summaries = list(
+#'         list(type = "simple", name = "avg_sl", func = "mean",
+#'              col = "Sepal.Length")
+#'       ),
+#'       by = list("Species")
 #'     ),
 #'     data = list(data = iris)
 #'   )
@@ -108,13 +107,17 @@ get_summary_functions <- function() {
 #'
 #' @export
 new_summarize_block <- function(
-  state = list(summaries = list(), by = list()),
+  summaries = list(),
+  by = list(),
   ...
 ) {
   new_js_transform_block(
     class = "summarize_block",
     name = "summarize",
-    state = state,
+    state = list(
+      summaries = summaries,
+      by = by
+    ),
     expr_fn = function(s) {
       make_summarize_expr(
         s$summaries %||% list(),

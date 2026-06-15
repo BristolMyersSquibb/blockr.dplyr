@@ -3,12 +3,23 @@
 ## Breaking changes
 
 - All block UIs rewritten as JS-driven components for instant feedback.
+- Block constructors now take flat, per-field arguments instead of a single
+  `state = list(...)` argument (e.g.
+  `new_filter_block(conditions = ..., operator = ...)` rather than
+  `new_filter_block(state = list(conditions = ..., operator = ...))`). This
+  surfaces every field directly to the assistant and to external control.
+  Boards saved with the old single-`state` format still restore; code
+  passing `state = list(...)` must switch to the individual arguments.
+  The registry assistant metadata (`arguments` descriptions + `examples`)
+  was flattened to match: each field is now keyed by its constructor
+  argument name instead of nested under `state`, so the per-block AI sees
+  accurate parameter docs and canonical example shapes.
 - `new_filter_expr_block()`, `new_mutate_expr_block()` and
   `new_summarize_expr_block()` are removed: filter, mutate and summarize
   now each unify no-code and expression modes in a single UI. Boards
   saved with old versions still restore (state is migrated on load);
   code calling the removed constructors must switch to the unified
-  blocks with an `expr`-type entry in `state`.
+  blocks with an `expr`-type entry in `conditions`/`mutations`/`summaries`.
 - An unconfigured filter or summarize block now passes data through
   unchanged. Previously an empty filter emitted `dplyr::filter(., TRUE)`
   and an empty summarize collapsed the data to a single row.
@@ -16,7 +27,7 @@
 ## New features
 
 - Filter block supports value, numeric, and expression conditions, plus
-  a `preserveOrder` option. Column values load lazily on dropdown-open,
+  a `preserve_order` option. Column values load lazily on dropdown-open,
   so large data arrives instantly.
 - High-cardinality columns use server-side value search: the dropdown
   shows the first page plus a total count, and typing queries R for

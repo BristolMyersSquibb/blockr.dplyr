@@ -5,16 +5,38 @@
 \title{Slice block (JS-driven)}
 \usage{
 new_slice_block(
-  state = list(type = "head", n = 5L, prop = NULL, order_by = "", with_ties = TRUE,
-    weight_by = "", replace = FALSE, rows = "1:5", by = list()),
+  type = "head",
+  n = 5L,
+  prop = NULL,
+  order_by = "",
+  with_ties = TRUE,
+  weight_by = "",
+  replace = FALSE,
+  rows = "1:5",
+  by = list(),
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{type} (string: "head", "tail", "min", "max",
-"sample"), \code{n} (integer), \code{prop} (numeric or NULL), \code{order_by} (string),
-\code{with_ties} (logical), \code{weight_by} (string), \code{replace} (logical), and
-\code{by} (character vector).}
+\item{type}{Slice type: one of \code{"head"}, \code{"tail"}, \code{"min"}, \code{"max"},
+\code{"sample"}.}
+
+\item{n}{Integer number of rows to keep.}
+
+\item{prop}{Proportion of rows to keep (numeric or \code{NULL}); takes
+precedence over \code{n} when set.}
+
+\item{order_by}{Column name used to order rows for \code{min}/\code{max} slices.}
+
+\item{with_ties}{Logical; whether to keep tied rows for \code{min}/\code{max}.}
+
+\item{weight_by}{Column name used as sampling weights for \code{sample}.}
+
+\item{replace}{Logical; whether to sample with replacement.}
+
+\item{rows}{Row index expression (e.g. \code{"1:5"}) for positional slicing.}
+
+\item{by}{Character vector (or array) of grouping columns (\code{.by}).}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -30,16 +52,14 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_slice_block(
-      state = list(
-        type = "head",
-        n = 10L,
-        prop = NULL,
-        order_by = "",
-        with_ties = TRUE,
-        weight_by = "",
-        replace = FALSE,
-        by = list()
-      )
+      type = "head",
+      n = 10L,
+      prop = NULL,
+      order_by = "",
+      with_ties = TRUE,
+      weight_by = "",
+      replace = FALSE,
+      by = list()
     ),
     data = list(data = iris)
   )

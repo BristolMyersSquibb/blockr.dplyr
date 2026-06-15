@@ -5,16 +5,35 @@
 \title{Pivot wider block (JS-driven)}
 \usage{
 new_pivot_wider_block(
-  state = list(names_from = list(), values_from = list(), id_cols = list(), values_fill =
-    NULL, names_sep = "_", names_prefix = ""),
+  names_from = list(),
+  values_from = list(),
+  id_cols = list(),
+  values_fill = NULL,
+  names_sep = "_",
+  names_prefix = "",
+  values_fn = "",
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{names_from} (character vector), \code{values_from}
-(character vector), \code{id_cols} (character vector, optional),
-\code{values_fill} (value or NULL), \code{names_sep} (string), and
-\code{names_prefix} (string).}
+\item{names_from}{Character vector (or array) of columns whose values become
+the new column names.}
+
+\item{values_from}{Character vector (or array) of columns whose values fill
+the new cells.}
+
+\item{id_cols}{Character vector (or array) of identifier columns (optional);
+when empty, inferred from the remaining columns.}
+
+\item{values_fill}{Value used to fill missing cells (value or \code{NULL}).}
+
+\item{names_sep}{Separator string joining \code{names_from} columns into the new
+column names.}
+
+\item{names_prefix}{String prefix prepended to the new column names.}
+
+\item{values_fn}{Aggregation function applied to duplicate cells, as a
+string (e.g. \code{"sum"}); \code{""} means none.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -29,14 +48,12 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_pivot_wider_block(
-      state = list(
-        names_from = list("Species"),
-        values_from = list("Sepal.Length"),
-        id_cols = list(),
-        values_fill = NULL,
-        names_sep = "_",
-        names_prefix = ""
-      )
+      names_from = list("Species"),
+      values_from = list("Sepal.Length"),
+      id_cols = list(),
+      values_fill = NULL,
+      names_sep = "_",
+      names_prefix = ""
     ),
     data = list(data = iris)
   )

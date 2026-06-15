@@ -4,13 +4,12 @@
 #' expression mode (free R code for join conditions) in a single JS-driven UI.
 #' Takes two data inputs (x and y).
 #'
-#' @param state List with:
-#'   - `type`: join function name ("left_join", "inner_join", "right_join",
-#'     "full_join", "semi_join", "anti_join")
-#'   - `keys`: list of key objects, each with `xCol`, `op`, `yCol`
-#'   - `exprs`: character vector of R expression strings for join_by()
-#'   - `suffix_x`: suffix for x columns (default ".x")
-#'   - `suffix_y`: suffix for y columns (default ".y")
+#' @param type Join function name ("left_join", "inner_join", "right_join",
+#'   "full_join", "semi_join", "anti_join").
+#' @param keys List of key objects, each with `xCol`, `op`, `yCol`.
+#' @param exprs Character vector of R expression strings for `join_by()`.
+#' @param suffix_x Suffix for x columns (default ".x").
+#' @param suffix_y Suffix for y columns (default ".y").
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -18,14 +17,9 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_join_block(
-#'       state = list(
-#'         type = "left_join",
-#'         keys = list(
-#'           list(xCol = "id", op = "==", yCol = "id")
-#'         ),
-#'         exprs = list(),
-#'         suffix_x = ".x",
-#'         suffix_y = ".y"
+#'       type = "left_join",
+#'       keys = list(
+#'         list(xCol = "id", op = "==", yCol = "id")
 #'       )
 #'     ),
 #'     data = list(x = iris, y = iris)
@@ -38,16 +32,20 @@
 #'
 #' @export
 new_join_block <- function(
-  state = list(type = "left_join", keys = list(), exprs = list(),
-               suffix_x = ".x", suffix_y = ".y"),
+  type = "left_join",
+  keys = list(),
+  exprs = list(),
+  suffix_x = ".x",
+  suffix_y = ".y",
   ...
 ) {
+  state <- list(type = type, keys = keys, exprs = exprs,
+                suffix_x = suffix_x, suffix_y = suffix_y)
   new_transform_block(
     # -- server ---------------------------------------------------------------
     function(id, x, y) {
       moduleServer(id, function(input, output, session) {
         ns <- session$ns
-        r_state <- reactiveVal(state)
 
         # Send column summary (name + label + type) when either input changes
         observeEvent(list(x(), y()), {
@@ -61,11 +59,11 @@ new_join_block <- function(
           )
         })
 
-        js_block_sync(input, session, "join", "join_input", r_state)
+        sync <- js_block_state(input, session, "join", "join_input", state)
 
         list(
           expr = reactive({
-            s <- r_state()
+            s <- sync$state()
             make_join_expr(
               s$type %||% "left_join",
               s$keys %||% list(),
@@ -74,7 +72,7 @@ new_join_block <- function(
               s$suffix_y %||% ".y"
             )
           }),
-          state = list(state = r_state)
+          state = sync$fields
         )
       })
     },
@@ -86,7 +84,7 @@ new_join_block <- function(
     class = "join_block",
     expr_type = "bquoted",
     external_ctrl = TRUE,
-    allow_empty_state = "state",
+    allow_empty_state = TRUE,
     ...
   )
 }

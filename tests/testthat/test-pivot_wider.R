@@ -6,11 +6,9 @@ eval_bquoted <- function(expr, df) {
 
 test_that("pivot_wider block: empty names_from/values_from pass data through", {
   blk <- new_pivot_wider_block(
-    state = list(
-      names_from = list(), values_from = list(),
-      id_cols = list(), values_fill = NULL,
-      names_sep = "_", names_prefix = ""
-    )
+    names_from = list(), values_from = list(),
+    id_cols = list(), values_fill = NULL,
+    names_sep = "_", names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -29,14 +27,12 @@ test_that("pivot_wider block: spreads values to wide format", {
   )
 
   blk <- new_pivot_wider_block(
-    state = list(
-      names_from = "measure",
-      values_from = "value",
-      id_cols = "id",
-      values_fill = NULL,
-      names_sep = "_",
-      names_prefix = ""
-    )
+    names_from = "measure",
+    values_from = "value",
+    id_cols = "id",
+    values_fill = NULL,
+    names_sep = "_",
+    names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -59,14 +55,12 @@ test_that("pivot_wider block: names_prefix adds prefix", {
   )
 
   blk <- new_pivot_wider_block(
-    state = list(
-      names_from = "key",
-      values_from = "val",
-      id_cols = "id",
-      values_fill = NULL,
-      names_sep = "_",
-      names_prefix = "col_"
-    )
+    names_from = "key",
+    values_from = "val",
+    id_cols = "id",
+    values_fill = NULL,
+    names_sep = "_",
+    names_prefix = "col_"
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -86,14 +80,12 @@ test_that("pivot_wider block: state change updates pivot", {
   )
 
   blk <- new_pivot_wider_block(
-    state = list(
-      names_from = "measure",
-      values_from = "value",
-      id_cols = "id",
-      values_fill = NULL,
-      names_sep = "_",
-      names_prefix = ""
-    )
+    names_from = "measure",
+    values_from = "value",
+    id_cols = "id",
+    values_fill = NULL,
+    names_sep = "_",
+    names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -102,14 +94,12 @@ test_that("pivot_wider block: state change updates pivot", {
     expect_equal(ncol(result1), 3)  # id, height, weight
 
     # Add a prefix
-    session$returned$state$state(list(
-      names_from = "measure",
-      values_from = "value",
-      id_cols = "id",
-      values_fill = NULL,
-      names_sep = "_",
-      names_prefix = "val_"
-    ))
+    session$returned$state$names_from("measure")
+    session$returned$state$values_from("value")
+    session$returned$state$id_cols("id")
+    session$returned$state$values_fill(NULL)
+    session$returned$state$names_sep("_")
+    session$returned$state$names_prefix("val_")
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
     expect_true("val_height" %in% colnames(result2))

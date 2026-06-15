@@ -6,7 +6,7 @@ eval_bquoted <- function(expr, df) {
 
 test_that("rename block: empty renames pass data through", {
   blk <- new_rename_block(
-    state = list(renames = list())
+    renames = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -18,7 +18,7 @@ test_that("rename block: empty renames pass data through", {
 
 test_that("rename block: rename a single column", {
   blk <- new_rename_block(
-    state = list(renames = list(miles_per_gallon = "mpg"))
+    renames = list(miles_per_gallon = "mpg")
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -32,10 +32,10 @@ test_that("rename block: rename a single column", {
 
 test_that("rename block: rename multiple columns", {
   blk <- new_rename_block(
-    state = list(renames = list(
+    renames = list(
       miles_per_gallon = "mpg",
       cylinders = "cyl"
-    ))
+    )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -50,7 +50,7 @@ test_that("rename block: rename multiple columns", {
 
 test_that("rename block: state change updates column names", {
   blk <- new_rename_block(
-    state = list(renames = list(miles_per_gallon = "mpg"))
+    renames = list(miles_per_gallon = "mpg")
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -59,9 +59,9 @@ test_that("rename block: state change updates column names", {
     expect_true("miles_per_gallon" %in% colnames(result1))
 
     # Change rename
-    session$returned$state$state(list(renames = list(
+    session$returned$state$renames(list(
       horse_power = "hp"
-    )))
+    ))
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), mtcars)
     expect_true("horse_power" %in% colnames(result2))

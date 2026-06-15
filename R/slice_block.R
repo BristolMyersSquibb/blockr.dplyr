@@ -6,10 +6,17 @@
 #' with_ties and replace, multi-select for grouping (.by).
 #' Auto-submits on any change.
 #'
-#' @param state List with `type` (string: "head", "tail", "min", "max",
-#'   "sample"), `n` (integer), `prop` (numeric or NULL), `order_by` (string),
-#'   `with_ties` (logical), `weight_by` (string), `replace` (logical), and
-#'   `by` (character vector).
+#' @param type Slice type: one of `"head"`, `"tail"`, `"min"`, `"max"`,
+#'   `"sample"`.
+#' @param n Integer number of rows to keep.
+#' @param prop Proportion of rows to keep (numeric or `NULL`); takes
+#'   precedence over `n` when set.
+#' @param order_by Column name used to order rows for `min`/`max` slices.
+#' @param with_ties Logical; whether to keep tied rows for `min`/`max`.
+#' @param weight_by Column name used as sampling weights for `sample`.
+#' @param replace Logical; whether to sample with replacement.
+#' @param rows Row index expression (e.g. `"1:5"`) for positional slicing.
+#' @param by Character vector (or array) of grouping columns (`.by`).
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -17,16 +24,14 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_slice_block(
-#'       state = list(
-#'         type = "head",
-#'         n = 10L,
-#'         prop = NULL,
-#'         order_by = "",
-#'         with_ties = TRUE,
-#'         weight_by = "",
-#'         replace = FALSE,
-#'         by = list()
-#'       )
+#'       type = "head",
+#'       n = 10L,
+#'       prop = NULL,
+#'       order_by = "",
+#'       with_ties = TRUE,
+#'       weight_by = "",
+#'       replace = FALSE,
+#'       by = list()
 #'     ),
 #'     data = list(data = iris)
 #'   )
@@ -38,23 +43,31 @@
 #'
 #' @export
 new_slice_block <- function(
-  state = list(
-    type = "head",
-    n = 5L,
-    prop = NULL,
-    order_by = "",
-    with_ties = TRUE,
-    weight_by = "",
-    replace = FALSE,
-    rows = "1:5",
-    by = list()
-  ),
+  type = "head",
+  n = 5L,
+  prop = NULL,
+  order_by = "",
+  with_ties = TRUE,
+  weight_by = "",
+  replace = FALSE,
+  rows = "1:5",
+  by = list(),
   ...
 ) {
   new_js_transform_block(
     class = "slice_block",
     name = "slice",
-    state = state,
+    state = list(
+      type = type,
+      n = n,
+      prop = prop,
+      order_by = order_by,
+      with_ties = with_ties,
+      weight_by = weight_by,
+      replace = replace,
+      rows = rows,
+      by = by
+    ),
     expr_fn = function(s) {
       make_slice_expr(
         s$type %||% "head",

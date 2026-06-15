@@ -24,9 +24,10 @@ legacy_json <- function(cls, ctor, payload) {
 }
 
 # Deserialize and return the migrated state (what the new ctor received).
+# Blocks now serialize their state as flat top-level payload fields.
 restored_state <- function(data) {
   blk <- blockr.core::blockr_deser(data)
-  blockr.core::blockr_ser(blk)$payload$state
+  blockr.core::blockr_ser(blk)$payload
 }
 
 test_that("legacy filter_block payload migrates to typed conditions", {
@@ -59,7 +60,7 @@ test_that("legacy filter_expr_block (removed ctor) migrates to expr condition", 
   blk <- blockr.core::blockr_deser(data)
   # Class is restored verbatim so blockr.core's round-trip check passes
   expect_s3_class(blk, "filter_expr_block")
-  state <- blockr.core::blockr_ser(blk)$payload$state
+  state <- blockr.core::blockr_ser(blk)$payload
   expect_equal(state$conditions[[1]]$type, "expr")
   expect_equal(state$conditions[[1]]$expr, "Sepal.Length > 7")
 })

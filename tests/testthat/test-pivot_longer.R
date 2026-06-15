@@ -6,10 +6,8 @@ eval_bquoted <- function(expr, df) {
 
 test_that("pivot_longer block: empty cols pass data through", {
   blk <- new_pivot_longer_block(
-    state = list(
-      cols = list(), names_to = "name",
-      values_to = "value", values_drop_na = FALSE, names_prefix = ""
-    )
+    cols = list(), names_to = "name",
+    values_to = "value", values_drop_na = FALSE, names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -27,13 +25,11 @@ test_that("pivot_longer block: pivots selected columns to long format", {
   )
 
   blk <- new_pivot_longer_block(
-    state = list(
-      cols = list("height", "weight"),
-      names_to = "measurement",
-      values_to = "value",
-      values_drop_na = FALSE,
-      names_prefix = ""
-    )
+    cols = list("height", "weight"),
+    names_to = "measurement",
+    values_to = "value",
+    values_drop_na = FALSE,
+    names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -55,13 +51,11 @@ test_that("pivot_longer block: values_drop_na removes NA rows", {
   )
 
   blk <- new_pivot_longer_block(
-    state = list(
-      cols = list("x", "y"),
-      names_to = "var",
-      values_to = "val",
-      values_drop_na = TRUE,
-      names_prefix = ""
-    )
+    cols = list("x", "y"),
+    names_to = "var",
+    values_to = "val",
+    values_drop_na = TRUE,
+    names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -81,13 +75,11 @@ test_that("pivot_longer block: state change updates pivot columns", {
   )
 
   blk <- new_pivot_longer_block(
-    state = list(
-      cols = list("a", "b"),
-      names_to = "name",
-      values_to = "value",
-      values_drop_na = FALSE,
-      names_prefix = ""
-    )
+    cols = list("a", "b"),
+    names_to = "name",
+    values_to = "value",
+    values_drop_na = FALSE,
+    names_prefix = ""
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -96,13 +88,11 @@ test_that("pivot_longer block: state change updates pivot columns", {
     expect_equal(nrow(result1), 4)  # 2 rows * 2 cols
 
     # Add column c to pivot
-    session$returned$state$state(list(
-      cols = list("a", "b", "c"),
-      names_to = "name",
-      values_to = "value",
-      values_drop_na = FALSE,
-      names_prefix = ""
-    ))
+    session$returned$state$cols(list("a", "b", "c"))
+    session$returned$state$names_to("name")
+    session$returned$state$values_to("value")
+    session$returned$state$values_drop_na(FALSE)
+    session$returned$state$names_prefix("")
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
     expect_equal(nrow(result2), 6)  # 2 rows * 3 cols

@@ -4,10 +4,11 @@
 \alias{new_bind_rows_block}
 \title{Bind rows block (JS-driven, variadic)}
 \usage{
-new_bind_rows_block(state = list(id_name = ""), ...)
+new_bind_rows_block(id_name = "", ...)
 }
 \arguments{
-\item{state}{List with \code{id_name} (string, optional .id column name).}
+\item{id_name}{Optional name for the \code{.id} column identifying the source
+data frame of each row (empty string = no id column).}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -21,7 +22,7 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_bind_rows_block(
-      state = list(id_name = "source")
+      id_name = "source"
     ),
     data = list(a = iris[1:5, ], b = iris[6:10, ])
   )

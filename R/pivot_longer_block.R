@@ -4,9 +4,11 @@
 #' Multi-select column picker with text inputs for names_to, values_to,
 #' names_prefix, and a toggle for values_drop_na. Auto-submits on any change.
 #'
-#' @param state List with `cols` (character vector of columns to pivot),
-#'   `names_to` (string), `values_to` (string), `values_drop_na` (logical),
-#'   and `names_prefix` (string).
+#' @param cols Character vector of columns to pivot into longer format.
+#' @param names_to Name of the new column holding the pivoted column names.
+#' @param values_to Name of the new column holding the pivoted values.
+#' @param values_drop_na If `TRUE`, drop rows with `NA` values.
+#' @param names_prefix Regular expression prefix stripped from column names.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -14,13 +16,11 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_pivot_longer_block(
-#'       state = list(
-#'         cols = list("Sepal.Length", "Sepal.Width"),
-#'         names_to = "measurement",
-#'         values_to = "value",
-#'         values_drop_na = FALSE,
-#'         names_prefix = ""
-#'       )
+#'       cols = list("Sepal.Length", "Sepal.Width"),
+#'       names_to = "measurement",
+#'       values_to = "value",
+#'       values_drop_na = FALSE,
+#'       names_prefix = ""
 #'     ),
 #'     data = list(data = iris)
 #'   )
@@ -32,19 +32,23 @@
 #'
 #' @export
 new_pivot_longer_block <- function(
-  state = list(
-    cols = list(),
-    names_to = "name",
-    values_to = "value",
-    values_drop_na = FALSE,
-    names_prefix = ""
-  ),
+  cols = list(),
+  names_to = "name",
+  values_to = "value",
+  values_drop_na = FALSE,
+  names_prefix = "",
   ...
 ) {
   new_js_transform_block(
     class = "pivot_longer_block",
     name = "pivot-longer",
-    state = state,
+    state = list(
+      cols = cols,
+      names_to = names_to,
+      values_to = values_to,
+      values_drop_na = values_drop_na,
+      names_prefix = names_prefix
+    ),
     expr_fn = function(s) {
       make_pivot_longer_expr(
         s$cols %||% list(),

@@ -69,7 +69,7 @@ interface BlockrFilterCondition {
 interface BlockrFilterState {
   conditions: BlockrFilterCondition[];
   operator: '&' | '|';
-  preserveOrder?: boolean;
+  preserve_order?: boolean;
 }
 
 /* --- Blockr.Select (blockr-select.js) --- */

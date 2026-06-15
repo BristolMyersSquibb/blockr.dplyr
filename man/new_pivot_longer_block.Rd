@@ -5,15 +5,24 @@
 \title{Pivot longer block (JS-driven)}
 \usage{
 new_pivot_longer_block(
-  state = list(cols = list(), names_to = "name", values_to = "value", values_drop_na =
-    FALSE, names_prefix = ""),
+  cols = list(),
+  names_to = "name",
+  values_to = "value",
+  values_drop_na = FALSE,
+  names_prefix = "",
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{cols} (character vector of columns to pivot),
-\code{names_to} (string), \code{values_to} (string), \code{values_drop_na} (logical),
-and \code{names_prefix} (string).}
+\item{cols}{Character vector of columns to pivot into longer format.}
+
+\item{names_to}{Name of the new column holding the pivoted column names.}
+
+\item{values_to}{Name of the new column holding the pivoted values.}
+
+\item{values_drop_na}{If \code{TRUE}, drop rows with \code{NA} values.}
+
+\item{names_prefix}{Regular expression prefix stripped from column names.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -27,13 +36,11 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_pivot_longer_block(
-      state = list(
-        cols = list("Sepal.Length", "Sepal.Width"),
-        names_to = "measurement",
-        values_to = "value",
-        values_drop_na = FALSE,
-        names_prefix = ""
-      )
+      cols = list("Sepal.Length", "Sepal.Width"),
+      names_to = "measurement",
+      values_to = "value",
+      values_drop_na = FALSE,
+      names_prefix = ""
     ),
     data = list(data = iris)
   )
