@@ -65,7 +65,9 @@ new_separate_block <- function(
         s$into %||% list(),
         s$sep %||% "[^[:alnum:]]+",
         s$remove %||% TRUE,
-        s$convert %||% FALSE
+        s$convert %||% FALSE,
+        s$extra %||% "warn",
+        s$fill %||% "warn"
       )
     },
     ...
