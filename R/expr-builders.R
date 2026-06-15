@@ -720,6 +720,13 @@ make_bind_cols_expr <- function(arg_names = character()) {
 #' @keywords internal
 #' @export
 build_column_summary <- function(df) {
+  if (inherits(df, "tbl_lazy")) {
+    # A 0-row collect carries the correct column classes (and any labels)
+    # via one cheap `LIMIT 0` query; reusing the in-memory path on that
+    # template yields `hasNA = FALSE` for free (no rows), so we avoid an
+    # anyNA() full-table scan per column on the remote backend.
+    return(build_column_summary(dplyr::collect(utils::head(df, 0L))))
+  }
   lapply(colnames(df), function(col) {
     vals <- df[[col]]
     list(
@@ -804,6 +811,9 @@ col_label <- function(x) {
 #' @keywords internal
 #' @export
 build_column_values <- function(df, col, limit = NULL, query = "") {
+  if (inherits(df, "tbl_lazy")) {
+    return(build_column_values_lazy(df, col, limit = limit, query = query))
+  }
   vals <- df[[col]]
   type <- column_type(vals)
 
@@ -846,6 +856,96 @@ build_column_values <- function(df, col, limit = NULL, query = "") {
     }
   }
   info
+}
+
+#' Lazy (remote-table) variant of [build_column_values()]
+#'
+#' Same return contract as [build_column_values()], but never pulls a whole
+#' column into R. Numeric columns report only their `min`/`max` (one aggregate
+#' query) and offer no value list — they filter by range. Character columns use
+#' a *bounded distinct*: at most `limit + 1` distinct values are pulled
+#' (`SELECT DISTINCT col ... LIMIT k+1`), so cost is capped by `limit`, not by
+#' the column's cardinality. Pulling `limit + 1` doubles as the "too many to
+#' enumerate" probe: if the sentinel row comes back, `truncated = TRUE` and the
+#' client switches to server-side search (each keystroke pushes a `LIKE` down
+#' via `query`). All of this runs only when the user opens a column's picker.
+#'
+#' @inheritParams build_column_values
+#' @return A column info object (list), matching [build_column_values()].
+#' @keywords internal
+build_column_values_lazy <- function(df, col, limit = NULL, query = "") {
+  df <- dplyr::ungroup(df)
+  template <- dplyr::collect(utils::head(df, 0L))
+  vals0 <- template[[col]]
+  type <- column_type(vals0)
+  sym <- rlang::sym(col)
+
+  info <- list(
+    name = col,
+    type = type,
+    hasNA = FALSE,        # an anyNA() probe would be a full remote scan
+    label = col_label(vals0)
+  )
+
+  numeric_col <- type %in% c("numeric", "integer")
+
+  # Numerics additionally carry min/max for the range operators (>, <, ...);
+  # one aggregate, independent of the value cap below.
+  if (numeric_col) {
+    rng <- dplyr::collect(
+      dplyr::summarise(
+        df,
+        ..lo = min(!!sym, na.rm = TRUE),
+        ..hi = max(!!sym, na.rm = TRUE)
+      )
+    )
+    if (nrow(rng) && is.finite(rng$..lo)) {
+      info$min <- rng$..lo
+      info$max <- rng$..hi
+    }
+  }
+
+  # Bounded distinct for the value picker — same contract as the in-memory
+  # path (numeric -> `uniqueValues`, character -> `values`), so the "is" /
+  # "is not" picker is populated for every column type. Pulling `limit + 1`
+  # caps the cost by `limit` (not cardinality) and flags truncation, which
+  # switches the client to server-side search. Optional substring pushdown.
+  q <- df
+  if (nzchar(query %||% "")) {
+    pattern <- regex_escape(tolower(query))
+    q <- dplyr::filter(q, grepl(!!pattern, tolower(as.character(!!sym))))
+  }
+  distinct_q <- dplyr::distinct(dplyr::transmute(q, ..v = !!sym))
+  cap <- if (is.null(limit)) Inf else limit
+  pulled <- if (is.finite(cap)) {
+    dplyr::collect(utils::head(distinct_q, cap + 1L))
+  } else {
+    dplyr::collect(distinct_q)
+  }
+
+  raw <- pulled$..v[!is.na(pulled$..v)]
+  truncated <- is.finite(cap) && length(raw) > cap
+
+  if (numeric_col) {
+    uv <- sort(raw)
+    if (truncated) uv <- uv[seq_len(cap)]
+    info$uniqueValues <- as.list(uv)
+  } else {
+    uv <- sort(as.character(raw))
+    if (truncated) uv <- uv[seq_len(cap)]
+    info$values <- as.list(uv)
+    info$hasEmpty <- FALSE   # "" probe skipped on remote backends
+  }
+  info$total <- if (truncated) NA_integer_ else length(uv)
+  info$truncated <- truncated
+  info
+}
+
+#' Escape regex metacharacters so a user query matches as a literal substring
+#' @param x A character scalar
+#' @noRd
+regex_escape <- function(x) {
+  gsub("([][{}()+*^$|\\\\.?-])", "\\\\\\1", x)
 }
 
 #' Build column metadata for JS (all columns, eager)

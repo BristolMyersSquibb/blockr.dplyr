@@ -180,7 +180,9 @@
         const val = optValue(opt);
         if (mode === 'multi' && selected.indexOf(val) >= 0) continue;
         if (q) {
-          const matchVal = val.toLowerCase().indexOf(q) >= 0;
+          // `val` may be a number (numeric value pickers send JSON numbers),
+          // so stringify before the case-insensitive substring match.
+          const matchVal = String(val).toLowerCase().indexOf(q) >= 0;
           const matchLabel = optLabel(opt).toLowerCase().indexOf(q) >= 0;
           if (!matchVal && !matchLabel) continue;
         }
