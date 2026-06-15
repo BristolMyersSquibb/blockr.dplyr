@@ -154,6 +154,14 @@ js_block_state <- function(input, session, name, input_name, state,
   })
 
   # R -> JS: push the recombined blob whenever any field changes.
+  #
+  # Sent as a custom message (not `sendInputMessage`) on purpose: the block's
+  # element is often inserted dynamically (add-block, board restore, on-demand
+  # dock tabs) and this init/restore push routinely races `bindAll`. Shiny has
+  # no CLIENT-side queue for input messages -- it drops any message whose
+  # target isn't `.shiny-bound-input` yet (shiny.js inputMessages handler).
+  # The custom channel's `_enqueue`/`_replayPending` (blockr-core.js) is that
+  # missing client-side queue, replaying on `initialize()`.
   observeEvent(r_state(), {
     if (self_write$active) {
       self_write$active <- FALSE
