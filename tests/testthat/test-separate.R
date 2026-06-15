@@ -235,3 +235,41 @@ test_that("join block: state change switches join type", {
     }
   )
 })
+
+test_that("separate block: extra/fill reach the expression (behavioral)", {
+  # Regression: the constructor stored extra/fill in state but expr_fn did
+  # not forward them, so user-set values were silently lost. "merge" keeps
+  # the surplus piece in the last column instead of dropping+warning.
+  df <- data.frame(x = c("a-1-z", "b-2-y"), stringsAsFactors = FALSE)
+
+  blk <- new_separate_block(
+    col = "x", into = c("letter", "number"), sep = "-",
+    remove = TRUE, convert = FALSE, extra = "merge", fill = "warn"
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    expr <- session$returned$expr()
+    expect_match(paste(deparse(expr), collapse = " "), 'extra = "merge"')
+    result <- eval_bquoted(expr, df)
+    # extra="merge" -> third piece merged into `number`, no drop
+    expect_equal(result$number, c("1-z", "2-y"))
+  })
+})
+
+test_that("separate block: fill='right' reaches the expression", {
+  df <- data.frame(x = c("a-1", "b"), stringsAsFactors = FALSE)
+
+  blk <- new_separate_block(
+    col = "x", into = c("letter", "number"), sep = "-",
+    remove = TRUE, convert = FALSE, extra = "warn", fill = "right"
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(df)), {
+    session$flushReact()
+    expr <- session$returned$expr()
+    expect_match(paste(deparse(expr), collapse = " "), 'fill = "right"')
+    result <- eval_bquoted(expr, df)
+    expect_equal(result$number, c("1", NA))
+  })
+})

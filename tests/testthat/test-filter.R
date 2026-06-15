@@ -275,3 +275,42 @@ test_that("build_column_values includes label", {
   info <- build_column_values(df, "age")
   expect_equal(info$label, "Age")
 })
+
+# --- Malformed-condition resilience ---
+# A filter block whose `conditions` are scalars (not {type,...} records) must
+# never crash: such shapes can arrive from a bad board restore or an
+# LLM-built block. The R->JS sync observer runs outside blockr.core's
+# per-block error boundary, so a throw there is session-fatal.
+
+test_that("normalize_filter_state_for_js tolerates malformed conditions", {
+  state <- list(conditions = list("AGE", "SEX"), operator = "&")
+  expect_no_error(out <- normalize_filter_state_for_js(state))
+  expect_equal(out$conditions, list("AGE", "SEX"))
+})
+
+test_that("normalize_filter_state_for_js tolerates non-list state", {
+  expect_no_error(normalize_filter_state_for_js(NULL))
+  expect_no_error(normalize_filter_state_for_js(list(conditions = "AGE")))
+})
+
+test_that("make_filter_expr skips malformed conditions instead of erroring", {
+  expect_no_error(expr <- make_filter_expr(list("AGE", "SEX"), "&"))
+  # All parts dropped -> identity filter
+  result <- eval_bquoted(expr, iris)
+  expect_equal(nrow(result), nrow(iris))
+})
+
+test_that("make_filter_expr ignores malformed conds with preserve_order", {
+  conds <- list(
+    "AGE",
+    list(type = "values", column = "Species",
+         values = list("setosa"), mode = "include")
+  )
+  expect_no_error(expr <- make_filter_expr(conds, "&", preserve_order = TRUE))
+  result <- eval_bquoted(expr, iris)
+  expect_true(all(result$Species == "setosa"))
+})
+
+test_that("new_filter_block constructs with malformed conditions", {
+  expect_no_error(new_filter_block(conditions = list("AGE", "SEX")))
+})

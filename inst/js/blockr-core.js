@@ -81,25 +81,31 @@ Blockr.onDocClick = (el, cb) => {
 
 /**
  * Messages that arrived before their target element was created/bound.
- * Keyed by element id; replayed in arrival order on initialize. Entries
- * expire after 30s so messages to never-rendered blocks don't accumulate.
+ * Keyed by element id -> Map(channel -> latest fn), replayed on initialize.
+ *
+ * Shiny has no client-side queue for messages to unbound inputs, so this is
+ * the queue that delivers a block's initial/restore state when its element
+ * is inserted dynamically (add-block, board restore, on-demand dock tabs)
+ * and binds after the message arrives.
+ *
+ * Entries are keyed by channel and keep only the LATEST message per channel
+ * (state and columns pushes are full idempotent snapshots), so a per-id entry
+ * is bounded by the number of channels and a block that binds arbitrarily
+ * late still replays its current state. (A previous wall-clock 30s expiry
+ * silently dropped the init state of blocks that bound >30s late -- e.g. a
+ * dock tab opened minutes after construction -- leaving them blank.)
  */
 Blockr._pending = new Map();
-Blockr._enqueue = (id, fn) => {
-  const now = Date.now();
-  for (const [key, queue] of Blockr._pending) {
-    if (now - queue.t > 30000) Blockr._pending.delete(key);
-  }
-  const queue = Blockr._pending.get(id) || { t: now, fns: [] };
-  queue.t = now;
-  queue.fns.push(fn);
+Blockr._enqueue = (id, channel, fn) => {
+  const queue = Blockr._pending.get(id) || new Map();
+  queue.set(channel, fn);
   Blockr._pending.set(id, queue);
 };
 Blockr._replayPending = (el) => {
   const queue = Blockr._pending.get(el.id);
   if (!queue) return;
   Blockr._pending.delete(el.id);
-  for (const fn of queue.fns) fn(el._block);
+  for (const fn of queue.values()) fn(el._block);
 };
 
 /**
@@ -158,7 +164,7 @@ Blockr.registerBlock = ({ name, Block, messages = {} }) => {
       if (el?._block) {
         handler(el._block, msg);
       } else {
-        Blockr._enqueue(msg.id, (block) => handler(block, msg));
+        Blockr._enqueue(msg.id, msgName, (block) => handler(block, msg));
       }
     });
   }
