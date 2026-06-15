@@ -99,9 +99,16 @@ new_filter_block <- function(
 #' regardless of length.
 #' @noRd
 normalize_filter_state_for_js <- function(state) {
-  if (is.null(state)) return(state)
+  # Be defensive about shape: this runs in the R->JS sync observer (js-block.R),
+  # which is OUTSIDE blockr.core's per-block error boundary, so throwing here
+  # crashes the whole Shiny session rather than just erroring the block. A
+  # malformed `conditions` (e.g. a list of scalars instead of {column,op,values}
+  # records, from a bad restore or an LLM-built block) must degrade, not crash.
+  if (is.null(state) || !is.list(state)) return(state)
   conds <- state$conditions %||% list()
+  if (!is.list(conds)) return(state)
   state$conditions <- lapply(conds, function(cond) {
+    if (!is.list(cond)) return(cond)
     if (!is.null(cond$values)) cond$values <- as.list(cond$values)
     cond
   })
