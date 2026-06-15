@@ -243,10 +243,8 @@ interface BlockrRegisterConfig {
   messages?: Record<string, (block: any, msg: any) => void>;
 }
 
-interface BlockrPendingQueue {
-  t: number;
-  fns: Array<(block: BlockrBlock | undefined) => void>;
-}
+/** channel name -> latest replay fn for an element not yet bound */
+type BlockrPendingQueue = Map<string, (block: BlockrBlock | undefined) => void>;
 
 interface BlockrNamespace {
   uid(prefix?: string): string;
@@ -259,7 +257,7 @@ interface BlockrNamespace {
   registerBlock(config: BlockrRegisterConfig): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
-  _enqueue(id: string, fn: (block: BlockrBlock | undefined) => void): void;
+  _enqueue(id: string, channel: string, fn: (block: BlockrBlock | undefined) => void): void;
   _replayPending(el: BlockrBlockHost): void;
   /** Shared components (blockr-select.js / blockr-input.js) */
   Select?: BlockrSelectStatic;
