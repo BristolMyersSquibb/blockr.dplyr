@@ -6,10 +6,8 @@ eval_bquoted <- function(expr, df) {
 
 test_that("unite block: empty cols pass data through", {
   blk <- new_unite_block(
-    state = list(
-      col = "united", cols = list(),
-      sep = "_", remove = TRUE, na_rm = FALSE
-    )
+    col = "united", cols = list(),
+    sep = "_", remove = TRUE, na_rm = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -28,13 +26,11 @@ test_that("unite block: combines columns into one", {
   )
 
   blk <- new_unite_block(
-    state = list(
-      col = "full_name",
-      cols = list("first", "last"),
-      sep = " ",
-      remove = TRUE,
-      na_rm = FALSE
-    )
+    col = "full_name",
+    cols = list("first", "last"),
+    sep = " ",
+    remove = TRUE,
+    na_rm = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -55,13 +51,11 @@ test_that("unite block: remove = FALSE keeps original columns", {
   )
 
   blk <- new_unite_block(
-    state = list(
-      col = "combined",
-      cols = list("x", "y"),
-      sep = "-",
-      remove = FALSE,
-      na_rm = FALSE
-    )
+    col = "combined",
+    cols = list("x", "y"),
+    sep = "-",
+    remove = FALSE,
+    na_rm = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -82,13 +76,11 @@ test_that("unite block: na_rm handles NA values", {
   )
 
   blk <- new_unite_block(
-    state = list(
-      col = "combined",
-      cols = list("x", "y"),
-      sep = "_",
-      remove = TRUE,
-      na_rm = TRUE
-    )
+    col = "combined",
+    cols = list("x", "y"),
+    sep = "_",
+    remove = TRUE,
+    na_rm = TRUE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -107,13 +99,11 @@ test_that("unite block: state change updates separator and columns", {
   )
 
   blk <- new_unite_block(
-    state = list(
-      col = "ab",
-      cols = list("a", "b"),
-      sep = "_",
-      remove = TRUE,
-      na_rm = FALSE
-    )
+    col = "ab",
+    cols = list("a", "b"),
+    sep = "_",
+    remove = TRUE,
+    na_rm = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -122,13 +112,11 @@ test_that("unite block: state change updates separator and columns", {
     expect_equal(result1$ab, c("x_1", "y_2"))
 
     # Change to unite all three columns with different separator
-    session$returned$state$state(list(
-      col = "abc",
-      cols = list("a", "b", "c"),
-      sep = "-",
-      remove = TRUE,
-      na_rm = FALSE
-    ))
+    session$returned$state$col("abc")
+    session$returned$state$cols(list("a", "b", "c"))
+    session$returned$state$sep("-")
+    session$returned$state$remove(TRUE)
+    session$returned$state$na_rm(FALSE)
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), df)
     expect_true("abc" %in% colnames(result2))

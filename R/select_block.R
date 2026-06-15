@@ -3,8 +3,9 @@
 #' Column selection block with reorderable multi-select, exclude toggle,
 #' and distinct toggle. Auto-submits on any change.
 #'
-#' @param state List with `columns` (character vector of column names),
-#'   `exclude` (logical), and `distinct` (logical).
+#' @param columns Character vector of column names to select (or reorder).
+#' @param exclude If `TRUE`, the listed `columns` are dropped instead of kept.
+#' @param distinct If `TRUE`, return only distinct rows of the selection.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -12,11 +13,9 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_select_block(
-#'       state = list(
-#'         columns = list("Sepal.Length", "Species"),
-#'         exclude = FALSE,
-#'         distinct = FALSE
-#'       )
+#'       columns = list("Sepal.Length", "Species"),
+#'       exclude = FALSE,
+#'       distinct = FALSE
 #'     ),
 #'     data = list(data = iris)
 #'   )
@@ -28,13 +27,19 @@
 #'
 #' @export
 new_select_block <- function(
-  state = list(columns = list(), exclude = FALSE, distinct = FALSE),
+  columns = list(),
+  exclude = FALSE,
+  distinct = FALSE,
   ...
 ) {
   new_js_transform_block(
     class = "select_block",
     name = "select",
-    state = state,
+    state = list(
+      columns = columns,
+      exclude = exclude,
+      distinct = distinct
+    ),
     expr_fn = function(s) {
       make_select_expr(
         s$columns %||% list(),

@@ -1,8 +1,19 @@
 #' Legacy deserialization for old block formats
 #'
-#' Converts old serialized block payloads (individual parameters) to the
-#' new single-state format. This allows boards saved with old blockr.dplyr
-#' versions to be restored.
+#' Restores boards saved by older blockr.dplyr versions. Two historical
+#' formats are handled:
+#'
+#' 1. **Individual-parameter format** (oldest): each state field was a
+#'    top-level payload entry, sometimes under different names or shapes
+#'    (e.g. filter conditions without a `type`, summarize `summaries` as a
+#'    named list). The per-block `state_builder` normalizes these to the
+#'    current flat field set.
+#' 2. **Single-`state` blob format** (interim): the whole state was nested
+#'    under one `state` payload key. This is unwrapped back to flat fields.
+#'
+#' The current format already serializes flat top-level fields that map
+#' straight onto the constructors' flat arguments, so those pass through the
+#' (idempotent) builders unchanged.
 #'
 #' Drop this file when backwards compatibility is no longer needed.
 #'
@@ -10,10 +21,15 @@
 #' @keywords internal
 NULL
 
-# Helper: convert old payload to new state-based args and call constructor.
-# Preserves original class from JSON so blockr.core's class check passes.
-legacy_deser_block <- function(data, ctor_name, state_builder) {
-  # Old constructor may no longer exist (e.g., new_filter_expr_block -> new_filter_block)
+# Convert an old payload to the constructor's flat arguments and build the
+# block. `state_builder` normalizes the individual-parameter format and must
+# be idempotent on already-flat (current) payloads. The single-`state` blob
+# is unwrapped directly (its contents already use the modern field shapes).
+# The original class from the JSON is restored so blockr.core's class check
+# passes.
+legacy_deser_block <- function(data, ctor_name, state_builder = identity) {
+  # Old constructor may no longer exist (e.g. new_filter_expr_block ->
+  # new_filter_block)
   ctor <- tryCatch(
     blockr_deser(data[["constructor"]]),
     error = function(e) NULL
@@ -21,23 +37,24 @@ legacy_deser_block <- function(data, ctor_name, state_builder) {
   payload <- data[["payload"]]
   orig_class <- data[["object"]]
 
-  # If payload already has "state", it's the new format — pass through
-  if ("state" %in% names(payload)) {
-    args <- c(payload, list(
-      ctor = if (!is.null(ctor)) coal(ctor_name(ctor), ctor_name) else ctor_name,
-      ctor_pkg = if (!is.null(ctor)) ctor_pkg(ctor) else utils::packageName()
-    ))
-    res <- do.call(ctor_name, args)
+  flat <- if ("state" %in% names(payload)) {
+    # Interim single-blob format: contents already use modern field shapes.
+    payload[["state"]]
   } else {
-    # Old format: convert individual params to state
-    state <- state_builder(payload)
-    args <- list(
-      state = state,
-      ctor = if (!is.null(ctor)) coal(ctor_name(ctor), ctor_name) else ctor_name,
-      ctor_pkg = if (!is.null(ctor)) ctor_pkg(ctor) else utils::packageName()
-    )
-    res <- do.call(ctor_name, args)
+    # Individual-parameter (oldest) or current flat format.
+    state_builder(payload)
   }
+
+  # Block attributes (`block_name`, ...) are serialized as sibling payload
+  # entries next to the state fields; carry them through to the constructor
+  # so e.g. custom block names survive restore.
+  extras <- payload[setdiff(names(payload), c(names(flat), "state"))]
+
+  args <- c(flat, extras, list(
+    ctor = if (!is.null(ctor)) coal(ctor_name(ctor), ctor_name) else ctor_name,
+    ctor_pkg = if (!is.null(ctor)) ctor_pkg(ctor) else utils::packageName()
+  ))
+  res <- do.call(ctor_name, args)
 
   # Restore original class so blockr.core's class check passes
   if (!is.null(orig_class) && !identical(class(res), orig_class)) {
@@ -46,14 +63,16 @@ legacy_deser_block <- function(data, ctor_name, state_builder) {
   res
 }
 
-# --- Filter (old: conditions + preserve_order) ---
+# --- Filter (old: conditions without type + operator) ---
 
 #' @export
 blockr_deser.filter_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_filter_block", function(p) {
     list(
       conditions = lapply(p$conditions %||% list(), function(c) {
-        # Old format had column + values + mode, convert to type = "values"
+        # Modern conditions already carry a `type`; leave them untouched.
+        if (!is.null(c$type)) return(c)
+        # Old format had column + values + mode -> type = "values"
         list(
           type = "values",
           column = c$column %||% "",
@@ -61,7 +80,8 @@ blockr_deser.filter_block <- function(x, data, ...) {
           mode = c$mode %||% "include"
         )
       }),
-      operator = p$operator %||% "&"
+      operator = p$operator %||% "&",
+      preserve_order = isTRUE(p$preserve_order)
     )
   })
 }
@@ -71,10 +91,22 @@ blockr_deser.filter_block <- function(x, data, ...) {
 #' @export
 blockr_deser.filter_expr_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_filter_block", function(p) {
-    expr_str <- p$exprs %||% "TRUE"
     list(
-      conditions = list(list(type = "expr", expr = expr_str)),
-      operator = "&"
+      conditions = list(list(type = "expr", expr = p$exprs %||% "TRUE")),
+      operator = "&",
+      preserve_order = FALSE
+    )
+  })
+}
+
+# --- Mutate (interim single-state blob; flat passthrough) ---
+
+#' @export
+blockr_deser.mutate_block <- function(x, data, ...) {
+  legacy_deser_block(data, "new_mutate_block", function(p) {
+    list(
+      mutations = p$mutations %||% list(),
+      by = p$by %||% list()
     )
   })
 }
@@ -97,20 +129,22 @@ blockr_deser.mutate_expr_block <- function(x, data, ...) {
 #' @export
 blockr_deser.summarize_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_summarize_block", function(p) {
-    if (!is.null(p$summaries) && is.list(p$summaries)) {
-      # Old no-code format: named list of list(func, col)
+    summaries <- p$summaries %||% list()
+    # Old no-code format: a NAMED list of list(func, col). Modern format is
+    # an unnamed array of records each carrying `name`/`type`.
+    is_old_named <- length(summaries) &&
+      !is.null(names(summaries)) && any(nzchar(names(summaries)))
+    if (is_old_named) {
       summaries <- mapply(function(nm, s) {
         list(type = "simple", name = nm,
              func = s$func %||% "mean", col = s$col %||% "")
-      }, names(p$summaries), p$summaries, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-    } else {
-      summaries <- list()
+      }, names(summaries), summaries, SIMPLIFY = FALSE, USE.NAMES = FALSE)
     }
     list(summaries = summaries, by = p$by %||% list())
   })
 }
 
-# --- Summarize expr (old: exprs as named list + by + unpack) ---
+# --- Summarize expr (old: exprs as named list + by) ---
 
 #' @export
 blockr_deser.summarize_expr_block <- function(x, data, ...) {
@@ -169,25 +203,29 @@ blockr_deser.slice_block <- function(x, data, ...) {
       with_ties = p$with_ties %||% TRUE,
       weight_by = p$weight_by %||% "",
       replace = isTRUE(p$replace),
+      rows = p$rows %||% "1:5",
       by = p$by %||% list()
     )
   })
 }
 
-# --- Join (old: type + by as simple column list) ---
+# --- Join (old: by as a simple column list; modern: keys) ---
 
 #' @export
 blockr_deser.join_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_join_block", function(p) {
-    # Old format: by = c("col1", "col2") — convert to keys with op = "=="
-    by <- p$by %||% list()
-    keys <- lapply(by, function(col) {
-      if (is.list(col) && !is.null(col$xCol)) {
-        col  # Already new format
-      } else {
-        list(xCol = as.character(col), op = "==", yCol = as.character(col))
-      }
-    })
+    # Modern payloads carry `keys` directly; only derive them from the old
+    # `by` column list when `keys` is absent.
+    keys <- p$keys
+    if (is.null(keys)) {
+      keys <- lapply(p$by %||% list(), function(col) {
+        if (is.list(col) && !is.null(col$xCol)) {
+          col  # already key-shaped
+        } else {
+          list(xCol = as.character(col), op = "==", yCol = as.character(col))
+        }
+      })
+    }
     list(
       type = p$type %||% "left_join",
       keys = keys,
@@ -233,12 +271,13 @@ blockr_deser.pivot_wider_block <- function(x, data, ...) {
       id_cols = p$id_cols %||% list(),
       values_fill = p$values_fill,
       names_sep = p$names_sep %||% "_",
-      names_prefix = p$names_prefix %||% ""
+      names_prefix = p$names_prefix %||% "",
+      values_fn = p$values_fn %||% ""
     )
   })
 }
 
-# --- Unite (old: individual params) ---
+# --- Unite (old: na.rm; modern: na_rm) ---
 
 #' @export
 blockr_deser.unite_block <- function(x, data, ...) {
@@ -248,7 +287,7 @@ blockr_deser.unite_block <- function(x, data, ...) {
       cols = p$cols %||% list(),
       sep = p$sep %||% "_",
       remove = p$remove %||% TRUE,
-      na_rm = p$na.rm %||% FALSE
+      na_rm = p$na_rm %||% p$na.rm %||% FALSE
     )
   })
 }

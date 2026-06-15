@@ -3,8 +3,8 @@
 #' Sort/arrange block with dynamic rows. Each row has a column picker and
 #' a direction toggle (ascending/descending). Auto-submits on any change.
 #'
-#' @param state List with `columns` (list of objects with `column` and
-#'   `direction` fields, where direction is "asc" or "desc").
+#' @param columns List of objects with `column` and `direction` fields, where
+#'   direction is "asc" or "desc". Each entry sorts by one column.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -12,10 +12,8 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_arrange_block(
-#'       state = list(
-#'         columns = list(
-#'           list(column = "Sepal.Length", direction = "desc")
-#'         )
+#'       columns = list(
+#'         list(column = "Sepal.Length", direction = "desc")
 #'       )
 #'     ),
 #'     data = list(data = iris)
@@ -28,13 +26,15 @@
 #'
 #' @export
 new_arrange_block <- function(
-  state = list(columns = list()),
+  columns = list(),
   ...
 ) {
   new_js_transform_block(
     class = "arrange_block",
     name = "arrange",
-    state = state,
+    state = list(
+      columns = columns
+    ),
     expr_fn = function(s) {
       make_arrange_expr(s$columns %||% list())
     },

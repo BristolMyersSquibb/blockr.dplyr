@@ -1,6 +1,6 @@
 Package: blockr.dplyr
 Title: Interactive 'dplyr' Data Transformation Blocks
-Version: 0.2.4
+Version: 0.1.0.9004
 Authors@R:
     c(person(given = "Christoph",
              family = "Sax",
@@ -43,6 +43,7 @@ Imports:
     tidyr,
     htmltools,
     jsonlite,
+    rlang,
     utils
 Suggests:
     shinytest2,

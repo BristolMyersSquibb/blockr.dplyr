@@ -3,11 +3,14 @@
 #' Unified filter block combining simple mode (column + operator + values)
 #' and expression mode (free R code) in a single JS-driven UI.
 #'
-#' @param state List with `conditions` (array of condition objects) and
-#'   `operator` ("&" or "|"). Condition types:
+#' @param conditions Array of condition objects combined by `operator`.
+#'   Condition types:
 #'   - `values`: column, values (character vector), mode ("include"/"exclude")
 #'   - `numeric`: column, op (">", ">=", "<", "<=", "is", "is not"), value
 #'   - `expr`: expr (R expression as string)
+#' @param operator How conditions are combined: `"&"` (all) or `"|"` (any).
+#' @param preserve_order If `TRUE`, rows are returned in the order matched by
+#'   the conditions rather than the original data order.
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -15,13 +18,11 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_filter_block(
-#'       state = list(
-#'         conditions = list(
-#'           list(type = "values", column = "Species",
-#'                values = list("setosa"), mode = "include")
-#'         ),
-#'         operator = "&"
-#'       )
+#'       conditions = list(
+#'         list(type = "values", column = "Species",
+#'              values = list("setosa"), mode = "include")
+#'       ),
+#'       operator = "&"
 #'     ),
 #'     data = list(data = iris)
 #'   )
@@ -33,18 +34,24 @@
 #'
 #' @export
 new_filter_block <- function(
-  state = list(conditions = list(), operator = "&"),
+  conditions = list(),
+  operator = "&",
+  preserve_order = FALSE,
   ...
 ) {
   new_js_transform_block(
     class = "filter_block",
     name = "filter",
-    state = state,
+    state = list(
+      conditions = conditions,
+      operator = operator,
+      preserve_order = preserve_order
+    ),
     expr_fn = function(s) {
       make_filter_expr(
         s$conditions %||% list(),
         s$operator %||% "&",
-        isTRUE(s$preserveOrder)
+        isTRUE(s$preserve_order)
       )
     },
     # Lightweight summary (names + types); unique values load on demand

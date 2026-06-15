@@ -6,7 +6,7 @@ eval_bquoted <- function(expr, df) {
 
 test_that("select block: empty columns pass all data through", {
   blk <- new_select_block(
-    state = list(columns = list(), exclude = FALSE, distinct = FALSE)
+    columns = list(), exclude = FALSE, distinct = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -19,10 +19,8 @@ test_that("select block: empty columns pass all data through", {
 
 test_that("select block: select specific columns", {
   blk <- new_select_block(
-    state = list(
-      columns = list("mpg", "cyl"),
-      exclude = FALSE, distinct = FALSE
-    )
+    columns = list("mpg", "cyl"),
+    exclude = FALSE, distinct = FALSE
   )
 
   testServer(
@@ -41,7 +39,7 @@ test_that("select block: select specific columns", {
 
 test_that("select block: exclude mode removes specified columns", {
   blk <- new_select_block(
-    state = list(columns = list("mpg", "cyl"), exclude = TRUE, distinct = FALSE)
+    columns = list("mpg", "cyl"), exclude = TRUE, distinct = FALSE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -56,7 +54,7 @@ test_that("select block: exclude mode removes specified columns", {
 test_that("select block: distinct deduplicates rows", {
   df <- data.frame(a = c(1, 1, 2, 2), b = c("x", "x", "y", "y"))
   blk <- new_select_block(
-    state = list(columns = list("a"), exclude = FALSE, distinct = TRUE)
+    columns = list("a"), exclude = FALSE, distinct = TRUE
   )
 
   testServer(blk$expr_server, args = list(data = reactive(df)), {
@@ -70,10 +68,8 @@ test_that("select block: distinct deduplicates rows", {
 
 test_that("select block: state change from include to exclude", {
   blk <- new_select_block(
-    state = list(
-      columns = list("mpg", "cyl"),
-      exclude = FALSE, distinct = FALSE
-    )
+    columns = list("mpg", "cyl"),
+    exclude = FALSE, distinct = FALSE
   )
 
   testServer(
@@ -87,10 +83,9 @@ test_that("select block: state change from include to exclude", {
       expect_equal(colnames(result1), c("mpg", "cyl"))
 
       # Switch to exclude mode
-      session$returned$state$state(list(
-        columns = list("mpg", "cyl"),
-        exclude = TRUE, distinct = FALSE
-      ))
+      session$returned$state$columns(list("mpg", "cyl"))
+      session$returned$state$exclude(TRUE)
+      session$returned$state$distinct(FALSE)
       session$flushReact()
       result2 <- eval_bquoted(
         session$returned$expr(), mtcars

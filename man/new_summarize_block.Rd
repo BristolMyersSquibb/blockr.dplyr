@@ -4,15 +4,17 @@
 \alias{new_summarize_block}
 \title{Summarize block (JS-driven)}
 \usage{
-new_summarize_block(state = list(summaries = list(), by = list()), ...)
+new_summarize_block(summaries = list(), by = list(), ...)
 }
 \arguments{
-\item{state}{List with \code{summaries} (array of summary objects) and \code{by}
-(character vector of grouping columns). Summary types:
+\item{summaries}{Array of summary objects. Summary types:
 \itemize{
 \item \code{simple}: name, func (e.g. "mean"), col (column name)
 \item \code{expr}: name, expr (R expression string)
 }}
+
+\item{by}{Character vector (or array) of grouping columns for grouped
+summaries.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -42,13 +44,11 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_summarize_block(
-      state = list(
-        summaries = list(
-          list(type = "simple", name = "avg_sl", func = "mean",
-               col = "Sepal.Length")
-        ),
-        by = list("Species")
-      )
+      summaries = list(
+        list(type = "simple", name = "avg_sl", func = "mean",
+             col = "Sepal.Length")
+      ),
+      by = list("Species")
     ),
     data = list(data = iris)
   )

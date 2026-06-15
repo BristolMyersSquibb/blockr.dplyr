@@ -4,16 +4,26 @@
 \alias{new_filter_block}
 \title{Filter block (JS-driven)}
 \usage{
-new_filter_block(state = list(conditions = list(), operator = "&"), ...)
+new_filter_block(
+  conditions = list(),
+  operator = "&",
+  preserve_order = FALSE,
+  ...
+)
 }
 \arguments{
-\item{state}{List with \code{conditions} (array of condition objects) and
-\code{operator} ("&" or "|"). Condition types:
+\item{conditions}{Array of condition objects combined by \code{operator}.
+Condition types:
 \itemize{
 \item \code{values}: column, values (character vector), mode ("include"/"exclude")
 \item \code{numeric}: column, op (">", ">=", "<", "<=", "is", "is not"), value
 \item \code{expr}: expr (R expression as string)
 }}
+
+\item{operator}{How conditions are combined: \code{"&"} (all) or \code{"|"} (any).}
+
+\item{preserve_order}{If \code{TRUE}, rows are returned in the order matched by
+the conditions rather than the original data order.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -26,13 +36,11 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_filter_block(
-      state = list(
-        conditions = list(
-          list(type = "values", column = "Species",
-               values = list("setosa"), mode = "include")
-        ),
-        operator = "&"
-      )
+      conditions = list(
+        list(type = "values", column = "Species",
+             values = list("setosa"), mode = "include")
+      ),
+      operator = "&"
     ),
     data = list(data = iris)
   )

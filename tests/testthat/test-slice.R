@@ -6,11 +6,9 @@ eval_bquoted <- function(expr, df) {
 
 test_that("slice block: default head returns first n rows", {
   blk <- new_slice_block(
-    state = list(
-      type = "head", n = 5L, prop = NULL,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "head", n = 5L, prop = NULL,
+    order_by = "", with_ties = TRUE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -23,11 +21,9 @@ test_that("slice block: default head returns first n rows", {
 
 test_that("slice block: tail returns last n rows", {
   blk <- new_slice_block(
-    state = list(
-      type = "tail", n = 3L, prop = NULL,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "tail", n = 3L, prop = NULL,
+    order_by = "", with_ties = TRUE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -40,11 +36,9 @@ test_that("slice block: tail returns last n rows", {
 
 test_that("slice block: sample returns correct count", {
   blk <- new_slice_block(
-    state = list(
-      type = "sample", n = 10L, prop = NULL,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "sample", n = 10L, prop = NULL,
+    order_by = "", with_ties = TRUE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -57,11 +51,9 @@ test_that("slice block: sample returns correct count", {
 
 test_that("slice block: min returns rows with smallest values", {
   blk <- new_slice_block(
-    state = list(
-      type = "min", n = 5L, prop = NULL,
-      order_by = "mpg", with_ties = FALSE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "min", n = 5L, prop = NULL,
+    order_by = "mpg", with_ties = FALSE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -76,11 +68,9 @@ test_that("slice block: min returns rows with smallest values", {
 
 test_that("slice block: prop-based slicing", {
   blk <- new_slice_block(
-    state = list(
-      type = "head", n = 5L, prop = 0.25,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "head", n = 5L, prop = 0.25,
+    order_by = "", with_ties = TRUE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -92,11 +82,9 @@ test_that("slice block: prop-based slicing", {
 
 test_that("slice block: state change from head to tail", {
   blk <- new_slice_block(
-    state = list(
-      type = "head", n = 5L, prop = NULL,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    )
+    type = "head", n = 5L, prop = NULL,
+    order_by = "", with_ties = TRUE,
+    weight_by = "", replace = FALSE, by = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -105,11 +93,14 @@ test_that("slice block: state change from head to tail", {
     expect_equal(result1, head(mtcars, 5))
 
     # Switch to tail
-    session$returned$state$state(list(
-      type = "tail", n = 3L, prop = NULL,
-      order_by = "", with_ties = TRUE,
-      weight_by = "", replace = FALSE, by = list()
-    ))
+    session$returned$state$type("tail")
+    session$returned$state$n(3L)
+    session$returned$state$prop(NULL)
+    session$returned$state$order_by("")
+    session$returned$state$with_ties(TRUE)
+    session$returned$state$weight_by("")
+    session$returned$state$replace(FALSE)
+    session$returned$state$by(list())
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), mtcars)
     expect_equal(nrow(result2), 3)

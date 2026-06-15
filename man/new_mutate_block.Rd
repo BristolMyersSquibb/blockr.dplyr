@@ -5,14 +5,17 @@
 \title{Mutate block (JS-driven)}
 \usage{
 new_mutate_block(
-  state = list(mutations = list(list(name = "", expr = "")), by = list()),
+  mutations = list(list(name = "", expr = "")),
+  by = list(),
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{mutations} (array of objects with \code{name} and \code{expr}
-strings) and optional \code{by} (array of grouping column names).
-Each mutation becomes a \code{dplyr::mutate()} argument.}
+\item{mutations}{Array of objects with \code{name} and \code{expr} strings. Each
+mutation becomes a \code{dplyr::mutate()} argument creating or modifying a
+column.}
+
+\item{by}{Optional array of grouping column names for grouped mutation.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -25,10 +28,8 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_mutate_block(
-      state = list(
-        mutations = list(
-          list(name = "Sepal.Ratio", expr = "Sepal.Length / Sepal.Width")
-        )
+      mutations = list(
+        list(name = "Sepal.Ratio", expr = "Sepal.Length / Sepal.Width")
       )
     ),
     data = list(data = iris)

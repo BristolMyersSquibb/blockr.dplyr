@@ -166,13 +166,11 @@ test_that("build_column_meta returns correct structure", {
 
 test_that("filter block produces correct expression from initial state", {
   blk <- new_filter_block(
-    state = list(
-      conditions = list(
-        list(type = "values", column = "cyl",
-             values = list("4", "6"), mode = "include")
-      ),
-      operator = "&"
-    )
+    conditions = list(
+      list(type = "values", column = "cyl",
+           values = list("4", "6"), mode = "include")
+    ),
+    operator = "&"
   )
 
   testServer(
@@ -195,12 +193,10 @@ test_that("filter block produces correct expression from initial state", {
 
 test_that("filter block produces correct expression for numeric condition", {
   blk <- new_filter_block(
-    state = list(
-      conditions = list(
-        list(type = "numeric", column = "mpg", op = ">", value = 25)
-      ),
-      operator = "&"
-    )
+    conditions = list(
+      list(type = "numeric", column = "mpg", op = ">", value = 25)
+    ),
+    operator = "&"
   )
 
   testServer(
@@ -218,13 +214,11 @@ test_that("filter block produces correct expression for numeric condition", {
 
 test_that("filter block state change propagates to expression", {
   blk <- new_filter_block(
-    state = list(
-      conditions = list(
-        list(type = "values", column = "Species",
-             values = list("setosa"), mode = "include")
-      ),
-      operator = "&"
-    )
+    conditions = list(
+      list(type = "values", column = "Species",
+           values = list("setosa"), mode = "include")
+    ),
+    operator = "&"
   )
 
   testServer(
@@ -238,13 +232,11 @@ test_that("filter block state change propagates to expression", {
 
       # Update state via reactiveVal
       state <- session$returned$state
-      state$state(list(
-        conditions = list(
-          list(type = "values", column = "Species",
-               values = list("virginica"), mode = "include")
-        ),
-        operator = "&"
+      state$conditions(list(
+        list(type = "values", column = "Species",
+             values = list("virginica"), mode = "include")
       ))
+      state$operator("&")
       session$flushReact()
       expr_result2 <- session$returned$expr()
       evaluated2 <- eval_bquoted(expr_result2, iris)

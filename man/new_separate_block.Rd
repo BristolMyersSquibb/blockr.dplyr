@@ -5,15 +5,30 @@
 \title{Separate block (JS-driven)}
 \usage{
 new_separate_block(
-  state = list(col = "", into = list(), sep = "[^[:alnum:]]+", remove = TRUE, convert =
-    FALSE, extra = "warn", fill = "warn"),
+  col = "",
+  into = list(),
+  sep = "[^[:alnum:]]+",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "warn",
+  fill = "warn",
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{col} (string, source column), \code{into} (character
-vector of new column names), \code{sep} (string or regex), \code{remove} (logical),
-\code{convert} (logical), \code{extra} (string), and \code{fill} (string).}
+\item{col}{Source column name to split.}
+
+\item{into}{Character vector (or array) of new column names.}
+
+\item{sep}{Separator string or regular expression used to split \code{col}.}
+
+\item{remove}{Logical; whether to drop the source column.}
+
+\item{convert}{Logical; whether to run type conversion on the new columns.}
+
+\item{extra}{How to handle extra pieces (e.g. \code{"warn"}, \code{"drop"}, \code{"merge"}).}
+
+\item{fill}{How to handle too few pieces (e.g. \code{"warn"}, \code{"right"}, \code{"left"}).}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -29,15 +44,13 @@ if (interactive()) {
   df <- data.frame(x = c("a-1", "b-2", "c-3"), stringsAsFactors = FALSE)
   serve(
     new_separate_block(
-      state = list(
-        col = "x",
-        into = list("letter", "number"),
-        sep = "-",
-        remove = TRUE,
-        convert = FALSE,
-        extra = "warn",
-        fill = "warn"
-      )
+      col = "x",
+      into = list("letter", "number"),
+      sep = "-",
+      remove = TRUE,
+      convert = FALSE,
+      extra = "warn",
+      fill = "warn"
     ),
     data = list(data = df)
   )

@@ -5,14 +5,24 @@
 \title{Unite block (JS-driven)}
 \usage{
 new_unite_block(
-  state = list(col = "united", cols = list(), sep = "_", remove = TRUE, na_rm = FALSE),
+  col = "united",
+  cols = list(),
+  sep = "_",
+  remove = TRUE,
+  na_rm = FALSE,
   ...
 )
 }
 \arguments{
-\item{state}{List with \code{col} (string, new column name), \code{cols} (character
-vector of columns to unite), \code{sep} (string), \code{remove} (logical), and
-\code{na.rm} (logical).}
+\item{col}{Name of the new united column.}
+
+\item{cols}{Character vector of columns to paste together.}
+
+\item{sep}{Separator placed between values.}
+
+\item{remove}{If \code{TRUE}, remove the input columns from the output.}
+
+\item{na_rm}{If \code{TRUE}, drop missing values before uniting.}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -27,13 +37,11 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_unite_block(
-      state = list(
-        col = "full_name",
-        cols = list("Sepal.Length", "Sepal.Width"),
-        sep = "_",
-        remove = TRUE,
-        na.rm = FALSE
-      )
+      col = "full_name",
+      cols = list("Sepal.Length", "Sepal.Width"),
+      sep = "_",
+      remove = TRUE,
+      na_rm = FALSE
     ),
     data = list(data = iris)
   )

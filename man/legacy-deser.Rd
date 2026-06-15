@@ -4,11 +4,24 @@
 \alias{legacy-deser}
 \title{Legacy deserialization for old block formats}
 \description{
-Converts old serialized block payloads (individual parameters) to the
-new single-state format. This allows boards saved with old blockr.dplyr
-versions to be restored.
+Restores boards saved by older blockr.dplyr versions. Two historical
+formats are handled:
 }
 \details{
+\enumerate{
+\item \strong{Individual-parameter format} (oldest): each state field was a
+top-level payload entry, sometimes under different names or shapes
+(e.g. filter conditions without a \code{type}, summarize \code{summaries} as a
+named list). The per-block \code{state_builder} normalizes these to the
+current flat field set.
+\item \strong{Single-\code{state} blob format} (interim): the whole state was nested
+under one \code{state} payload key. This is unwrapped back to flat fields.
+}
+
+The current format already serializes flat top-level fields that map
+straight onto the constructors' flat arguments, so those pass through the
+(idempotent) builders unchanged.
+
 Drop this file when backwards compatibility is no longer needed.
 }
 \keyword{internal}

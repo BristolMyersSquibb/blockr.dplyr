@@ -5,21 +5,25 @@
 \title{Join block (JS-driven)}
 \usage{
 new_join_block(
-  state = list(type = "left_join", keys = list(), exprs = list(), suffix_x = ".x",
-    suffix_y = ".y"),
+  type = "left_join",
+  keys = list(),
+  exprs = list(),
+  suffix_x = ".x",
+  suffix_y = ".y",
   ...
 )
 }
 \arguments{
-\item{state}{List with:
-\itemize{
-\item \code{type}: join function name ("left_join", "inner_join", "right_join",
-"full_join", "semi_join", "anti_join")
-\item \code{keys}: list of key objects, each with \code{xCol}, \code{op}, \code{yCol}
-\item \code{exprs}: character vector of R expression strings for join_by()
-\item \code{suffix_x}: suffix for x columns (default ".x")
-\item \code{suffix_y}: suffix for y columns (default ".y")
-}}
+\item{type}{Join function name ("left_join", "inner_join", "right_join",
+"full_join", "semi_join", "anti_join").}
+
+\item{keys}{List of key objects, each with \code{xCol}, \code{op}, \code{yCol}.}
+
+\item{exprs}{Character vector of R expression strings for \code{join_by()}.}
+
+\item{suffix_x}{Suffix for x columns (default ".x").}
+
+\item{suffix_y}{Suffix for y columns (default ".y").}
 
 \item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
 }
@@ -33,14 +37,9 @@ if (interactive()) {
   library(blockr.core)
   serve(
     new_join_block(
-      state = list(
-        type = "left_join",
-        keys = list(
-          list(xCol = "id", op = "==", yCol = "id")
-        ),
-        exprs = list(),
-        suffix_x = ".x",
-        suffix_y = ".y"
+      type = "left_join",
+      keys = list(
+        list(xCol = "id", op = "==", yCol = "id")
       )
     ),
     data = list(x = iris, y = iris)

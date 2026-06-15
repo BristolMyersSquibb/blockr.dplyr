@@ -4,7 +4,8 @@
 #' Simple UI with an optional text input for .id column name.
 #' Variadic block: accepts any number of data inputs via the `...args` pattern.
 #'
-#' @param state List with `id_name` (string, optional .id column name).
+#' @param id_name Optional name for the `.id` column identifying the source
+#'   data frame of each row (empty string = no id column).
 #' @param ... Additional arguments forwarded to [blockr.core::new_block()]
 #'
 #' @examples
@@ -12,7 +13,7 @@
 #'   library(blockr.core)
 #'   serve(
 #'     new_bind_rows_block(
-#'       state = list(id_name = "source")
+#'       id_name = "source"
 #'     ),
 #'     data = list(a = iris[1:5, ], b = iris[6:10, ])
 #'   )
@@ -25,17 +26,18 @@
 #'
 #' @export
 new_bind_rows_block <- function(
-  state = list(id_name = ""),
+  id_name = "",
   ...
 ) {
+  state <- list(id_name = id_name)
   new_transform_block(
     # -- server ---------------------------------------------------------------
     function(id, ...args) { # nolint: object_name_linter.
       moduleServer(id, function(input, output, session) {
         ns <- session$ns
-        r_state <- reactiveVal(state)
 
-        js_block_sync(input, session, "bind-rows", "bind_rows_input", r_state)
+        sync <- js_block_state(input, session, "bind-rows",
+                               "bind_rows_input", state)
 
         arg_names <- reactive(
           setNames(names(...args), dot_args_names(...args))
@@ -43,7 +45,7 @@ new_bind_rows_block <- function(
 
         list(
           expr = reactive({
-            s <- r_state()
+            s <- sync$state()
             id_name <- s$id_name %||% ""
 
             data_args <- lapply(arg_names(), as_dot_call)
@@ -52,7 +54,7 @@ new_bind_rows_block <- function(
 
             expr
           }),
-          state = list(state = r_state)
+          state = sync$fields
         )
       })
     },
@@ -64,7 +66,7 @@ new_bind_rows_block <- function(
     class = "bind_rows_block",
     expr_type = "bquoted",
     external_ctrl = TRUE,
-    allow_empty_state = "state",
+    allow_empty_state = TRUE,
     ...
   )
 }

@@ -6,7 +6,7 @@ eval_bquoted <- function(expr, df) {
 
 test_that("arrange block: empty columns pass data through unchanged", {
   blk <- new_arrange_block(
-    state = list(columns = list())
+    columns = list()
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -18,9 +18,9 @@ test_that("arrange block: empty columns pass data through unchanged", {
 
 test_that("arrange block: ascending sort orders correctly", {
   blk <- new_arrange_block(
-    state = list(columns = list(
+    columns = list(
       list(column = "mpg", direction = "asc")
-    ))
+    )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -32,9 +32,9 @@ test_that("arrange block: ascending sort orders correctly", {
 
 test_that("arrange block: descending sort orders correctly", {
   blk <- new_arrange_block(
-    state = list(columns = list(
+    columns = list(
       list(column = "mpg", direction = "desc")
-    ))
+    )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -46,10 +46,10 @@ test_that("arrange block: descending sort orders correctly", {
 
 test_that("arrange block: multi-column sort", {
   blk <- new_arrange_block(
-    state = list(columns = list(
+    columns = list(
       list(column = "cyl", direction = "asc"),
       list(column = "mpg", direction = "desc")
-    ))
+    )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -67,9 +67,9 @@ test_that("arrange block: multi-column sort", {
 
 test_that("arrange block: state change from asc to desc", {
   blk <- new_arrange_block(
-    state = list(columns = list(
+    columns = list(
       list(column = "mpg", direction = "asc")
-    ))
+    )
   )
 
   testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
@@ -78,9 +78,9 @@ test_that("arrange block: state change from asc to desc", {
     expect_true(all(diff(result1$mpg) >= 0))
 
     # Change to descending
-    session$returned$state$state(list(columns = list(
+    session$returned$state$columns(list(
       list(column = "mpg", direction = "desc")
-    )))
+    ))
     session$flushReact()
     result2 <- eval_bquoted(session$returned$expr(), mtcars)
     expect_true(all(diff(result2$mpg) <= 0))
