@@ -10,6 +10,10 @@
   surfaces every field directly to the assistant and to external control.
   Boards saved with the old single-`state` format still restore; code
   passing `state = list(...)` must switch to the individual arguments.
+  The registry assistant metadata (`arguments` descriptions + `examples`)
+  was flattened to match: each field is now keyed by its constructor
+  argument name instead of nested under `state`, so the per-block AI sees
+  accurate parameter docs and canonical example shapes.
 - `new_filter_expr_block()`, `new_mutate_expr_block()` and
   `new_summarize_expr_block()` are removed: filter, mutate and summarize
   now each unify no-code and expression modes in a single UI. Boards

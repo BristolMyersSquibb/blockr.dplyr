@@ -132,19 +132,26 @@ register_dplyr_blocks <- function() {
       # select_block:
       structure(
         c(
-          state = paste0(
-            "Object with: columns (array of ",
-            "column name strings), ",
-            "exclude (boolean), ",
-            "distinct (boolean)"
+          columns = paste0(
+            "Array of column name strings ",
+            "to keep (or to remove, when ",
+            "exclude=true)"
+          ),
+          exclude = paste0(
+            "Boolean -- when true, drop the ",
+            "listed columns instead of ",
+            "keeping them"
+          ),
+          distinct = paste0(
+            "Boolean -- when true, ",
+            "deduplicate rows after ",
+            "selecting"
           )
         ),
         examples = list(
-          state = list(
-            columns = list("mpg", "cyl", "hp"),
-            exclude = FALSE,
-            distinct = FALSE
-          )
+          columns = list("mpg", "cyl", "hp"),
+          exclude = FALSE,
+          distinct = FALSE
         ),
         prompt = paste(
           "Set columns to keep (or set",
@@ -156,25 +163,42 @@ register_dplyr_blocks <- function() {
       # join_block:
       structure(
         c(
-          state = paste0(
-            "Object with: type (join type ",
-            "string), keys (array of ",
-            "{xCol, op, yCol}), ",
-            "exprs (array of R expression ",
-            "strings), suffix_x, suffix_y"
+          type = paste0(
+            "Join type string: left_join, ",
+            "inner_join, right_join, ",
+            "full_join, anti_join, or ",
+            "semi_join"
+          ),
+          keys = paste0(
+            "Array of {xCol, op, yCol} ",
+            "objects defining the column ",
+            "pairs to match"
+          ),
+          exprs = paste0(
+            "Array of R expression strings ",
+            "(optional, advanced join ",
+            "predicates)"
+          ),
+          suffix_x = paste0(
+            "Suffix added to overlapping ",
+            "column names from the left ",
+            "table (default '.x')"
+          ),
+          suffix_y = paste0(
+            "Suffix added to overlapping ",
+            "column names from the right ",
+            "table (default '.y')"
           )
         ),
         examples = list(
-          state = list(
-            type = "left_join",
-            keys = list(list(
-              xCol = "id", op = "==",
-              yCol = "id"
-            )),
-            exprs = list(),
-            suffix_x = ".x",
-            suffix_y = ".y"
-          )
+          type = "left_join",
+          keys = list(list(
+            xCol = "id", op = "==",
+            yCol = "id"
+          )),
+          exprs = list(),
+          suffix_x = ".x",
+          suffix_y = ".y"
         ),
         prompt = paste(
           "Set type to the join function:",
@@ -191,16 +215,17 @@ register_dplyr_blocks <- function() {
       # arrange_block:
       structure(
         c(
-          state = paste0(
-            "Object with: columns (array of ",
-            "{column, direction} where ",
-            "direction is \"asc\" or \"desc\")"
+          columns = paste0(
+            "Array of {column, direction} ",
+            "objects where direction is ",
+            "\"asc\" or \"desc\". Rows are ",
+            "sorted by the columns in order."
           )
         ),
         examples = list(
-          state = list(columns = list(
+          columns = list(
             list(column = "mpg", direction = "desc")
-          ))
+          )
         ),
         prompt = paste(
           "Each entry has column (name)",
@@ -212,28 +237,29 @@ register_dplyr_blocks <- function() {
       # mutate_block:
       structure(
         c(
-          state = paste0(
-            "Object with: mutations (array ",
-            "of objects, each with 'name' ",
-            "(new column name) and 'expr' ",
-            "(R expression string)), and ",
-            "optional by (array of grouping ",
-            "column names)"
+          mutations = paste0(
+            "Array of objects, each with ",
+            "'name' (new column name) and ",
+            "'expr' (R expression string)"
+          ),
+          by = paste0(
+            "Optional array of grouping ",
+            "column names (group the ",
+            "operation, e.g. mean per group)"
           )
         ),
         examples = list(
-          state = list(
-            mutations = list(
-              list(
-                name = "mpg_squared",
-                expr = "mpg^2"
-              ),
-              list(
-                name = "hp_per_cyl",
-                expr = "hp / cyl"
-              )
+          mutations = list(
+            list(
+              name = "mpg_squared",
+              expr = "mpg^2"
+            ),
+            list(
+              name = "hp_per_cyl",
+              expr = "hp / cyl"
             )
-          )
+          ),
+          by = list()
         ),
         prompt = paste(
           "Each mutation creates or modifies",
@@ -267,36 +293,36 @@ register_dplyr_blocks <- function() {
       # summarize_block:
       structure(
         c(
-          state = paste0(
-            "Object with: summaries (array ",
-            "of summary objects) and by ",
-            "(array of grouping column ",
-            "names). Summary types: ",
-            "'simple' (name, func like ",
-            "'mean'/'sd'/'sum'/'n'/",
+          summaries = paste0(
+            "Array of summary objects. ",
+            "Types: 'simple' (name, func ",
+            "like 'mean'/'sd'/'sum'/'n'/",
             "'n_distinct', col) or 'expr' ",
             "(name, expr as R expression ",
             "string)"
+          ),
+          by = paste0(
+            "Array of grouping column names ",
+            "-- this is how you group (do ",
+            "NOT write group_by() in exprs)"
           )
         ),
         examples = list(
-          state = list(
-            summaries = list(
-              list(
-                type = "simple",
-                name = "avg_mpg",
-                func = "mean",
-                col = "mpg"
-              ),
-              list(
-                type = "simple",
-                name = "count",
-                func = "n",
-                col = ""
-              )
+          summaries = list(
+            list(
+              type = "simple",
+              name = "avg_mpg",
+              func = "mean",
+              col = "mpg"
             ),
-            by = list("cyl")
-          )
+            list(
+              type = "simple",
+              name = "count",
+              func = "n",
+              col = ""
+            )
+          ),
+          by = list("cyl")
         ),
         prompt = paste(
           "Two modes for each summary:",
@@ -331,34 +357,39 @@ register_dplyr_blocks <- function() {
       # filter_block:
       structure(
         c(
-          state = paste0(
-            "Object with: conditions ",
-            "(array of condition objects) ",
-            "and operator ",
-            "(\"&\" or \"|\"). ",
-            "Condition types: ",
-            "\"values\" (column, values ",
-            "array of strings, mode ",
+          conditions = paste0(
+            "Array of condition objects. ",
+            "Types: \"values\" (column, ",
+            "values array of strings, mode ",
             "\"include\"/\"exclude\"), ",
             "\"numeric\" (column, op like ",
             "\">\"/\">=\"/\"<\"/\"<=\", ",
             "value as number), ",
             "\"expr\" (expr as R ",
             "expression string)"
+          ),
+          operator = paste0(
+            "How to combine conditions: ",
+            "\"&\" for AND (all match), ",
+            "\"|\" for OR (any match)"
+          ),
+          preserve_order = paste0(
+            "Boolean -- when true, keep the ",
+            "original row order rather than ",
+            "reordering"
           )
         ),
         examples = list(
-          state = list(
-            conditions = list(
-              list(
-                type = "values",
-                column = "Species",
-                values = list("setosa"),
-                mode = "include"
-              )
-            ),
-            operator = "&"
-          )
+          conditions = list(
+            list(
+              type = "values",
+              column = "Species",
+              values = list("setosa"),
+              mode = "include"
+            )
+          ),
+          operator = "&",
+          preserve_order = FALSE
         ),
         prompt = paste(
           "Conditions can be: type",
@@ -439,15 +470,13 @@ register_dplyr_blocks <- function() {
       # bind_rows_block:
       structure(
         c(
-          state = paste0(
-            "Object with: id_name ",
-            "(optional string for ",
-            ".id column name)"
+          id_name = paste0(
+            "Optional string -- name of an ",
+            ".id column identifying which ",
+            "input each row came from"
           )
         ),
-        examples = list(
-          state = list(id_name = "source")
-        )
+        examples = list(id_name = "source")
       ),
       # bind_cols_block:
       structure(
@@ -463,17 +492,19 @@ register_dplyr_blocks <- function() {
       # rename_block:
       structure(
         c(
-          state = paste0(
-            "Object with: renames (object",
-            " where keys are new names,",
-            " values are old names)"
+          renames = paste0(
+            "Object mapping new names to old",
+            " names: {new_name: 'old_name', ",
+            "...}. Keys are the desired new ",
+            "column names, values are the ",
+            "existing column names."
           )
         ),
         examples = list(
-          state = list(renames = list(
+          renames = list(
             miles_per_gallon = "mpg",
             cylinders = "cyl"
-          ))
+          )
         ),
         prompt = paste(
           "Renames is an object mapping",
@@ -487,28 +518,34 @@ register_dplyr_blocks <- function() {
       # slice_block:
       structure(
         c(
-          state = paste0(
-            "Object with: type ",
-            "('head'/'tail'/'min'/'max'/",
-            "'sample'), n (integer), ",
-            "prop (number 0-1, alternative",
-            " to n), order_by (column for",
-            " min/max), with_ties ",
-            "(boolean), weight_by (column",
-            " for sample), replace ",
-            "(boolean), by (array of ",
-            "grouping columns)"
-          )
+          type = paste0(
+            "One of 'head' (first n rows), ",
+            "'tail' (last n), 'min'/'max' ",
+            "(rows with smallest/largest ",
+            "order_by values), 'sample' ",
+            "(random sample)"
+          ),
+          n = "Integer row count",
+          prop = paste0(
+            "Number 0-1, proportion of rows ",
+            "(alternative to n -- not both)"
+          ),
+          order_by = "Column to rank by, for min/max",
+          with_ties = paste0(
+            "Boolean -- whether tied rows at ",
+            "the cutoff are all kept (min/max)"
+          ),
+          weight_by = "Column of weights, for sampling",
+          replace = "Boolean -- sample with replacement",
+          by = "Array of grouping columns (slice within each group)"
         ),
         examples = list(
-          state = list(
-            type = "head", n = 10L,
-            prop = NULL, order_by = "",
-            with_ties = TRUE,
-            weight_by = "",
-            replace = FALSE,
-            by = list()
-          )
+          type = "head", n = 10L,
+          prop = NULL, order_by = "",
+          with_ties = TRUE,
+          weight_by = "",
+          replace = FALSE,
+          by = list()
         ),
         prompt = paste(
           "Types: 'head' (first n rows),",
@@ -541,49 +578,44 @@ register_dplyr_blocks <- function() {
       # pivot_longer_block:
       structure(
         c(
-          state = paste0(
-            "Object with: cols (array of ",
-            "column names to pivot), ",
-            "names_to (string), ",
-            "values_to (string), ",
-            "values_drop_na (boolean), ",
-            "names_prefix (string)"
-          )
+          cols = "Array of column names to pivot to long form",
+          names_to = "String -- name of the new column holding the pivoted names",
+          values_to = "String -- name of the new column holding the pivoted values",
+          values_drop_na = "Boolean -- drop rows with NA values after pivoting",
+          names_prefix = "String -- regex prefix stripped from the pivoted names"
         ),
         examples = list(
-          state = list(
-            cols = list("col_a", "col_b"),
-            names_to = "variable",
-            values_to = "value",
-            values_drop_na = FALSE,
-            names_prefix = ""
-          )
+          cols = list("col_a", "col_b"),
+          names_to = "variable",
+          values_to = "value",
+          values_drop_na = FALSE,
+          names_prefix = ""
         )
       ),
       # pivot_wider_block:
       structure(
         c(
-          state = paste0(
-            "Object with: names_from ",
-            "(array), values_from (array),",
-            " id_cols (array, optional), ",
-            "values_fill (value or null), ",
-            "names_sep (string), ",
-            "names_prefix (string), ",
-            "values_fn (string or null, ",
-            "e.g. 'mean', 'sum', 'first')"
+          names_from = "Array of column(s) whose values become the new column names",
+          values_from = "Array of column(s) whose values fill the new columns",
+          id_cols = "Array (optional) of columns that uniquely identify each output row",
+          values_fill = "Value (or null) used to fill missing cells",
+          names_sep = "String separator joining multiple names_from / prefix parts",
+          names_prefix = "String prepended to every new column name",
+          values_fn = paste0(
+            "String (or null) aggregation ",
+            "function (e.g. 'mean', 'sum', ",
+            "'first') for duplicate id+name ",
+            "combinations"
           )
         ),
         examples = list(
-          state = list(
-            names_from = list("category"),
-            values_from = list("value"),
-            id_cols = list(),
-            values_fill = NULL,
-            names_sep = "_",
-            names_prefix = "",
-            values_fn = NULL
-          )
+          names_from = list("category"),
+          values_from = list("value"),
+          id_cols = list(),
+          values_fill = NULL,
+          names_sep = "_",
+          names_prefix = "",
+          values_fn = NULL
         ),
         prompt = paste(
           "Set values_fn (e.g., 'mean',",
@@ -596,44 +628,35 @@ register_dplyr_blocks <- function() {
       # unite_block:
       structure(
         c(
-          state = paste0(
-            "Object with: col (new column",
-            " name), cols (array of ",
-            "columns to unite), ",
-            "sep (separator string), ",
-            "remove (boolean), ",
-            "na_rm (boolean)"
-          )
+          col = "New column name for the united result",
+          cols = "Array of columns to unite",
+          sep = "Separator string placed between values",
+          remove = "Boolean -- remove the input columns after uniting",
+          na_rm = "Boolean -- drop NA values before uniting"
         ),
         examples = list(
-          state = list(
-            col = "full_name",
-            cols = list(
-              "first_name", "last_name"
-            ),
-            sep = " ", remove = TRUE,
-            na_rm = FALSE
-          )
+          col = "full_name",
+          cols = list(
+            "first_name", "last_name"
+          ),
+          sep = " ", remove = TRUE,
+          na_rm = FALSE
         )
       ),
       # separate_block:
       structure(
         c(
-          state = paste0(
-            "Object with: col (source ",
-            "column), into (array of new ",
-            "column names), sep (separator",
-            " string), remove (boolean), ",
-            "convert (boolean)"
-          )
+          col = "Source column to split",
+          into = "Array of new column names to split into",
+          sep = "Separator string (or regex) to split on",
+          remove = "Boolean -- remove the source column after splitting",
+          convert = "Boolean -- auto-convert the new columns to numeric/logical types"
         ),
         examples = list(
-          state = list(
-            col = "full_name",
-            into = list("first", "last"),
-            sep = " ", remove = TRUE,
-            convert = FALSE
-          )
+          col = "full_name",
+          into = list("first", "last"),
+          sep = " ", remove = TRUE,
+          convert = FALSE
         )
       )
     ),
