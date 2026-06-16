@@ -166,12 +166,26 @@ js_block_state <- function(input, session, name, input_name, state,
     if (self_write$active) {
       self_write$active <- FALSE
     } else {
-      session$sendCustomMessage(
-        paste0(name, "-block-update"),
-        list(
-          id = session$ns(input_name),
-          state = normalize_state(r_state())
-        )
+      # This observer runs OUTSIDE blockr.core's per-block error boundary
+      # (which only wraps expr eval / data / render), so a throw in
+      # `normalize_state()` or serialization is session-fatal rather than
+      # contained to the block. No block's state sync may ever take down the
+      # whole session -- contain it and warn so the block degrades instead.
+      tryCatch(
+        session$sendCustomMessage(
+          paste0(name, "-block-update"),
+          list(
+            id = session$ns(input_name),
+            state = normalize_state(r_state())
+          )
+        ),
+        error = function(e) {
+          warning(
+            sprintf("blockr.dplyr: could not sync '%s' state to JS: %s",
+                    name, conditionMessage(e)),
+            call. = FALSE
+          )
+        }
       )
     }
   })
