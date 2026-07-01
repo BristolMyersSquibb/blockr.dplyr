@@ -278,7 +278,11 @@
 
         const label = document.createElement('span');
         label.className = 'blockr-select__tag-label';
-        label.textContent = val;
+        // Match the dropdown option and single-select value display: show the
+        // value in normal font with the option's label muted on the side
+        // (`.blockr-select__opt-label`). Unnamed options fall back to bare value.
+        const opt = findOpt(options, val);
+        if (opt) { fillOptContent(label, opt); } else { label.textContent = val; }
         tag.appendChild(label);
 
         const removeBtn = document.createElement('button');
