@@ -29,11 +29,13 @@
     const val = optValue(o);
     const lbl = optLabel(o);
     el.appendChild(document.createTextNode(val));
+    // The element (or an ancestor) ellipsizes on overflow, so always offer
+    // the full text on hover.
+    el.title = lbl ? `${val} — ${lbl}` : val;
     if (lbl) {
       const span = document.createElement('span');
       span.className = 'blockr-select__opt-label';
       span.textContent = lbl;
-      span.setAttribute('title', lbl);
       el.appendChild(span);
     }
   };
@@ -255,11 +257,16 @@
       if (mode !== 'single') return;
       if (selected) {
         const opt = findOpt(options, /** @type {string} */ (selected));
-        if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = /** @type {string} */ (selected); }
+        if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = /** @type {string} */ (selected); valueEl.title = /** @type {string} */ (selected); }
+        // valueEl has pointer-events: none, so its title never triggers —
+        // hover happens on the control.
+        control.title = valueEl.title;
         valueEl.classList.remove('blockr-select__value--placeholder');
         searchInput.setAttribute('placeholder', '');
       } else {
         valueEl.textContent = placeholder;
+        valueEl.title = '';
+        control.title = '';
         valueEl.classList.add('blockr-select__value--placeholder');
         searchInput.setAttribute('placeholder', placeholder);
       }
@@ -282,7 +289,7 @@
         // value in normal font with the option's label muted on the side
         // (`.blockr-select__opt-label`). Unnamed options fall back to bare value.
         const opt = findOpt(options, val);
-        if (opt) { fillOptContent(label, opt); } else { label.textContent = val; }
+        if (opt) { fillOptContent(label, opt); } else { label.textContent = val; label.title = val; }
         tag.appendChild(label);
 
         const removeBtn = document.createElement('button');

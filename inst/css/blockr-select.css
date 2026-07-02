@@ -117,6 +117,10 @@
   flex-wrap: wrap;
   gap: 3px;
   align-items: center;
+  /* As a flex item of the control, min-width: auto would content-size this
+     past the control, defeating the tags' max-width: 100% cap below. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* --- Individual tag --- */
@@ -133,7 +137,9 @@
   color: var(--blockr-grey-700, #374151);
   cursor: default;
   user-select: none;
-  max-width: 160px;
+  /* Cap at the control width, not a fixed size: a tag only ellipsizes when
+     it alone cannot fit the row, so widening the block removes truncation. */
+  max-width: 100%;
 }
 
 .blockr-select__tag-label {
