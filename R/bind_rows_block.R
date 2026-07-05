@@ -39,8 +39,10 @@ new_bind_rows_block <- function(
         sync <- js_block_state(input, session, "bind-rows",
                                "bind_rows_input", state)
 
+        # Eval-env symbols for the connected inputs (.arg1, .arg2, ... for
+        # unnamed DAG-UI slots, else the link name); reactive on the link set.
         arg_names <- reactive(
-          setNames(names(...args), dot_args_names(...args))
+          dot_arg_refs(...args)
         )
 
         list(

@@ -29,8 +29,10 @@ new_bind_cols_block <- function(...) {
     # -- server ---------------------------------------------------------------
     function(id, ...args) { # nolint: object_name_linter.
       moduleServer(id, function(input, output, session) {
+        # Eval-env symbols for the connected inputs (.arg1, .arg2, ... for
+        # unnamed DAG-UI slots, else the link name); reactive on the link set.
         arg_names <- reactive(
-          setNames(names(...args), dot_args_names(...args))
+          dot_arg_refs(...args)
         )
 
         list(
