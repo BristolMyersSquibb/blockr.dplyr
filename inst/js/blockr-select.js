@@ -626,11 +626,16 @@
             selected = '';
           }
         } else {
-          if (sel != null) {
-            selected = /** @type {string[]} */ (sel).filter(v => vals.indexOf(v) >= 0);
-          } else {
-            selected = /** @type {string[]} */ (selected).filter(v => vals.indexOf(v) >= 0);
-          }
+          // A multi-select's selection is an array, but a caller may hand us a
+          // scalar (e.g. a block constructed with `names_from = "y"`). Coerce to
+          // an array so `.filter` never throws -- an unhandled throw here aborts
+          // the rest of the Shiny message batch, which can drop later custom
+          // messages (e.g. a chart's `drilldown-data`), leaving those blocks blank.
+          const src = sel != null ? sel : selected;
+          const arr = Array.isArray(src)
+            ? src
+            : (src != null && src !== '' ? [src] : []);
+          selected = arr.filter(v => vals.indexOf(v) >= 0);
         }
         render();
         if (isOpen) renderDropdown();

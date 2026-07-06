@@ -1,6 +1,6 @@
 Package: blockr.dplyr
 Title: Interactive 'dplyr' Data Transformation Blocks
-Version: 0.1.0.9004
+Version: 0.1.0.9005
 Authors@R:
     c(person(given = "Christoph",
              family = "Sax",
