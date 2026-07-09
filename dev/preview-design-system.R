@@ -6,9 +6,9 @@
 # so this also demonstrates the standalone case where all styling runs on
 # the var(--blockr-*, fallback) values.
 #
-# Run from your local blockr checkout, either
-#   - from the blockr.dplyr package dir:  source("dev/preview-design-system.R")
-#   - or from the workspace root:         source("blockr.dplyr/dev/preview-design-system.R")
+# Run from the workspace root:
+#   Rscript blockr.dplyr/dev/preview-design-system.R
+# (or source() the file from an R session; serves on port 3838)
 #
 # Things to try:
 #   * Gears (slice, pivots, join, read/write/download, viz/ggplot blocks):
@@ -28,13 +28,15 @@
 #   * Type pickers: ggplot's 9-type icon tile grid vs facet's 2-type
 #     segmented strip.
 #
-# NOTE: pkgload::load_all() serves the INSTALLED inst/js, not source —
-# after editing any inst/ asset, reinstall the package first.
-
-pkg <- if (file.exists("DESCRIPTION")) "." else "blockr.dplyr"
-pkgload::load_all(pkg)
+# NOTE: library(), not pkgload::load_all(), on purpose — blockr.viz builds
+# htmlDependencies on blockr.dplyr's shared assets via
+# system.file("css", package = "blockr.dplyr"), which returns '' for a
+# load_all()'d (uninstalled) dplyr and crashes addResourcePath. This means
+# edits only reach the browser after a reinstall:
+#   Rscript -e 'install.packages("blockr.dplyr", repos = NULL, type = "source")'
 
 library(blockr.core)
+library(blockr.dplyr)
 library(blockr.ggplot)
 library(blockr.viz)
 library(blockr.io)
