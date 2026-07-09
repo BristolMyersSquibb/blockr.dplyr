@@ -105,6 +105,12 @@ interface BlockrSelectConfigBase {
 interface BlockrSelectSingleConfig extends BlockrSelectConfigBase {
   /** Initial value (null/undefined: first option, or '' if none). */
   selected?: string | null;
+  /**
+   * Opt out of the first-option fallback: `''` means "nothing selected" and
+   * survives `setOptions()`, so the placeholder keeps showing. Use when a
+   * silent auto-pick would change results (default false).
+   */
+  allowEmpty?: boolean;
   onChange?: (value: string) => void;
 }
 
@@ -120,6 +126,7 @@ interface BlockrSelectMultiConfig extends BlockrSelectConfigBase {
 /** Internal union as consumed by createSelect (mode picks the shape). */
 interface BlockrSelectConfig extends BlockrSelectConfigBase {
   selected?: string | string[] | null;
+  allowEmpty?: boolean;
   reorderable?: boolean;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
