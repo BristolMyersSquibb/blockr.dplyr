@@ -273,7 +273,7 @@ interface BlockrNamespace {
   /** Commit-on-Enter text input with the "Enter ↵" chip (§5.5). */
   textCommit(
     input: HTMLInputElement,
-    opts: { onCommit: (value: string) => void; compact?: boolean }
+    opts: { onCommit: (value: string) => void }
   ): BlockrTextCommitHandle;
 }
 

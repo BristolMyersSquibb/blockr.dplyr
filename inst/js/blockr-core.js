@@ -233,14 +233,15 @@ Blockr.setRequiredEmpty = (el, empty) => {
  * go through the returned `sync(value)`, which resets the committed
  * baseline so a restored value never shows an armed chip.
  *
+ * The chip always reads "Enter ↵" — a bare glyph is not self-evident, and
+ * one label everywhere beats saving a few pixels in tight rows.
+ *
  * @param {HTMLInputElement} input
- * @param {{ onCommit: (value: string) => void, compact?: boolean }} opts
- *   `compact` renders a bare ↵ chip for tight in-row contexts.
+ * @param {{ onCommit: (value: string) => void }} opts
  * @returns {{ chip: HTMLButtonElement, commit: () => void,
  *             sync: (value: string) => void }}
  */
 Blockr.textCommit = (input, opts) => {
-  const compact = !!opts.compact;
   const chip = document.createElement('button');
   chip.type = 'button';
   chip.className = 'blockr-expr-confirm';
@@ -249,9 +250,7 @@ Blockr.textCommit = (input, opts) => {
   chip.style.display = 'none';
   let committed = input.value;
   let everCommitted = false;
-  const armed = compact ?
-    '<span class="blockr-kbd">↵</span>' :
-    'Enter <span class="blockr-kbd">↵</span>';
+  const armed = 'Enter <span class="blockr-kbd">↵</span>';
   const syncChip = () => {
     if (input.value !== committed) {
       chip.style.display = '';

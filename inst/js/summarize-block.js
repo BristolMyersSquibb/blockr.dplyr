@@ -190,9 +190,8 @@
       nameInput.value = name || '';
       summary._nameInput = nameInput;
       row.appendChild(nameInput);
-      // Commits on Enter/blur with a compact ↵ chip (§5.5)
+      // Commits on Enter/blur with the "Enter ↵" chip (§5.5)
       Blockr.textCommit(nameInput, {
-        compact: true,
         onCommit: (value) => {
           summary.name = value;
           this._submit();

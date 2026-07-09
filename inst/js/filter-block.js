@@ -360,9 +360,8 @@
         numInput.placeholder = 'Enter value\u2026';
         if (cond.numValue != null) numInput.value = /** @type {any} */ (cond.numValue);
         container.appendChild(numInput);
-        // Commits on Enter/blur with a compact \u21b5 chip (\u00a75.5)
+        // Commits on Enter/blur with the "Enter \u21b5" chip (\u00a75.5)
         Blockr.textCommit(numInput, {
-          compact: true,
           onCommit: (value) => {
             cond.numValue = value === '' ? null : parseFloat(value);
             this._submit();

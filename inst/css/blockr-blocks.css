@@ -159,17 +159,29 @@
   font-size: 0.95em;
 }
 
-/* Text input + commit chip side by side (Blockr.textCommit, §5.5). */
+/* Standalone bordered text input + commit chip (Blockr.textCommit, §5.5).
+   The chip overlays inside the field's right edge — never beside it — so it
+   reads the same as the chips that sit inside a .blockr-row or inside
+   blockr.io's path input. The input reserves room for the armed
+   "Enter ↵" label, which is the chip's widest state. */
 .blockr-commit-field {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
   width: 100%;
 }
 
 .blockr-commit-field > input {
   flex: 1 1 auto;
   min-width: 0;
+  padding-right: 78px;
+}
+
+.blockr-commit-field > .blockr-expr-confirm {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* Required field with no value: soft amber attention, not a hard error.

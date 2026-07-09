@@ -9,7 +9,8 @@
 blockr_core_js_dep <- function() {
   htmltools::htmlDependency(
     name = "blockr-core-js",
-    version = utils::packageVersion("blockr.dplyr"),
+    # Bump the suffix on every blockr-core.js edit (version-pinned cache).
+    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
     src = system.file("js", package = "blockr.dplyr"),
     script = "blockr-core.js"
   )
@@ -46,7 +47,8 @@ settings_band_dep <- function() {
 blockr_blocks_css_dep <- function() {
   htmltools::htmlDependency(
     name = "blockr-blocks-css",
-    version = utils::packageVersion("blockr.dplyr"),
+    # Bump the suffix on every blockr-blocks.css edit (version-pinned cache).
+    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
     src = system.file("css", package = "blockr.dplyr"),
     stylesheet = "blockr-blocks.css"
   )

@@ -122,7 +122,7 @@
       // No --bordered class needed: the row provides the border
       topRow.appendChild(typeWrap);
 
-      // n input — commits on Enter/blur with a compact ↵ chip (§5.5)
+      // n input — commits on Enter/blur with the "Enter ↵" chip (§5.5)
       const nWrap = document.createElement('div');
       nWrap.className = 'slb-n-wrap';
       this._nInput = document.createElement('input');
@@ -133,7 +133,6 @@
       this._nInput.placeholder = 'n';
       nWrap.appendChild(this._nInput);
       this._nCommit = Blockr.textCommit(this._nInput, {
-        compact: true,
         onCommit: () => {
           this._updateNValue();
           this._submit();
@@ -181,7 +180,6 @@
       this._rowsInput.placeholder = '1:5, c(1,3,5), -c(2,4)';
       this._rowsWrap.appendChild(this._rowsInput);
       this._rowsCommit = Blockr.textCommit(this._rowsInput, {
-        compact: true,
         onCommit: (value) => {
           this.rows = value;
           this._updateRequired();
