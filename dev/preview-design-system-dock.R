@@ -13,17 +13,19 @@
 # See the sibling script's header for the walk-through list (bands, amber
 # cues, Enter-chip commits, checkbox-vs-pill rule, type pickers).
 #
-# NOTE: library(), not pkgload::load_all() — installed blockr.viz/dock
-# resolve blockr.dplyr's shared assets via system.file(), which returns ''
-# for a load_all()'d dplyr and crashes addResourcePath. Reinstall after
-# editing inst/ assets.
+# NOTE: load_all() ALL of them, never a mix. Packages build their
+# htmlDependencies on each other's assets via
+# system.file("css", package = "blockr.dplyr"); pkgload swaps in a shim that
+# maps that onto the source inst/ — but only inside namespaces it loaded.
+# A load_all()'d blockr.dplyr behind an *installed* blockr.viz therefore
+# yields src = '' and crashes addResourcePath on page render.
 
-library(blockr.core)
-library(blockr.dplyr)
-library(blockr.ggplot)
-library(blockr.viz)
-library(blockr.io)
-library(blockr.dock)
+# Works from the workspace root or from the package dir.
+root <- if (file.exists("blockr.dplyr/DESCRIPTION")) "." else ".."
+for (p in c("blockr.core", "blockr.dplyr", "blockr.ggplot", "blockr.viz",
+            "blockr.io", "blockr.dock")) {
+  pkgload::load_all(file.path(root, p), quiet = TRUE)
+}
 library(blockr.dag)
 
 options(
@@ -98,20 +100,27 @@ serve(
       list(from = "data", to = "tile", input = "data")
     ),
     extensions = new_dag_extension(),
-    # Named PLAIN list (a pre-built dock_layouts object skips leaf-id
-    # resolution and blanks the board); leaf semantics: bare string = own
-    # panel, c(...) = tabbed group, nested list = split. "dag_extension"
-    # is the DAG panel's extension_id().
-    layouts = list(
-      Pipeline = dock_layout("dag_extension"),
-      `Data-IO` = dock_layout(c("data", "data2"), c("read", "write", "download")),
-      Bands = dock_layout(c("slice", "pivot_wider"), c("pivot_longer", "join")),
-      Cards = dock_layout(
-        c("select", "filter", "separate", "unite", "rename"),
-        c("mutate", "summarize", "arrange", "bind_rows")
+    # Current dock API: named PLAIN list of `grids =` (the old `layouts =` is
+    # swallowed by ... and silently ignored). Views are derived from the
+    # grids. A grid child is either a bare panel id or panels(...) for a
+    # tabbed group; "dag_extension" is the DAG panel's extension_id().
+    # View names must be safe identifiers (letters, digits, . - _).
+    grids = list(
+      Pipeline = dock_grid("dag_extension"),
+      `Data-IO` = dock_grid(
+        panels("data", "data2"),
+        panels("read", "write", "download")
       ),
-      Plots = dock_layout(c("gg", "facet"), c("theme", "grid")),
-      Renderers = dock_layout("chart", c("summary_table", "tile"))
+      Bands = dock_grid(
+        panels("slice", "pivot_wider"),
+        panels("pivot_longer", "join")
+      ),
+      Cards = dock_grid(
+        panels("select", "filter", "separate", "unite", "rename"),
+        panels("mutate", "summarize", "arrange", "bind_rows")
+      ),
+      Plots = dock_grid(panels("gg", "facet"), panels("theme", "grid")),
+      Renderers = dock_grid("chart", panels("summary_table", "tile"))
     ),
     active = "Pipeline"
   )

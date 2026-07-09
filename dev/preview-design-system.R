@@ -28,18 +28,19 @@
 #   * Type pickers: ggplot's 9-type icon tile grid vs facet's 2-type
 #     segmented strip.
 #
-# NOTE: library(), not pkgload::load_all(), on purpose — blockr.viz builds
-# htmlDependencies on blockr.dplyr's shared assets via
-# system.file("css", package = "blockr.dplyr"), which returns '' for a
-# load_all()'d (uninstalled) dplyr and crashes addResourcePath. This means
-# edits only reach the browser after a reinstall:
-#   Rscript -e 'install.packages("blockr.dplyr", repos = NULL, type = "source")'
+# NOTE: load_all() ALL of them, never a mix. Packages build their
+# htmlDependencies on each other's assets via
+# system.file("css", package = "blockr.dplyr"); pkgload swaps in a shim that
+# maps that onto the source inst/ — but only inside namespaces it loaded.
+# A load_all()'d blockr.dplyr behind an *installed* blockr.viz therefore
+# yields src = '' and crashes addResourcePath on page render.
 
-library(blockr.core)
-library(blockr.dplyr)
-library(blockr.ggplot)
-library(blockr.viz)
-library(blockr.io)
+# Works from the workspace root or from the package dir.
+root <- if (file.exists("blockr.dplyr/DESCRIPTION")) "." else ".."
+for (p in c("blockr.core", "blockr.dplyr", "blockr.ggplot", "blockr.viz",
+            "blockr.io")) {
+  pkgload::load_all(file.path(root, p), quiet = TRUE)
+}
 
 options(shiny.port = 3838)
 
