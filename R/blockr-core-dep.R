@@ -27,7 +27,8 @@ blockr_core_js_dep <- function() {
 settings_band_dep <- function() {
   htmltools::htmlDependency(
     name = "blockr-dplyr-settings-band",
-    version = utils::packageVersion("blockr.dplyr"),
+    # Bump the suffix on every settings-band.css/js edit (asset cache).
+    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
     src = system.file(package = "blockr.dplyr"),
     script = "js/settings-band.js",
     stylesheet = "css/settings-band.css"
