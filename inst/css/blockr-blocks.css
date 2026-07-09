@@ -153,6 +153,24 @@
   opacity: 0.5;
 }
 
+/* Muted keystroke glyph inside confirm chips and buttons ("Enter ↵"). */
+.blockr-kbd {
+  opacity: 0.55;
+  font-size: 0.95em;
+}
+
+/* Required field with no value: soft amber attention, not a hard error.
+   Canonical recipe — mirrors blockr.viz .dd-role-required-empty /
+   .stb-field--required-empty and blockr.io .blockr-path-required-empty.
+   Apply the class to the field wrapper (or directly to a standalone
+   text input); clears as soon as the field has a value. */
+.blockr-field--required-empty .blockr-select__control,
+.blockr-field--required-empty .blockr-text-input,
+.blockr-field--required-empty.blockr-text-input {
+  border-color: var(--blockr-color-warning, #f59e0b);
+  background: var(--blockr-color-warning-bg, #fffbeb);
+}
+
 /* --- Shared number input --- */
 .blockr-num-input {
   height: 30px;
