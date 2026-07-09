@@ -178,9 +178,14 @@
    Apply the class to the field wrapper (or directly to a standalone
    text input); clears as soon as the field has a value. */
 .blockr-field--required-empty .blockr-select__control,
+.blockr-field--required-empty.blockr-select--bordered .blockr-select__control,
+.blockr-field--required-empty .blockr-select--bordered .blockr-select__control,
 .blockr-field--required-empty .blockr-text-input,
 .blockr-field--required-empty.blockr-text-input,
 .blockr-field--required-empty.blockr-row {
+  /* The --bordered variants repeat the pattern at higher specificity:
+     blockr-select.css loads after this sheet and its equal-specificity
+     .blockr-select--bordered rule would win the border otherwise. */
   border-color: var(--blockr-color-warning, #f59e0b);
   background: var(--blockr-color-warning-bg, #fffbeb);
 }
