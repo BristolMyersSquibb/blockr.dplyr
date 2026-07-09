@@ -51,10 +51,17 @@
 
     // State
     let options = config.options || [];
+    // Single mode only: opt out of the first-option fallback so '' means
+    // "nothing selected" and survives setOptions(). Without it, any option
+    // refresh silently picks option 0 — fine for a column picker, wrong
+    // wherever an unrequested pick would change what the user is looking at.
+    const allowEmpty = mode === 'single' && config.allowEmpty === true;
     /** @type {string | string[]} string in 'single' mode, string[] in 'multi' */
     let selected = mode === 'multi'
       ? (config.selected || []).slice()
-      : (config.selected != null ? config.selected : (options.length > 0 ? optValue(options[0]) : ''));
+      : (config.selected != null
+          ? config.selected
+          : (allowEmpty || options.length === 0 ? '' : optValue(options[0])));
     const placeholder = config.placeholder || '';
     const reorderable = mode === 'multi' && config.reorderable !== false;
     const onChange = config.onChange || null;
@@ -620,6 +627,14 @@
         if (mode === 'single') {
           if (sel != null && vals.indexOf(/** @type {string} */ (sel)) >= 0) {
             selected = sel;
+          } else if (allowEmpty) {
+            // '' survives, and a selection that is no longer among the options
+            // CLEARS rather than sliding onto option 0. Omitting `sel` keeps a
+            // still-valid selection instead of resetting it.
+            selected = (sel == null &&
+                        vals.indexOf(/** @type {string} */ (selected)) >= 0)
+              ? selected
+              : '';
           } else if (options.length > 0) {
             selected = optValue(options[0]);
           } else {
