@@ -2,10 +2,11 @@
 /**
  * SelectBlock — JS-driven column select block input binding.
  *
- * Multi-select column picker with reorderable tags, exclude toggle,
- * and distinct option. Auto-submits on any change (300ms debounce).
+ * Multi-select column picker with reorderable tags, plus exclude and
+ * distinct checkboxes (design-system rule: data options are checkboxes).
+ * Submits immediately on any change.
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -35,17 +36,14 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._excludeBox = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._distinctBox = null;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -65,42 +63,32 @@
         reorderable: true,
         onChange: (selected) => {
           this.columns = selected;
-          this._autoSubmit();
+          this._submit();
         }
       });
       this._multiSelect.el.classList.add('blockr-select--bordered');
 
-      // Toggle bar: include/exclude pill + distinct pill
-      const toggleBar = document.createElement('div');
-      toggleBar.className = 'blockr-add-row';
+      // Option bar: exclude + distinct checkboxes (boolean data options)
+      const optionBar = document.createElement('div');
+      optionBar.className = 'blockr-checkbox-row sb-options';
 
-      this.excludeBtn = document.createElement('button');
-      this.excludeBtn.type = 'button';
-      this.excludeBtn.className = 'blockr-pill sb-toggle';
-      this.excludeBtn.textContent = 'include';
-      this.excludeBtn.title = 'Toggle between keeping or removing the selected columns';
-      this.excludeBtn.addEventListener('click', () => {
-        this.exclude = !this.exclude;
-        /** @type {HTMLButtonElement} */ (this.excludeBtn).textContent = this.exclude ? 'exclude' : 'include';
-        /** @type {HTMLButtonElement} */ (this.excludeBtn).classList.toggle('sb-toggle-active', this.exclude);
-        this._autoSubmit();
+      this._excludeBox = Blockr.checkbox('Exclude selected', this.exclude, (checked) => {
+        this.exclude = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this.excludeBtn);
+      this._excludeBox.input.title =
+        'Remove the selected columns instead of keeping them';
+      optionBar.appendChild(this._excludeBox.el);
 
-      this._distinctToggle = document.createElement('button');
-      this._distinctToggle.type = 'button';
-      this._distinctToggle.className = 'blockr-pill sb-toggle';
-      this._distinctToggle.textContent = 'all rows';
-      this._distinctToggle.title = 'Toggle deduplication of rows based on selected columns';
-      this._distinctToggle.addEventListener('click', () => {
-        this.distinct = !this.distinct;
-        /** @type {HTMLButtonElement} */ (this._distinctToggle).textContent = this.distinct ? 'distinct rows' : 'all rows';
-        /** @type {HTMLButtonElement} */ (this._distinctToggle).classList.toggle('sb-toggle-active', this.distinct);
-        this._autoSubmit();
+      this._distinctBox = Blockr.checkbox('Distinct rows', this.distinct, (checked) => {
+        this.distinct = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this._distinctToggle);
+      this._distinctBox.input.title =
+        'Deduplicate rows based on the selected columns';
+      optionBar.appendChild(this._distinctBox.el);
 
-      this.card.appendChild(toggleBar);
+      this.card.appendChild(optionBar);
     }
 
     /** @returns {SelectBlockState} */
@@ -131,10 +119,8 @@
       this.exclude = !!state?.exclude;
       this.distinct = !!state?.distinct;
 
-      /** @type {HTMLButtonElement} */ (this.excludeBtn).textContent = this.exclude ? 'exclude' : 'include';
-      /** @type {HTMLButtonElement} */ (this.excludeBtn).classList.toggle('sb-toggle-active', this.exclude);
-      /** @type {HTMLButtonElement} */ (this._distinctToggle).textContent = this.distinct ? 'distinct rows' : 'all rows';
-      /** @type {HTMLButtonElement} */ (this._distinctToggle).classList.toggle('sb-toggle-active', this.distinct);
+      /** @type {BlockrCheckboxHandle} */ (this._excludeBox).set(this.exclude);
+      /** @type {BlockrCheckboxHandle} */ (this._distinctBox).set(this.distinct);
 
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnOptions, this.columns);

@@ -3,7 +3,7 @@
  * BindRowsBlock — JS-driven dplyr::bind_rows block input binding.
  *
  * Simple: just a text input for id_name (optional).
- * Auto-submits on any change (300ms debounce).
+ * The .id name commits on Enter/blur (§5.5 chip).
  * Variadic block — no column message handler needed.
  *
  * Depends on: blockr-core.js
@@ -27,15 +27,10 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._idCommit = null;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -56,11 +51,16 @@
       this._idInput.className = 'blockr-text-input brb-text-input';
       this._idInput.value = '';
       this._idInput.placeholder = 'e.g. source';
-      this._idInput.addEventListener('input', () => {
-        this.id_name = /** @type {HTMLInputElement} */ (this._idInput).value;
-        this._autoSubmit();
+      const idField = document.createElement('div');
+      idField.className = 'blockr-commit-field';
+      idField.appendChild(this._idInput);
+      this._idCommit = Blockr.textCommit(this._idInput, {
+        onCommit: (value) => {
+          this.id_name = value;
+          this._submit();
+        }
       });
-      fieldWrap.appendChild(this._idInput);
+      fieldWrap.appendChild(idField);
       this.card.appendChild(fieldWrap);
     }
 
@@ -88,7 +88,7 @@
      */
     setState(state, silent) {
       this.id_name = state?.id_name || '';
-      /** @type {HTMLInputElement} */ (this._idInput).value = this.id_name;
+      /** @type {BlockrTextCommitHandle} */ (this._idCommit).sync(this.id_name);
     }
   }
 

@@ -3,10 +3,12 @@
  * UniteBlock — JS-driven tidyr::unite block input binding.
  *
  * Main UI: new column name text input, columns multi-select (bordered),
- * separator text input, remove/na_rm toggle pills.
- * Auto-submits on any change (300ms debounce).
+ * separator text input, remove/na_rm checkboxes.
+ * Selects and checkboxes submit immediately; text inputs commit on
+ * Enter/blur (§5.5 chip). The columns picker carries the amber
+ * required-empty cue while nothing is selected.
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -42,17 +44,19 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._removeBox = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._naRmBox = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._colCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._sepCommit = null;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
+      this._updateRequired();
     }
 
     _buildDOM() {
@@ -64,47 +68,58 @@
       const topRow = document.createElement('div');
       topRow.className = 'ub-input-row';
 
-      // col (new column name)
+      // col (new column name) — commits on Enter/blur (§5.5 chip)
       const colWrap = document.createElement('div');
       colWrap.className = 'ub-field';
       const colLabel = document.createElement('label');
       colLabel.className = 'blockr-label';
       colLabel.textContent = 'New column name';
       colWrap.appendChild(colLabel);
+      const colField = document.createElement('div');
+      colField.className = 'blockr-commit-field';
       this._colInput = document.createElement('input');
       this._colInput.type = 'text';
       this._colInput.className = 'blockr-text-input ub-text-input';
       this._colInput.value = this.col;
       this._colInput.placeholder = 'united';
-      this._colInput.addEventListener('input', () => {
-        this.col = /** @type {HTMLInputElement} */ (this._colInput).value;
-        this._autoSubmit();
+      colField.appendChild(this._colInput);
+      this._colCommit = Blockr.textCommit(this._colInput, {
+        onCommit: (value) => {
+          this.col = value;
+          this._submit();
+        }
       });
-      colWrap.appendChild(this._colInput);
+      colWrap.appendChild(colField);
       topRow.appendChild(colWrap);
 
-      // sep
+      // sep — commits on Enter/blur
       const sepWrap = document.createElement('div');
       sepWrap.className = 'ub-field ub-field-narrow';
       const sepLabel = document.createElement('label');
       sepLabel.className = 'blockr-label';
       sepLabel.textContent = 'Separator';
       sepWrap.appendChild(sepLabel);
+      const sepField = document.createElement('div');
+      sepField.className = 'blockr-commit-field';
       this._sepInput = document.createElement('input');
       this._sepInput.type = 'text';
       this._sepInput.className = 'blockr-text-input ub-text-input';
       this._sepInput.value = this.sep;
       this._sepInput.placeholder = '_';
-      this._sepInput.addEventListener('input', () => {
-        this.sep = /** @type {HTMLInputElement} */ (this._sepInput).value;
-        this._autoSubmit();
+      sepField.appendChild(this._sepInput);
+      this._sepCommit = Blockr.textCommit(this._sepInput, {
+        onCommit: (value) => {
+          this.sep = value;
+          this._submit();
+        }
       });
-      sepWrap.appendChild(this._sepInput);
+      sepWrap.appendChild(sepField);
       topRow.appendChild(sepWrap);
 
       this.card.appendChild(topRow);
 
-      // Column picker (bordered)
+      // Column picker (bordered) — required: unite with no columns is an
+      // identity transform, so it carries the amber cue while empty.
       const pickerWrap = document.createElement('div');
       pickerWrap.className = 'ub-picker-wrap blockr-select--bordered';
       const pickerLabel = document.createElement('label');
@@ -112,49 +127,46 @@
       pickerLabel.textContent = 'Columns to unite';
       pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
+      this._pickerWrap = pickerWrap;
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns\u2026',
+        placeholder: 'Select columns…',
         reorderable: true,
         onChange: (selected) => {
           this.cols = selected;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
 
-      // Toggle bar: remove + na_rm pills
-      const toggleBar = document.createElement('div');
-      toggleBar.className = 'blockr-add-row';
+      // Option bar: remove + na_rm checkboxes (boolean data options)
+      const optionBar = document.createElement('div');
+      optionBar.className = 'blockr-checkbox-row ub-options';
 
-      this._removeToggle = document.createElement('button');
-      this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill sb-toggle sb-toggle-active';
-      this._removeToggle.textContent = 'remove original';
-      this._removeToggle.title = 'Toggle whether the source columns are removed after uniting';
-      this._removeToggle.addEventListener('click', () => {
-        this.remove = !this.remove;
-        /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
-        /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
-        this._autoSubmit();
+      this._removeBox = Blockr.checkbox('Remove source columns', this.remove, (checked) => {
+        this.remove = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this._removeToggle);
+      this._removeBox.input.title =
+        'Remove the source columns after uniting';
+      optionBar.appendChild(this._removeBox.el);
 
-      this._naRmToggle = document.createElement('button');
-      this._naRmToggle.type = 'button';
-      this._naRmToggle.className = 'blockr-pill sb-toggle';
-      this._naRmToggle.textContent = 'keep NA';
-      this._naRmToggle.title = 'Toggle whether NA values are removed before pasting columns together';
-      this._naRmToggle.addEventListener('click', () => {
-        this.na_rm = !this.na_rm;
-        /** @type {HTMLButtonElement} */ (this._naRmToggle).textContent = this.na_rm ? 'drop NA' : 'keep NA';
-        /** @type {HTMLButtonElement} */ (this._naRmToggle).classList.toggle('sb-toggle-active', this.na_rm);
-        this._autoSubmit();
+      this._naRmBox = Blockr.checkbox('Drop NA values', this.na_rm, (checked) => {
+        this.na_rm = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this._naRmToggle);
+      this._naRmBox.input.title =
+        'Remove NA values before pasting columns together';
+      optionBar.appendChild(this._naRmBox.el);
 
-      this.card.appendChild(toggleBar);
+      this.card.appendChild(optionBar);
+    }
+
+    _updateRequired() {
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._pickerWrap), this.cols.length === 0);
     }
 
     /** @returns {UniteState} */
@@ -190,20 +202,19 @@
       this.remove = state?.remove !== false;
       this.na_rm = !!state?.na_rm;
 
-      // Update text inputs
-      /** @type {HTMLInputElement} */ (this._colInput).value = this.col;
-      /** @type {HTMLInputElement} */ (this._sepInput).value = this.sep;
+      // Update text inputs (sync resets the chips)
+      /** @type {BlockrTextCommitHandle} */ (this._colCommit).sync(this.col);
+      /** @type {BlockrTextCommitHandle} */ (this._sepCommit).sync(this.sep);
 
-      // Update toggles
-      /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
-      /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
-      /** @type {HTMLButtonElement} */ (this._naRmToggle).textContent = this.na_rm ? 'drop NA' : 'keep NA';
-      /** @type {HTMLButtonElement} */ (this._naRmToggle).classList.toggle('sb-toggle-active', this.na_rm);
+      // Update checkboxes
+      /** @type {BlockrCheckboxHandle} */ (this._removeBox).set(this.remove);
+      /** @type {BlockrCheckboxHandle} */ (this._naRmBox).set(this.na_rm);
 
       // Update multi-select
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnOptions, this.cols);
       }
+      this._updateRequired();
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -220,6 +231,7 @@
         this._multiSelect.setOptions(this.columnOptions, this.cols);
         this.cols = this._multiSelect.getValue();
       }
+      this._updateRequired();
     }
   }
 

@@ -47,7 +47,7 @@
 .spb-text-input:focus {
   outline: none;
   border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
 }
 
 .spb-text-input::placeholder {
@@ -55,3 +55,9 @@
 }
 
 /* Gear button and popover styles are in blockr-blocks.css (shared) */
+
+/* Option checkboxes below the inputs */
+.spb-options {
+  min-height: 30px;
+  padding: 3px 0;
+}

@@ -67,18 +67,11 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._bySelect = null;
 
       this._buildDOM();
       this._addRow('', '');
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -122,7 +115,7 @@
         reorderable: true,
         onChange: (value) => {
           this.byValues = value || [];
-          this._autoSubmit();
+          this._submit();
         }
       });
       this._bySelect.el.classList.add('blockr-select--bordered');
@@ -167,7 +160,7 @@
       const confirmBtn = document.createElement('button');
       confirmBtn.className = 'blockr-expr-confirm';
       confirmBtn.type = 'button';
-      confirmBtn.innerHTML = 'Enter \u21B5';
+      confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
       confirmBtn.title = 'Apply expression';
 
       /** @type {MutateRow} */
@@ -194,20 +187,31 @@
         placeholder: 'R expression\u2026',
         onChange: () => {
           confirmBtn.classList.remove('confirmed');
-          confirmBtn.innerHTML = 'Enter \u21B5';
+          confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
         },
         onConfirm: () => doConfirm()
       });
       rowData.exprInput = exprInput;
       row.appendChild(confirmBtn);
 
-      // Name input: debounced auto-submit on change (300ms)
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      let nameTimer = null;
+      // Name input joins the row's confirm cycle (§5.5): typing re-arms
+      // the chip, Enter or blur commits the row (only when dirty — a plain
+      // focus pass-through must not fire a submit).
+      let nameDirty = false;
       nameInput.addEventListener('input', () => {
-        clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (nameTimer));
-        nameTimer = setTimeout(() => this._submit(), 300);
+        nameDirty = true;
+        confirmBtn.classList.remove('confirmed');
+        confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
       });
+      const commitName = () => {
+        if (!nameDirty) return;
+        nameDirty = false;
+        doConfirm();
+      };
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commitName(); }
+      });
+      nameInput.addEventListener('blur', commitName);
 
       // Remove button
       const rmBtn = document.createElement('button');

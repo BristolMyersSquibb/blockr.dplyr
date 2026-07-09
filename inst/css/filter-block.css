@@ -30,15 +30,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Preserve order pill */
-.fb-preserve-btn { font-size: 10px !important; }
-
-.fb-preserve-btn.fb-preserve-active {
-  color: var(--blockr-color-primary, #2563eb) !important;
-  background: rgba(37, 99, 235, 0.08) !important;
-  border-color: rgba(37, 99, 235, 0.2) !important;
-}
-
 /* Expression row */
 .fb-row-expr .fb-expr-code {
   flex: 1;

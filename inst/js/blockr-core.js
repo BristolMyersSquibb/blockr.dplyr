@@ -210,3 +210,85 @@ Blockr.icons = {
     '1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 ' +
     '2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>'
 };
+
+/**
+ * Toggle the canonical required-empty amber cue (blockr-blocks.css
+ * .blockr-field--required-empty) on a field wrapper or standalone input.
+ * One name keeps call sites greppable for the blockr.ui move.
+ * @param {Element} el
+ * @param {boolean} empty
+ */
+Blockr.setRequiredEmpty = (el, empty) => {
+  el.classList.toggle('blockr-field--required-empty', !!empty);
+};
+
+/**
+ * Commit-on-Enter text input (design-system §5.5): typing never submits —
+ * a chip arms with "Enter ↵" while the value is dirty, the value commits on
+ * Enter, blur or the chip (which then fades to the ✓ icon), and Escape
+ * reverts to the last committed value.
+ *
+ * The input must already sit in its parent: the chip is inserted directly
+ * after it. Programmatic value changes (setState restores, mode switches)
+ * go through the returned `sync(value)`, which resets the committed
+ * baseline so a restored value never shows an armed chip.
+ *
+ * The chip always reads "Enter ↵" — a bare glyph is not self-evident, and
+ * one label everywhere beats saving a few pixels in tight rows.
+ *
+ * @param {HTMLInputElement} input
+ * @param {{ onCommit: (value: string) => void }} opts
+ * @returns {{ chip: HTMLButtonElement, commit: () => void,
+ *             sync: (value: string) => void }}
+ */
+Blockr.textCommit = (input, opts) => {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'blockr-expr-confirm';
+  chip.title = 'Apply (Enter)';
+  chip.setAttribute('aria-label', 'Apply (Enter)');
+  chip.style.display = 'none';
+  let committed = input.value;
+  let everCommitted = false;
+  const armed = 'Enter <span class="blockr-kbd">↵</span>';
+  const syncChip = () => {
+    if (input.value !== committed) {
+      chip.style.display = '';
+      chip.classList.remove('confirmed');
+      chip.innerHTML = armed;
+    } else if (everCommitted) {
+      chip.style.display = '';
+      chip.classList.add('confirmed');
+      chip.innerHTML = Blockr.icons.confirm;
+    } else {
+      chip.style.display = 'none';
+    }
+  };
+  const commit = () => {
+    if (input.value === committed) return;
+    committed = input.value;
+    everCommitted = true;
+    opts.onCommit(input.value);
+    syncChip();
+  };
+  input.addEventListener('input', syncChip);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    else if (e.key === 'Escape') { input.value = committed; syncChip(); }
+  });
+  input.addEventListener('blur', commit);
+  // Keep focus on the input so the chip click doesn't race blur-commit.
+  chip.addEventListener('mousedown', (e) => e.preventDefault());
+  chip.addEventListener('click', commit);
+  /** @type {Element} */ (input.parentElement).insertBefore(chip, input.nextSibling);
+  return {
+    chip,
+    commit,
+    sync: (value) => {
+      input.value = value;
+      committed = value;
+      everCommitted = false;
+      syncChip();
+    }
+  };
+};
