@@ -3,9 +3,10 @@
  * FilterBlock — JS-driven filter block input binding.
  *
  * Auto-detects column types: multi-select for categorical, comparison for numeric.
- * Value/range changes auto-submit (300ms debounce). Expression mode has explicit confirm.
+ * Discrete controls submit immediately; numeric values and expression mode
+ * commit on Enter/blur (§5.5 chip). "Keep pick order" is a checkbox.
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
+ * Depends on: blockr-core.js, blockr-select.js, blockr-input.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -91,19 +92,14 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       this.preserveOrder = false;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._preserveBox = null;
       /** @type {Set<string>} */
       this._pendingValueRequests = new Set();
 
       this._buildDOM();
       this._addValueRow(null, null);
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -141,7 +137,7 @@
       this.opToggle.addEventListener('click', () => {
         this.operator = this.operator === '&' ? '|' : '&';
         /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
-        this._autoSubmit();
+        this._submit();
       });
       addRow.appendChild(this.opToggle);
 
@@ -149,24 +145,20 @@
       spacer.style.flex = '1';
       addRow.appendChild(spacer);
 
-      this.preserveBtn = document.createElement('button');
-      this.preserveBtn.type = 'button';
-      this.preserveBtn.className = 'blockr-pill fb-preserve-btn';
-      this.preserveBtn.textContent = 'data order';
-      this.preserveBtn.title = 'Toggle between original data order and the order you picked values';
-      this.preserveBtn.addEventListener('click', () => {
-        this.preserveOrder = !this.preserveOrder;
-        /** @type {HTMLButtonElement} */ (this.preserveBtn).textContent = this.preserveOrder ? 'pick order' : 'data order';
-        /** @type {HTMLButtonElement} */ (this.preserveBtn).classList.toggle('fb-preserve-active', this.preserveOrder);
+      // Boolean data option -> checkbox (design-system rule)
+      this._preserveBox = Blockr.checkbox('Keep pick order', this.preserveOrder, (checked) => {
+        this.preserveOrder = checked;
         // Re-render value selects so reorderable state updates
         for (const c of this.conditions) {
           if (c.filterType === 'values' || c.filterType === 'numeric') {
             this._renderDynamicContent(c);
           }
         }
-        this._autoSubmit();
+        this._submit();
       });
-      addRow.appendChild(this.preserveBtn);
+      this._preserveBox.input.title =
+        'Keep rows in the order you picked values instead of the original data order';
+      addRow.appendChild(this._preserveBox.el);
 
       this.card.appendChild(addRow);
     }
@@ -200,7 +192,7 @@
         cond.op = ops[idx].value;
         btn.textContent = ops[idx].label;
         this._renderDynamicContent(cond);
-        this._autoSubmit();
+        this._submit();
       });
 
       cond._opBtn = btn;
@@ -271,7 +263,7 @@
       rmBtn.innerHTML = Blockr.icons.x;
       rmBtn.addEventListener('click', () => {
         this._removeCondition(id);
-        this._autoSubmit();
+        this._submit();
       });
       row.appendChild(rmBtn);
 
@@ -356,7 +348,7 @@
           onSearch: (query) => this._searchColumnValues(/** @type {string} */ (cond.column), query),
           onChange: (selected) => {
             cond.values = selected;
-            this._autoSubmit();
+            this._submit();
           }
         });
         cond._valueSelectize.setSearchInfo(meta);
@@ -367,11 +359,15 @@
         numInput.step = 'any';
         numInput.placeholder = 'Enter value\u2026';
         if (cond.numValue != null) numInput.value = /** @type {any} */ (cond.numValue);
-        numInput.addEventListener('input', () => {
-          cond.numValue = numInput.value === '' ? null : parseFloat(numInput.value);
-          this._autoSubmit();
-        });
         container.appendChild(numInput);
+        // Commits on Enter/blur with a compact \u21b5 chip (\u00a75.5)
+        Blockr.textCommit(numInput, {
+          compact: true,
+          onCommit: (value) => {
+            cond.numValue = value === '' ? null : parseFloat(value);
+            this._submit();
+          }
+        });
       }
     }
 
@@ -560,9 +556,8 @@
 
       // Restore "preserve order" toggle
       this.preserveOrder = !!state?.preserve_order;
-      if (this.preserveBtn) {
-        /** @type {HTMLButtonElement} */ (this.preserveBtn).textContent = this.preserveOrder ? 'pick order' : 'data order';
-        /** @type {HTMLButtonElement} */ (this.preserveBtn).classList.toggle('fb-preserve-active', this.preserveOrder);
+      if (this._preserveBox) {
+        this._preserveBox.set(this.preserveOrder);
       }
 
       // Rebuild from state

@@ -1,5 +1,6 @@
 /* SelectBlock — select block specific styles */
-/* Shared row/pill styles come from blockr-blocks.css */
+/* Shared row styles come from blockr-blocks.css; checkboxes from
+   settings-band.css */
 
 .select-block-container { width: 100%; }
 
@@ -14,14 +15,8 @@
   margin-bottom: 6px;
 }
 
-/* Toggle pills */
-.sb-toggle {
-  font-size: 10px !important;
-  margin-right: 6px;
-}
-
-.sb-toggle-active {
-  color: var(--blockr-color-primary, #2563eb) !important;
-  background: rgba(37, 99, 235, 0.08) !important;
-  border-color: rgba(37, 99, 235, 0.2) !important;
+/* Option checkboxes below the picker */
+.sb-options {
+  min-height: 30px;
+  padding: 3px 0;
 }

@@ -4,7 +4,8 @@
  *
  * Dynamic rows: each row has a column picker (single select), an arrow
  * separator, a text input for the new name, and a remove button.
- * Footer has an "Add rename" link. Auto-submits on change (300ms debounce
+ * Footer has an "Add rename" link. Selects submit immediately; the new-name
+ * input commits on Enter/blur (§5.5 compact chip
  * for text input).
  *
  * Depends on: blockr-core.js, blockr-select.js
@@ -28,6 +29,7 @@
    * @property {BlockrSelectSingleHandle | null} _colSelect
    * @property {HTMLDivElement | null} rowEl
    * @property {HTMLInputElement} [_nameInput]
+   * @property {BlockrTextCommitHandle} [_nameCommit]
    */
 
   class RenameBlock {
@@ -46,16 +48,9 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
 
       this._buildDOM();
       this._addRow(null, '');
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -113,10 +108,10 @@
           // Auto-populate new name if empty
           if (!row.newName && value) {
             row.newName = value;
-            /** @type {HTMLInputElement} */ (row._nameInput).value = value;
+            row._nameCommit?.sync(value);
           }
           this._syncColWidth();
-          this._autoSubmit();
+          this._submit();
         }
       });
 
@@ -132,12 +127,16 @@
       nameInput.className = 'rb-name-input';
       nameInput.placeholder = 'New name\u2026';
       nameInput.value = newName || '';
-      nameInput.addEventListener('input', () => {
-        row.newName = nameInput.value;
-        this._autoSubmit();
-      });
       row._nameInput = nameInput;
       rowEl.appendChild(nameInput);
+      // Commits on Enter/blur with a compact ↵ chip (§5.5)
+      row._nameCommit = Blockr.textCommit(nameInput, {
+        compact: true,
+        onCommit: (value) => {
+          row.newName = value;
+          this._submit();
+        }
+      });
 
       // Remove button
       const rmBtn = document.createElement('button');
@@ -146,7 +145,7 @@
       rmBtn.innerHTML = Blockr.icons.x;
       rmBtn.addEventListener('click', () => {
         this._removeRow(id);
-        this._autoSubmit();
+        this._submit();
       });
       rowEl.appendChild(rmBtn);
 

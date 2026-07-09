@@ -1,5 +1,32 @@
 # blockr.dplyr 0.2.0
 
+## Design-system alignment
+
+- Gear settings now expand a full-width, in-flow settings band between the
+  gear header and the block content (pivot_wider, pivot_longer, join,
+  slice) instead of a floating popover: content pushes down, the gear is
+  the only toggle, and there is no outside-click dismissal. Band assets
+  are vendored verbatim from blockr.viz (the canonical source until the
+  shared layer moves to blockr.ui).
+- On/off options are checkboxes instead of self-labeling toggle pills
+  (design-system rule: values cycle as pills, data options are
+  checkboxes): select exclude/distinct, separate remove/convert, unite
+  remove/na_rm, filter "Keep pick order", pivot_longer drop-NA, slice
+  keep-ties / sample-with-replacement. Cycling pills (AND/OR, asc/desc,
+  n/%, join type, operators) are unchanged.
+- Text and number inputs commit on Enter or blur with an "Enter ↵"
+  confirm chip (armed → faded check; Escape reverts) instead of
+  auto-submitting on a 300ms debounce; discrete controls (selects, pills,
+  checkboxes) now submit immediately.
+- Required-but-empty fields show a soft amber cue
+  (`.blockr-field--required-empty`): pivot_longer columns, pivot_wider
+  names/values-from, separate column/into, unite columns, slice
+  order-by (min/max) and custom row positions.
+- Token unification: one focus ring (blue-600 `--blockr-focus-ring`),
+  danger fallback `#dc2626`, mono font behind `--blockr-font-mono`;
+  the summarize block's CSS prefix is now `smb-` (collision with the
+  select block's `sb-`); the orphaned `filter-unified.css` is removed.
+
 ## Breaking changes
 
 - All block UIs rewritten as JS-driven components for instant feedback.

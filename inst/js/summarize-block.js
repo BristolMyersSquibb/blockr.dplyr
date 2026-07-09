@@ -91,8 +91,6 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._bySelectize = null;
 
@@ -100,20 +98,15 @@
       this._addSimpleRow(null, null, null);
     }
 
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
-    }
-
     _buildDOM() {
       // Card
       this.card = document.createElement('div');
-      this.card.className = 'sb-card';
+      this.card.className = 'smb-card';
       this.el.appendChild(this.card);
 
       // Summaries list
       this.listEl = document.createElement('div');
-      this.listEl.className = 'sb-summaries';
+      this.listEl.className = 'smb-summaries';
       this.card.appendChild(this.listEl);
 
       // Add row: [+ Add summary] [</>]
@@ -137,7 +130,7 @@
 
       // Group by section (below the card)
       this.bySection = document.createElement('div');
-      this.bySection.className = 'sb-by-section';
+      this.bySection.className = 'smb-by-section';
 
       const byLabel = document.createElement('span');
       byLabel.className = 'blockr-label';
@@ -145,7 +138,7 @@
       this.bySection.appendChild(byLabel);
 
       const byWrap = document.createElement('div');
-      byWrap.className = 'sb-by-wrap';
+      byWrap.className = 'smb-by-wrap';
       this.bySection.appendChild(byWrap);
 
       this._bySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
@@ -153,7 +146,7 @@
         selected: [],
         placeholder: 'Select grouping columns\u2026',
         reorderable: true,
-        onChange: (value) => { this.byValues = value || []; this._autoSubmit(); }
+        onChange: (value) => { this.byValues = value || []; this._submit(); }
       });
       this._bySelectize.el.classList.add('blockr-select--bordered');
 
@@ -185,32 +178,36 @@
       };
 
       const row = document.createElement('div');
-      row.className = 'blockr-row sb-row-simple';
+      row.className = 'blockr-row smb-row-simple';
       row.setAttribute('data-summary-id', /** @type {string} */ (/** @type {*} */ (id)));
       summary.rowEl = row;
 
       // Name input
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
-      nameInput.className = 'sb-name-input';
+      nameInput.className = 'smb-name-input';
       nameInput.placeholder = 'column_name';
       nameInput.value = name || '';
-      nameInput.addEventListener('input', () => {
-        summary.name = nameInput.value;
-        this._autoSubmit();
-      });
       summary._nameInput = nameInput;
       row.appendChild(nameInput);
+      // Commits on Enter/blur with a compact ↵ chip (§5.5)
+      Blockr.textCommit(nameInput, {
+        compact: true,
+        onCommit: (value) => {
+          summary.name = value;
+          this._submit();
+        }
+      });
 
       // Equals sign
       const eqSign = document.createElement('span');
-      eqSign.className = 'sb-eq-sign';
+      eqSign.className = 'smb-eq-sign';
       eqSign.textContent = '=';
       row.appendChild(eqSign);
 
       // Function selectize — include custom funcs not in the predefined list
       const funcDiv = document.createElement('div');
-      funcDiv.className = 'sb-func-wrap';
+      funcDiv.className = 'smb-func-wrap';
       row.appendChild(funcDiv);
       const funcOptions = (func && !this.summaryFuncs.includes(func))
         ? [...this.summaryFuncs, func]
@@ -222,20 +219,20 @@
         onChange: (value) => {
           summary.func = value;
           this._updateColVisibility(summary);
-          this._autoSubmit();
+          this._submit();
         }
       });
 
       // "of" label
       const ofLabel = document.createElement('span');
-      ofLabel.className = 'sb-of-label';
+      ofLabel.className = 'smb-of-label';
       ofLabel.textContent = 'of';
       summary._ofLabel = ofLabel;
       row.appendChild(ofLabel);
 
       // Column selectize
       const colWrap = document.createElement('div');
-      colWrap.className = 'sb-col-wrap';
+      colWrap.className = 'smb-col-wrap';
       row.appendChild(colWrap);
       summary._colWrap = colWrap;
       summary._colSelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colWrap, {
@@ -245,7 +242,7 @@
         placeholder: 'Column\u2026',
         onChange: (value) => {
           summary.col = value;
-          this._autoSubmit();
+          this._submit();
         }
       });
 
@@ -256,7 +253,7 @@
       rmBtn.innerHTML = Blockr.icons.x;
       rmBtn.addEventListener('click', () => {
         this._removeSummary(id);
-        this._autoSubmit();
+        this._submit();
       });
       row.appendChild(rmBtn);
 
@@ -288,33 +285,33 @@
       const id = this.nextId++;
 
       const row = document.createElement('div');
-      row.className = 'blockr-row sb-row-expr';
+      row.className = 'blockr-row smb-row-expr';
       row.setAttribute('data-summary-id', /** @type {string} */ (/** @type {*} */ (id)));
 
       // Name input
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
-      nameInput.className = 'sb-name-input';
+      nameInput.className = 'smb-name-input';
       nameInput.placeholder = 'column_name';
       nameInput.value = name || '';
       row.appendChild(nameInput);
 
       // Equals sign
       const eqSign = document.createElement('span');
-      eqSign.className = 'sb-eq-sign';
+      eqSign.className = 'smb-eq-sign';
       eqSign.textContent = '=';
       row.appendChild(eqSign);
 
       // Expression editor
       const codeDiv = document.createElement('div');
-      codeDiv.className = 'blockr-row-content sb-expr-code';
+      codeDiv.className = 'blockr-row-content smb-expr-code';
       row.appendChild(codeDiv);
 
       // Confirm button
       const confirmBtn = document.createElement('button');
       confirmBtn.className = 'blockr-expr-confirm';
       confirmBtn.type = 'button';
-      confirmBtn.innerHTML = 'Enter \u21B5';
+      confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
       confirmBtn.title = 'Apply expression';
 
       const doConfirm = () => {
@@ -331,11 +328,29 @@
         placeholder: 'R expression\u2026',
         onChange: () => {
           confirmBtn.classList.remove('confirmed');
-          confirmBtn.innerHTML = 'Enter \u21B5';
+          confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
         },
         onConfirm: () => doConfirm()
       });
       row.appendChild(confirmBtn);
+
+      // Name input joins the row's confirm cycle (§5.5): typing re-arms
+      // the chip, Enter or blur commits the row (only when dirty).
+      let nameDirty = false;
+      nameInput.addEventListener('input', () => {
+        nameDirty = true;
+        confirmBtn.classList.remove('confirmed');
+        confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+      });
+      const commitName = () => {
+        if (!nameDirty) return;
+        nameDirty = false;
+        doConfirm();
+      };
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commitName(); }
+      });
+      nameInput.addEventListener('blur', commitName);
 
       // Remove button
       const rmBtn = document.createElement('button');
@@ -559,7 +574,7 @@
       }
 
       // Auto-submit now that columns are available
-      this._autoSubmit();
+      this._submit();
     }
   }
 

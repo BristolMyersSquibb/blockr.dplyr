@@ -3,10 +3,12 @@
  * SeparateBlock — JS-driven tidyr::separate block input binding.
  *
  * Main UI: source column single-select (bordered), into text input
- * (comma-separated names), separator text input, remove/convert toggle pills.
- * Auto-submits on any change (300ms debounce).
+ * (comma-separated names), separator text input, remove/convert checkboxes.
+ * Selects and checkboxes submit immediately; text inputs commit on
+ * Enter/blur (§5.5 chip). Required fields (column, into) carry the amber
+ * required-empty cue.
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -43,17 +45,19 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectSingleHandle | null} */
       this._colSelect = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._removeBox = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._convertBox = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._intoCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._sepCommit = null;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
+      this._updateRequired();
     }
 
     _buildDOM() {
@@ -61,7 +65,7 @@
       this.card.className = 'spb-card';
       this.el.appendChild(this.card);
 
-      // Source column picker (bordered)
+      // Source column picker (bordered) — required
       const colWrap = document.createElement('div');
       colWrap.className = 'spb-col-wrap blockr-select--bordered';
       const colLabel = document.createElement('label');
@@ -71,89 +75,100 @@
       this._colSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colWrap, {
         options: this.columnOptions,
         selected: /** @type {any} */ (null),
-        placeholder: 'Select column\u2026',
+        placeholder: 'Select column…',
         onChange: (value) => {
           this.col = value;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
       this.card.appendChild(colWrap);
+      this._colWrap = colWrap;
 
       // Text inputs row: into + sep
       const inputRow = document.createElement('div');
       inputRow.className = 'spb-input-row';
 
-      // into (comma-separated names)
+      // into (comma-separated names) — required; commits on Enter/blur
       const intoWrap = document.createElement('div');
       intoWrap.className = 'spb-field';
       const intoLabel = document.createElement('label');
       intoLabel.className = 'blockr-label';
       intoLabel.textContent = 'Into (comma-separated)';
       intoWrap.appendChild(intoLabel);
+      const intoField = document.createElement('div');
+      intoField.className = 'blockr-commit-field';
       this._intoInput = document.createElement('input');
       this._intoInput.type = 'text';
       this._intoInput.className = 'blockr-text-input spb-text-input';
       this._intoInput.value = '';
       this._intoInput.placeholder = 'col1, col2, col3';
-      this._intoInput.addEventListener('input', () => {
-        this.into = this._parseInto(/** @type {HTMLInputElement} */ (this._intoInput).value);
-        this._autoSubmit();
+      intoField.appendChild(this._intoInput);
+      this._intoCommit = Blockr.textCommit(this._intoInput, {
+        onCommit: (value) => {
+          this.into = this._parseInto(value);
+          this._updateRequired();
+          this._submit();
+        }
       });
-      intoWrap.appendChild(this._intoInput);
+      intoWrap.appendChild(intoField);
       inputRow.appendChild(intoWrap);
+      this._intoWrap = intoWrap;
 
-      // sep
+      // sep — commits on Enter/blur
       const sepWrap = document.createElement('div');
       sepWrap.className = 'spb-field spb-field-narrow';
       const sepLabel = document.createElement('label');
       sepLabel.className = 'blockr-label';
       sepLabel.textContent = 'Separator';
       sepWrap.appendChild(sepLabel);
+      const sepField = document.createElement('div');
+      sepField.className = 'blockr-commit-field';
       this._sepInput = document.createElement('input');
       this._sepInput.type = 'text';
       this._sepInput.className = 'blockr-text-input spb-text-input';
       this._sepInput.value = this.sep;
       this._sepInput.placeholder = '[^[:alnum:]]+';
-      this._sepInput.addEventListener('input', () => {
-        this.sep = /** @type {HTMLInputElement} */ (this._sepInput).value;
-        this._autoSubmit();
+      sepField.appendChild(this._sepInput);
+      this._sepCommit = Blockr.textCommit(this._sepInput, {
+        onCommit: (value) => {
+          this.sep = value;
+          this._submit();
+        }
       });
-      sepWrap.appendChild(this._sepInput);
+      sepWrap.appendChild(sepField);
       inputRow.appendChild(sepWrap);
 
       this.card.appendChild(inputRow);
 
-      // Toggle bar: remove + convert pills
-      const toggleBar = document.createElement('div');
-      toggleBar.className = 'blockr-add-row';
+      // Option bar: remove + convert checkboxes (boolean data options)
+      const optionBar = document.createElement('div');
+      optionBar.className = 'blockr-checkbox-row spb-options';
 
-      this._removeToggle = document.createElement('button');
-      this._removeToggle.type = 'button';
-      this._removeToggle.className = 'blockr-pill sb-toggle sb-toggle-active';
-      this._removeToggle.textContent = 'remove original';
-      this._removeToggle.title = 'Toggle whether the source column is removed after splitting';
-      this._removeToggle.addEventListener('click', () => {
-        this.remove = !this.remove;
-        /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
-        /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
-        this._autoSubmit();
+      this._removeBox = Blockr.checkbox('Remove source column', this.remove, (checked) => {
+        this.remove = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this._removeToggle);
+      this._removeBox.input.title =
+        'Remove the source column after splitting';
+      optionBar.appendChild(this._removeBox.el);
 
-      this._convertToggle = document.createElement('button');
-      this._convertToggle.type = 'button';
-      this._convertToggle.className = 'blockr-pill sb-toggle';
-      this._convertToggle.textContent = 'keep types';
-      this._convertToggle.title = 'Toggle whether split values are auto-converted to numbers or logicals';
-      this._convertToggle.addEventListener('click', () => {
-        this.convert = !this.convert;
-        /** @type {HTMLButtonElement} */ (this._convertToggle).textContent = this.convert ? 'auto-convert' : 'keep types';
-        /** @type {HTMLButtonElement} */ (this._convertToggle).classList.toggle('sb-toggle-active', this.convert);
-        this._autoSubmit();
+      this._convertBox = Blockr.checkbox('Auto-convert types', this.convert, (checked) => {
+        this.convert = checked;
+        this._submit();
       });
-      toggleBar.appendChild(this._convertToggle);
+      this._convertBox.input.title =
+        'Auto-convert split values to numbers or logicals';
+      optionBar.appendChild(this._convertBox.el);
 
-      this.card.appendChild(toggleBar);
+      this.card.appendChild(optionBar);
+    }
+
+    _updateRequired() {
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._colWrap), !this.col);
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._intoWrap), this.into.length === 0);
     }
 
     /**
@@ -204,15 +219,15 @@
         this._colSelect.setOptions(this.columnOptions, this.col || null);
       }
 
-      // Update text inputs
-      /** @type {HTMLInputElement} */ (this._intoInput).value = this.into.join(', ');
-      /** @type {HTMLInputElement} */ (this._sepInput).value = this.sep;
+      // Update text inputs (sync resets the chips)
+      /** @type {BlockrTextCommitHandle} */ (this._intoCommit).sync(this.into.join(', '));
+      /** @type {BlockrTextCommitHandle} */ (this._sepCommit).sync(this.sep);
 
-      // Update toggles
-      /** @type {HTMLButtonElement} */ (this._removeToggle).textContent = this.remove ? 'remove original' : 'keep original';
-      /** @type {HTMLButtonElement} */ (this._removeToggle).classList.toggle('sb-toggle-active', this.remove);
-      /** @type {HTMLButtonElement} */ (this._convertToggle).textContent = this.convert ? 'auto-convert' : 'keep types';
-      /** @type {HTMLButtonElement} */ (this._convertToggle).classList.toggle('sb-toggle-active', this.convert);
+      // Update checkboxes
+      /** @type {BlockrCheckboxHandle} */ (this._removeBox).set(this.remove);
+      /** @type {BlockrCheckboxHandle} */ (this._convertBox).set(this.convert);
+
+      this._updateRequired();
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -230,6 +245,7 @@
         this._colSelect.setOptions(this.columnOptions, current);
         this.col = this._colSelect.getValue();
       }
+      this._updateRequired();
     }
   }
 

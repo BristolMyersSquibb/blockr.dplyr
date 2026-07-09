@@ -3,10 +3,10 @@
 
 .summarize-block-container { width: 100%; }
 
-.sb-card { overflow: visible; }
+.smb-card { overflow: visible; }
 
 /* --- Name input — plain text field, left side with separator --- */
-.sb-name-input {
+.smb-name-input {
   flex: 1;
   min-width: 60px;
   height: 30px;
@@ -20,12 +20,12 @@
   outline: none;
 }
 
-.sb-name-input::placeholder {
+.smb-name-input::placeholder {
   color: var(--blockr-grey-400, #9ca3af);
 }
 
 /* --- Equals sign --- */
-.sb-eq-sign {
+.smb-eq-sign {
   color: var(--blockr-grey-400, #9ca3af);
   font-size: 13px;
   padding: 0 2px;
@@ -34,7 +34,7 @@
 }
 
 /* --- "of" label between func and col --- */
-.sb-of-label {
+.smb-of-label {
   color: var(--blockr-grey-400, #9ca3af);
   font-size: var(--blockr-font-size-base, 0.875rem);
   flex-shrink: 0;
@@ -43,7 +43,7 @@
 }
 
 /* --- Function selectize wrapper --- */
-.sb-func-wrap {
+.smb-func-wrap {
   flex: 1;
   min-width: 80px;
   border-right: 1px solid var(--blockr-color-border, #e5e7eb);
@@ -51,19 +51,19 @@
 }
 
 /* --- Column selectize wrapper --- */
-.sb-col-wrap {
+.smb-col-wrap {
   flex: 1;
   min-width: 80px;
 }
 
 /* --- Expression row code area --- */
-.sb-row-expr .sb-expr-code {
+.smb-row-expr .smb-expr-code {
   flex: 1;
   min-width: 0;
 }
 
 /* --- Group by section --- */
-.sb-by-section {
+.smb-by-section {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -71,7 +71,7 @@
   padding: 0 2px;
 }
 
-.sb-by-wrap {
+.smb-by-wrap {
   flex: 1;
   min-width: 0;
 }

@@ -55,3 +55,9 @@
 }
 
 /* Gear button and popover styles are in blockr-blocks.css (shared) */
+
+/* Option checkboxes below the inputs */
+.spb-options {
+  min-height: 30px;
+  padding: 3px 0;
+}

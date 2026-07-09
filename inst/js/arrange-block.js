@@ -51,16 +51,9 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
 
       this._buildDOM();
       this._addRow(null, 'asc');
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _buildDOM() {
@@ -115,7 +108,7 @@
         placeholder: 'Column\u2026',
         onChange: (value) => {
           row.column = value;
-          this._autoSubmit();
+          this._submit();
         }
       });
 
@@ -130,7 +123,7 @@
         row.direction = row.direction === 'asc' ? 'desc' : 'asc';
         dirBtn.textContent = row.direction;
         dirBtn.classList.toggle('ab-dir-desc', row.direction === 'desc');
-        this._autoSubmit();
+        this._submit();
       });
       row._dirBtn = dirBtn;
       rowEl.appendChild(dirBtn);
@@ -142,7 +135,7 @@
       rmBtn.innerHTML = Blockr.icons.x;
       rmBtn.addEventListener('click', () => {
         this._removeRow(id);
-        this._autoSubmit();
+        this._submit();
       });
       rowEl.appendChild(rmBtn);
 

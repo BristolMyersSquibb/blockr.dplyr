@@ -30,7 +30,7 @@ Semantic:
 - `--blockr-color-border` (#e5e7eb) — all borders
 - `--blockr-color-bg-input` (#f9fafb) — input backgrounds
 - `--blockr-color-primary` (#2563eb) — focus rings, active states
-- `--blockr-color-danger` (#dc3545) — delete hover
+- `--blockr-color-danger` (#dc2626) — delete hover
 
 ## Sizing
 
@@ -44,7 +44,7 @@ Border radius: **8px** for inputs/rows/dropdowns, **4px** for pills/buttons.
 
 ## Interaction States
 
-**Focus ring:** `border-color: var(--blockr-color-primary)` + `box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1)`. Consistent across all focusable elements.
+**Focus ring:** `border-color: var(--blockr-color-primary)` + `box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12))` (blue-600). Consistent across all focusable elements.
 
 **Hover:** Background shifts to `--blockr-grey-50` or `--blockr-grey-100`. Transitions 0.15s ease.
 
@@ -65,13 +65,28 @@ Border radius: **8px** for inputs/rows/dropdowns, **4px** for pills/buttons.
 
 Rows have a fixed-width left column (150-160px) for the "key" (column name), a separator (`=`, `→`), and flex content for the "value."
 
-### Gear popover
+### Gear settings band
 
 ```
-.blockr-gear-header  — flex, justify-content: flex-end
-.blockr-gear-btn     — 26px square icon button
-.blockr-popover      — absolute positioned panel, 8px radius, shadow
+.blockr-gear-header       — flex, justify-content: flex-end
+.blockr-gear-btn          — 26px square icon button (toggle; .blockr-gear-active while open)
+.blockr-settings          — full-width in-flow band between the gear header and
+                            the content (settings-band.css, vendored from blockr.viz)
+.blockr-settings--beak    — notch pointing at the gear
+.blockr-settings__title / __grid / __field — band micro-heading + field grid
 ```
+
+The band replaced the floating `.blockr-popover` for dplyr's own blocks
+(design-system decision, gear-panel-proposals variant B): content pushes down,
+the gear is the only toggle, no outside-click dismissal. The `.blockr-popover-*`
+rules remain in blockr-blocks.css solely for downstream engine consumers
+(blockr.dm / blockr.viz / blockr.ggplot) until the blockr.ui move.
+
+Boolean data options render as `Blockr.checkbox` (`.blockr-checkbox`,
+settings-band.js); cycling pills stay where the label is the value (AND/OR,
+asc/desc, n/%, operators). Text/number inputs commit on Enter/blur via
+`Blockr.textCommit` (armed "Enter ↵" chip → faded ✓); required-but-empty
+fields get `Blockr.setRequiredEmpty` (amber `.blockr-field--required-empty`).
 
 ### Responsive layout
 
@@ -145,7 +160,7 @@ SVG icon strings: `chevron` (12px), `remove` (10px), `x` (14px), `plus` (14px), 
 .blockr-select__option--highlighted — element + modifier
 ```
 
-**Package-specific prefixes:** `fb-` (filter block), `mb-` (mutate block), `plb-` (pivot longer), `sb-` (summarize).
+**Package-specific prefixes:** `fb-` (filter block), `mb-` (mutate block), `plb-` (pivot longer), `smb-` (summarize), `sb-` (select).
 
 ## File Organization
 
@@ -167,8 +182,8 @@ Inconsistencies to address when updating the design system in blockr.dock:
 
 - **Border radius tiers:** Doc says 8px/4px but code also uses 6px (in separate, bind-rows, pivot-longer, unite for internal card sections). Need a clear three-tier system: 8px (containers/dropdowns) / 6px (sub-sections) / 4px (pills/buttons). Or standardize to two tiers.
 
-- **`sb-` prefix collision:** Both select block and summarize block use the `sb-` prefix. One needs renaming (e.g., `selb-` for select or `smb-` for summarize).
+- **`sb-` prefix collision:** resolved — summarize renamed to `smb-`; select keeps `sb-`.
 
 - **Missing from doc:** The `--bordered` modifier pattern (42px standalone variant), the 38px popover control height, and dropdown shadow values (`0 4px 12px rgba(0, 0, 0, 0.1)`) should be documented.
 
-- **Prefix inventory incomplete:** Only 4 of 13 block prefixes were listed. Full set: `ab-` (arrange), `bcb-` (bind-cols), `brb-` (bind-rows), `fb-` (filter), `jb-` (join), `mb-` (mutate), `plb-` (pivot-longer), `pwb-` (pivot-wider), `rb-` (rename), `sb-` (select/summarize), `slb-` (slice), `spb-` (separate), `ub-` (unite).
+- **Prefix inventory incomplete:** Only 4 of 13 block prefixes were listed. Full set: `ab-` (arrange), `bcb-` (bind-cols), `brb-` (bind-rows), `fb-` (filter), `jb-` (join), `mb-` (mutate), `plb-` (pivot-longer), `pwb-` (pivot-wider), `rb-` (rename), `sb-` (select), `slb-` (slice), `smb-` (summarize), `spb-` (separate), `ub-` (unite).

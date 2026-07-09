@@ -265,7 +265,11 @@
   background: rgba(37, 99, 235, 0.08);
 }
 
-/* --- Shared popover panel --- */
+/* --- Shared popover panel ---
+   blockr.dplyr's own blocks no longer use the floating popover (they moved
+   to the in-flow settings band, settings-band.css) — but the blockr.dm,
+   blockr.viz and blockr.ggplot engines still consume .blockr-popover-* from
+   this sheet. Keep until the shared layer moves to blockr.ui. --- */
 .blockr-popover {
   position: absolute;
   right: 0;
