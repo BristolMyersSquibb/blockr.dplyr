@@ -206,7 +206,7 @@
       this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select grouping columns…',
+        placeholder: 'None',
         reorderable: false,
         onChange: (selected) => {
           this.by = selected;
@@ -246,7 +246,11 @@
       this._orderBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(orderBySelectWrap, {
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
-        placeholder: 'Column…',
+        // Without this the control falls back to the first column and displays
+        // it while `order_by` is still '' — the block looks configured and is
+        // not (ux-principles, "the model and the control never disagree").
+        allowEmpty: true,
+        placeholder: 'Select column…',
         onChange: (value) => {
           this.order_by = value;
           this._updateRequired();
@@ -268,7 +272,9 @@
       this._weightBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(weightBySelectWrap, {
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
-        placeholder: 'Column (optional)…',
+        allowEmpty: true,
+        // Optional: empty is a configuration, so the placeholder names it.
+        placeholder: 'Unweighted',
         onChange: (value) => {
           this.weight_by = value;
           this._submit();

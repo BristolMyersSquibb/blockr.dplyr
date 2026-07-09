@@ -76,8 +76,6 @@
         this.exclude = checked;
         this._submit();
       });
-      this._excludeBox.input.title =
-        'Remove the selected columns instead of keeping them';
       optionBar.appendChild(this._excludeBox.el);
 
       this._distinctBox = Blockr.checkbox('Distinct rows', this.distinct, (checked) => {

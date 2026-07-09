@@ -142,7 +142,10 @@
       this._idColsSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(idColsWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns…',
+        // Empty is a legal configuration here, so the placeholder names what
+        // it does: make_pivot_wider_expr() omits `id_cols` and tidyr keeps
+        // every column not used by names_from / values_from.
+        placeholder: 'All other columns',
         reorderable: false,
         onChange: (selected) => {
           this.id_cols = selected;
@@ -259,7 +262,10 @@
         values_from: this.values_from.slice(),
         id_cols: this.id_cols.slice(),
         values_fill: this.values_fill || null,
-        names_sep: this.names_sep,
+        // A cleared field means "use the default", which is what the
+        // placeholder promises. Without the fallback `""` reaches
+        // tidyr::pivot_wider() and the names are joined with nothing.
+        names_sep: this.names_sep || '_',
         names_prefix: this.names_prefix,
         values_fn: this.values_fn || null
       };
