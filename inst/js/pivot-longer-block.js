@@ -3,10 +3,11 @@
  * PivotLongerBlock — JS-driven pivot_longer block input binding.
  *
  * Main UI: column multi-select (bordered), names_to text input, values_to text input.
- * Gear popover: values_drop_na toggle, names_prefix text input.
- * Auto-submits on any change (300ms debounce).
+ * Settings band (in-flow, gear-toggled): values_drop_na checkbox,
+ *   names_prefix text input.
+ * Selects submit immediately; text inputs commit on Enter/blur (§5.5 chip).
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -42,18 +43,20 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
-      this._popoverOpen = false;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._dropNaBox = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._namesToCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._valuesToCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._prefixCommit = null;
+      this._bandOpen = false;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
+      this._updateRequired();
     }
 
     _buildDOM() {
@@ -69,14 +72,16 @@
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
       this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
+      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
-      // Column picker (bordered)
+      // Settings band — in flow between the gear header and the content
+      // (a panel, not a menu: the gear is the only toggle).
+      this._buildBand();
+
+      // Column picker (bordered) — required: the block is an identity
+      // transform until columns are chosen, so it carries the amber cue.
       const pickerWrap = document.createElement('div');
       pickerWrap.className = 'plb-picker-wrap blockr-select--bordered';
       const pickerLabel = document.createElement('label');
@@ -84,15 +89,17 @@
       pickerLabel.textContent = 'Columns';
       pickerWrap.appendChild(pickerLabel);
       this.card.appendChild(pickerWrap);
+      this._pickerWrap = pickerWrap;
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns\u2026',
+        placeholder: 'Select columns…',
         reorderable: true,
         onChange: (selected) => {
           this.cols = selected;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
 
@@ -100,23 +107,28 @@
       const inputRow = document.createElement('div');
       inputRow.className = 'plb-input-row';
 
-      // names_to
+      // names_to — commits on Enter/blur with the "Enter ↵" chip (§5.5)
       const namesToWrap = document.createElement('div');
       namesToWrap.className = 'plb-field';
       const namesToLabel = document.createElement('label');
       namesToLabel.className = 'blockr-label';
       namesToLabel.textContent = 'Names to';
       namesToWrap.appendChild(namesToLabel);
+      const namesToField = document.createElement('div');
+      namesToField.className = 'blockr-commit-field';
       this._namesToInput = document.createElement('input');
       this._namesToInput.type = 'text';
       this._namesToInput.className = 'blockr-text-input plb-text-input';
       this._namesToInput.value = this.names_to;
       this._namesToInput.placeholder = 'name';
-      this._namesToInput.addEventListener('input', () => {
-        this.names_to = /** @type {HTMLInputElement} */ (this._namesToInput).value;
-        this._autoSubmit();
+      namesToField.appendChild(this._namesToInput);
+      this._namesToCommit = Blockr.textCommit(this._namesToInput, {
+        onCommit: (value) => {
+          this.names_to = value;
+          this._submit();
+        }
       });
-      namesToWrap.appendChild(this._namesToInput);
+      namesToWrap.appendChild(namesToField);
       inputRow.appendChild(namesToWrap);
 
       // values_to
@@ -126,94 +138,91 @@
       valuesToLabel.className = 'blockr-label';
       valuesToLabel.textContent = 'Values to';
       valuesToWrap.appendChild(valuesToLabel);
+      const valuesToField = document.createElement('div');
+      valuesToField.className = 'blockr-commit-field';
       this._valuesToInput = document.createElement('input');
       this._valuesToInput.type = 'text';
       this._valuesToInput.className = 'blockr-text-input plb-text-input';
       this._valuesToInput.value = this.values_to;
       this._valuesToInput.placeholder = 'value';
-      this._valuesToInput.addEventListener('input', () => {
-        this.values_to = /** @type {HTMLInputElement} */ (this._valuesToInput).value;
-        this._autoSubmit();
+      valuesToField.appendChild(this._valuesToInput);
+      this._valuesToCommit = Blockr.textCommit(this._valuesToInput, {
+        onCommit: (value) => {
+          this.values_to = value;
+          this._submit();
+        }
       });
-      valuesToWrap.appendChild(this._valuesToInput);
+      valuesToWrap.appendChild(valuesToField);
       inputRow.appendChild(valuesToWrap);
 
       this.card.appendChild(inputRow);
-
-      // Settings popover
-      this._buildPopover();
-
-      // Close popover on outside click
-      Blockr.onDocClick(this.el, (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
-            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
-          this._closePopover();
-        }
-      });
     }
 
-    // --- Settings popover ---
+    // --- Settings band ---
 
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
+    _buildBand() {
+      this.bandEl = document.createElement('div');
+      this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      // values_drop_na toggle
-      this._dropNaToggle = document.createElement('button');
-      this._dropNaToggle.type = 'button';
-      this._dropNaToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._dropNaToggle.textContent = 'Keep NA';
-      this._dropNaToggle.title = 'Toggle whether rows with NA values are dropped from the result';
-      this._dropNaToggle.addEventListener('click', () => {
-        this.values_drop_na = !this.values_drop_na;
-        /** @type {HTMLButtonElement} */ (this._dropNaToggle).textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
-        /** @type {HTMLButtonElement} */ (this._dropNaToggle).classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
-        this._autoSubmit();
+      const title = document.createElement('div');
+      title.className = 'blockr-settings__title';
+      title.textContent = 'Advanced settings';
+      this.bandEl.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'blockr-settings__grid';
+      this.bandEl.appendChild(grid);
+
+      // values_drop_na — boolean data option -> checkbox
+      const dropNaField = document.createElement('div');
+      dropNaField.className = 'blockr-settings__field';
+      this._dropNaBox = Blockr.checkbox('Drop NA values', this.values_drop_na, (checked) => {
+        this.values_drop_na = checked;
+        this._submit();
       });
-      this.popoverEl.appendChild(this._dropNaToggle);
+      this._dropNaBox.input.title =
+        'Drop rows whose value is NA from the result';
+      dropNaField.appendChild(this._dropNaBox.el);
+      grid.appendChild(dropNaField);
 
-      // names_prefix
-      const prefixRow = document.createElement('div');
-      prefixRow.className = 'blockr-popover-row';
+      // names_prefix — commits on Enter/blur (§5.5 chip)
+      const prefixField = document.createElement('div');
+      prefixField.className = 'blockr-settings__field';
       const prefixLabel = document.createElement('label');
-      prefixLabel.className = 'blockr-popover-label';
-      prefixLabel.textContent = 'Prefix:';
-      prefixRow.appendChild(prefixLabel);
+      prefixLabel.className = 'blockr-label';
+      prefixLabel.textContent = 'Prefix';
+      prefixField.appendChild(prefixLabel);
+      const prefixWrap = document.createElement('div');
+      prefixWrap.className = 'blockr-commit-field';
       this._prefixInput = document.createElement('input');
       this._prefixInput.type = 'text';
-      this._prefixInput.className = 'blockr-popover-input';
+      this._prefixInput.className = 'blockr-text-input';
       this._prefixInput.value = this.names_prefix;
       this._prefixInput.placeholder = '(optional)';
-      this._prefixInput.addEventListener('input', () => {
-        this.names_prefix = /** @type {HTMLInputElement} */ (this._prefixInput).value;
-        this._autoSubmit();
+      prefixWrap.appendChild(this._prefixInput);
+      this._prefixCommit = Blockr.textCommit(this._prefixInput, {
+        onCommit: (value) => {
+          this.names_prefix = value;
+          this._submit();
+        }
       });
-      prefixRow.appendChild(this._prefixInput);
-      this.popoverEl.appendChild(prefixRow);
+      prefixField.appendChild(prefixWrap);
+      grid.appendChild(prefixField);
 
-      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);
     }
 
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
+    _toggleBand() {
+      this._bandOpen = !this._bandOpen;
+      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
     }
 
-    _openPopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
-      this._popoverOpen = true;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
-      this._popoverOpen = false;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
+    _updateRequired() {
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._pickerWrap),
+        this.cols.length === 0
+      );
     }
 
     /** @returns {PivotLongerState} */
@@ -249,19 +258,19 @@
       this.values_drop_na = !!state?.values_drop_na;
       this.names_prefix = state?.names_prefix || '';
 
-      // Update text inputs
-      /** @type {HTMLInputElement} */ (this._namesToInput).value = this.names_to;
-      /** @type {HTMLInputElement} */ (this._valuesToInput).value = this.values_to;
+      // Update text inputs (sync resets the chip to its hidden state)
+      /** @type {BlockrTextCommitHandle} */ (this._namesToCommit).sync(this.names_to);
+      /** @type {BlockrTextCommitHandle} */ (this._valuesToCommit).sync(this.values_to);
 
-      // Update popover controls
-      /** @type {HTMLInputElement} */ (this._prefixInput).value = this.names_prefix;
-      /** @type {HTMLButtonElement} */ (this._dropNaToggle).textContent = this.values_drop_na ? 'Drop NA' : 'Keep NA';
-      /** @type {HTMLButtonElement} */ (this._dropNaToggle).classList.toggle('blockr-popover-toggle-active', this.values_drop_na);
+      // Update band controls
+      /** @type {BlockrTextCommitHandle} */ (this._prefixCommit).sync(this.names_prefix);
+      /** @type {BlockrCheckboxHandle} */ (this._dropNaBox).set(this.values_drop_na);
 
       // Update multi-select
       if (this._multiSelect) {
         this._multiSelect.setOptions(this.columnOptions, this.cols);
       }
+      this._updateRequired();
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -278,6 +287,7 @@
         this._multiSelect.setOptions(this.columnOptions, this.cols);
         this.cols = this._multiSelect.getValue();
       }
+      this._updateRequired();
     }
   }
 

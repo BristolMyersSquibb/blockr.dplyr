@@ -159,6 +159,19 @@
   font-size: 0.95em;
 }
 
+/* Text input + commit chip side by side (Blockr.textCommit, §5.5). */
+.blockr-commit-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.blockr-commit-field > input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Required field with no value: soft amber attention, not a hard error.
    Canonical recipe — mirrors blockr.viz .dd-role-required-empty /
    .stb-field--required-empty and blockr.io .blockr-path-required-empty.
@@ -166,7 +179,8 @@
    text input); clears as soon as the field has a value. */
 .blockr-field--required-empty .blockr-select__control,
 .blockr-field--required-empty .blockr-text-input,
-.blockr-field--required-empty.blockr-text-input {
+.blockr-field--required-empty.blockr-text-input,
+.blockr-field--required-empty.blockr-row {
   border-color: var(--blockr-color-warning, #f59e0b);
   background: var(--blockr-color-warning-bg, #fffbeb);
 }

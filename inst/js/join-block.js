@@ -6,7 +6,8 @@
  * Key rows: [x col select] [operator pill] [y col select] [remove]
  * Expression rows: [BlockrInput] [confirm] [remove]
  * Header: join type pill (click-cycle) + gear settings button
- * Settings popover: suffix X and Y text inputs
+ * Settings band (in-flow, gear-toggled): suffix X and Y text inputs
+ * (commit on Enter/blur, §5.5 chip)
  *
  * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
@@ -113,17 +114,14 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
-      this._popoverOpen = false;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._suffixXCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._suffixYCommit = null;
+      this._bandOpen = false;
 
       this._buildDOM();
       this._addKeyRow(null, null, null);
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
     }
 
     _submit() {
@@ -145,12 +143,13 @@
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
       this.gearBtn.title = 'Suffix settings';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
+      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
+
+      // Settings band — in flow between the gear header and the content
+      // (a panel, not a menu: the gear is the only toggle).
+      this._buildBand();
 
       // Header row: join type pill
       const header = document.createElement('div');
@@ -166,14 +165,11 @@
         this.joinTypeIdx = (this.joinTypeIdx + 1) % JOIN_TYPES.length;
         this.joinType = JOIN_TYPES[this.joinTypeIdx].value;
         /** @type {HTMLButtonElement} */ (this.joinTypePill).textContent = JOIN_TYPES[this.joinTypeIdx].label;
-        this._autoSubmit();
+        this._submit();
       });
       header.appendChild(this.joinTypePill);
 
       this.card.appendChild(header);
-
-      // Settings popover
-      this._buildPopover();
 
       // Keys/expressions list
       this.listEl = document.createElement('div');
@@ -198,81 +194,76 @@
       addRow.appendChild(addExprLink);
 
       this.card.appendChild(addRow);
-
-      // Close popover on outside click
-      Blockr.onDocClick(this.el, (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
-            !/** @type {HTMLButtonElement} */ (this.gearBtn).contains(/** @type {Node | null} */ (e.target))) {
-          this._closePopover();
-        }
-      });
     }
 
-    // --- Settings popover ---
+    // --- Settings band ---
 
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
+    _buildBand() {
+      this.bandEl = document.createElement('div');
+      this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      // Suffix X
-      const rowX = document.createElement('div');
-      rowX.className = 'blockr-popover-row';
+      const title = document.createElement('div');
+      title.className = 'blockr-settings__title';
+      title.textContent = 'Suffixes';
+      this.bandEl.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'blockr-settings__grid';
+      this.bandEl.appendChild(grid);
+
+      // Suffix X — commits on Enter/blur (§5.5 chip)
+      const fieldX = document.createElement('div');
+      fieldX.className = 'blockr-settings__field';
       const labelX = document.createElement('label');
-      labelX.textContent = 'Suffix X:';
-      labelX.className = 'blockr-popover-label';
+      labelX.textContent = 'Suffix X';
+      labelX.className = 'blockr-label';
+      fieldX.appendChild(labelX);
+      const wrapX = document.createElement('div');
+      wrapX.className = 'blockr-commit-field';
       this.suffixXInput = document.createElement('input');
       this.suffixXInput.type = 'text';
-      this.suffixXInput.className = 'blockr-popover-input';
+      this.suffixXInput.className = 'blockr-text-input';
       this.suffixXInput.value = this.suffixX;
-      this.suffixXInput.addEventListener('input', () => {
-        this.suffixX = /** @type {HTMLInputElement} */ (this.suffixXInput).value;
-        this._autoSubmit();
+      wrapX.appendChild(this.suffixXInput);
+      this._suffixXCommit = Blockr.textCommit(this.suffixXInput, {
+        onCommit: (value) => {
+          this.suffixX = value;
+          this._submit();
+        }
       });
-      rowX.appendChild(labelX);
-      rowX.appendChild(this.suffixXInput);
-      this.popoverEl.appendChild(rowX);
+      fieldX.appendChild(wrapX);
+      grid.appendChild(fieldX);
 
       // Suffix Y
-      const rowY = document.createElement('div');
-      rowY.className = 'blockr-popover-row';
+      const fieldY = document.createElement('div');
+      fieldY.className = 'blockr-settings__field';
       const labelY = document.createElement('label');
-      labelY.textContent = 'Suffix Y:';
-      labelY.className = 'blockr-popover-label';
+      labelY.textContent = 'Suffix Y';
+      labelY.className = 'blockr-label';
+      fieldY.appendChild(labelY);
+      const wrapY = document.createElement('div');
+      wrapY.className = 'blockr-commit-field';
       this.suffixYInput = document.createElement('input');
       this.suffixYInput.type = 'text';
-      this.suffixYInput.className = 'blockr-popover-input';
+      this.suffixYInput.className = 'blockr-text-input';
       this.suffixYInput.value = this.suffixY;
-      this.suffixYInput.addEventListener('input', () => {
-        this.suffixY = /** @type {HTMLInputElement} */ (this.suffixYInput).value;
-        this._autoSubmit();
+      wrapY.appendChild(this.suffixYInput);
+      this._suffixYCommit = Blockr.textCommit(this.suffixYInput, {
+        onCommit: (value) => {
+          this.suffixY = value;
+          this._submit();
+        }
       });
-      rowY.appendChild(labelY);
-      rowY.appendChild(this.suffixYInput);
-      this.popoverEl.appendChild(rowY);
+      fieldY.appendChild(wrapY);
+      grid.appendChild(fieldY);
 
-      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);
     }
 
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
-    }
-
-    _openPopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
-      this._popoverOpen = true;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
-      this._popoverOpen = false;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
+    _toggleBand() {
+      this._bandOpen = !this._bandOpen;
+      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
     }
 
     // --- Key rows ---
@@ -312,7 +303,7 @@
         onChange: (value) => {
           key.xCol = value;
           this._syncColWidth();
-          this._autoSubmit();
+          this._submit();
         }
       });
 
@@ -328,7 +319,7 @@
         opIdx = (opIdx + 1) % KEY_OPS.length;
         key.op = KEY_OPS[opIdx].value;
         opBtn.textContent = KEY_OPS[opIdx].label;
-        this._autoSubmit();
+        this._submit();
       });
       key._opBtn = opBtn;
       row.appendChild(opBtn);
@@ -344,7 +335,7 @@
         placeholder: 'y column\u2026',
         onChange: (value) => {
           key.yCol = value;
-          this._autoSubmit();
+          this._submit();
         }
       });
 
@@ -355,7 +346,7 @@
       rmBtn.innerHTML = Blockr.icons.x;
       rmBtn.addEventListener('click', () => {
         this._removeKey(id);
-        this._autoSubmit();
+        this._submit();
       });
       row.appendChild(rmBtn);
 
@@ -556,8 +547,8 @@
       // Set suffixes
       this.suffixX = state?.suffix_x ?? '.x';
       this.suffixY = state?.suffix_y ?? '.y';
-      /** @type {HTMLInputElement} */ (this.suffixXInput).value = this.suffixX;
-      /** @type {HTMLInputElement} */ (this.suffixYInput).value = this.suffixY;
+      /** @type {BlockrTextCommitHandle} */ (this._suffixXCommit).sync(this.suffixX);
+      /** @type {BlockrTextCommitHandle} */ (this._suffixYCommit).sync(this.suffixY);
 
       // Rebuild keys
       const keys = state?.keys || [];
@@ -631,7 +622,7 @@
       this._syncColWidth();
 
       // Auto-submit now that columns are available
-      this._autoSubmit();
+      this._submit();
     }
   }
 

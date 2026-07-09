@@ -4,10 +4,11 @@
  *
  * Main UI: names_from multi-select (bordered), values_from multi-select (bordered),
  * id_cols multi-select (bordered).
- * Gear popover: values_fill, names_sep, names_prefix text inputs.
- * Auto-submits on any change (300ms debounce).
+ * Settings band (in-flow, gear-toggled): values_fill, names_sep, names_prefix
+ *   text inputs + values_fn select.
+ * Selects submit immediately; text inputs commit on Enter/blur (§5.5 chip).
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -49,22 +50,22 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._namesFromSelect = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._valuesFromSelect = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._idColsSelect = null;
-      this._popoverOpen = false;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._fillCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._sepCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._prefixCommit = null;
+      this._bandOpen = false;
 
       this._buildDOM();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
+      this._updateRequired();
     }
 
     _buildDOM() {
@@ -80,14 +81,16 @@
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
       this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
+      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
-      // names_from picker (bordered)
+      // Settings band — in flow between the gear header and the content
+      // (a panel, not a menu: the gear is the only toggle).
+      this._buildBand();
+
+      // names_from picker (bordered) — required: pivot_wider without it is
+      // an identity transform, so it carries the amber cue while empty.
       const namesFromWrap = document.createElement('div');
       namesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
       const namesFromLabel = document.createElement('label');
@@ -97,16 +100,18 @@
       this._namesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(namesFromWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns\u2026',
+        placeholder: 'Select columns…',
         reorderable: false,
         onChange: (selected) => {
           this.names_from = selected;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
       this.card.appendChild(namesFromWrap);
+      this._namesFromWrap = namesFromWrap;
 
-      // values_from picker (bordered)
+      // values_from picker (bordered) — required, same reasoning
       const valuesFromWrap = document.createElement('div');
       valuesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
       const valuesFromLabel = document.createElement('label');
@@ -116,14 +121,16 @@
       this._valuesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(valuesFromWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns\u2026',
+        placeholder: 'Select columns…',
         reorderable: false,
         onChange: (selected) => {
           this.values_from = selected;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
       this.card.appendChild(valuesFromWrap);
+      this._valuesFromWrap = valuesFromWrap;
 
       // id_cols picker (bordered)
       const idColsWrap = document.createElement('div');
@@ -135,102 +142,83 @@
       this._idColsSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(idColsWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select columns\u2026',
+        placeholder: 'Select columns…',
         reorderable: false,
         onChange: (selected) => {
           this.id_cols = selected;
-          this._autoSubmit();
+          this._submit();
         }
       });
       this.card.appendChild(idColsWrap);
-
-      // Settings popover
-      this._buildPopover();
-
-      // Close popover on outside click
-      Blockr.onDocClick(this.el, (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
-            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
-          this._closePopover();
-        }
-      });
     }
 
-    // --- Settings popover ---
+    // --- Settings band ---
 
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
+    /**
+     * Build one band text field with a commit chip.
+     * @param {HTMLElement} grid @param {string} label @param {string} value
+     * @param {string} placeholder @param {(value: string) => void} onCommit
+     * @returns {{ input: HTMLInputElement, commit: BlockrTextCommitHandle }}
+     */
+    _bandTextField(grid, label, value, placeholder, onCommit) {
+      const field = document.createElement('div');
+      field.className = 'blockr-settings__field';
+      const labelEl = document.createElement('label');
+      labelEl.className = 'blockr-label';
+      labelEl.textContent = label;
+      field.appendChild(labelEl);
+      const wrap = document.createElement('div');
+      wrap.className = 'blockr-commit-field';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'blockr-text-input';
+      input.value = value;
+      input.placeholder = placeholder;
+      wrap.appendChild(input);
+      const commit = Blockr.textCommit(input, { onCommit });
+      field.appendChild(wrap);
+      grid.appendChild(field);
+      return { input, commit };
+    }
 
-      // values_fill
-      const fillRow = document.createElement('div');
-      fillRow.className = 'blockr-popover-row';
-      const fillLabel = document.createElement('label');
-      fillLabel.className = 'blockr-popover-label';
-      fillLabel.textContent = 'Fill:';
-      fillRow.appendChild(fillLabel);
-      this._fillInput = document.createElement('input');
-      this._fillInput.type = 'text';
-      this._fillInput.className = 'blockr-popover-input';
-      this._fillInput.value = this.values_fill;
-      this._fillInput.placeholder = '(optional)';
-      this._fillInput.addEventListener('input', () => {
-        this.values_fill = /** @type {HTMLInputElement} */ (this._fillInput).value;
-        this._autoSubmit();
-      });
-      fillRow.appendChild(this._fillInput);
-      this.popoverEl.appendChild(fillRow);
+    _buildBand() {
+      this.bandEl = document.createElement('div');
+      this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      // names_sep
-      const sepRow = document.createElement('div');
-      sepRow.className = 'blockr-popover-row';
-      const sepLabel = document.createElement('label');
-      sepLabel.className = 'blockr-popover-label';
-      sepLabel.textContent = 'Separator:';
-      sepRow.appendChild(sepLabel);
-      this._sepInput = document.createElement('input');
-      this._sepInput.type = 'text';
-      this._sepInput.className = 'blockr-popover-input';
-      this._sepInput.value = this.names_sep;
-      this._sepInput.placeholder = '_';
-      this._sepInput.addEventListener('input', () => {
-        this.names_sep = /** @type {HTMLInputElement} */ (this._sepInput).value;
-        this._autoSubmit();
-      });
-      sepRow.appendChild(this._sepInput);
-      this.popoverEl.appendChild(sepRow);
+      const title = document.createElement('div');
+      title.className = 'blockr-settings__title';
+      title.textContent = 'Advanced settings';
+      this.bandEl.appendChild(title);
 
-      // names_prefix
-      const prefixRow = document.createElement('div');
-      prefixRow.className = 'blockr-popover-row';
-      const prefixLabel = document.createElement('label');
-      prefixLabel.className = 'blockr-popover-label';
-      prefixLabel.textContent = 'Prefix:';
-      prefixRow.appendChild(prefixLabel);
-      this._prefixInput = document.createElement('input');
-      this._prefixInput.type = 'text';
-      this._prefixInput.className = 'blockr-popover-input';
-      this._prefixInput.value = this.names_prefix;
-      this._prefixInput.placeholder = '(optional)';
-      this._prefixInput.addEventListener('input', () => {
-        this.names_prefix = /** @type {HTMLInputElement} */ (this._prefixInput).value;
-        this._autoSubmit();
-      });
-      prefixRow.appendChild(this._prefixInput);
-      this.popoverEl.appendChild(prefixRow);
+      const grid = document.createElement('div');
+      grid.className = 'blockr-settings__grid';
+      this.bandEl.appendChild(grid);
+
+      // values_fill / names_sep / names_prefix — commit on Enter/blur (§5.5)
+      const fill = this._bandTextField(grid, 'Fill', this.values_fill, '(optional)',
+        (value) => { this.values_fill = value; this._submit(); });
+      this._fillInput = fill.input;
+      this._fillCommit = fill.commit;
+
+      const sep = this._bandTextField(grid, 'Separator', this.names_sep, '_',
+        (value) => { this.names_sep = value; this._submit(); });
+      this._sepInput = sep.input;
+      this._sepCommit = sep.commit;
+
+      const prefix = this._bandTextField(grid, 'Prefix', this.names_prefix, '(optional)',
+        (value) => { this.names_prefix = value; this._submit(); });
+      this._prefixInput = prefix.input;
+      this._prefixCommit = prefix.commit;
 
       // values_fn (aggregation function for duplicates)
-      const fnRow = document.createElement('div');
-      fnRow.className = 'blockr-popover-row';
+      const fnField = document.createElement('div');
+      fnField.className = 'blockr-settings__field';
       const fnLabel = document.createElement('label');
-      fnLabel.className = 'blockr-popover-label';
-      fnLabel.textContent = 'Aggregation:';
-      fnRow.appendChild(fnLabel);
+      fnLabel.className = 'blockr-label';
+      fnLabel.textContent = 'Aggregation';
+      fnField.appendChild(fnLabel);
       const fnWrap = document.createElement('div');
-      fnWrap.className = 'blockr-popover-select-wrap';
-      fnRow.appendChild(fnWrap);
+      fnField.appendChild(fnWrap);
       const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
       this._valuesFnSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(fnWrap, {
         options: fnOptions,
@@ -238,32 +226,30 @@
         placeholder: '(none)',
         onChange: (value) => {
           this.values_fn = value;
-          this._autoSubmit();
+          this._submit();
         }
       });
-      this.popoverEl.appendChild(fnRow);
+      this._valuesFnSelect.el.classList.add('blockr-select--bordered');
+      grid.appendChild(fnField);
 
-      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);
     }
 
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
+    _toggleBand() {
+      this._bandOpen = !this._bandOpen;
+      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
     }
 
-    _openPopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
-      this._popoverOpen = true;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
-    }
-
-    _closePopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
-      this._popoverOpen = false;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
+    _updateRequired() {
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._namesFromWrap),
+        this.names_from.length === 0
+      );
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._valuesFromWrap),
+        this.values_from.length === 0
+      );
     }
 
     /** @returns {PivotWiderState} */
@@ -303,10 +289,10 @@
       this.names_prefix = state?.names_prefix || '';
       this.values_fn = state?.values_fn || '';
 
-      // Update popover text inputs
-      /** @type {HTMLInputElement} */ (this._fillInput).value = this.values_fill;
-      /** @type {HTMLInputElement} */ (this._sepInput).value = this.names_sep;
-      /** @type {HTMLInputElement} */ (this._prefixInput).value = this.names_prefix;
+      // Update band text inputs (sync resets the chips)
+      /** @type {BlockrTextCommitHandle} */ (this._fillCommit).sync(this.values_fill);
+      /** @type {BlockrTextCommitHandle} */ (this._sepCommit).sync(this.names_sep);
+      /** @type {BlockrTextCommitHandle} */ (this._prefixCommit).sync(this.names_prefix);
       if (this._valuesFnSelect) {
         const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
         this._valuesFnSelect.setOptions(fnOptions, this.values_fn);
@@ -322,6 +308,7 @@
       if (this._idColsSelect) {
         this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
       }
+      this._updateRequired();
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -346,6 +333,7 @@
         this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
         this.id_cols = this._idColsSelect.getValue();
       }
+      this._updateRequired();
     }
   }
 

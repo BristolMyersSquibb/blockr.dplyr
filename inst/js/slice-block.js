@@ -3,11 +3,12 @@
  * SliceBlock — JS-driven dplyr::slice_* block input binding.
  *
  * Main UI: [type selector (bordered)] [n input] [gear button]
- * Gear popover: order_by (min/max), weight_by (sample), with_ties (min/max),
- *   replace (sample) — conditionally visible based on type.
+ * Settings band (in-flow, gear-toggled): order_by (min/max), weight_by
+ *   (sample), with_ties (min/max), replace (sample) — conditionally visible
+ *   based on type; on/off options are Blockr.checkbox.
  * Below card: "Group by:" label + bordered multi-select (summarize pattern).
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-core.js, blockr-select.js, settings-band.js
  */
 (() => {
   'use strict';
@@ -55,8 +56,6 @@
       /** @type {((value: boolean) => void) | null} */
       this._callback = null;
       this._submitted = false;
-      /** @type {ReturnType<typeof setTimeout> | null} */
-      this._debounceTimer = null;
       /** @type {BlockrSelectSingleHandle | null} */
       this._typeSelect = null;
       /** @type {BlockrSelectSingleHandle | null} */
@@ -65,15 +64,18 @@
       this._weightBySelect = null;
       /** @type {BlockrSelectMultiHandle | null} */
       this._bySelect = null;
-      this._popoverOpen = false;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._withTiesBox = null;
+      /** @type {BlockrCheckboxHandle | null} */
+      this._replaceBox = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._nCommit = null;
+      /** @type {BlockrTextCommitHandle | null} */
+      this._rowsCommit = null;
+      this._bandOpen = false;
 
       this._buildDOM();
-      this._updatePopoverVisibility();
-    }
-
-    _autoSubmit() {
-      clearTimeout(/** @type {ReturnType<typeof setTimeout>} */ (this._debounceTimer));
-      this._debounceTimer = setTimeout(() => this._submit(), 300);
+      this._updateBandVisibility();
     }
 
     _buildDOM() {
@@ -89,17 +91,20 @@
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
       this.gearBtn.title = 'Options';
-      this.gearBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._togglePopover();
-      });
+      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this._gearHeader = gearHeader;
       this.card.appendChild(gearHeader);
 
+      // Settings band — in flow between the gear header and the main row:
+      // opening pushes the content down; the gear is the only toggle
+      // (a panel, not a menu — no outside-click dismissal).
+      this._buildBand();
+
       // Top row: type + n in a standard blockr-row
       const topRow = document.createElement('div');
       topRow.className = 'blockr-row';
+      this._topRow = topRow;
 
       // Type selector
       const typeWrap = document.createElement('div');
@@ -107,17 +112,17 @@
       this._typeSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(typeWrap, {
         options: SLICE_TYPES,
         selected: this.type,
-        placeholder: 'Type\u2026',
+        placeholder: 'Type…',
         onChange: (value) => {
           this.type = value;
-          this._updatePopoverVisibility();
-          this._autoSubmit();
+          this._updateBandVisibility();
+          this._submit();
         }
       });
       // No --bordered class needed: the row provides the border
       topRow.appendChild(typeWrap);
 
-      // n input
+      // n input — commits on Enter/blur with a compact ↵ chip (§5.5)
       const nWrap = document.createElement('div');
       nWrap.className = 'slb-n-wrap';
       this._nInput = document.createElement('input');
@@ -126,11 +131,14 @@
       this._nInput.value = /** @type {string} */ (/** @type {*} */ (this.n));
       this._nInput.min = '1';
       this._nInput.placeholder = 'n';
-      this._nInput.addEventListener('input', () => {
-        this._updateNValue();
-        this._autoSubmit();
-      });
       nWrap.appendChild(this._nInput);
+      this._nCommit = Blockr.textCommit(this._nInput, {
+        compact: true,
+        onCommit: () => {
+          this._updateNValue();
+          this._submit();
+        }
+      });
       topRow.appendChild(nWrap);
 
       // n/% toggle pill
@@ -149,16 +157,16 @@
           /** @type {HTMLInputElement} */ (this._nInput).max = '100';
           /** @type {HTMLInputElement} */ (this._nInput).step = '1';
           /** @type {HTMLInputElement} */ (this._nInput).placeholder = '%';
-          /** @type {HTMLInputElement} */ (this._nInput).value = '10';
+          /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync('10');
         } else {
           /** @type {HTMLInputElement} */ (this._nInput).min = '1';
           /** @type {HTMLInputElement} */ (this._nInput).removeAttribute('max');
           /** @type {HTMLInputElement} */ (this._nInput).step = '1';
           /** @type {HTMLInputElement} */ (this._nInput).placeholder = 'n';
-          /** @type {HTMLInputElement} */ (this._nInput).value = '5';
+          /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync('5');
         }
         this._updateNValue();
-        this._autoSubmit();
+        this._submit();
       });
       topRow.appendChild(this._nModePill);
 
@@ -171,17 +179,18 @@
       this._rowsInput.className = 'blockr-num-input';
       this._rowsInput.value = this.rows;
       this._rowsInput.placeholder = '1:5, c(1,3,5), -c(2,4)';
-      this._rowsInput.addEventListener('input', () => {
-        this.rows = /** @type {HTMLInputElement} */ (this._rowsInput).value;
-        this._autoSubmit();
-      });
       this._rowsWrap.appendChild(this._rowsInput);
+      this._rowsCommit = Blockr.textCommit(this._rowsInput, {
+        compact: true,
+        onCommit: (value) => {
+          this.rows = value;
+          this._updateRequired();
+          this._submit();
+        }
+      });
       topRow.appendChild(this._rowsWrap);
 
       this.card.appendChild(topRow);
-
-      // Settings popover
-      this._buildPopover();
 
       // Group by section (below the card, summarize pattern)
       this.bySection = document.createElement('div');
@@ -199,132 +208,115 @@
       this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select grouping columns\u2026',
+        placeholder: 'Select grouping columns…',
         reorderable: false,
         onChange: (selected) => {
           this.by = selected;
-          this._autoSubmit();
+          this._submit();
         }
       });
       this._bySelect.el.classList.add('blockr-select--bordered');
 
       this.el.appendChild(this.bySection);
-
-      // Close popover on outside click
-      Blockr.onDocClick(this.el, (e) => {
-        if (this._popoverOpen && this.popoverEl &&
-            !this.popoverEl.contains(/** @type {Node | null} */ (e.target)) &&
-            !(/** @type {HTMLButtonElement} */ (this.gearBtn)).contains(/** @type {Node | null} */ (e.target))) {
-          this._closePopover();
-        }
-      });
     }
 
-    // --- Settings popover ---
+    // --- Settings band ---
 
-    _buildPopover() {
-      this.popoverEl = document.createElement('div');
-      this.popoverEl.className = 'blockr-popover';
-      this.popoverEl.style.display = 'none';
+    _buildBand() {
+      this.bandEl = document.createElement('div');
+      this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      // order_by select (min/max)
-      this._popOrderByWrap = document.createElement('div');
-      this._popOrderByWrap.className = 'blockr-popover-row';
+      const title = document.createElement('div');
+      title.className = 'blockr-settings__title';
+      title.textContent = 'Options';
+      this.bandEl.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'blockr-settings__grid';
+      this.bandEl.appendChild(grid);
+
+      // order_by select (min/max) — required for slice_min/slice_max, so it
+      // carries the amber required-empty cue while unset.
+      this._orderByField = document.createElement('div');
+      this._orderByField.className = 'blockr-settings__field';
       const orderByLabel = document.createElement('label');
-      orderByLabel.className = 'blockr-popover-label';
-      orderByLabel.textContent = 'Order by:';
-      this._popOrderByWrap.appendChild(orderByLabel);
+      orderByLabel.className = 'blockr-label';
+      orderByLabel.textContent = 'Order by';
+      this._orderByField.appendChild(orderByLabel);
       const orderBySelectWrap = document.createElement('div');
-      orderBySelectWrap.className = 'blockr-popover-select-wrap';
-      this._popOrderByWrap.appendChild(orderBySelectWrap);
+      this._orderByField.appendChild(orderBySelectWrap);
       this._orderBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(orderBySelectWrap, {
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
-        placeholder: 'Column\u2026',
+        placeholder: 'Column…',
         onChange: (value) => {
           this.order_by = value;
-          this._autoSubmit();
+          this._updateRequired();
+          this._submit();
         }
       });
-      this.popoverEl.appendChild(this._popOrderByWrap);
+      this._orderBySelect.el.classList.add('blockr-select--bordered');
+      grid.appendChild(this._orderByField);
 
       // weight_by select (sample)
-      this._popWeightByWrap = document.createElement('div');
-      this._popWeightByWrap.className = 'blockr-popover-row';
+      this._weightByField = document.createElement('div');
+      this._weightByField.className = 'blockr-settings__field';
       const weightByLabel = document.createElement('label');
-      weightByLabel.className = 'blockr-popover-label';
-      weightByLabel.textContent = 'Weight by:';
-      this._popWeightByWrap.appendChild(weightByLabel);
+      weightByLabel.className = 'blockr-label';
+      weightByLabel.textContent = 'Weight by';
+      this._weightByField.appendChild(weightByLabel);
       const weightBySelectWrap = document.createElement('div');
-      weightBySelectWrap.className = 'blockr-popover-select-wrap';
-      this._popWeightByWrap.appendChild(weightBySelectWrap);
+      this._weightByField.appendChild(weightBySelectWrap);
       this._weightBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(weightBySelectWrap, {
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
-        placeholder: 'Column (optional)\u2026',
+        placeholder: 'Column (optional)…',
         onChange: (value) => {
           this.weight_by = value;
-          this._autoSubmit();
+          this._submit();
         }
       });
-      this.popoverEl.appendChild(this._popWeightByWrap);
+      this._weightBySelect.el.classList.add('blockr-select--bordered');
+      grid.appendChild(this._weightByField);
 
-      // with_ties toggle (min/max)
-      this._popWithTiesWrap = document.createElement('div');
-      this._withTiesToggle = document.createElement('button');
-      this._withTiesToggle.type = 'button';
-      this._withTiesToggle.className = 'blockr-pill blockr-popover-toggle blockr-popover-toggle-active';
-      this._withTiesToggle.textContent = 'Keep ties';
-      this._withTiesToggle.title = 'Toggle whether rows with equal values are all included or cut off at n';
-      this._withTiesToggle.addEventListener('click', () => {
-        this.with_ties = !this.with_ties;
-        /** @type {HTMLButtonElement} */ (this._withTiesToggle).textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
-        /** @type {HTMLButtonElement} */ (this._withTiesToggle).classList.toggle('blockr-popover-toggle-active', this.with_ties);
-        this._autoSubmit();
+      // with_ties (min/max) — boolean data option -> checkbox
+      this._withTiesField = document.createElement('div');
+      this._withTiesField.className = 'blockr-settings__field';
+      this._withTiesBox = Blockr.checkbox('Keep ties', this.with_ties, (checked) => {
+        this.with_ties = checked;
+        this._submit();
       });
-      this._popWithTiesWrap.appendChild(this._withTiesToggle);
-      this.popoverEl.appendChild(this._popWithTiesWrap);
+      this._withTiesBox.input.title =
+        'Whether rows with equal values are all included or cut off at n';
+      this._withTiesField.appendChild(this._withTiesBox.el);
+      grid.appendChild(this._withTiesField);
 
-      // replace toggle (sample)
-      this._popReplaceWrap = document.createElement('div');
-      this._replaceToggle = document.createElement('button');
-      this._replaceToggle.type = 'button';
-      this._replaceToggle.className = 'blockr-pill blockr-popover-toggle';
-      this._replaceToggle.textContent = 'No replacement';
-      this._replaceToggle.title = 'Toggle whether sampled rows can be picked more than once';
-      this._replaceToggle.addEventListener('click', () => {
-        this.replace = !this.replace;
-        /** @type {HTMLButtonElement} */ (this._replaceToggle).textContent = this.replace ? 'With replacement' : 'No replacement';
-        /** @type {HTMLButtonElement} */ (this._replaceToggle).classList.toggle('blockr-popover-toggle-active', this.replace);
-        this._autoSubmit();
+      // replace (sample) — boolean data option -> checkbox
+      this._replaceField = document.createElement('div');
+      this._replaceField.className = 'blockr-settings__field';
+      this._replaceBox = Blockr.checkbox('Sample with replacement', this.replace, (checked) => {
+        this.replace = checked;
+        this._submit();
       });
-      this._popReplaceWrap.appendChild(this._replaceToggle);
-      this.popoverEl.appendChild(this._popReplaceWrap);
+      this._replaceBox.input.title =
+        'Whether sampled rows can be picked more than once';
+      this._replaceField.appendChild(this._replaceBox.el);
+      grid.appendChild(this._replaceField);
 
-      /** @type {HTMLDivElement} */ (this.card).appendChild(this.popoverEl);
+      /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);
     }
 
-    _togglePopover() {
-      if (this._popoverOpen) {
-        this._closePopover();
-      } else {
-        this._openPopover();
-      }
+    _toggleBand() {
+      this._bandOpen = !this._bandOpen;
+      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
+      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
     }
 
-    _openPopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'block';
-      this._popoverOpen = true;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.add('blockr-gear-active');
+    _closeBand() {
+      if (this._bandOpen) this._toggleBand();
     }
 
-    _closePopover() {
-      /** @type {HTMLDivElement} */ (this.popoverEl).style.display = 'none';
-      this._popoverOpen = false;
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.remove('blockr-gear-active');
-    }
-
-    _updatePopoverVisibility() {
+    _updateBandVisibility() {
       const isMinMax = this.type === 'min' || this.type === 'max';
       const isSample = this.type === 'sample';
       const isCustom = this.type === 'custom';
@@ -334,18 +326,35 @@
       if (this._gearHeader) {
         this._gearHeader.style.display = hasOptions ? '' : 'none';
       }
-      // Close popover if we hid the gear
-      if (!hasOptions && this._popoverOpen) this._closePopover();
+      // Close band if we hid the gear
+      if (!hasOptions) this._closeBand();
 
       // Toggle n input vs rows input
       /** @type {HTMLElement} */ (/** @type {HTMLInputElement} */ (this._nInput).parentElement).style.display = isCustom ? 'none' : '';
       /** @type {HTMLButtonElement} */ (this._nModePill).style.display = isCustom ? 'none' : '';
       /** @type {HTMLDivElement} */ (this._rowsWrap).style.display = isCustom ? '' : 'none';
 
-      /** @type {HTMLDivElement} */ (this._popOrderByWrap).style.display = isMinMax ? '' : 'none';
-      /** @type {HTMLDivElement} */ (this._popWeightByWrap).style.display = isSample ? '' : 'none';
-      /** @type {HTMLDivElement} */ (this._popWithTiesWrap).style.display = isMinMax ? '' : 'none';
-      /** @type {HTMLDivElement} */ (this._popReplaceWrap).style.display = isSample ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._orderByField).style.display = isMinMax ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._weightByField).style.display = isSample ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._withTiesField).style.display = isMinMax ? '' : 'none';
+      /** @type {HTMLDivElement} */ (this._replaceField).style.display = isSample ? '' : 'none';
+
+      this._updateRequired();
+    }
+
+    _updateRequired() {
+      const isMinMax = this.type === 'min' || this.type === 'max';
+      const isCustom = this.type === 'custom';
+      // slice_min/slice_max without order_by is a runtime error — amber the
+      // band field while unset; likewise custom positions with no expression.
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._orderByField),
+        isMinMax && !this.order_by
+      );
+      Blockr.setRequiredEmpty(
+        /** @type {HTMLDivElement} */ (this._topRow),
+        isCustom && !this.rows.trim()
+      );
     }
 
     _updateNValue() {
@@ -411,16 +420,17 @@
       /** @type {HTMLButtonElement} */ (this._nModePill).textContent = this._usesProp ? '%' : 'n';
       /** @type {HTMLButtonElement} */ (this._nModePill).classList.toggle('slb-mode-active', this._usesProp);
       if (this._usesProp) {
-        /** @type {HTMLInputElement} */ (this._nInput).value = /** @type {string} */ (/** @type {*} */ (Math.round(/** @type {number} */ (this.prop) * 100)));
+        /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync(
+          String(Math.round(/** @type {number} */ (this.prop) * 100)));
         /** @type {HTMLInputElement} */ (this._nInput).placeholder = '%';
       } else {
-        /** @type {HTMLInputElement} */ (this._nInput).value = /** @type {string} */ (/** @type {*} */ (this.n ?? 5));
+        /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync(String(this.n ?? 5));
         /** @type {HTMLInputElement} */ (this._nInput).placeholder = 'n';
       }
 
       // Update rows input
-      if (this._rowsInput) {
-        this._rowsInput.value = this.rows;
+      if (this._rowsCommit) {
+        this._rowsCommit.sync(this.rows);
       }
 
       // Update column selects
@@ -434,13 +444,11 @@
         this._bySelect.setOptions(this.columnOptions, this.by);
       }
 
-      // Update toggles
-      /** @type {HTMLButtonElement} */ (this._withTiesToggle).textContent = this.with_ties ? 'Keep ties' : 'Skip ties';
-      /** @type {HTMLButtonElement} */ (this._withTiesToggle).classList.toggle('blockr-popover-toggle-active', this.with_ties);
-      /** @type {HTMLButtonElement} */ (this._replaceToggle).textContent = this.replace ? 'With replacement' : 'No replacement';
-      /** @type {HTMLButtonElement} */ (this._replaceToggle).classList.toggle('blockr-popover-toggle-active', this.replace);
+      // Update checkboxes
+      /** @type {BlockrCheckboxHandle} */ (this._withTiesBox).set(this.with_ties);
+      /** @type {BlockrCheckboxHandle} */ (this._replaceBox).set(this.replace);
 
-      this._updatePopoverVisibility();
+      this._updateBandVisibility();
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -472,6 +480,7 @@
         this._bySelect.setOptions(this.columnOptions, this.by);
         this.by = (this.by || []).filter(c => this.columnNames.includes(c));
       }
+      this._updateRequired();
     }
   }
 

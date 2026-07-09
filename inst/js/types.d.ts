@@ -268,6 +268,20 @@ interface BlockrNamespace {
     checked: boolean,
     onChange: (checked: boolean) => void
   ): BlockrCheckboxHandle;
+  /** Toggle the canonical required-empty amber cue on a field wrapper. */
+  setRequiredEmpty(el: Element, empty: boolean): void;
+  /** Commit-on-Enter text input with the "Enter ↵" chip (§5.5). */
+  textCommit(
+    input: HTMLInputElement,
+    opts: { onCommit: (value: string) => void; compact?: boolean }
+  ): BlockrTextCommitHandle;
+}
+
+/** Handle returned by Blockr.textCommit (blockr-core.js). */
+interface BlockrTextCommitHandle {
+  chip: HTMLButtonElement;
+  commit(): void;
+  sync(value: string): void;
 }
 
 /** Handle returned by Blockr.checkbox (settings-band.js). */
