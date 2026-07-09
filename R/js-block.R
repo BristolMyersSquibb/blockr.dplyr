@@ -202,6 +202,8 @@ js_block_ui <- function(name, shared_deps = "select") {
     tagList(
       blockr_core_js_dep(),
       blockr_blocks_css_dep(),
+      # Band CSS + Blockr.checkbox; must load before the per-block script.
+      settings_band_dep(),
       if ("select" %in% shared_deps) blockr_select_dep(),
       if ("input" %in% shared_deps) blockr_input_dep(),
       js_block_dep(name),

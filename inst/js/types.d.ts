@@ -262,6 +262,20 @@ interface BlockrNamespace {
   /** Shared components (blockr-select.js / blockr-input.js) */
   Select?: BlockrSelectStatic;
   Input?: BlockrInputStatic;
+  /** Design-system checkbox factory (settings-band.js, vendored from blockr.viz). */
+  checkbox(
+    label: string,
+    checked: boolean,
+    onChange: (checked: boolean) => void
+  ): BlockrCheckboxHandle;
+}
+
+/** Handle returned by Blockr.checkbox (settings-band.js). */
+interface BlockrCheckboxHandle {
+  el: HTMLLabelElement;
+  input: HTMLInputElement;
+  set(v: boolean): void;
+  get(): boolean;
 }
 
 declare var Blockr: BlockrNamespace;

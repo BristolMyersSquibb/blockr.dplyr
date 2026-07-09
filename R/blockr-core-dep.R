@@ -15,6 +15,25 @@ blockr_core_js_dep <- function() {
   )
 }
 
+#' HTML dependency for the settings band + checkbox assets
+#'
+#' Vendored verbatim from blockr.viz (the canonical source until the shared
+#' layer moves to blockr.ui): the in-flow gear settings band CSS and the
+#' `Blockr.checkbox` factory. Distinct dependency name per package so a
+#' stale copy can never shadow a fresh one on a mixed dashboard.
+#'
+#' @return An `htmltools::htmlDependency`.
+#' @noRd
+settings_band_dep <- function() {
+  htmltools::htmlDependency(
+    name = "blockr-dplyr-settings-band",
+    version = utils::packageVersion("blockr.dplyr"),
+    src = system.file(package = "blockr.dplyr"),
+    script = "js/settings-band.js",
+    stylesheet = "css/settings-band.css"
+  )
+}
+
 #' HTML dependency for blockr-blocks.css (shared block layout styles)
 #'
 #' Exported for reuse by other blockr packages that reuse the shared
