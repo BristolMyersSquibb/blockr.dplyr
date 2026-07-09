@@ -149,8 +149,6 @@
         this.remove = checked;
         this._submit();
       });
-      this._removeBox.input.title =
-        'Remove the source columns after uniting';
       optionBar.appendChild(this._removeBox.el);
 
       this._naRmBox = Blockr.checkbox('Drop NA values', this.na_rm, (checked) => {
@@ -174,7 +172,10 @@
       return {
         col: this.col || 'united',
         cols: this.cols.slice(),
-        sep: this.sep,
+        // A cleared field means "use the default", which is what the
+        // placeholder promises. Without the fallback `""` reaches
+        // tidyr::unite() and the values are pasted with no separator.
+        sep: this.sep || '_',
         remove: this.remove,
         na_rm: this.na_rm
       };

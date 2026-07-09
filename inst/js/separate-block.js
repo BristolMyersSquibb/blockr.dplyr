@@ -149,8 +149,6 @@
         this.remove = checked;
         this._submit();
       });
-      this._removeBox.input.title =
-        'Remove the source column after splitting';
       optionBar.appendChild(this._removeBox.el);
 
       this._convertBox = Blockr.checkbox('Auto-convert types', this.convert, (checked) => {
@@ -186,7 +184,10 @@
       return {
         col: this.col,
         into: this.into.slice(),
-        sep: this.sep,
+        // A cleared field means "use the default", which is what the
+        // placeholder promises. Without the fallback `""` reaches
+        // tidyr::separate() and splits between every character.
+        sep: this.sep || '[^[:alnum:]]+',
         remove: this.remove,
         convert: this.convert
       };

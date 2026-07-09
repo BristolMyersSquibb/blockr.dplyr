@@ -144,7 +144,7 @@
       this._bySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
         options: this.columnOptions,
         selected: [],
-        placeholder: 'Select grouping columns\u2026',
+        placeholder: 'None',
         reorderable: true,
         onChange: (value) => { this.byValues = value || []; this._submit(); }
       });

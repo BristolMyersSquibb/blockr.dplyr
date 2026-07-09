@@ -524,7 +524,10 @@ make_slice_expr <- function(type = "head", n = 5L, prop = NULL,
     expr[["n"]] <- as.integer(n %||% 5L)
   }
 
-  if (type %in% c("min", "max") && nzchar(order_by %||% "")) {
+  # slice_min()/slice_max() error without order_by. An unconfigured block passes
+  # data through and lets the amber cue do the talking; it never errors.
+  if (type %in% c("min", "max")) {
+    if (!nzchar(order_by %||% "")) return(bbquote(.(data)))
     expr[["order_by"]] <- as.name(order_by)
     if (!isTRUE(with_ties)) expr[["with_ties"]] <- FALSE
   }

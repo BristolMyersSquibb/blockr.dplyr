@@ -1,3 +1,33 @@
+# blockr.dplyr (development version)
+
+## Bug fixes
+
+- `slice` with type `min`/`max` and no `order_by` raised
+  `` `order_by` is absent but must be supplied `` instead of passing the data
+  through. An unconfigured block is inert, never a red banner.
+- `slice`'s `Order by` and `Weight by` pickers displayed the first column while
+  the block's value was still `""`, so the block looked configured and was not.
+  Both now pass `allowEmpty = TRUE` to `Blockr.Select`.
+- Required-empty fields now render the trailing `*` on their label, which the
+  design system has specified all along and the CSS never implemented.
+
+- Clearing the `Separator` field in `unite`, `separate` or `pivot_wider` sent
+  an empty string rather than the default the placeholder promised: `unite`
+  pasted values with no separator, `separate` split between every character,
+  and `pivot_wider` joined names with nothing. A cleared field now applies the
+  default, matching the placeholder and the behaviour of the other text fields
+  in those blocks (#0).
+
+## Design-system alignment
+
+- Placeholders now name the empty state on optional fields and prompt on
+  required ones, and the trailing `…` marks the difference: `ID columns
+  (optional)` reads `All other columns` (what tidyr actually does), `Group by:`
+  reads `None`, `Weight by` reads `Unweighted`, while required pickers keep
+  `Select columns…`.
+- Removed the `title` tooltips that only restated their checkbox label
+  (`Exclude selected`, `Remove source column`, `Remove source columns`).
+
 # blockr.dplyr 0.2.0
 
 ## Design-system alignment

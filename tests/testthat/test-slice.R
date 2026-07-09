@@ -107,3 +107,36 @@ test_that("slice block: state change from head to tail", {
     expect_equal(result2, tail(mtcars, 3), ignore_attr = TRUE)
   })
 })
+
+test_that("slice block: min/max without order_by passes data through", {
+  # slice_min()/slice_max() error when order_by is absent. An unconfigured
+  # block is inert, never a red banner (ux-principles, invariant 2).
+  for (type in c("min", "max")) {
+    blk <- new_slice_block(
+      type = type, n = 5L, prop = NULL,
+      order_by = "", with_ties = TRUE,
+      weight_by = "", replace = FALSE, by = list()
+    )
+
+    testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
+      session$flushReact()
+      expect_no_error(result <- eval_bquoted(session$returned$expr(), mtcars))
+      expect_equal(result, mtcars)
+    })
+  }
+})
+
+test_that("slice block: min with order_by slices", {
+  blk <- new_slice_block(
+    type = "min", n = 3L, prop = NULL,
+    order_by = "mpg", with_ties = FALSE,
+    weight_by = "", replace = FALSE, by = list()
+  )
+
+  testServer(blk$expr_server, args = list(data = reactive(mtcars)), {
+    session$flushReact()
+    result <- eval_bquoted(session$returned$expr(), mtcars)
+    expect_equal(nrow(result), 3)
+    expect_equal(result$mpg, sort(mtcars$mpg)[1:3])
+  })
+})

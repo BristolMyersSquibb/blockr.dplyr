@@ -202,6 +202,15 @@
   background: var(--blockr-color-warning-bg, #fffbeb);
 }
 
+/* The second half of the recipe: the label carries a trailing `*`. Only
+   reaches wrappers that contain their own label — a required row without one
+   (slice's custom-positions row) is carried by the amber alone. */
+.blockr-field--required-empty > .blockr-label::after {
+  content: " *";
+  color: var(--blockr-color-warning, #f59e0b);
+  font-weight: 600;
+}
+
 /* --- Shared number input --- */
 .blockr-num-input {
   height: 30px;
