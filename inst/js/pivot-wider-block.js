@@ -100,8 +100,9 @@
       this._namesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(namesFromWrap, {
         options: this.columnOptions,
         selected: [],
+        // Pick order builds the combined column names (`a_b`, joined by
+        // names_sep), so the chips stay drag-reorderable (the default).
         placeholder: 'Select columns…',
-        reorderable: false,
         onChange: (selected) => {
           this.names_from = selected;
           this._updateRequired();
@@ -122,7 +123,6 @@
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',
-        reorderable: false,
         onChange: (selected) => {
           this.values_from = selected;
           this._updateRequired();
@@ -146,7 +146,6 @@
         // it does: make_pivot_wider_expr() omits `id_cols` and tidyr keeps
         // every column not used by names_from / values_from.
         placeholder: 'All other columns',
-        reorderable: false,
         onChange: (selected) => {
           this.id_cols = selected;
           this._submit();
