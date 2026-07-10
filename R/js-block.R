@@ -221,18 +221,21 @@ js_block_ui <- function(name, shared_deps = "select") {
 #' HTML dependency for a block's JS + CSS pair
 #' @noRd
 js_block_dep <- function(name) {
-  htmltools::tagList(
-    htmltools::htmlDependency(
-      name = paste0(name, "-block-js"),
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("js", package = "blockr.dplyr"),
-      script = paste0(name, "-block.js")
-    ),
-    htmltools::htmlDependency(
-      name = paste0(name, "-block-css"),
-      version = utils::packageVersion("blockr.dplyr"),
-      src = system.file("css", package = "blockr.dplyr"),
-      stylesheet = paste0(name, "-block.css")
+  force(name)
+  dep_cached(paste0("js_block_dep:", name), function() {
+    htmltools::tagList(
+      htmltools::htmlDependency(
+        name = paste0(name, "-block-js"),
+        version = utils::packageVersion("blockr.dplyr"),
+        src = system.file("js", package = "blockr.dplyr"),
+        script = paste0(name, "-block.js")
+      ),
+      htmltools::htmlDependency(
+        name = paste0(name, "-block-css"),
+        version = utils::packageVersion("blockr.dplyr"),
+        src = system.file("css", package = "blockr.dplyr"),
+        stylesheet = paste0(name, "-block.css")
+      )
     )
-  )
+  })
 }
