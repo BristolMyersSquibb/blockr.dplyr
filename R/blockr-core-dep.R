@@ -1,20 +1,9 @@
-# Process-level cache for the htmlDependency builders below. Each takes no
-# data-dependent args (js_block_dep is keyed by block name) and returns the same
-# object for the life of the R process, yet was re-running disk I/O (read.dcf via
-# packageVersion + system.file) on every block construction/render -- ~95% of a
-# js block's construction cost (see blockr.viz/dev/block-build-cost-findings.md).
-# htmlDependency objects are immutable value lists htmltools already shares
-# across sessions, so a process-level cache is correct. Called at RUNTIME, so
-# collation order does not matter.
-.dep_cache <- new.env(parent = emptyenv())
-
-#' @noRd
-dep_cached <- function(key, build) {
-  if (!exists(key, envir = .dep_cache, inherits = FALSE)) {
-    assign(key, build(), envir = .dep_cache)
-  }
-  get(key, envir = .dep_cache, inherits = FALSE)
-}
+# The htmlDependency builders here are memoised (memoise0, R/aaa-memoise.R):
+# each takes no data-dependent args and returns the same immutable object for
+# the life of the process, but was re-running disk I/O (packageVersion ->
+# read.dcf + system.file) on every block construction/render -- ~95% of a js
+# block's construction cost. See blockr.viz/dev/block-build-cost-findings.md.
+# (js_block_dep is keyed by block name, so it keeps its own keyed cache.)
 
 #' HTML dependency for blockr-core.js (namespace + shared utilities)
 #'
@@ -24,7 +13,7 @@ dep_cached <- function(key, build) {
 #' @return An `htmltools::htmlDependency`.
 #' @keywords internal
 #' @export
-blockr_core_js_dep <- function() dep_cached("blockr_core_js_dep", function() {
+blockr_core_js_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-core-js",
     # Bump the suffix on every blockr-core.js edit (version-pinned cache).
@@ -43,7 +32,7 @@ blockr_core_js_dep <- function() dep_cached("blockr_core_js_dep", function() {
 #'
 #' @return An `htmltools::htmlDependency`.
 #' @noRd
-settings_band_dep <- function() dep_cached("settings_band_dep", function() {
+settings_band_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-dplyr-settings-band",
     # Bump the suffix on every settings-band.css/js edit (asset cache).
@@ -62,7 +51,7 @@ settings_band_dep <- function() dep_cached("settings_band_dep", function() {
 #' @return An `htmltools::htmlDependency`.
 #' @keywords internal
 #' @export
-blockr_blocks_css_dep <- function() dep_cached("blockr_blocks_css_dep", function() {
+blockr_blocks_css_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-blocks-css",
     # Bump the suffix on every blockr-blocks.css edit (version-pinned cache).

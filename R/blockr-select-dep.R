@@ -6,7 +6,7 @@
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
 #' @keywords internal
 #' @export
-blockr_select_dep <- function() dep_cached("blockr_select_dep", function() {
+blockr_select_dep <- memoise0(function() {
   htmltools::tagList(
     blockr_core_js_dep(),
     htmltools::htmlDependency(
