@@ -1,3 +1,10 @@
+# The htmlDependency builders here are memoised (memoise0, R/aaa-memoise.R):
+# each takes no data-dependent args and returns the same immutable object for
+# the life of the process, but was re-running disk I/O (packageVersion ->
+# read.dcf + system.file) on every block construction/render -- ~95% of a js
+# block's construction cost. See blockr.viz/dev/block-build-cost-findings.md.
+# (js_block_dep is keyed by block name, so it keeps its own keyed cache.)
+
 #' HTML dependency for blockr-core.js (namespace + shared utilities)
 #'
 #' Exported for reuse by other blockr packages that build on the shared
@@ -6,7 +13,7 @@
 #' @return An `htmltools::htmlDependency`.
 #' @keywords internal
 #' @export
-blockr_core_js_dep <- function() {
+blockr_core_js_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-core-js",
     # Bump the suffix on every blockr-core.js edit (version-pinned cache).
@@ -14,7 +21,7 @@ blockr_core_js_dep <- function() {
     src = system.file("js", package = "blockr.dplyr"),
     script = "blockr-core.js"
   )
-}
+})
 
 #' HTML dependency for the settings band + checkbox assets
 #'
@@ -25,7 +32,7 @@ blockr_core_js_dep <- function() {
 #'
 #' @return An `htmltools::htmlDependency`.
 #' @noRd
-settings_band_dep <- function() {
+settings_band_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-dplyr-settings-band",
     # Bump the suffix on every settings-band.css/js edit (asset cache).
@@ -34,7 +41,7 @@ settings_band_dep <- function() {
     script = "js/settings-band.js",
     stylesheet = "css/settings-band.css"
   )
-}
+})
 
 #' HTML dependency for blockr-blocks.css (shared block layout styles)
 #'
@@ -44,7 +51,7 @@ settings_band_dep <- function() {
 #' @return An `htmltools::htmlDependency`.
 #' @keywords internal
 #' @export
-blockr_blocks_css_dep <- function() {
+blockr_blocks_css_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-blocks-css",
     # Bump the suffix on every blockr-blocks.css edit (version-pinned cache).
@@ -52,4 +59,4 @@ blockr_blocks_css_dep <- function() {
     src = system.file("css", package = "blockr.dplyr"),
     stylesheet = "blockr-blocks.css"
   )
-}
+})

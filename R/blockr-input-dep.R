@@ -6,7 +6,7 @@
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
 #' @keywords internal
 #' @export
-blockr_input_dep <- function() {
+blockr_input_dep <- memoise0(function() {
   htmltools::tagList(
     blockr_core_js_dep(),
     htmltools::htmlDependency(
@@ -22,4 +22,4 @@ blockr_input_dep <- function() {
       stylesheet = "blockr-input.css"
     )
   )
-}
+})
