@@ -835,14 +835,16 @@ build_column_values <- function(df, col, limit = NULL, query = "") {
     label = col_label(vals)
   )
 
+  # Returns the filtered/limited values plus total/truncated, which the caller
+  # writes onto `info` (rather than `<<-` reaching out of this closure).
   cap_values <- function(uv) {
-    info$total <<- length(uv)
-    info$truncated <<- !is.null(limit) && length(uv) > limit
+    total <- length(uv)
+    truncated <- !is.null(limit) && length(uv) > limit
     if (nzchar(query %||% "")) {
       uv <- uv[grepl(tolower(query), tolower(as.character(uv)), fixed = TRUE)]
     }
     if (!is.null(limit) && length(uv) > limit) uv <- uv[seq_len(limit)]
-    uv
+    list(values = uv, total = total, truncated = truncated)
   }
 
   if (type %in% c("numeric", "integer")) {
@@ -851,12 +853,17 @@ build_column_values <- function(df, col, limit = NULL, query = "") {
       info$min <- min(non_na)
       info$max <- max(non_na)
     }
-    info$uniqueValues <- as.list(cap_values(sort(unique(non_na))))
+    capped <- cap_values(sort(unique(non_na)))
+    info$total <- capped$total
+    info$truncated <- capped$truncated
+    info$uniqueValues <- as.list(capped$values)
   } else {
     # sort() before as.character(): factors sort by level order, not
     # alphabetically, so ordered factors render in their natural order.
-    uv <- cap_values(as.character(sort(unique(vals[!is.na(vals)]))))
-    info$values <- as.list(uv)
+    capped <- cap_values(as.character(sort(unique(vals[!is.na(vals)]))))
+    info$total <- capped$total
+    info$truncated <- capped$truncated
+    info$values <- as.list(capped$values)
     # `vals == ""` crashes on POSIXct/Date columns because R coerces "" back
     # to the column class. Only run the empty-string probe on actual
     # character/factor data where "" is a meaningful value.
