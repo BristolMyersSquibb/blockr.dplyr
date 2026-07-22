@@ -49,6 +49,7 @@ Imports:
     utils
 Suggests:
     chromote,
+    DT,
     shinytest2,
     testthat (>= 3.0.0),
     withr
