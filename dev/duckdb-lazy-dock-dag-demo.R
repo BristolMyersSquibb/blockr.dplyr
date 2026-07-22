@@ -20,7 +20,7 @@
 # Everything in between is a real blockr.dplyr block on the remote table.
 
 options(
-  blockr.html_table_preview = TRUE,   # swap DT -> shared lazy-aware HTML preview
+  blockr.tabular_display = blockr.ui::html_table_display,   # swap DT -> shared lazy-aware HTML preview
   shiny.port = 3845,
   # shiny.host = "0.0.0.0",
   shiny.launch.browser = T

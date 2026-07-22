@@ -7,7 +7,7 @@ library(blockr.dag)
 library(blockr.extra)
 
 options(
-  blockr.html_table_preview = TRUE,
+  blockr.tabular_display = blockr.ui::html_table_display,
   "g6R.mode" = "dev",
   "g6R.preserve_elements_position" = TRUE
 )

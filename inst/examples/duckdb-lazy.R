@@ -19,7 +19,7 @@
 # source checkout with pkgload::load_all(). One board, two loaders, no drift.
 if (!exists("dev_local")) dev_local <- FALSE
 
-options(blockr.html_table_preview = TRUE)  # swap DT -> shared lazy-aware HTML preview
+options(blockr.tabular_display = blockr.ui::html_table_display)  # swap DT -> shared lazy-aware HTML preview
 
 blockr_pkgs <- c(
   "blockr.core",

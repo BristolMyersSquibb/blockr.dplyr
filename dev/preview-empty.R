@@ -7,7 +7,7 @@ pkgload::load_all("blockr.dag")
 pkgload::load_all("blockr.extra")
 
 options(
-  blockr.html_table_preview = TRUE
+  blockr.tabular_display = blockr.ui::html_table_display
 )
 
 serve(
