@@ -1,4 +1,4 @@
-#' @importFrom blockr.core register_blocks new_block_args new_block_arg
+#' @importFrom blockr.core register_blocks new_arg_specs new_arg_spec
 #'   arg_string arg_number arg_integer arg_boolean arg_enum arg_array arg_object
 register_dplyr_blocks <- function() {
   register_blocks(
@@ -241,8 +241,8 @@ register_dplyr_blocks <- function() {
     ),
     arguments = list(
       # select_block:
-      new_block_args(
-        columns = new_block_arg(
+      new_arg_specs(
+        columns = new_arg_spec(
           paste0(
             "Array of column name strings ",
             "to keep (or to remove, when ",
@@ -251,7 +251,7 @@ register_dplyr_blocks <- function() {
           example = list("mpg", "cyl", "hp"),
           type = arg_array(arg_string())
         ),
-        exclude = new_block_arg(
+        exclude = new_arg_spec(
           paste0(
             "Boolean -- when true, drop the ",
             "listed columns instead of ",
@@ -260,7 +260,7 @@ register_dplyr_blocks <- function() {
           example = FALSE,
           type = arg_boolean()
         ),
-        distinct = new_block_arg(
+        distinct = new_arg_spec(
           paste0(
             "Boolean -- when true, ",
             "deduplicate rows after ",
@@ -271,8 +271,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # join_block:
-      new_block_args(
-        type = new_block_arg(
+      new_arg_specs(
+        type = new_arg_spec(
           paste0(
             "Join type string: left_join, ",
             "inner_join, right_join, ",
@@ -285,7 +285,7 @@ register_dplyr_blocks <- function() {
               "full_join", "anti_join", "semi_join")
           )
         ),
-        keys = new_block_arg(
+        keys = new_arg_spec(
           paste0(
             "Array of {xCol, op, yCol} ",
             "objects defining the column ",
@@ -300,7 +300,7 @@ register_dplyr_blocks <- function() {
             )
           )
         ),
-        exprs = new_block_arg(
+        exprs = new_arg_spec(
           paste0(
             "Array of R expression strings ",
             "(optional, advanced join ",
@@ -309,7 +309,7 @@ register_dplyr_blocks <- function() {
           example = list(),
           type = arg_array(arg_string())
         ),
-        suffix_x = new_block_arg(
+        suffix_x = new_arg_spec(
           paste0(
             "Suffix added to overlapping ",
             "column names from the left ",
@@ -318,7 +318,7 @@ register_dplyr_blocks <- function() {
           example = ".x",
           type = arg_string()
         ),
-        suffix_y = new_block_arg(
+        suffix_y = new_arg_spec(
           paste0(
             "Suffix added to overlapping ",
             "column names from the right ",
@@ -329,8 +329,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # arrange_block:
-      new_block_args(
-        columns = new_block_arg(
+      new_arg_specs(
+        columns = new_arg_spec(
           paste0(
             "Array of {column, direction} ",
             "objects where direction is ",
@@ -347,8 +347,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # mutate_block:
-      new_block_args(
-        mutations = new_block_arg(
+      new_arg_specs(
+        mutations = new_arg_spec(
           paste0(
             "Array of objects, each with ",
             "'name' (new column name) and ",
@@ -362,7 +362,7 @@ register_dplyr_blocks <- function() {
             arg_object(name = arg_string(), expr = arg_string())
           )
         ),
-        by = new_block_arg(
+        by = new_arg_spec(
           paste0(
             "Optional array of grouping ",
             "column names (group the ",
@@ -373,8 +373,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # summarize_block:
-      new_block_args(
-        summaries = new_block_arg(
+      new_arg_specs(
+        summaries = new_arg_spec(
           paste0(
             "Array of summary objects. ",
             "Types: 'simple' (name, func ",
@@ -397,7 +397,7 @@ register_dplyr_blocks <- function() {
             )
           )
         ),
-        by = new_block_arg(
+        by = new_arg_spec(
           paste0(
             "Array of grouping column names ",
             "-- this is how you group (do ",
@@ -408,8 +408,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # filter_block:
-      new_block_args(
-        conditions = new_block_arg(
+      new_arg_specs(
+        conditions = new_arg_spec(
           paste0(
             "Array of condition objects. ",
             "Types: \"values\" (column, ",
@@ -441,7 +441,7 @@ register_dplyr_blocks <- function() {
             )
           )
         ),
-        operator = new_block_arg(
+        operator = new_arg_spec(
           paste0(
             "How to combine conditions: ",
             "\"&\" for AND (all match), ",
@@ -450,7 +450,7 @@ register_dplyr_blocks <- function() {
           example = "&",
           type = arg_enum(c("&", "|"))
         ),
-        preserve_order = new_block_arg(
+        preserve_order = new_arg_spec(
           paste0(
             "Boolean -- when true, keep the ",
             "original row order rather than ",
@@ -461,8 +461,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # bind_rows_block:
-      new_block_args(
-        id_name = new_block_arg(
+      new_arg_specs(
+        id_name = new_arg_spec(
           paste0(
             "Optional string -- name of an ",
             ".id column identifying which ",
@@ -473,13 +473,13 @@ register_dplyr_blocks <- function() {
         )
       ),
       # bind_cols_block:
-      new_block_args(),
+      new_arg_specs(),
       # rename_block:
-      new_block_args(
+      new_arg_specs(
         # A data-keyed map (arbitrary new->old name pairs). The JSON-Schema
         # subset has no open-ended object, so `type` is left unset and the
         # consumer infers a key->value map from the worked example.
-        renames = new_block_arg(
+        renames = new_arg_spec(
           paste0(
             "Object mapping new names to old",
             " names: {new_name: 'old_name', ",
@@ -491,8 +491,8 @@ register_dplyr_blocks <- function() {
         )
       ),
       # slice_block:
-      new_block_args(
-        type = new_block_arg(
+      new_arg_specs(
+        type = new_arg_spec(
           paste0(
             "One of 'head' (first n rows), ",
             "'tail' (last n), 'min'/'max' ",
@@ -503,12 +503,12 @@ register_dplyr_blocks <- function() {
           example = "head",
           type = arg_enum(c("head", "tail", "min", "max", "sample"))
         ),
-        n = new_block_arg(
+        n = new_arg_spec(
           "Integer row count",
           example = 10L,
           type = arg_integer()
         ),
-        prop = new_block_arg(
+        prop = new_arg_spec(
           paste0(
             "Number 0-1, proportion of rows ",
             "(alternative to n -- not both)"
@@ -516,12 +516,12 @@ register_dplyr_blocks <- function() {
           example = NULL,
           type = arg_number()
         ),
-        order_by = new_block_arg(
+        order_by = new_arg_spec(
           "Column to rank by, for min/max",
           example = "",
           type = arg_string()
         ),
-        with_ties = new_block_arg(
+        with_ties = new_arg_spec(
           paste0(
             "Boolean -- whether tied rows at ",
             "the cutoff are all kept (min/max)"
@@ -529,83 +529,83 @@ register_dplyr_blocks <- function() {
           example = TRUE,
           type = arg_boolean()
         ),
-        weight_by = new_block_arg(
+        weight_by = new_arg_spec(
           "Column of weights, for sampling",
           example = "",
           type = arg_string()
         ),
-        replace = new_block_arg(
+        replace = new_arg_spec(
           "Boolean -- sample with replacement",
           example = FALSE,
           type = arg_boolean()
         ),
-        by = new_block_arg(
+        by = new_arg_spec(
           "Array of grouping columns (slice within each group)",
           example = list(),
           type = arg_array(arg_string())
         )
       ),
       # pivot_longer_block:
-      new_block_args(
-        cols = new_block_arg(
+      new_arg_specs(
+        cols = new_arg_spec(
           "Array of column names to pivot to long form",
           example = list("col_a", "col_b"),
           type = arg_array(arg_string())
         ),
-        names_to = new_block_arg(
+        names_to = new_arg_spec(
           "String -- name of the new column holding the pivoted names",
           example = "variable",
           type = arg_string()
         ),
-        values_to = new_block_arg(
+        values_to = new_arg_spec(
           "String -- name of the new column holding the pivoted values",
           example = "value",
           type = arg_string()
         ),
-        values_drop_na = new_block_arg(
+        values_drop_na = new_arg_spec(
           "Boolean -- drop rows with NA values after pivoting",
           example = FALSE,
           type = arg_boolean()
         ),
-        names_prefix = new_block_arg(
+        names_prefix = new_arg_spec(
           "String -- regex prefix stripped from the pivoted names",
           example = "",
           type = arg_string()
         )
       ),
       # pivot_wider_block:
-      new_block_args(
-        names_from = new_block_arg(
+      new_arg_specs(
+        names_from = new_arg_spec(
           "Array of column(s) whose values become the new column names",
           example = list("category"),
           type = arg_array(arg_string())
         ),
-        values_from = new_block_arg(
+        values_from = new_arg_spec(
           "Array of column(s) whose values fill the new columns",
           example = list("value"),
           type = arg_array(arg_string())
         ),
-        id_cols = new_block_arg(
+        id_cols = new_arg_spec(
           "Array (optional) of columns that uniquely identify each output row",
           example = list(),
           type = arg_array(arg_string())
         ),
         # Scalar of unknown type (number/string/NULL) -- left untyped.
-        values_fill = new_block_arg(
+        values_fill = new_arg_spec(
           "Value (or null) used to fill missing cells",
           example = NULL
         ),
-        names_sep = new_block_arg(
+        names_sep = new_arg_spec(
           "String separator joining multiple names_from / prefix parts",
           example = "_",
           type = arg_string()
         ),
-        names_prefix = new_block_arg(
+        names_prefix = new_arg_spec(
           "String prepended to every new column name",
           example = "",
           type = arg_string()
         ),
-        values_fn = new_block_arg(
+        values_fn = new_arg_spec(
           paste0(
             "String (or null) aggregation ",
             "function (e.g. 'mean', 'sum', ",
@@ -617,56 +617,56 @@ register_dplyr_blocks <- function() {
         )
       ),
       # unite_block:
-      new_block_args(
-        col = new_block_arg(
+      new_arg_specs(
+        col = new_arg_spec(
           "New column name for the united result",
           example = "full_name",
           type = arg_string()
         ),
-        cols = new_block_arg(
+        cols = new_arg_spec(
           "Array of columns to unite",
           example = list("first_name", "last_name"),
           type = arg_array(arg_string())
         ),
-        sep = new_block_arg(
+        sep = new_arg_spec(
           "Separator string placed between values",
           example = " ",
           type = arg_string()
         ),
-        remove = new_block_arg(
+        remove = new_arg_spec(
           "Boolean -- remove the input columns after uniting",
           example = TRUE,
           type = arg_boolean()
         ),
-        na_rm = new_block_arg(
+        na_rm = new_arg_spec(
           "Boolean -- drop NA values before uniting",
           example = FALSE,
           type = arg_boolean()
         )
       ),
       # separate_block:
-      new_block_args(
-        col = new_block_arg(
+      new_arg_specs(
+        col = new_arg_spec(
           "Source column to split",
           example = "full_name",
           type = arg_string()
         ),
-        into = new_block_arg(
+        into = new_arg_spec(
           "Array of new column names to split into",
           example = list("first", "last"),
           type = arg_array(arg_string())
         ),
-        sep = new_block_arg(
+        sep = new_arg_spec(
           "Separator string (or regex) to split on",
           example = " ",
           type = arg_string()
         ),
-        remove = new_block_arg(
+        remove = new_arg_spec(
           "Boolean -- remove the source column after splitting",
           example = TRUE,
           type = arg_boolean()
         ),
-        convert = new_block_arg(
+        convert = new_arg_spec(
           "Boolean -- auto-convert the new columns to numeric/logical types",
           example = FALSE,
           type = arg_boolean()
