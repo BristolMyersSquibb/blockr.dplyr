@@ -111,6 +111,24 @@
   position: absolute;
 }
 
+/* In multi mode when closed, take the search input out of flow as well.
+   Left in flow it holds a trailing flex slot (min-width) plus one `gap`
+   gutter, so once the tags leave less than that free, the empty input alone
+   wraps to a second row and inflates the control even though the tags fit on
+   one. Zeroing its width is not enough — the gutter still counts — hence
+   position: absolute, matching the single-mode rule above.
+   Gated on a tag existing: while nothing is selected this input is the ONLY
+   element that renders the placeholder (multi mode builds no
+   `.blockr-select__value`), so collapsing it when empty blanks the control. */
+.blockr-select--multi:not(.blockr-select--open)
+  .blockr-select__tags:has(.blockr-select__tag) .blockr-select__search {
+  position: absolute;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  opacity: 0;
+}
+
 /* --- Tags container (multi mode) --- */
 .blockr-select__tags {
   display: flex;
