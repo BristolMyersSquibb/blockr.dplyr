@@ -103,10 +103,10 @@ serve(
     # Current dock API: named PLAIN list of `grids =` (the old `layouts =` is
     # swallowed by ... and silently ignored). Views are derived from the
     # grids. A grid child is either a bare panel id or panels(...) for a
-    # tabbed group; "dag_extension" is the DAG panel's extension_id().
+    # tabbed group; "dag" is the DAG panel's extension_id().
     # View names must be safe identifiers (letters, digits, . - _).
     grids = list(
-      Pipeline = dock_grid("dag_extension"),
+      Pipeline = dock_grid("dag"),
       `Data-IO` = dock_grid(
         panels("data", "data2"),
         panels("read", "write", "download")
