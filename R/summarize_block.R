@@ -130,10 +130,18 @@ new_summarize_block <- function(
       func_info <- lapply(names(all_funcs), function(label) {
         list(value = unname(all_funcs[[label]]), label = label)
       })
-      session$sendCustomMessage(
-        "summarize-functions",
-        list(id = ns(input_name), functions = func_info)
-      )
+      send_funcs <- function() {
+        session$sendCustomMessage(
+          "summarize-functions",
+          list(id = ns(input_name), functions = func_info)
+        )
+      }
+
+      send_funcs()
+      # Sent once, so a deferred dock panel drops it for good and the block
+      # silently falls back to the JS DEFAULT_SUMMARY_FUNCS -- any function
+      # added through `blockr.dplyr.summary_functions` would go missing.
+      observeEvent(input[[js_block_ready_name(input_name)]], send_funcs())
     },
     shared_deps = c("select", "input"),
     ...

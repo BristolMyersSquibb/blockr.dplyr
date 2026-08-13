@@ -65,12 +65,24 @@ new_js_transform_block <- function(class,
         ns <- session$ns
 
         if (!is.null(columns_meta)) {
-          observeEvent(data(), {
-            session$sendCustomMessage(
-              paste0(name, "-columns"),
-              list(id = ns(input_name), columns = columns_meta(data()))
+          send_columns <- function() {
+            # `data()` throws while an upstream block is unset or erroring;
+            # the next `data()` change re-sends, so swallow it here rather
+            # than take down the announce observer.
+            tryCatch(
+              session$sendCustomMessage(
+                paste0(name, "-columns"),
+                list(id = ns(input_name), columns = columns_meta(data()))
+              ),
+              error = function(e) NULL
             )
-          })
+          }
+
+          observeEvent(data(), send_columns())
+          # Deferred panel: this push was dropped at boot (see js_block_state).
+          # Without it the column pickers stay EMPTY and the block cannot be
+          # configured at all, restored state or not.
+          observeEvent(input[[js_block_ready_name(input_name)]], send_columns())
         }
 
         if (!is.null(setup)) {
@@ -104,6 +116,18 @@ new_js_transform_block <- function(class,
 #' @noRd
 js_block_input_name <- function(name) {
   paste0(gsub("-", "_", name, fixed = TRUE), "_input")
+}
+
+#' Input id the client announces itself on
+#'
+#' `Blockr.registerBlock()`'s binding `initialize()` sets this input when it
+#' binds with nothing queued for it -- see [js_block_state()] for why that is
+#' the signal that a push was dropped. Every message a block sends *once* (at
+#' module start, or on a `data()` change that will not repeat) must also be
+#' sent from an `observeEvent()` on this input.
+#' @noRd
+js_block_ready_name <- function(input_name) {
+  paste0(input_name, "_ready")
 }
 
 #' Wire the bidirectional JS <-> R state sync over per-field reactiveVals
@@ -153,6 +177,30 @@ js_block_state <- function(input, session, name, input_name, state,
     for (f in fields) r_fields[[f]](blob[[f]])
   })
 
+  # This runs OUTSIDE blockr.core's per-block error boundary (which only wraps
+  # expr eval / data / render), so a throw in `normalize_state()` or
+  # serialization is session-fatal rather than contained to the block. No
+  # block's state sync may ever take down the whole session -- contain it and
+  # warn so the block degrades instead.
+  send_state <- function() {
+    tryCatch(
+      session$sendCustomMessage(
+        paste0(name, "-block-update"),
+        list(
+          id = session$ns(input_name),
+          state = normalize_state(isolate(r_state()))
+        )
+      ),
+      error = function(e) {
+        warning(
+          sprintf("blockr.dplyr: could not sync '%s' state to JS: %s",
+                  name, conditionMessage(e)),
+          call. = FALSE
+        )
+      }
+    )
+  }
+
   # R -> JS: push the recombined blob whenever any field changes.
   #
   # Sent as a custom message (not `sendInputMessage`) on purpose: the block's
@@ -166,29 +214,21 @@ js_block_state <- function(input, session, name, input_name, state,
     if (self_write$active) {
       self_write$active <- FALSE
     } else {
-      # This observer runs OUTSIDE blockr.core's per-block error boundary
-      # (which only wraps expr eval / data / render), so a throw in
-      # `normalize_state()` or serialization is session-fatal rather than
-      # contained to the block. No block's state sync may ever take down the
-      # whole session -- contain it and warn so the block degrades instead.
-      tryCatch(
-        session$sendCustomMessage(
-          paste0(name, "-block-update"),
-          list(
-            id = session$ns(input_name),
-            state = normalize_state(r_state())
-          )
-        ),
-        error = function(e) {
-          warning(
-            sprintf("blockr.dplyr: could not sync '%s' state to JS: %s",
-                    name, conditionMessage(e)),
-            call. = FALSE
-          )
-        }
-      )
+      send_state()
     }
   })
+
+  # ...except when the block sits on a dock panel that is not on the startup
+  # view. The block's server still runs at boot (blockr.core constructs it
+  # whenever a visible block downstream needs it), but its JS ships as an
+  # htmlDependency on the block's `ui()`, so it is delivered WITH the panel, on
+  # first visit. Shiny drops a custom message with no registered handler, and
+  # the queue above cannot catch a message dropped before its own script
+  # loaded. The client therefore announces itself on bind when nothing was
+  # queued for it, and we re-send. Duplicates are harmless: `setState()`
+  # rebuilds from a full snapshot and never fires the submit callback.
+  # See blockr.core#317 for the core-level fix this stands in for.
+  observeEvent(input[[js_block_ready_name(input_name)]], send_state())
 
   list(fields = r_fields, state = r_state)
 }

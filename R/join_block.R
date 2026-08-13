@@ -47,17 +47,25 @@ new_join_block <- function(
       moduleServer(id, function(input, output, session) {
         ns <- session$ns
 
-        # Send column summary (name + label + type) when either input changes
-        observeEvent(list(x(), y()), {
-          session$sendCustomMessage(
-            "join-columns",
-            list(
-              id = ns("join_input"),
-              xColumns = build_column_picker_meta(x()),
-              yColumns = build_column_picker_meta(y())
-            )
+        send_columns <- function() {
+          tryCatch(
+            session$sendCustomMessage(
+              "join-columns",
+              list(
+                id = ns("join_input"),
+                xColumns = build_column_picker_meta(x()),
+                yColumns = build_column_picker_meta(y())
+              )
+            ),
+            error = function(e) NULL
           )
-        })
+        }
+
+        # Send column summary (name + label + type) when either input changes
+        observeEvent(list(x(), y()), send_columns())
+        # ...and when a client announces itself, which is how a block on a
+        # deferred dock panel gets the push that was dropped at boot.
+        observeEvent(input[[js_block_ready_name("join_input")]], send_columns())
 
         sync <- js_block_state(input, session, "join", "join_input", state)
 
