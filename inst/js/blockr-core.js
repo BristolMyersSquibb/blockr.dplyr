@@ -103,9 +103,10 @@ Blockr._enqueue = (id, channel, fn) => {
 };
 Blockr._replayPending = (el) => {
   const queue = Blockr._pending.get(el.id);
-  if (!queue) return;
+  if (!queue) return false;
   Blockr._pending.delete(el.id);
   for (const fn of queue.values()) fn(el._block);
+  return true;
 };
 
 /**
@@ -151,7 +152,19 @@ Blockr.registerBlock = ({ name, Block, messages = {} }) => {
     /** @param {BlockrBlockHost} el */
     initialize: (el) => {
       if (!el._block) el._block = new Block(el);
-      Blockr._replayPending(el);
+      // Anything R sent before this element bound was parked by _enqueue.
+      const replayed = Blockr._replayPending(el);
+      // Nothing parked means one of two things: a genuinely fresh block, or a
+      // block whose state and columns were pushed before THIS script existed
+      // -- the deferred dock panel case, where the block's JS is delivered
+      // with its panel on first visit and Shiny drops custom messages that
+      // have no handler yet. No client-side queue can catch a message dropped
+      // before the queue itself loaded, so announce instead and let R re-send
+      // (js-block.R, `js_block_ready_name()`). The extra round trip is cheap
+      // and idempotent when the block really is fresh.
+      if (!replayed) {
+        Shiny.setInputValue(`${el.id}_ready`, Date.now(), { priority: 'event' });
+      }
     }
   });
   Shiny.inputBindings.register(binding, `blockr.${name}`);

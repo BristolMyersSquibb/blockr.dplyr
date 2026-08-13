@@ -265,7 +265,8 @@ interface BlockrNamespace {
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
   _enqueue(id: string, channel: string, fn: (block: BlockrBlock | undefined) => void): void;
-  _replayPending(el: BlockrBlockHost): void;
+  /** True if anything was parked for `el` and has now been replayed. */
+  _replayPending(el: BlockrBlockHost): boolean;
   /** Shared components (blockr-select.js / blockr-input.js) */
   Select?: BlockrSelectStatic;
   Input?: BlockrInputStatic;

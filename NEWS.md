@@ -2,6 +2,17 @@
 
 ## Bug fixes
 
+- Every block came up **blank** — one empty row, no column choices — when its
+  dock panel was not on the startup view, while its expression and everything
+  downstream stayed correct. The block's server runs at boot (blockr.core
+  builds it whenever a visible block downstream needs it) and pushes its state
+  and columns before the panel, and with it this package's JavaScript, has been
+  delivered; Shiny drops custom messages that have no handler yet, and the
+  replay queue in `blockr-core.js` cannot catch a message dropped before its
+  own script loaded. The binding now announces itself on bind when nothing was
+  queued for it, and R re-sends state, columns, and `summarize`'s function
+  list. Affected all 13 blocks. The core-level fix this stands in for is
+  BristolMyersSquibb/blockr.core#317.
 - `slice` with type `min`/`max` and no `order_by` raised
   `` `order_by` is absent but must be supplied `` instead of passing the data
   through. An unconfigured block is inert, never a red banner.
