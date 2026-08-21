@@ -1,0 +1,12 @@
+{
+  "name": "blockr.dplyr",
+  "private": true,
+  "description": "Test harness for the block JavaScript in inst/js (see tests/js/).",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test tests/js/*.test.js"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.11.2"
+  }
+}

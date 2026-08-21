@@ -2,6 +2,40 @@
 
 ## Bug fixes
 
+- **Restored blocks came back pointing at the wrong columns**, or at none.
+  A block read its column back out of the `Blockr.Select` widget after
+  refreshing the widget's options, and stored whatever the widget said. A
+  column picker has no `allowEmpty`, so an option list that does not carry the
+  block's column slides the widget onto the first one — and during a restore
+  that list arrives routinely, because an upstream that has not restored yet
+  still reports the old frame's columns. The authored column was gone before
+  the real one arrived, and nothing brought it back: `setState()` rebuilds from
+  R's message, which does not repeat. Multi-column pickers lost their columns
+  outright, since `setOptions()` filters the selection against the new list.
+  Every block with a column picker was affected: `rename` renamed the wrong
+  column, `filter` kept its values while re-pointing at another column,
+  `join` joined on the wrong keys, `select`, `unite`, `pivot_longer`,
+  `pivot_wider`, `slice` and `summarize` came back empty, and `arrange` and
+  `separate` collapsed onto the first column. A block now keeps its own
+  column: one the board restored or the user picked survives a list that does
+  not offer it and lands back on its option when the real columns arrive,
+  while one the select auto-picked still follows the data.
+- Following from that, a column picker no longer drops a deliberate column
+  just because the frame in front of it does not carry one by that name. This
+  is what makes a restore survive an upstream that is still settling, and it
+  cuts the other way too: when an upstream really has removed the column, the
+  block holds on to it and fails loudly instead of quietly transforming a
+  different one. Only a column the select auto-picked still follows the data.
+- `summarize` and `join` auto-submit once they know their columns, and
+  `summarize` and `mutate` did so again from `setState()`. On a restore that
+  wrote the client's reading of the block over the state R had just sent it —
+  `mutate`'s fired before the group-by had been restored, so a restored
+  `mutate` lost its `.by` for good. These now speak only when they have
+  something to say that R did not already tell them.
+- R pushes a block's state before its columns, so a block that auto-submits on
+  columns can no longer answer with a fabricated state before its restore has
+  arrived.
+
 - Every block came up **blank** — one empty row, no column choices — when its
   dock panel was not on the startup view, while its expression and everything
   downstream stayed correct. The block's server runs at boot (blockr.core

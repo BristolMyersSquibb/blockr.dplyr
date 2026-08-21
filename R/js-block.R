@@ -78,11 +78,23 @@ new_js_transform_block <- function(class,
             )
           }
 
-          observeEvent(data(), send_columns())
+          # Both of these run at a LOWER priority than the state pushes in
+          # `js_block_state()`, so a restored block always learns what it is
+          # before it learns what columns exist. The other way round, a block
+          # that auto-submits once columns arrive (summarize, join) sends its
+          # fresh, auto-picked reading of itself first, and that input write
+          # lands in the per-field reactiveVals -- overwriting the very state
+          # that was about to be pushed to it. `self_write` then suppresses
+          # the correcting echo, so R and the client quietly disagree.
+          observeEvent(data(), send_columns(), priority = -10L)
           # Deferred panel: this push was dropped at boot (see js_block_state).
           # Without it the column pickers stay EMPTY and the block cannot be
           # configured at all, restored state or not.
-          observeEvent(input[[js_block_ready_name(input_name)]], send_columns())
+          observeEvent(
+            input[[js_block_ready_name(input_name)]],
+            send_columns(),
+            priority = -10L
+          )
         }
 
         if (!is.null(setup)) {
@@ -210,6 +222,9 @@ js_block_state <- function(input, session, name, input_name, state,
   # target isn't `.shiny-bound-input` yet (shiny.js inputMessages handler).
   # The custom channel's `_enqueue`/`_replayPending` (blockr-core.js) is that
   # missing client-side queue, replaying on `initialize()`.
+  #
+  # Priority 0 against the columns pushes' -10: state first, always. See
+  # `new_js_transform_block()` for what the other order costs.
   observeEvent(r_state(), {
     if (self_write$active) {
       self_write$active <- FALSE

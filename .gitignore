@@ -5,3 +5,4 @@ docs/
 /doc/
 /Meta/
 vignettes/*.html
+node_modules/

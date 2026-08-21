@@ -145,10 +145,16 @@ interface BlockrSelectHandleBase {
     sel?: string | string[] | null
   ): void;
   /**
-   * Swap the option list without touching the current selection (setOptions
-   * would drop chips whose value list hasn't arrived yet). Lazy loading.
+   * Swap the option list without reconciling the selection against it
+   * (setOptions would drop chips whose value list hasn't arrived yet). Lazy
+   * loading, and — with `sel` — a caller that owns the value and is only
+   * borrowing the widget to display it: `sel` is forced, option list or not.
+   * See Blockr.reconcileColumn.
    */
-  updateOptions(opts: BlockrSelectOption[] | BlockrSelectOption | null | undefined): void;
+  updateOptions(
+    opts: BlockrSelectOption[] | BlockrSelectOption | null | undefined,
+    sel?: string | string[] | null
+  ): void;
   /** Toggle the "Loading…" dropdown state. */
   setLoading(flag: boolean): void;
   /**
@@ -276,6 +282,30 @@ interface BlockrNamespace {
     checked: boolean,
     onChange: (checked: boolean) => void
   ): BlockrCheckboxHandle;
+  /**
+   * Point a column picker at a new option list without losing a deliberate
+   * pick. Returns the column the caller should hold from here on: a pinned
+   * one (restored or user-picked) survives a list that does not offer it, an
+   * unpinned one still follows the list. See blockr-core.js.
+   */
+  reconcileColumn(
+    select: BlockrSelectSingleHandle,
+    options: BlockrSelectOption[],
+    column: string,
+    pinned: boolean | undefined
+  ): string;
+  /** The same for a multi picker, where everything selected is pinned. */
+  reconcileColumns(
+    select: BlockrSelectMultiHandle,
+    options: BlockrSelectOption[],
+    columns: string[] | null | undefined
+  ): string[];
+  /**
+   * Serialization for "has this state changed?": insensitive to key order,
+   * and to the scalar/length-1-array distinction jsonlite's auto-unboxing
+   * puts on the wire. See blockr-core.js.
+   */
+  stateKey(state: unknown): string;
   /** Toggle the canonical required-empty amber cue on a field wrapper. */
   setRequiredEmpty(el: Element, empty: boolean): void;
   /** Commit-on-Enter text input with the "Enter ↵" chip (§5.5). */

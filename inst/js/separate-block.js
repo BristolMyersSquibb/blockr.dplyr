@@ -31,6 +31,11 @@
     constructor(el) {
       this.el = el;
       this.col = '';
+      // True when the board restored the column or the user picked it, as
+      // opposed to the select's own auto-pick of option 0. Only a pinned
+      // column survives a column list that does not offer it — see
+      // updateColumns().
+      this.colPinned = false;
       /** @type {string[]} */
       this.into = [];
       this.sep = '[^[:alnum:]]+';
@@ -78,6 +83,7 @@
         placeholder: 'Select column…',
         onChange: (value) => {
           this.col = value;
+          this.colPinned = true;
           this._updateRequired();
           this._submit();
         }
@@ -210,14 +216,20 @@
      */
     setState(state, silent) {
       this.col = state?.col || '';
+      this.colPinned = !!state?.col;
       this.into = (state?.into || []).slice();
       this.sep = state?.sep ?? '[^[:alnum:]]+';
       this.remove = state?.remove !== false;
       this.convert = !!state?.convert;
 
-      // Update column select
+      // Update column select. `this.col` is already the restored value and
+      // stays authoritative — the reconcile is here so the FACE keeps showing
+      // it when the option list is empty or stale (state usually arrives
+      // before the first column push), instead of blanking to `''`.
       if (this._colSelect) {
-        this._colSelect.setOptions(this.columnOptions, this.col || null);
+        Blockr.reconcileColumn(
+          this._colSelect, this.columnOptions, this.col, this.colPinned
+        );
       }
 
       // Update text inputs (sync resets the chips)
@@ -242,9 +254,9 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       if (this._colSelect) {
-        const current = this._colSelect.getValue();
-        this._colSelect.setOptions(this.columnOptions, current);
-        this.col = this._colSelect.getValue();
+        this.col = Blockr.reconcileColumn(
+          this._colSelect, this.columnOptions, this.col, this.colPinned
+        );
       }
       this._updateRequired();
     }

@@ -121,7 +121,11 @@
       /** @type {BlockrCheckboxHandle} */ (this._distinctBox).set(this.distinct);
 
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnOptions, this.columns);
+        // The block owns `columns`; the widget only shows them. setOptions()
+        // would drop the ones the current option list does not carry, which on
+        // a restore is all of them (state arrives before the first column
+        // push).
+        Blockr.reconcileColumns(this._multiSelect, this.columnOptions, this.columns);
       }
     }
 
@@ -136,8 +140,9 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnOptions, this.columns);
-        this.columns = this._multiSelect.getValue();
+        this.columns = Blockr.reconcileColumns(
+          this._multiSelect, this.columnOptions, this.columns
+        );
       }
     }
   }

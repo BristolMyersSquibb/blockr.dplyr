@@ -34,12 +34,17 @@
  */
 
 /**
- * Internal key-row record: the key model plus its UI handles.
+ * Internal key-row record: the key model plus its UI handles. `xPinned` /
+ * `yPinned` mark a column the board restored or the user picked, as opposed
+ * to one a select auto-picked (option 0) on its own — only a pinned column
+ * survives a column list that does not offer it (see updateColumns()).
  * @typedef {Object} JoinKeyRow
  * @property {number} id
  * @property {string} xCol
  * @property {string} op
  * @property {string} yCol
+ * @property {boolean} xPinned
+ * @property {boolean} yPinned
  * @property {BlockrSelectSingleHandle | null} _xSelectize
  * @property {BlockrSelectSingleHandle | null} _ySelectize
  * @property {HTMLButtonElement} [_opBtn] Assigned right after row creation.
@@ -281,6 +286,11 @@
         xCol: xCol || '',
         op: op || '==',
         yCol: yCol || '',
+        // Columns handed to us came from the board or the user; ones the
+        // selects pick on their own do not. Only a pinned column survives a
+        // column list that does not offer it — see updateColumns().
+        xPinned: !!xCol,
+        yPinned: !!yCol,
         _xSelectize: null,
         _ySelectize: null,
         rowEl: null
@@ -302,6 +312,7 @@
         placeholder: 'x column\u2026',
         onChange: (value) => {
           key.xCol = value;
+          key.xPinned = true;
           this._syncColWidth();
           this._submit();
         }
@@ -335,6 +346,7 @@
         placeholder: 'y column\u2026',
         onChange: (value) => {
           key.yCol = value;
+          key.yPinned = true;
           this._submit();
         }
       });
@@ -580,6 +592,7 @@
      * @param {BlockrPickerColumn[] | null | undefined} yMeta
      */
     updateColumns(xMeta, yMeta) {
+      const before = Blockr.stateKey(this._compose());
       this.xColumnMeta = {};
       this.xColumns = [];
       this.xColumnOptions = [];
@@ -597,17 +610,20 @@
         this.yColumnOptions.push({ value: col.name, label: col.label || '' });
       }
 
-      // Update key row selectizes
+      // Update key row selectizes. A key row owns its columns; the widgets do
+      // not. Both sides restore independently, and either upstream can still
+      // be settling when its column list arrives — a key that adopted the
+      // select's fallback would join on a column nobody chose.
       for (const k of this.keys) {
         if (k._xSelectize) {
-          const curX = k._xSelectize.getValue();
-          k._xSelectize.setOptions(this.xColumnOptions, curX);
-          k.xCol = k._xSelectize.getValue();
+          k.xCol = Blockr.reconcileColumn(
+            k._xSelectize, this.xColumnOptions, k.xCol, k.xPinned
+          );
         }
         if (k._ySelectize) {
-          const curY = k._ySelectize.getValue();
-          k._ySelectize.setOptions(this.yColumnOptions, curY);
-          k.yCol = k._ySelectize.getValue();
+          k.yCol = Blockr.reconcileColumn(
+            k._ySelectize, this.yColumnOptions, k.yCol, k.yPinned
+          );
         }
       }
 
@@ -621,8 +637,9 @@
 
       this._syncColWidth();
 
-      // Auto-submit now that columns are available
-      this._submit();
+      // Auto-submit now that columns are available -- but only if knowing
+      // them changed what this block would send (see summarize-block.js).
+      if (Blockr.stateKey(this._compose()) !== before) this._submit();
     }
   }
 

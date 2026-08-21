@@ -5,7 +5,7 @@
  * Each row: [name_input] = [Blockr.Input expression] [confirm] [remove]
  * Expression-only mode with confirm-on-Enter pattern.
  *
- * Depends on: blockr-core.js, blockr-input.js
+ * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
 
 /**
@@ -300,16 +300,24 @@
           r.confirmBtn?.classList.add('confirmed');
           if (r.confirmBtn) r.confirmBtn.innerHTML = Blockr.icons.confirm;
         }
-        if (!silent) this._submit();
       }
       // Update group by (ensure array — R may send scalar string)
       const by = state?.by || [];
       this.byValues = Array.isArray(by) ? by.slice() : [by];
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnOptions, this.byValues);
+        Blockr.reconcileColumns(this._bySelect, this.columnOptions, this.byValues);
       }
 
       this._updateUI();
+
+      // Answer R only if our reading of what it sent differs from what it
+      // sent. This used to submit halfway through the rebuild, before `by`
+      // had been restored, so it shipped the PREVIOUS by -- and
+      // `js_block_state()` writes an input blob straight into the per-field
+      // reactiveVals, so the board's group-by was gone.
+      if (!silent && Blockr.stateKey(this._compose()) !== Blockr.stateKey(state || {})) {
+        this._submit();
+      }
     }
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
@@ -326,7 +334,7 @@
         r.exprInput?.setColumns(this.columnNames);
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnOptions, this.byValues);
+        Blockr.reconcileColumns(this._bySelect, this.columnOptions, this.byValues);
       }
     }
   }

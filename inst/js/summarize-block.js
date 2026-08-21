@@ -35,12 +35,16 @@
 /**
  * Internal row record: the summary model plus its UI handles. Simple rows
  * carry func/col and the two selectizes; expr rows carry exprInput.
+ * `colPinned` marks a column the board restored or the user picked, as
+ * opposed to one the select auto-picked (option 0) on its own — only a pinned
+ * column survives a column list that does not offer it (see updateColumns()).
  * @typedef {Object} SummarizeRow
  * @property {number} id
  * @property {'simple' | 'expr'} type
  * @property {string} name
  * @property {string} [func]
  * @property {string} [col]
+ * @property {boolean} [colPinned]
  * @property {HTMLDivElement | null} rowEl
  * @property {BlockrInputHandle} [exprInput]
  * @property {BlockrSelectSingleHandle | null} [_funcSelectize]
@@ -169,6 +173,10 @@
         name: name || '',
         func: func || this.summaryFuncs[0],
         col: col || '',
+        // A column handed to us came from the board or the user; one the
+        // select picks on its own does not. Only a pinned column survives a
+        // column list that does not offer it — see updateColumns().
+        colPinned: !!col,
         rowEl: null,
         _funcSelectize: null,
         _colSelectize: null,
@@ -241,6 +249,7 @@
         placeholder: 'Column\u2026',
         onChange: (value) => {
           summary.col = value;
+          summary.colPinned = true;
           this._submit();
         }
       });
@@ -483,13 +492,17 @@
       const by = Array.isArray(byRaw) ? byRaw.slice() : [byRaw];
       this.byValues = by;
       if (this._bySelectize) {
-        this._bySelectize.setOptions(this.columnOptions, by);
+        Blockr.reconcileColumns(this._bySelectize, this.columnOptions, by);
       }
 
       this._updateUI();
 
-      // Auto-submit if state has content
-      if (summaries.length > 0 && !silent) {
+      // Answer R only if our reading of what it sent differs from what it
+      // sent — typically a name this block generated for a summary that
+      // arrived without one. Echoing an unchanged state back is not free: it
+      // writes the blob into R's per-field reactiveVals and arms `self_write`
+      // against the next real change (see Blockr.stateKey).
+      if (!silent && Blockr.stateKey(this._compose()) !== Blockr.stateKey(state || {})) {
         this._submit();
       }
     }
@@ -540,6 +553,7 @@
 
     /** @param {BlockrPickerColumn[] | null | undefined} meta */
     updateColumns(meta) {
+      const before = Blockr.stateKey(this._compose());
       this.columnMeta = {};
       this.columnNames = [];
       this.columnOptions = [];
@@ -549,14 +563,21 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
 
-      // Refresh simple-row column pickers, but do not auto-assign a default
-      // column to a row that legitimately has none (e.g. func = "n"), and
-      // only clear the stored column if it has actually been removed.
+      // Refresh simple-row column pickers. A row that legitimately has no
+      // column (e.g. func = "n") must not be auto-assigned one, and a row that
+      // HAS one keeps it even when this list does not carry it: clearing there
+      // dropped the whole summary from _compose(), and the _submit() at the
+      // end of this method wrote that empty version straight back to R.
       for (const s of this.summaries) {
         if (s.type === 'simple' && s._colSelectize) {
-          s._colSelectize.setOptions(this.columnOptions, s.col || null);
-          if (s.col && !this.columnNames.includes(s.col)) {
-            s.col = "";
+          if (NO_COL_FUNCS.includes(/** @type {string} */ (s.func))) {
+            // This row takes no column (n()), so "" is its answer, not a gap
+            // waiting to be filled: refresh the list and leave the row alone.
+            s._colSelectize.setOptions(this.columnOptions, null);
+          } else {
+            s.col = Blockr.reconcileColumn(
+              s._colSelectize, this.columnOptions, s.col || '', s.colPinned
+            );
           }
         }
         if (s.exprInput) {
@@ -564,16 +585,19 @@
         }
       }
 
-      // Refresh group-by selectize and drop removed columns from model
+      // Refresh the group-by selectize; the model stays authoritative
       if (this._bySelectize) {
-        this._bySelectize.setOptions(this.columnOptions, this.byValues);
-        this.byValues = (this.byValues || []).filter(
-          c => this.columnNames.includes(c)
+        this.byValues = Blockr.reconcileColumns(
+          this._bySelectize, this.columnOptions, this.byValues
         );
       }
 
-      // Auto-submit now that columns are available
-      this._submit();
+      // Auto-submit now that columns are available -- but only if knowing
+      // them changed what this block would send. A fresh block picks its first
+      // column here and R has to hear about it; a restored one has nothing new
+      // to say, and saying it anyway wrote the client's reading over the state
+      // R had just restored (see Blockr.stateKey).
+      if (Blockr.stateKey(this._compose()) !== before) this._submit();
     }
   }
 

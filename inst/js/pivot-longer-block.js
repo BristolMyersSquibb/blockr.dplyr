@@ -268,7 +268,7 @@
 
       // Update multi-select
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnOptions, this.cols);
+        Blockr.reconcileColumns(this._multiSelect, this.columnOptions, this.cols);
       }
       this._updateRequired();
     }
@@ -284,8 +284,9 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       if (this._multiSelect) {
-        this._multiSelect.setOptions(this.columnOptions, this.cols);
-        this.cols = this._multiSelect.getValue();
+        this.cols = Blockr.reconcileColumns(
+          this._multiSelect, this.columnOptions, this.cols
+        );
       }
       this._updateRequired();
     }
