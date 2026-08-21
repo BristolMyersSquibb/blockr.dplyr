@@ -12,3 +12,5 @@
 ^Meta$
 ^cran-comments\.md$
 ^tsconfig\.json$
+^node_modules$
+^package(-lock)?\.json$

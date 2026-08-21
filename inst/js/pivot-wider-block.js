@@ -305,13 +305,13 @@
 
       // Update multi-selects
       if (this._namesFromSelect) {
-        this._namesFromSelect.setOptions(this.columnOptions, this.names_from);
+        Blockr.reconcileColumns(this._namesFromSelect, this.columnOptions, this.names_from);
       }
       if (this._valuesFromSelect) {
-        this._valuesFromSelect.setOptions(this.columnOptions, this.values_from);
+        Blockr.reconcileColumns(this._valuesFromSelect, this.columnOptions, this.values_from);
       }
       if (this._idColsSelect) {
-        this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
+        Blockr.reconcileColumns(this._idColsSelect, this.columnOptions, this.id_cols);
       }
       this._updateRequired();
     }
@@ -327,16 +327,19 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       if (this._namesFromSelect) {
-        this._namesFromSelect.setOptions(this.columnOptions, this.names_from);
-        this.names_from = this._namesFromSelect.getValue();
+        this.names_from = Blockr.reconcileColumns(
+          this._namesFromSelect, this.columnOptions, this.names_from
+        );
       }
       if (this._valuesFromSelect) {
-        this._valuesFromSelect.setOptions(this.columnOptions, this.values_from);
-        this.values_from = this._valuesFromSelect.getValue();
+        this.values_from = Blockr.reconcileColumns(
+          this._valuesFromSelect, this.columnOptions, this.values_from
+        );
       }
       if (this._idColsSelect) {
-        this._idColsSelect.setOptions(this.columnOptions, this.id_cols);
-        this.id_cols = this._idColsSelect.getValue();
+        this.id_cols = Blockr.reconcileColumns(
+          this._idColsSelect, this.columnOptions, this.id_cols
+        );
       }
       this._updateRequired();
     }

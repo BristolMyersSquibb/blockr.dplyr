@@ -41,8 +41,14 @@
       /** @type {number | null} */
       this.prop = null;
       this.order_by = '';
+      // True when the board restored the column or the user picked it. An
+      // `allowEmpty` picker never chooses on its own, so an unpinned column is
+      // always '' — the flag is what tells a deliberate column apart from one
+      // the current frame simply has not delivered yet (see updateColumns).
+      this.orderByPinned = false;
       this.with_ties = true;
       this.weight_by = '';
+      this.weightByPinned = false;
       this.replace = false;
       this.rows = '1:5';
       /** @type {string[]} */
@@ -253,6 +259,7 @@
         placeholder: 'Select column…',
         onChange: (value) => {
           this.order_by = value;
+          this.orderByPinned = !!value;
           this._updateRequired();
           this._submit();
         }
@@ -277,6 +284,7 @@
         placeholder: 'Unweighted',
         onChange: (value) => {
           this.weight_by = value;
+          this.weightByPinned = !!value;
           this._submit();
         }
       });
@@ -407,8 +415,10 @@
       this.n = state?.n ?? 5;
       this.prop = state?.prop ?? null;
       this.order_by = state?.order_by || '';
+      this.orderByPinned = !!this.order_by;
       this.with_ties = state?.with_ties !== false;
       this.weight_by = state?.weight_by || '';
+      this.weightByPinned = !!this.weight_by;
       this.replace = !!state?.replace;
       this.rows = state?.rows || '1:5';
       const byRaw = state?.by || [];
@@ -439,13 +449,17 @@
 
       // Update column selects
       if (this._orderBySelect) {
-        this._orderBySelect.setOptions(this.columnOptions, this.order_by || null);
+        Blockr.reconcileColumn(
+          this._orderBySelect, this.columnOptions, this.order_by, this.orderByPinned
+        );
       }
       if (this._weightBySelect) {
-        this._weightBySelect.setOptions(this.columnOptions, this.weight_by || null);
+        Blockr.reconcileColumn(
+          this._weightBySelect, this.columnOptions, this.weight_by, this.weightByPinned
+        );
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnOptions, this.by);
+        Blockr.reconcileColumns(this._bySelect, this.columnOptions, this.by);
       }
 
       // Update checkboxes
@@ -468,21 +482,24 @@
       // Refresh options but keep the model state authoritative: a single
       // selectize picks a default when passed null, which would silently
       // commit a column the user never chose (breaks save/restore).
+      //
+      // Dropping a column the new list does not carry was the other half of
+      // that: during a restore the list routinely arrives from an upstream
+      // that has not restored yet, and clearing `order_by` there loses the
+      // board's column for good. A pinned column stays put and lands back on
+      // its option when the real columns arrive.
       if (this._orderBySelect) {
-        this._orderBySelect.setOptions(this.columnOptions, this.order_by || null);
-        if (this.order_by && !this.columnNames.includes(this.order_by)) {
-          this.order_by = "";
-        }
+        this.order_by = Blockr.reconcileColumn(
+          this._orderBySelect, this.columnOptions, this.order_by, this.orderByPinned
+        );
       }
       if (this._weightBySelect) {
-        this._weightBySelect.setOptions(this.columnOptions, this.weight_by || null);
-        if (this.weight_by && !this.columnNames.includes(this.weight_by)) {
-          this.weight_by = "";
-        }
+        this.weight_by = Blockr.reconcileColumn(
+          this._weightBySelect, this.columnOptions, this.weight_by, this.weightByPinned
+        );
       }
       if (this._bySelect) {
-        this._bySelect.setOptions(this.columnOptions, this.by);
-        this.by = (this.by || []).filter(c => this.columnNames.includes(c));
+        this.by = Blockr.reconcileColumns(this._bySelect, this.columnOptions, this.by);
       }
       this._updateRequired();
     }

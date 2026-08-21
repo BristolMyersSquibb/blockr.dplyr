@@ -61,11 +61,18 @@ new_join_block <- function(
           )
         }
 
-        # Send column summary (name + label + type) when either input changes
-        observeEvent(list(x(), y()), send_columns())
+        # Send column summary (name + label + type) when either input changes.
+        # Lower priority than the state push in `js_block_state()`: join
+        # auto-submits once it has columns, so a restored block must have
+        # been told what it is first (see `new_js_transform_block()`).
+        observeEvent(list(x(), y()), send_columns(), priority = -10L)
         # ...and when a client announces itself, which is how a block on a
         # deferred dock panel gets the push that was dropped at boot.
-        observeEvent(input[[js_block_ready_name("join_input")]], send_columns())
+        observeEvent(
+          input[[js_block_ready_name("join_input")]],
+          send_columns(),
+          priority = -10L
+        )
 
         sync <- js_block_state(input, session, "join", "join_input", state)
 

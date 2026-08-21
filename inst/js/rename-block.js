@@ -21,11 +21,15 @@
    */
 
   /**
-   * Internal per-row UI record.
+   * Internal per-row UI record. `colPinned` marks a column the board restored
+   * or the user picked, as opposed to one the select auto-picked (option 0) on
+   * its own. Only a pinned column survives a column list that does not offer
+   * it — see updateColumns().
    * @typedef {Object} RenameRow
    * @property {number} id
    * @property {string} oldCol
    * @property {string} newName
+   * @property {boolean} colPinned
    * @property {BlockrSelectSingleHandle | null} _colSelect
    * @property {HTMLDivElement | null} rowEl
    * @property {HTMLInputElement} [_nameInput]
@@ -86,6 +90,9 @@
         id,
         oldCol: oldCol || '',
         newName: newName || '',
+        // A column handed to us came from the board or the user; one the
+        // select picks on its own does not.
+        colPinned: !!oldCol,
         _colSelect: null,
         rowEl: null
       };
@@ -105,6 +112,7 @@
         placeholder: 'Column\u2026',
         onChange: (value) => {
           row.oldCol = value;
+          row.colPinned = true;
           // Auto-populate new name if empty
           if (!row.newName && value) {
             row.newName = value;
@@ -148,9 +156,10 @@
       });
       rowEl.appendChild(rmBtn);
 
-      // Sync row.oldCol with the select's actual value — the select may
-      // auto-pick the first option when oldCol is null/empty.
-      row.oldCol = row._colSelect.getValue() || '';
+      // A row created with no column adopts the select's auto-pick (option 0),
+      // so the face and the value agree. A row that ASKED for one keeps it,
+      // even while `columnOptions` does not carry it — see updateColumns().
+      if (!row.oldCol) row.oldCol = row._colSelect.getValue() || '';
 
       /** @type {HTMLDivElement} */ (this.listEl).appendChild(rowEl);
       this.rows.push(row);
@@ -260,11 +269,10 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       for (const r of this.rows) {
-        if (r._colSelect) {
-          const current = r._colSelect.getValue();
-          r._colSelect.setOptions(this.columnOptions, current);
-          r.oldCol = r._colSelect.getValue();
-        }
+        if (!r._colSelect) continue;
+        r.oldCol = Blockr.reconcileColumn(
+          r._colSelect, this.columnOptions, r.oldCol, r.colPinned
+        );
       }
       this._syncColWidth();
     }

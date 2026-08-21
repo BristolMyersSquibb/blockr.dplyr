@@ -225,6 +225,101 @@ Blockr.icons = {
 };
 
 /**
+ * Point a column picker at a new option list without losing a deliberate pick.
+ *
+ * The BLOCK owns its column; the widget does not. Reading the pick back out of
+ * the select after `setOptions()` and storing that as block state is what used
+ * to lose a restored board: a column picker has no `allowEmpty`, so a list that
+ * does not carry the block's column slides the widget onto option 0 — and
+ * during a restore that list arrives routinely, because an upstream still
+ * settling means `data()` is the OLD frame. The block adopted the fallback,
+ * and nothing recovered it: `setState()` rebuilds from R's message, which does
+ * not repeat. rename renamed a column nobody named, filter kept its values
+ * while re-pointing at another column.
+ *
+ * So the two cases have to be told apart:
+ *   pinned   — the board restored this column, or the user picked it. It
+ *              survives a list that does not offer it (`updateOptions` swaps
+ *              the list without touching the selection, so the face keeps
+ *              showing it) and lands back on its option when the real columns
+ *              arrive.
+ *   unpinned — nothing but the select's own auto-pick of option 0, which is
+ *              not a decision. It still follows the list, so re-pointing the
+ *              block at different data moves it — and the face keeps matching
+ *              the value.
+ *
+ * @param {BlockrSelectSingleHandle} select
+ * @param {BlockrSelectOption[]} options
+ * @param {string} column The owner's column, not the widget's.
+ * @param {boolean} pinned
+ * @returns {string} The column the owner should hold from here on.
+ */
+Blockr.reconcileColumn = (select, options, column, pinned) => {
+  const offered = (options || []).map(
+    (o) => (o && typeof o === 'object' ? o.value : o)
+  );
+  if (pinned && column && offered.indexOf(column) < 0) {
+    select.updateOptions(options, column);
+    return column;
+  }
+  select.setOptions(options, column || null);
+  return select.getValue() || '';
+};
+
+/**
+ * A comparable key for a block state, insensitive to key order and to the
+ * scalar/length-1-array distinction.
+ *
+ * For deciding whether a block has anything new to tell R. A submit is not
+ * free: `js_block_state()` writes the blob into the per-field reactiveVals and
+ * arms `self_write` to swallow the echo, so a submit that says nothing costs a
+ * round trip and leaves the guard armed against the next real change. What R
+ * sent us is not news.
+ *
+ * A length-1 array and its bare element are the SAME value on the wire, so
+ * they have to key the same: jsonlite auto-unboxes, and a single group-by
+ * column reaches the client as `by: "Species"` while `_compose()` holds
+ * `["Species"]`. Keying those apart made every restore with one group-by
+ * column echo itself straight back at R, which is the case this guard exists
+ * to stop. Unwrapping both sides cannot hide a real difference: the values
+ * underneath are still compared.
+ *
+ * @param {unknown} state
+ * @returns {string}
+ */
+Blockr.stateKey = (state) => JSON.stringify(state, (_key, value) => {
+  if (Array.isArray(value)) return value.length === 1 ? value[0] : value;
+  return value && typeof value === 'object'
+    ? Object.keys(value).sort().reduce((sorted, k) => {
+      sorted[k] = value[k];
+      return sorted;
+    }, /** @type {Record<string, unknown>} */ ({}))
+    : value;
+});
+
+/**
+ * The same, for a multi column picker.
+ *
+ * There is no auto-pick to tell apart here — a multi select never chooses
+ * anything on its own, so everything in it was restored or picked, and all of
+ * it is pinned. `setOptions()` would FILTER the selection against the new
+ * list, which during a restore means a block whose columns the current frame
+ * does not carry yet comes back EMPTY: no columns selected, no columns to
+ * pivot, no group-by. Nothing brings them back either, so the next submit
+ * writes the empty version over the board's.
+ *
+ * @param {BlockrSelectMultiHandle} select
+ * @param {BlockrSelectOption[]} options
+ * @param {string[]} columns The owner's columns, not the widget's.
+ * @returns {string[]} The columns the owner should hold from here on.
+ */
+Blockr.reconcileColumns = (select, options, columns) => {
+  const cols = (columns || []).slice();
+  select.updateOptions(options, cols);
+  return cols;
+};
+
+/**
  * Toggle the canonical required-empty amber cue (blockr-blocks.css
  * .blockr-field--required-empty) on a field wrapper or standalone input.
  * One name keeps call sites greppable for the blockr.ui move.

@@ -660,12 +660,27 @@
         return mode === 'single' ? (selected || '') : selected.slice();
       },
 
-      // Swap the option list without touching the current selection (setOptions
-      // filters selected against the new options, which would drop chips whose
-      // value list hasn't arrived yet). Used by lazy value loading.
-      /** @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts */
-      updateOptions(opts) {
+      // Swap the option list without reconciling the selection against it
+      // (setOptions filters selected against the new options, which would drop
+      // chips whose value list hasn't arrived yet). Used by lazy value loading.
+      //
+      // `sel` forces the selection instead of leaving it alone — for a caller
+      // that OWNS the value and is only borrowing the widget to display it,
+      // e.g. a column picker showing the column a board restored while the
+      // frame that has it is still loading (Blockr.reconcileColumn). Nothing
+      // else may set a selection the option list does not contain: use
+      // setOptions() and let it reconcile.
+      /**
+       * @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts
+       * @param {string | string[] | null} [sel]
+       */
+      updateOptions(opts, sel) {
         options = Array.isArray(opts) ? opts : (opts != null ? [opts] : []);
+        if (sel != null) {
+          selected = mode === 'multi'
+            ? (Array.isArray(sel) ? sel.slice() : [sel])
+            : sel;
+        }
         render();
         if (isOpen) computePosition();
       },

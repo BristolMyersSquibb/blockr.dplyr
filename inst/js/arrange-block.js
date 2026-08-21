@@ -27,9 +27,14 @@
   /**
    * Internal per-row UI record.
    * @typedef {Object} ArrangeRow
+   * `colPinned` marks a column the board restored or the user picked, as
+   * opposed to one the select auto-picked (option 0) on its own. Only a
+   * pinned column survives a column list that does not offer it — see
+   * updateColumns().
    * @property {number} id
    * @property {string} column
    * @property {'asc' | 'desc'} direction
+   * @property {boolean} colPinned
    * @property {BlockrSelectSingleHandle | null} _colSelect
    * @property {HTMLDivElement | null} rowEl
    * @property {HTMLButtonElement} [_dirBtn]
@@ -89,6 +94,9 @@
         id,
         column: column || '',
         direction: direction || 'asc',
+        // A column handed to us came from the board or the user; one the
+        // select picks on its own does not.
+        colPinned: !!column,
         _colSelect: null,
         rowEl: null
       };
@@ -108,6 +116,7 @@
         placeholder: 'Column\u2026',
         onChange: (value) => {
           row.column = value;
+          row.colPinned = true;
           this._submit();
         }
       });
@@ -224,11 +233,10 @@
         this.columnOptions.push({ value: col.name, label: col.label || '' });
       }
       for (const r of this.rows) {
-        if (r._colSelect) {
-          const current = r._colSelect.getValue();
-          r._colSelect.setOptions(this.columnOptions, current);
-          r.column = r._colSelect.getValue();
-        }
+        if (!r._colSelect) continue;
+        r.column = Blockr.reconcileColumn(
+          r._colSelect, this.columnOptions, r.column, r.colPinned
+        );
       }
     }
   }

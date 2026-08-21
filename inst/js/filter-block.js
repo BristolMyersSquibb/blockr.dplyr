@@ -54,10 +54,15 @@
   /**
    * Internal per-condition row record (UI state; composed into a
    * BlockrFilterCondition by _compose()).
+   * `colPinned` marks a column the board restored or the user picked, as
+   * opposed to one the select auto-picked (option 0) on its own — only a
+   * pinned column survives a column list that does not offer it (see
+   * updateColumns()).
    * @typedef {Object} FilterCondRow
    * @property {number} id
    * @property {'none' | 'values' | 'numeric' | 'expr'} filterType
    * @property {string | null} column
+   * @property {boolean} colPinned
    * @property {string} [op]
    * @property {string[] | null} values
    * @property {number | null} numValue
@@ -211,13 +216,32 @@
       // { op: c.op } — if cond.op is left at the default 'is' here, an
       // initial state of mode='exclude' (op='is not') gets clobbered the
       // moment columns load. Same for numeric ops ('>', '<=', etc.).
+      // Coerce scalar → [scalar] here as well as in _onColumnChange: R → JSON
+      // auto-unboxing flattens a length-1 character vector to a string, and a
+      // restored row is composed from these fields before _onColumnChange has
+      // ever run (see filterType below).
+      const rawVals = opts?.values;
+      const values = Array.isArray(rawVals)
+        ? rawVals.slice()
+        : (rawVals == null || rawVals === '' ? [] : [rawVals]);
+
       /** @type {FilterCondRow} */
       const cond = {
         id,
-        filterType: 'none',
+        // A restored row knows its own kind from its saved state; only a fresh
+        // row has to wait for column metadata to find out. Leaving this at
+        // 'none' until metadata arrives is what used to make _compose() DROP a
+        // restored condition whose column the current frame does not carry (an
+        // upstream still settling) — the next submit then wrote an empty
+        // filter over the board's. _onColumnChange overwrites it, from the
+        // column's real type, the moment that metadata lands.
+        filterType: values.length ? 'values' : (opts?.numValue != null ? 'numeric' : 'none'),
         column: column || '',
+        // A column handed to us came from the board or the user; one the
+        // select picks on its own does not.
+        colPinned: !!column,
         op: opts?.op || 'is',
-        values: /** @type {string[]} */ (opts?.values || []),
+        values,
         numValue: opts?.numValue ?? null,
         // Saved colType from a restored state — used by _compose until live
         // column metadata arrives and takes precedence.
@@ -241,6 +265,7 @@
         selected: /** @type {string | undefined} */ (column),
         placeholder: 'Column\u2026',
         onChange: (value) => {
+          cond.colPinned = true;
           this._onColumnChange(cond, value);
           this._syncColWidth();
         }
@@ -438,6 +463,8 @@
         id,
         filterType: 'expr',
         column: null,
+        // No column picker on an expression row, so nothing to pin.
+        colPinned: false,
         values: null,
         numValue: null,
         multiSelect: null,
@@ -605,9 +632,10 @@
       }
       for (const c of this.conditions) {
         if (c._colSelectize) {
-          const current = c._colSelectize.getValue();
-          c._colSelectize.setOptions(this.columnOptions, current);
-          const col = c._colSelectize.getValue();
+          const col = Blockr.reconcileColumn(
+            c._colSelectize, this.columnOptions, c.column || '', c.colPinned
+          );
+          c.column = col;
           if (col && this.columnMeta[col]) {
             // Preserve existing values/op: column metadata refreshing must
             // not clobber user- or setState-provided condition values.
@@ -617,6 +645,11 @@
               op: c.op
             });
           }
+          // A pinned column the frame does not carry keeps its row as it
+          // stands — values, operator and `_savedColType` all intact — so
+          // _compose() still ships the condition the board restored while the
+          // upstream settles. Re-rendering it against absent metadata would
+          // throw the values away.
         }
         if (c.exprInput) {
           c.exprInput.setColumns(this.columnNames);
