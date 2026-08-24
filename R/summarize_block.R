@@ -114,6 +114,7 @@ new_summarize_block <- function(
   new_js_transform_block(
     class = "summarize_block",
     name = "summarize",
+    record_fields = "summaries",
     state = list(
       summaries = summaries,
       by = by

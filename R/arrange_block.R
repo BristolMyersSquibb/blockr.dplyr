@@ -32,6 +32,7 @@ new_arrange_block <- function(
   new_js_transform_block(
     class = "arrange_block",
     name = "arrange",
+    record_fields = "columns",
     state = list(
       columns = columns
     ),
