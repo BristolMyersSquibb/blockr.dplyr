@@ -22,6 +22,8 @@ NULL
 make_filter_expr <- function(conditions,
                              operator = "&",
                              preserve_order = FALSE) {
+  conditions <- as_record_list(conditions)
+
   if (length(conditions) == 0) {
     return(bbquote(.(data)))
   }
@@ -202,6 +204,8 @@ make_expr_part <- function(cond) {
 #' @return A language object
 #' @noRd
 make_mutate_expr <- function(mutations, by = character()) {
+  mutations <- as_record_list(mutations)
+
   mutations <- Filter(
     function(r) nzchar(r$name %||% "") && nzchar(r$expr %||% ""),
     mutations
@@ -261,6 +265,8 @@ summarize_func_map <- function(func) {
 #' @return A language object
 #' @noRd
 make_summarize_expr <- function(summaries, by = character()) {
+  summaries <- as_record_list(summaries)
+
   if (length(summaries) == 0) {
     return(bbquote(.(data)))
   }
@@ -435,6 +441,9 @@ make_select_expr <- function(columns, exclude = FALSE, distinct = FALSE) {
 #' @return A language object
 #' @noRd
 make_arrange_expr <- function(columns) {
+  columns <- as_record_list(columns)
+  columns <- Filter(function(c) nzchar(c$column %||% ""), columns)
+
   if (length(columns) == 0) return(bbquote(.(data)))
 
   args <- lapply(columns, function(c) {

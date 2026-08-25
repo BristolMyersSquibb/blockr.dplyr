@@ -106,6 +106,18 @@ for (spec in record_list_blocks) {
         expect_no_error(shiny::isolate(session$returned$expr()))
       })
     })
+
+    # An ATOMIC field -- `summaries: ["eggs"]` collapsed by `simplifyVector` --
+    # aborted the whole session with "$ operator is invalid for atomic
+    # vectors", taking the board down with it. It must degrade to a
+    # pass-through block instead.
+    test_that(paste(s$label, "survives an ATOMIC record field"), {
+      blk <- s$ctor(c("eggs", "traps"))
+      testServer(blk$expr_server, args = list(data = shiny::reactive(mtcars)), {
+        session$flushReact()
+        expect_no_error(shiny::isolate(session$returned$expr()))
+      })
+    })
   })
 }
 
@@ -114,6 +126,14 @@ test_that("as_record_list leaves a canonical list alone", {
   expect_identical(as_record_list(x), x)
   expect_identical(as_record_list(list()), list())
   expect_identical(as_record_list(NULL), NULL)
-  # a plain character vector is not a record list
-  expect_identical(as_record_list(c("a", "b")), c("a", "b"))
+  # A plain character vector is not a record list. It is DROPPED rather than
+  # passed on: `summaries: ["eggs"]` from a tool call reached `r$name` and
+  # aborted the session, so an empty block is the safer degradation.
+  expect_identical(as_record_list(c("a", "b")), list())
+  expect_identical(as_record_list("a"), list())
+  # a stray string among real records goes too, the records stay
+  expect_identical(
+    as_record_list(list(list(name = "a"), "junk")),
+    list(list(name = "a"))
+  )
 })

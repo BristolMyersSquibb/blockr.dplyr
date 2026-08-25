@@ -333,12 +333,29 @@ js_block_dep <- local({
 #' * a single flat record (`names()` set, not every element a list) -> wrap it
 #' * a NAMED list of records (every element a list) -> drop the names
 #'
+#' Anything that is not a record at all -- an atomic vector, or a stray string
+#' among the records -- is dropped rather than passed on, so a malformed tool
+#' call degrades to an empty block instead of aborting the session.
+#'
 #' @param x A state field value.
 #' @return `x` as an unnamed list of records; unchanged if it already is one.
 #' @noRd
 as_record_list <- function(x) {
-  if (!is.list(x) || !length(x) || is.null(names(x))) {
+  if (!length(x)) {
     return(x)
+  }
+
+  # An atomic vector is never a record list. It arrives when a tool call sends
+  # `summaries: ["eggs"]` where the schema asks for an array of objects and
+  # `simplifyVector` collapses it to a character vector. Passing it through
+  # reaches `r$name` in the expression builder and aborts with "$ operator is
+  # invalid for atomic vectors" -- which kills the session, not just the block.
+  if (!is.list(x)) {
+    return(list())
+  }
+
+  if (is.null(names(x))) {
+    return(Filter(is.list, x))
   }
 
   if (all(vapply(x, is.list, logical(1L)))) {
