@@ -587,7 +587,11 @@
       }
 
       // Rebuild from state
-      const conditions = state?.conditions || [];
+      // R canonicalises this to a list of records (as_record_list), but a
+      // stale saved board can still send one flat record as an object. An
+      // unguarded for-of throws and the block renders nothing, silently.
+      const conditionsRaw = state?.conditions || [];
+      const conditions = Array.isArray(conditionsRaw) ? conditionsRaw : [conditionsRaw];
       if (conditions.length === 0) {
         this._addValueRow(null, null);
       } else {

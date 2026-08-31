@@ -35,6 +35,7 @@ new_mutate_block <- function(
   new_js_transform_block(
     class = "mutate_block",
     name = "mutate",
+    record_fields = "mutations",
     state = list(
       mutations = mutations,
       by = by

@@ -464,7 +464,11 @@
       }
 
       // Rebuild summaries
-      const summaries = state?.summaries || [];
+      // R canonicalises this to a list of records (as_record_list), but a
+      // stale saved board can still send one flat record as an object. An
+      // unguarded for-of throws and the block renders nothing, silently.
+      const summariesRaw = state?.summaries || [];
+      const summaries = Array.isArray(summariesRaw) ? summariesRaw : [summariesRaw];
       if (summaries.length === 0) {
         this._addSimpleRow(null, null, null);
       } else {

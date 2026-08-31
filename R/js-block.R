@@ -32,6 +32,10 @@ NULL
 #' @param setup Optional `function(input, session, ns, data, input_name)`
 #'   registering block-specific observers (e.g. filter's lazy value
 #'   requests, summarize's function list).
+#' @param record_fields Names of state fields that hold a list OF records.
+#'   Each is passed through `as_record_list()` at construction, so a flat
+#'   single record is canonicalised rather than breaking `expr_fn` and the
+#'   block's `setState()`.
 #' @param normalize_state Applied to the state before sending it to JS via
 #'   the update message (e.g. force length-1 vectors to JSON arrays).
 #' @param shared_deps Character subset of `c("select", "input")`.
@@ -46,11 +50,18 @@ new_js_transform_block <- function(class,
                                    columns_meta = build_column_picker_meta,
                                    setup = NULL,
                                    normalize_state = identity,
+                                   record_fields = character(),
                                    shared_deps = "select",
                                    ctor = sys.parent(),
                                    ctor_pkg = NULL,
                                    ...) {
   input_name <- js_block_input_name(name)
+
+  # Canonicalise list-OF-record fields before anything reads them, so a flat
+  # record neither throws in `expr_fn` nor reaches the client as a JSON object.
+  for (f in intersect(record_fields, names(state))) {
+    state[[f]] <- as_record_list(state[[f]])
+  }
 
   # blockr.core's `initial_block_state()` reads each constructor formal by
   # name from the (expr-)server's enclosing environment. Our flat formals
@@ -300,3 +311,56 @@ js_block_dep <- local({
     cache[[name]]
   }
 })
+
+#' Canonicalise a record-list state field
+#'
+#' A record-list field (`summaries`, `mutations`, `conditions`, `columns`) is a
+#' list OF records. Written flat -- `list(name = "m", func = "mean")` rather
+#' than `list(list(name = "m", func = "mean"))` -- it is accepted by every
+#' constructor and then fails twice over: `expr_fn` throws "$ operator is
+#' invalid for atomic vectors", and it serialises to a JSON object that the
+#' block's own `setState` cannot iterate (`summaries is not iterable`). The
+#' block renders nothing and reports no error a caller can see, because
+#' `get_block_result()` returns the block's pass-through input.
+#'
+#' A human copying a worked example gets the nesting right. A block built from
+#' a schema -- blockr.assistant -- does not, reliably. See
+#' `_inbox/2026-08-24-dplyr-js-blocks-unguarded-list-state.md`.
+#'
+#' Two malformed shapes, one canonical result. Both are JSON objects where the
+#' JS contract needs an array:
+#'
+#' * a single flat record (`names()` set, not every element a list) -> wrap it
+#' * a NAMED list of records (every element a list) -> drop the names
+#'
+#' Anything that is not a record at all -- an atomic vector, or a stray string
+#' among the records -- is dropped rather than passed on, so a malformed tool
+#' call degrades to an empty block instead of aborting the session.
+#'
+#' @param x A state field value.
+#' @return `x` as an unnamed list of records; unchanged if it already is one.
+#' @noRd
+as_record_list <- function(x) {
+  if (!length(x)) {
+    return(x)
+  }
+
+  # An atomic vector is never a record list. It arrives when a tool call sends
+  # `summaries: ["eggs"]` where the schema asks for an array of objects and
+  # `simplifyVector` collapses it to a character vector. Passing it through
+  # reaches `r$name` in the expression builder and aborts with "$ operator is
+  # invalid for atomic vectors" -- which kills the session, not just the block.
+  if (!is.list(x)) {
+    return(list())
+  }
+
+  if (is.null(names(x))) {
+    return(Filter(is.list, x))
+  }
+
+  if (all(vapply(x, is.list, logical(1L)))) {
+    return(unname(x))
+  }
+
+  list(x)
+}

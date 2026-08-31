@@ -211,7 +211,11 @@
       }
 
       // Rebuild from state
-      const columns = state?.columns || [];
+      // R canonicalises this to a list of records (as_record_list), but a
+      // stale saved board can still send one flat record as an object. An
+      // unguarded for-of throws and the block renders nothing, silently.
+      const columnsRaw = state?.columns || [];
+      const columns = Array.isArray(columnsRaw) ? columnsRaw : [columnsRaw];
       if (columns.length === 0) {
         this._addRow(null, 'asc');
       } else {

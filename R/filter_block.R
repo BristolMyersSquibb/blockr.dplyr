@@ -42,6 +42,7 @@ new_filter_block <- function(
   new_js_transform_block(
     class = "filter_block",
     name = "filter",
+    record_fields = "conditions",
     state = list(
       conditions = conditions,
       operator = operator,
