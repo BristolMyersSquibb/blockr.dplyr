@@ -141,6 +141,51 @@
   max-width: 100%;
 }
 
+/* --- Single-line modifier ---------------------------------------------------
+   Tags stay on one row and the overflow collapses into a "+N" chip
+   (blockr-select.js `fitTags`), so the control keeps its height whatever is
+   selected. Used by the auto-generated parameter bands, where a wrapping
+   select sets the height of the whole grid row. */
+.blockr-select--single-line .blockr-select__control {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.blockr-select--single-line .blockr-select__tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  flex: 1;
+}
+.blockr-select--single-line .blockr-select__tag {
+  flex: 0 0 auto;
+}
+/* Clicking the chip wraps the control open so every tag is reachable — the
+   dropdown lists only what is not selected, so this is the only place a
+   hidden pick can be removed. Collapses again on the next outside click. */
+.blockr-select--single-line.blockr-select--expanded .blockr-select__control,
+.blockr-select--single-line.blockr-select--expanded .blockr-select__tags {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+/* The overflow count. Not a tag: it carries no remove button, and clicking it
+   expands the control (see the modifier above) rather than opening the
+   dropdown. */
+.blockr-select__more {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  /* --blockr-radius-sm */
+  border-radius: 4px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  line-height: 1.4;
+  color: var(--blockr-color-primary, #2563eb);
+  cursor: pointer;
+  user-select: none;
+}
+
 /* --- Individual tag --- */
 .blockr-select__tag {
   display: inline-flex;
@@ -185,6 +230,12 @@
 .blockr-select__tag-remove:hover {
   color: var(--blockr-color-danger, #dc2626);
   background: rgba(220, 53, 69, 0.08);
+}
+
+/* Tags the single-line fit dropped. After `.blockr-select__tag`, whose
+   `display: inline-flex` would otherwise win on source order. */
+.blockr-select__tag--hidden {
+  display: none;
 }
 
 /* --- Drag states --- */

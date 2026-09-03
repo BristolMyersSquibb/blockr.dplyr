@@ -119,6 +119,11 @@ interface BlockrSelectMultiConfig extends BlockrSelectConfigBase {
   selected?: string[];
   /** Tags can be drag-reordered (default true). */
   reorderable?: boolean;
+  /**
+   * Keep the tags on one row and collapse the overflow into a "+N" chip,
+   * instead of wrapping and growing the control (default false).
+   */
+  singleLine?: boolean;
   /** Receives a copy of the selected values, in tag order. */
   onChange?: (value: string[]) => void;
 }
@@ -128,6 +133,7 @@ interface BlockrSelectConfig extends BlockrSelectConfigBase {
   selected?: string | string[] | null;
   allowEmpty?: boolean;
   reorderable?: boolean;
+  singleLine?: boolean;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
 }

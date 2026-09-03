@@ -1,5 +1,16 @@
 # blockr.dplyr (development version)
 
+## Features
+
+- **`Blockr.Select.multi()` takes `singleLine: true`**: the tags stay on one
+  row and the overflow is counted on a `+N` chip, instead of wrapping and
+  growing the control a row per tag. Clicking the chip wraps the control open
+  so a hidden pick can still be removed (the dropdown lists only what is not
+  selected), and it collapses again on the next click outside. A
+  `ResizeObserver` refits on width changes, so widening a block gives tags
+  back. Used by the auto-generated parameter bands in blockr.extra, where the
+  grid sizes a row to its tallest field.
+
 ## Bug fixes
 
 - **Restored blocks came back pointing at the wrong columns**, or at none.

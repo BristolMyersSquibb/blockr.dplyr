@@ -40,6 +40,34 @@
     }
   };
 
+  /* How many tags fit on one row, given their measured widths.
+   *
+   * Split out from the DOM work because it is the part worth testing: the chip
+   * has to fit too, so dropping a tag can force dropping the next one up when
+   * the count goes from "+9" to "+10". Widths are in visual order and exclude
+   * the gap, which is added between neighbours only.
+   *
+   * @param {number[]} widths @param {number} avail
+   * @param {number} gap @param {number} chipWidth
+   * @returns {number}
+   */
+  const fitCount = (widths, avail, gap, chipWidth) => {
+    let used = 0;
+    let shown = 0;
+    for (let i = 0; i < widths.length; i++) {
+      const w = widths[i] + (shown ? gap : 0);
+      if (used + w > avail) break;
+      used += w;
+      shown++;
+    }
+    if (shown === widths.length) return shown;
+    while (shown > 0 && used + gap + chipWidth > avail) {
+      shown--;
+      used -= widths[shown] + (shown ? gap : 0);
+    }
+    return shown;
+  };
+
   /**
    * @param {HTMLElement} container
    * @param {BlockrSelectConfig} config
@@ -64,6 +92,17 @@
           : (allowEmpty || options.length === 0 ? '' : optValue(options[0])));
     const placeholder = config.placeholder || '';
     const reorderable = mode === 'multi' && config.reorderable !== false;
+    // Keep the tags on one row and collapse the overflow into a "+N" chip,
+    // instead of wrapping and growing the control a row per tag. Auto-generated
+    // parameter bands (function block, code block) sit in a grid where the
+    // tallest field sets the row height, so a wrapping select there is what
+    // makes the whole band tall.
+    const singleLine = mode === 'multi' && config.singleLine === true;
+    // Single-line only: the chip has been clicked, so the control wraps and
+    // shows every tag until the click lands somewhere else. The dropdown lists
+    // only UNselected options, so without this a tag past the first row could
+    // be neither seen nor removed.
+    let expanded = false;
     const onChange = config.onChange || null;
     const onOpen = config.onOpen || null;
     const onSearch = config.onSearch || null;
@@ -95,6 +134,7 @@
     // DOM
     const root = document.createElement('div');
     root.className = `blockr-select blockr-select--${mode}`;
+    if (singleLine) root.classList.add('blockr-select--single-line');
     root.setAttribute('role', 'combobox');
     root.setAttribute('aria-expanded', 'false');
     root.setAttribute('aria-haspopup', 'listbox');
@@ -109,6 +149,9 @@
     let tagsEl = /** @type {any} */ (null);
     /** @type {HTMLSpanElement} */
     let valueEl = /** @type {any} */ (null);
+
+    /** @type {HTMLSpanElement} */
+    let moreEl = /** @type {any} */ (null);
 
     if (mode === 'multi') {
       tagsEl = document.createElement('div');
@@ -312,9 +355,63 @@
       searchInput.setAttribute('placeholder', selected.length === 0 ? placeholder : '');
     };
 
+    /* Hide the tags past the first row and count them on the chip.
+     *
+     * Runs after every render and from a ResizeObserver, so widening the block
+     * gives tags back without anything else having to notice. A zero width
+     * means the control is not laid out yet (a deferred dock panel, a hidden
+     * tab): leave every tag visible and let the observer's first delivery do
+     * the fit, rather than measuring against nothing and hiding all of them.
+     */
+    const fitTags = () => {
+      if (!singleLine || destroyed) return;
+      const tags = /** @type {HTMLElement[]} */ (
+        Array.from(tagsEl.querySelectorAll('.blockr-select__tag'))
+      );
+      tags.forEach(t => t.classList.remove('blockr-select__tag--hidden'));
+      if (moreEl) moreEl.style.display = 'none';
+      if (!tags.length || expanded) return;
+
+      const avail = tagsEl.clientWidth;
+      if (!avail) return;
+
+      const gap = parseFloat(getComputedStyle(tagsEl).columnGap) || 3;
+      // While the dropdown is open the search input is back in flow and needs
+      // its min-width, so the tags get that much less room.
+      const reserve = isOpen ? 40 + gap : 0;
+
+      if (!moreEl) {
+        moreEl = document.createElement('span');
+        moreEl.className = 'blockr-select__more';
+        moreEl.setAttribute('aria-hidden', 'true');
+      }
+      // Measure the chip at its widest possible count: the count can only
+      // shrink as tags are dropped, never grow past the total.
+      moreEl.textContent = `+${tags.length}`;
+      moreEl.style.display = '';
+      if (moreEl.parentElement !== tagsEl) tagsEl.insertBefore(moreEl, searchInput);
+      const chipWidth = moreEl.getBoundingClientRect().width;
+
+      const widths = tags.map(t => t.getBoundingClientRect().width);
+      const shown = fitCount(widths, avail - reserve, gap, chipWidth);
+
+      if (shown >= tags.length) {
+        moreEl.style.display = 'none';
+        return;
+      }
+      const hidden = tags.slice(shown);
+      hidden.forEach(t => t.classList.add('blockr-select__tag--hidden'));
+      moreEl.textContent = `+${hidden.length}`;
+      moreEl.title = hidden
+        .map(t => t.getAttribute('data-value'))
+        .filter(Boolean)
+        .join(', ');
+    };
+
     const render = () => {
       if (mode === 'single') renderValue();
       if (mode === 'multi') renderTags();
+      if (mode === 'multi') fitTags();
       if (isOpen) renderDropdown();
     };
 
@@ -334,6 +431,8 @@
 
       root.classList.add('blockr-select--open');
       root.setAttribute('aria-expanded', 'true');
+      // The search input is back in flow now, so the row is narrower.
+      if (mode === 'multi') fitTags();
 
       if (mode === 'single') {
         valueEl.style.display = 'none';
@@ -364,6 +463,7 @@
       root.classList.remove('blockr-select--open', 'blockr-select--above');
       root.setAttribute('aria-expanded', 'false');
       searchInput.removeAttribute('aria-activedescendant');
+      if (mode === 'multi') fitTags();
 
       if (mode === 'single') {
         valueEl.style.display = '';
@@ -444,6 +544,25 @@
       e.stopPropagation();
     };
 
+    /* The "+N" chip: show the rest rather than open the dropdown, which in
+     * multi mode lists only what is NOT selected. */
+    /** @param {MouseEvent} e */
+    const onMoreClick = (e) => {
+      if (!singleLine) return;
+      if (!(/** @type {Element} */ (e.target).closest('.blockr-select__more'))) return;
+      e.stopPropagation();
+      expanded = true;
+      root.classList.add('blockr-select--expanded');
+      fitTags();
+    };
+
+    const collapse = () => {
+      if (!expanded) return;
+      expanded = false;
+      root.classList.remove('blockr-select--expanded');
+      fitTags();
+    };
+
     const onSearchInput = () => {
       searchQuery = searchInput.value;
       highlightIdx = 0;
@@ -507,6 +626,7 @@
     /** @param {MouseEvent} e */
     const onDocumentClick = (e) => {
       if (root.contains(/** @type {Node | null} */ (e.target)) || dropdown.contains(/** @type {Node | null} */ (e.target))) return;
+      collapse();
       close();
     };
 
@@ -602,6 +722,7 @@
 
     if (mode === 'multi') {
       control.addEventListener('click', onTagRemoveClick);
+      if (singleLine) control.addEventListener('click', onMoreClick, true);
       if (reorderable && tagsEl) {
         tagsEl.addEventListener('dragstart', onDragStart);
         tagsEl.addEventListener('dragover', onDragOver);
@@ -611,6 +732,22 @@
     }
 
     render();
+
+    /* Re-fit on width changes: a dock panel resize, a grid reflow, or the
+     * control's first layout after a deferred panel mounts. Observing the
+     * control rather than the tags row keeps this out of a feedback loop:
+     * hiding a tag changes the row's content, never the control's width. */
+    /** @type {ResizeObserver | null} */
+    let resizeObs = null;
+    if (singleLine && typeof ResizeObserver !== 'undefined') {
+      let pending = false;
+      resizeObs = new ResizeObserver(() => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; fitTags(); });
+      });
+      resizeObs.observe(control);
+    }
 
     // --- Public API ---
 
@@ -705,6 +842,7 @@
         if (destroyed) return;
         destroyed = true;
         if (searchTimer) clearTimeout(searchTimer);
+        if (resizeObs) resizeObs.disconnect();
         close();
 
         if (dropdown.parentElement === document.body) {
@@ -720,6 +858,7 @@
 
         if (mode === 'multi') {
           control.removeEventListener('click', onTagRemoveClick);
+          if (singleLine) control.removeEventListener('click', onMoreClick, true);
           if (reorderable && tagsEl) {
             tagsEl.removeEventListener('dragstart', onDragStart);
             tagsEl.removeEventListener('dragover', onDragOver);
@@ -735,6 +874,8 @@
 
   Blockr.Select = {
     single: (container, config) => /** @type {BlockrSelectSingleHandle} */ (createSelect(container, config, 'single')),
-    multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi'))
+    multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi')),
+    // Exposed for tests: the row-fitting arithmetic, without a layout engine.
+    fitCount: fitCount
   };
 })();
