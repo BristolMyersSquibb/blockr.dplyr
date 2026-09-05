@@ -2,6 +2,12 @@
 
 ## Features
 
+- **`maxTagChars` shortens a long tag from the middle.** "Xanomeline High Dose"
+  and "Xanomeline Low Dose" both end-ellipsize to "Xanomelin…", so the end
+  ellipsis CSS gives you is the wrong cut for these values; middle truncation
+  costs the same width and keeps both ends. The full value stays on the tag's
+  title, and the value the widget returns is untouched.
+
 - **`Blockr.Select.multi()` takes `singleLine: true`**: the tags stay on one
   row and the overflow is counted on a `+N` chip, instead of wrapping and
   growing the control a row per tag. Clicking the chip wraps the control open

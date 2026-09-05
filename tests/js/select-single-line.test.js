@@ -66,6 +66,43 @@ test('fitCount: no tags, no chip', () => {
   win.close();
 });
 
+test('midTruncate cuts the middle, keeping both ends', () => {
+  const win = newWindow();
+  const mid = win.Blockr.Select.midTruncate;
+
+  // The case it exists for: an end ellipsis makes these two the same string.
+  assert.strictEqual(mid('Xanomeline High Dose', 16), 'Xanomeli\u2026gh Dose');
+  assert.strictEqual(mid('Xanomeline Low Dose', 16), 'Xanomeli\u2026ow Dose');
+  assert.notStrictEqual(mid('Xanomeline High Dose', 16), mid('Xanomeline Low Dose', 16));
+
+  // Never longer than the cap, and short values are returned untouched.
+  assert.strictEqual(mid('Xanomeline High Dose', 16).length, 16);
+  assert.strictEqual(mid('AGE', 16), 'AGE');
+  assert.strictEqual(mid('AGE', 0), 'AGE');
+  win.close();
+});
+
+test('a tag past the cap is truncated and keeps the full value on hover', () => {
+  const win = newWindow();
+  const doc = win.document;
+  doc.body.innerHTML = '<div id="host"></div>';
+  const sel = win.Blockr.Select.multi(doc.getElementById('host'), {
+    options: ['Xanomeline High Dose', 'AGE'],
+    selected: ['Xanomeline High Dose', 'AGE'],
+    maxTagChars: 16
+  });
+
+  const labels = [...sel.el.querySelectorAll('.blockr-select__tag-label')];
+  assert.strictEqual(labels[0].textContent, 'Xanomeli\u2026gh Dose');
+  assert.strictEqual(labels[0].title, 'Xanomeline High Dose');
+  assert.strictEqual(labels[1].textContent, 'AGE');
+
+  // The value that leaves the widget is the value, not what is painted on it.
+  assert.deepStrictEqual(sel.getValue(), ['Xanomeline High Dose', 'AGE']);
+  sel.destroy();
+  win.close();
+});
+
 test('singleLine marks the root and leaves an unlaid-out control alone', () => {
   const win = newWindow();
   const doc = win.document;

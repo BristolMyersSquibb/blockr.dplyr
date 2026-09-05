@@ -124,6 +124,11 @@ interface BlockrSelectMultiConfig extends BlockrSelectConfigBase {
    * instead of wrapping and growing the control (default false).
    */
   singleLine?: boolean;
+  /**
+   * Shorten tag labels longer than this many characters, cutting the MIDDLE so
+   * both ends survive; the full value stays on the tag's title (default 0, off).
+   */
+  maxTagChars?: number;
   /** Receives a copy of the selected values, in tag order. */
   onChange?: (value: string[]) => void;
 }
@@ -134,6 +139,7 @@ interface BlockrSelectConfig extends BlockrSelectConfigBase {
   allowEmpty?: boolean;
   reorderable?: boolean;
   singleLine?: boolean;
+  maxTagChars?: number;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
 }

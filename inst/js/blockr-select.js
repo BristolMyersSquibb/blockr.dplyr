@@ -40,6 +40,23 @@
     }
   };
 
+  /* Shorten a tag label from the MIDDLE.
+   *
+   * CSS can only ellipsize at the end, and for the values these controls carry
+   * the distinguishing word is as often the last one as the first: "Xanomeline
+   * High Dose" and "Xanomeline Low Dose" both end-ellipsize to "Xanomelin…".
+   * Cutting the middle costs the same width and keeps both ends. The full value
+   * stays on the tag's title.
+   *
+   * @param {string} value @param {number} cap @returns {string}
+   */
+  const midTruncate = (value, cap) => {
+    if (!cap || value.length <= cap) return value;
+    const head = Math.ceil((cap - 1) / 2);
+    const tail = Math.floor((cap - 1) / 2);
+    return value.slice(0, head) + '\u2026' + value.slice(value.length - tail);
+  };
+
   /* How many tags fit on one row, given their measured widths.
    *
    * Split out from the DOM work because it is the part worth testing: the chip
@@ -98,6 +115,10 @@
     // tallest field sets the row height, so a wrapping select there is what
     // makes the whole band tall.
     const singleLine = mode === 'multi' && config.singleLine === true;
+    // Tag labels longer than this are shortened in the middle (0 = never).
+    const maxTagChars = mode === 'multi' && config.maxTagChars > 0
+      ? config.maxTagChars
+      : 0;
     // Single-line only: the chip has been clicked, so the control wraps and
     // shows every tag until the click lands somewhere else. The dropdown lists
     // only UNselected options, so without this a tag past the first row could
@@ -339,7 +360,16 @@
         // value in normal font with the option's label muted on the side
         // (`.blockr-select__opt-label`). Unnamed options fall back to bare value.
         const opt = findOpt(options, val);
-        if (opt) { fillOptContent(label, opt); } else { label.textContent = val; label.title = val; }
+        if (maxTagChars && val.length > maxTagChars) {
+          const lbl = opt ? optLabel(opt) : '';
+          label.textContent = midTruncate(val, maxTagChars);
+          label.title = lbl ? `${val} \u2014 ${lbl}` : val;
+        } else if (opt) {
+          fillOptContent(label, opt);
+        } else {
+          label.textContent = val;
+          label.title = val;
+        }
         tag.appendChild(label);
 
         const removeBtn = document.createElement('button');
@@ -875,7 +905,8 @@
   Blockr.Select = {
     single: (container, config) => /** @type {BlockrSelectSingleHandle} */ (createSelect(container, config, 'single')),
     multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi')),
-    // Exposed for tests: the row-fitting arithmetic, without a layout engine.
-    fitCount: fitCount
+    // Exposed for tests: the arithmetic, without a layout engine.
+    fitCount: fitCount,
+    midTruncate: midTruncate
   };
 })();
