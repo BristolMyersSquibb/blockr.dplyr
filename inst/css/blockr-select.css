@@ -324,11 +324,14 @@
   padding: 4px 9px 4px;
 }
 
+/* Inset by the panel's own padding again, so the box sits inside the panel
+   rather than against its edge and its border lines up with where the option
+   text starts. */
 .blockr-select__search--menu {
   display: block;
-  width: 100%;
+  width: calc(100% - 8px);
   height: 30px;
-  margin: 2px 0 4px;
+  margin: 2px 4px 5px;
   padding: 0 9px;
   border: 1px solid var(--blockr-color-border-strong, #d1d5db);
   border-radius: var(--blockr-radius-sm, 4px);
