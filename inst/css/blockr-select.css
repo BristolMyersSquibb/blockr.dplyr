@@ -299,6 +299,58 @@
   z-index: 9999;
 }
 
+/* ===== Headless: the dropdown as a menu ===== */
+/* Blockr.Select.menu(): the same dropdown, hung off a word instead of a
+   control it owns. The host is a stub -- the panel itself is portalled to
+   <body> like every other dropdown. blockr.docs design-system/pinned-controls.md */
+.blockr-select-menu-host {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.blockr-select--headless .blockr-select__dropdown {
+  padding: 4px;
+}
+
+/* The role this menu sets. The word that was clicked says which VALUE is in
+   the slot, never which setting it fills, so the panel has to. */
+.blockr-select__menu-title {
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--blockr-color-text-subtle, #9ca3af);
+  padding: 4px 9px 4px;
+}
+
+.blockr-select__search--menu {
+  display: block;
+  width: 100%;
+  height: 30px;
+  margin: 2px 0 4px;
+  padding: 0 9px;
+  border: 1px solid var(--blockr-color-border-strong, #d1d5db);
+  border-radius: var(--blockr-radius-sm, 4px);
+  background: #fff;
+  font: inherit;
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+}
+
+/* A short list needs no filter box, but it still needs the focus: the arrows,
+   Enter and type-ahead all run off this input. Clipped rather than hidden,
+   because display:none cannot hold focus. */
+.blockr-select__search--offscreen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .blockr-select--open .blockr-select__dropdown {
   display: block;
 }

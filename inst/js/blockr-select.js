@@ -23,19 +23,30 @@
   const optLabel = (o) => typeof o === 'object' && o !== null ? (o.label || '') : '';
   /** @param {BlockrSelectOption[]} opts @param {string} val */
   const findOpt = (opts, val) => opts.find(o => optValue(o) === val);
-  /** @param {HTMLElement} el @param {BlockrSelectOption} o */
-  const fillOptContent = (el, o) => {
+  /* Both facts, and `labelFirst` decides which one leads.
+   *
+   * A menu opened from a word has to lead with the word that was clicked. A
+   * sentence printing `{label(@color)}` says "Actual Treatment", and a list
+   * whose rows read "TRTA *Actual Treatment*" puts what the reader just
+   * clicked in the muted half of the row and bolds a string that is nowhere
+   * on screen. blockr.docs design-system/pinned-controls.md.
+   *
+   * @param {HTMLElement} el @param {BlockrSelectOption} o @param {boolean} [labelFirst]
+   */
+  const fillOptContent = (el, o, labelFirst) => {
     el.textContent = '';
     const val = optValue(o);
     const lbl = optLabel(o);
-    el.appendChild(document.createTextNode(val));
+    const lead = (labelFirst && lbl) ? lbl : val;
+    const trail = (labelFirst && lbl) ? val : lbl;
+    el.appendChild(document.createTextNode(lead));
     // The element (or an ancestor) ellipsizes on overflow, so always offer
     // the full text on hover.
     el.title = lbl ? `${val} — ${lbl}` : val;
-    if (lbl) {
+    if (trail) {
       const span = document.createElement('span');
       span.className = 'blockr-select__opt-label';
-      span.textContent = lbl;
+      span.textContent = trail;
       el.appendChild(span);
     }
   };
@@ -101,6 +112,16 @@
     // refresh silently picks option 0 — fine for a column picker, wrong
     // wherever an unrequested pick would change what the user is looking at.
     const allowEmpty = mode === 'single' && config.allowEmpty === true;
+    // Headless: the dropdown IS the widget, anchored to something the caller
+    // owns (a word in a block's sentence) instead of to a control this
+    // builds. Same options, same tick, same search, same keyboard -- a menu
+    // that drifts from the select is a second idiom nobody asked for.
+    const headless = config.headless === true;
+    const menuTitle = config.title || '';
+    const labelFirst = config.labelFirst === true;
+    // The select's own rule for when a list needs filtering, in one place.
+    const searchAfter = config.searchAfter != null ? config.searchAfter : 8;
+    const onClose = config.onClose || null;
     /** @type {string | string[]} string in 'single' mode, string[] in 'multi' */
     let selected = mode === 'multi'
       ? (config.selected || []).slice()
@@ -156,6 +177,7 @@
     const root = document.createElement('div');
     root.className = `blockr-select blockr-select--${mode}`;
     if (singleLine) root.classList.add('blockr-select--single-line');
+    if (headless) root.classList.add('blockr-select--headless');
     root.setAttribute('role', 'combobox');
     root.setAttribute('aria-expanded', 'false');
     root.setAttribute('aria-haspopup', 'listbox');
@@ -212,23 +234,68 @@
     dropdown.id = dropdownId;
     dropdown.setAttribute('role', 'listbox');
 
-    root.appendChild(control);
+    // In headless mode the control is never shown, so it is never mounted;
+    // `searchInput` moves into the dropdown's head below and `valueEl` simply
+    // renders into a detached node.
+    if (!headless) root.appendChild(control);
     container.appendChild(root);
+
+    // Head of a headless dropdown: the role's name, and the filter box past
+    // the same threshold the select uses elsewhere. Everything after
+    // `headEnd` is options, and only that part is cleared on re-render, so a
+    // keystroke cannot move the input the user is typing into.
+    /** @type {Comment | null} */
+    let headEnd = null;
+    if (headless) {
+      if (menuTitle) {
+        const t = document.createElement('div');
+        t.className = 'blockr-select__menu-title';
+        t.textContent = menuTitle;
+        dropdown.appendChild(t);
+      }
+      // Always mounted, because focus is what makes the arrows, Enter and
+      // type-ahead work; only shown once the list is long enough to need
+      // filtering. A short menu still filters as you type, which is what a
+      // native menu does.
+      searchInput.className += (options.length > searchAfter)
+        ? ' blockr-select__search--menu'
+        : ' blockr-select__search--menu blockr-select__search--offscreen';
+      searchInput.setAttribute('placeholder', config.searchPlaceholder || 'Filter');
+      dropdown.appendChild(searchInput);
+      headEnd = document.createComment('opts');
+      dropdown.appendChild(headEnd);
+    }
 
     // Portal: dropdown lives on document.body while open so it escapes any
     // clipping / paint-containment / stacking-context ancestors (Dockview
     // panels, offcanvas, modals, …). See blockr.design/open/blockr-select-portal.
 
     const computePosition = () => {
-      const r = root.getBoundingClientRect();
+      // Anchored to the caller's element when there is no control of our own.
+      const r = (config.anchor || root).getBoundingClientRect();
       const dropH = dropdown.offsetHeight || 240;
       const spaceBelow = window.innerHeight - r.bottom - 8;
       const flipAbove = spaceBelow < dropH && r.top > dropH;
 
       dropdown.style.position = 'fixed';
-      dropdown.style.width    = r.width + 'px';
-      dropdown.style.left     = r.left + 'px';
       dropdown.style.bottom   = 'auto';
+      if (headless) {
+        // A word is not a control: the panel sizes to its own content, and
+        // has to be pulled back inside the viewport rather than lining up.
+        // `right` is 0 in the stylesheet (a dropdown normally spans its
+        // control), which would stretch a fixed box to the window edge and
+        // make every menu exactly max-width wide.
+        dropdown.style.right = 'auto';
+        dropdown.style.width = '';
+        dropdown.style.minWidth = (config.minWidth || 190) + 'px';
+        dropdown.style.maxWidth = (config.maxWidth || 320) + 'px';
+        const w = dropdown.offsetWidth || 190;
+        dropdown.style.left = Math.max(8, Math.min(r.left,
+          document.documentElement.clientWidth - w - 8)) + 'px';
+      } else {
+        dropdown.style.width = r.width + 'px';
+        dropdown.style.left  = r.left + 'px';
+      }
 
       if (flipAbove) {
         dropdown.style.top = (r.top - dropH - 4) + 'px';
@@ -265,9 +332,17 @@
       return result;
     };
 
+    // Everything after `headEnd` is options. In headless mode the title and
+    // the filter box sit before it and survive a re-render; without this the
+    // input would be re-created (or moved, which blurs it) on every keystroke.
+    const clearOptions = () => {
+      if (!headEnd) { dropdown.innerHTML = ''; return; }
+      while (headEnd.nextSibling) dropdown.removeChild(headEnd.nextSibling);
+    };
+
     const renderDropdown = () => {
       const filtered = getFiltered();
-      dropdown.innerHTML = '';
+      clearOptions();
 
       if (loading) {
         const empty = document.createElement('div');
@@ -303,7 +378,7 @@
         div.setAttribute('id', `${id}-opt-${i}`);
         div.setAttribute('aria-selected', (mode === 'single' && val === selected) ? 'true' : 'false');
         div.setAttribute('data-value', val);
-        fillOptContent(div, opt);
+        fillOptContent(div, opt, labelFirst);
         dropdown.appendChild(div);
       }
 
@@ -326,6 +401,9 @@
 
     const renderValue = () => {
       if (mode !== 'single') return;
+      // Headless has no control to render into, and writing the search
+      // placeholder here would wipe the menu's "Filter" prompt.
+      if (headless) return;
       if (selected) {
         const opt = findOpt(options, /** @type {string} */ (selected));
         if (opt) { fillOptContent(valueEl, opt); } else { valueEl.textContent = /** @type {string} */ (selected); valueEl.title = /** @type {string} */ (selected); }
@@ -464,7 +542,7 @@
       // The search input is back in flow now, so the row is narrower.
       if (mode === 'multi') fitTags();
 
-      if (mode === 'single') {
+      if (mode === 'single' && !headless) {
         valueEl.style.display = 'none';
         searchInput.style.width = '';
         searchInput.setAttribute('placeholder', /** @type {string} */ (selected) || placeholder);
@@ -502,6 +580,9 @@
       }
 
       dropdown.innerHTML = '';
+      // Last, and after the DOM is settled: a headless caller tears the whole
+      // widget down from here.
+      if (onClose) onClose();
     };
 
     const toggle = () => { isOpen ? close() : open(); };
@@ -656,6 +737,9 @@
     /** @param {MouseEvent} e */
     const onDocumentClick = (e) => {
       if (root.contains(/** @type {Node | null} */ (e.target)) || dropdown.contains(/** @type {Node | null} */ (e.target))) return;
+      // The anchor is not outside. A click on it is the caller's toggle, and
+      // closing here first would have it re-open on the same click.
+      if (config.anchor && config.anchor.contains(/** @type {Node | null} */ (e.target))) return;
       collapse();
       close();
     };
@@ -784,6 +868,9 @@
     return {
       el: root,
 
+      // Headless callers own the opening: there is no control to click.
+      open() { open(); },
+
       /**
        * @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts
        * @param {string | string[] | null} [sel]
@@ -902,9 +989,54 @@
     };
   };
 
+  /* The dropdown on its own, hung off something the caller owns.
+   *
+   * For a word in a block's sentence that IS one of its settings: clicking it
+   * has to give the list, not a popover holding a control that gives the list.
+   * Everything below the surface is the single select -- same options, same
+   * tick on the current one, same filter box past the same threshold, same
+   * arrows / type-ahead / Enter / Escape, same portal and same flip near the
+   * bottom of the window -- because a menu that drifts from the select is a
+   * second idiom to maintain. See blockr.docs design-system/pinned-controls.md.
+   *
+   * Opens immediately and destroys itself when it closes, so the caller keeps
+   * a handle only to close it early (a re-render under it, say).
+   *
+   * @param {HTMLElement} anchor The element to hang under, usually a word.
+   * @param {any} config `title`, `labelFirst`, plus the usual select options.
+   */
+  const createMenu = (anchor, config) => {
+    const host = document.createElement('div');
+    host.className = 'blockr-select-menu-host';
+    document.body.appendChild(host);
+    let handle = null;
+    let done = false;
+    const teardown = () => {
+      if (done) return;
+      done = true;
+      // After the click that closed it has finished: `close()` runs before
+      // the option's own onChange, and destroying here synchronously would
+      // pull the DOM out from under it.
+      setTimeout(() => {
+        if (handle) handle.destroy();
+        Blockr.removeNode(host);
+        if (config.onClose) config.onClose();
+      }, 0);
+    };
+    handle = createSelect(host, Object.assign({}, config, {
+      headless: true,
+      anchor: anchor,
+      allowEmpty: true,
+      onClose: teardown
+    }), 'single');
+    handle.open();
+    return { close: teardown, handle: handle };
+  };
+
   Blockr.Select = {
     single: (container, config) => /** @type {BlockrSelectSingleHandle} */ (createSelect(container, config, 'single')),
     multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi')),
+    menu: createMenu,
     // Exposed for tests: the arithmetic, without a layout engine.
     fitCount: fitCount,
     midTruncate: midTruncate
