@@ -142,6 +142,17 @@ interface BlockrSelectConfig extends BlockrSelectConfigBase {
   maxTagChars?: number;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
+  /* Set by Blockr.Select.menu(): the dropdown alone, anchored to `anchor`. */
+  headless?: boolean;
+  anchor?: HTMLElement;
+  title?: string;
+  labelFirst?: boolean;
+  /** Show the filter box once there are more options than this (default 8). */
+  searchAfter?: number;
+  searchPlaceholder?: string;
+  minWidth?: number;
+  maxWidth?: number;
+  onClose?: () => void;
 }
 
 interface BlockrSelectHandleBase {
@@ -196,6 +207,17 @@ interface BlockrSelectStatic {
     container: HTMLElement,
     config: BlockrSelectMultiConfig
   ): BlockrSelectMultiHandle;
+  /**
+   * The dropdown on its own, hung under `anchor`. Opens immediately and
+   * destroys itself on close.
+   */
+  menu(
+    anchor: HTMLElement,
+    config: any
+  ): { close: () => void; handle: BlockrSelectHandleBase & { open(): void } };
+  /** Exposed for tests. */
+  fitCount(widths: number[], avail: number, gap: number, chipWidth: number): number;
+  midTruncate(value: string, cap: number): string;
 }
 
 /* --- Blockr.Input (blockr-input.js) --- */

@@ -23,7 +23,7 @@
   const optLabel = (o) => typeof o === 'object' && o !== null ? (o.label || '') : '';
   /** @param {BlockrSelectOption[]} opts @param {string} val */
   const findOpt = (opts, val) => opts.find(o => optValue(o) === val);
-  /* Both facts, and `labelFirst` decides which one leads.
+  /** Both facts, and `labelFirst` decides which one leads.
    *
    * A menu opened from a word has to lead with the word that was clicked. A
    * sentence printing `{label(@color)}` says "Actual Treatment", and a list
@@ -51,7 +51,7 @@
     }
   };
 
-  /* Shorten a tag label from the MIDDLE.
+  /** Shorten a tag label from the MIDDLE.
    *
    * CSS can only ellipsize at the end, and for the values these controls carry
    * the distinguishing word is as often the last one as the first: "Xanomeline
@@ -68,7 +68,7 @@
     return value.slice(0, head) + '\u2026' + value.slice(value.length - tail);
   };
 
-  /* How many tags fit on one row, given their measured widths.
+  /** How many tags fit on one row, given their measured widths.
    *
    * Split out from the DOM work because it is the part worth testing: the chip
    * has to fit too, so dropping a tag can force dropping the next one up when
@@ -137,7 +137,7 @@
     // makes the whole band tall.
     const singleLine = mode === 'multi' && config.singleLine === true;
     // Tag labels longer than this are shortened in the middle (0 = never).
-    const maxTagChars = mode === 'multi' && config.maxTagChars > 0
+    const maxTagChars = mode === 'multi' && config.maxTagChars && config.maxTagChars > 0
       ? config.maxTagChars
       : 0;
     // Single-line only: the chip has been clicked, so the control wraps and
@@ -989,7 +989,7 @@
     };
   };
 
-  /* The dropdown on its own, hung off something the caller owns.
+  /** The dropdown on its own, hung off something the caller owns.
    *
    * For a word in a block's sentence that IS one of its settings: clicking it
    * has to give the list, not a popover holding a control that gives the list.
@@ -1009,6 +1009,7 @@
     const host = document.createElement('div');
     host.className = 'blockr-select-menu-host';
     document.body.appendChild(host);
+    /** @type {ReturnType<typeof createSelect> | null} */
     let handle = null;
     let done = false;
     const teardown = () => {
