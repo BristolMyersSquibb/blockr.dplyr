@@ -253,6 +253,20 @@
         t.textContent = menuTitle;
         dropdown.appendChild(t);
       }
+      // A multi menu carries its picks in the panel's own head. The control
+      // that normally holds them is never mounted here, so without this the
+      // tags render into a detached node: the panel would list what you can
+      // add and show nothing you already have, with no way to take one off.
+      // Above the filter box, which is where the control has them relative to
+      // the list. The `x` on a tag is wired at the bottom, with the rest.
+      // The class goes on the tags element, not on an ancestor: the dropdown
+      // is portalled to <body> on open, so a rule hung off
+      // `.blockr-select--headless` (which lives on `root`) stops matching the
+      // moment the panel is on screen.
+      if (mode === 'multi') {
+        tagsEl.classList.add('blockr-select__tags--menu');
+        dropdown.appendChild(tagsEl);
+      }
       // Always mounted, because focus is what makes the arrows, Enter and
       // type-ahead work; only shown once the list is long enough to need
       // filtering. A short menu still filters as you type, which is what a
@@ -458,9 +472,18 @@
         removeBtn.innerHTML = Blockr.icons.remove;
         tag.appendChild(removeBtn);
 
-        tagsEl.insertBefore(tag, searchInput);
+        // The headless head takes the search input OUT of the tags row (it
+        // becomes the panel's filter box), and insertBefore against a node
+        // that is no longer a child throws.
+        if (searchInput.parentElement === tagsEl) tagsEl.insertBefore(tag, searchInput);
+        else tagsEl.appendChild(tag);
       }
-      searchInput.setAttribute('placeholder', selected.length === 0 ? placeholder : '');
+      // The menu's filter box is not the control's inline search: its prompt
+      // is the caller's ("Filter columns"), and writing a placeholder here
+      // would wipe it on the first pick.
+      if (!headless) {
+        searchInput.setAttribute('placeholder', selected.length === 0 ? placeholder : '');
+      }
     };
 
     /* Hide the tags past the first row and count them on the chip.
@@ -835,7 +858,10 @@
     root.addEventListener('keydown', onRootKeydown);
 
     if (mode === 'multi') {
-      control.addEventListener('click', onTagRemoveClick);
+      // Headless: the tags live in the panel head, not in the control, and
+      // the control is not in the document at all. One or the other, never
+      // both, or a removal fires twice.
+      (headless ? tagsEl : control).addEventListener('click', onTagRemoveClick);
       if (singleLine) control.addEventListener('click', onMoreClick, true);
       if (reorderable && tagsEl) {
         tagsEl.addEventListener('dragstart', onDragStart);
@@ -1002,8 +1028,16 @@
    * Opens immediately and destroys itself when it closes, so the caller keeps
    * a handle only to close it early (a re-render under it, say).
    *
+   * `mode: 'multi'` gives the same panel for a setting that takes several
+   * values: the picks are tags in the head, the list below offers what is not
+   * picked yet, and a pick does NOT close the panel -- adding three columns is
+   * one gesture. Before this a caller had to mount a whole select in a box of
+   * its own and let it drop its own list underneath, which put two stacked
+   * boxes on screen for one word.
+   *
    * @param {HTMLElement} anchor The element to hang under, usually a word.
-   * @param {any} config `title`, `labelFirst`, plus the usual select options.
+   * @param {any} config `title`, `labelFirst`, `mode`, plus the usual select
+   *   options. `selected` is a string in single mode and an array in multi.
    */
   const createMenu = (anchor, config) => {
     const host = document.createElement('div');
@@ -1029,7 +1063,7 @@
       anchor: anchor,
       allowEmpty: true,
       onClose: teardown
-    }), 'single');
+    }), config.mode === 'multi' ? 'multi' : 'single');
     handle.open();
     return { close: teardown, handle: handle };
   };
@@ -1038,6 +1072,13 @@
     single: (container, config) => /** @type {BlockrSelectSingleHandle} */ (createSelect(container, config, 'single')),
     multi: (container, config) => /** @type {BlockrSelectMultiHandle} */ (createSelect(container, config, 'multi')),
     menu: createMenu,
+    // Capability flag for the packages that PAINT the words (blockr.viz,
+    // blockr.sandbox) against whatever blockr.dplyr a deployment happens to
+    // carry. Without it, a caller asking for `mode: 'multi'` on an older
+    // build gets a SINGLE menu that looks right and sends one string where
+    // the setting holds a list -- the first pick would drop every other
+    // value. A missing flag is meant to be thrown on, not felt out.
+    menuMulti: true,
     // Exposed for tests: the arithmetic, without a layout engine.
     fitCount: fitCount,
     midTruncate: midTruncate

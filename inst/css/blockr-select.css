@@ -324,6 +324,15 @@
   padding: 4px 9px 4px;
 }
 
+/* The picks, in the panel's own head (multi menus). The control that would
+   hold them is never mounted, so they sit between the title and the filter
+   box. Inset to 9px so a tag's left edge lands on the same column as the
+   title and, within a pixel, an option's text -- the head and the list read
+   as one column rather than two boxes. */
+.blockr-select__tags--menu {
+  padding: 2px 9px 6px;
+}
+
 /* Inset by the panel's own padding again, so the box sits inside the panel
    rather than against its edge and its border lines up with where the option
    text starts. */

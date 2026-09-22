@@ -185,3 +185,97 @@ test('a click on the anchor is the caller\'s toggle, not an outside click', () =
     }, 0);
   });
 });
+
+/* --- multi mode -----------------------------------------------------------
+ *
+ * The same panel for a setting that takes several values. What changes: the
+ * picks are tags in the panel's own head (the control that holds them in an
+ * ordinary multi is never mounted), and a pick leaves the panel open, because
+ * adding three columns has to be one gesture rather than three round trips
+ * through the word.
+ */
+
+const tagValues = (win) =>
+  [...win.document.querySelectorAll('.blockr-select__tag')]
+    .map((e) => e.getAttribute('data-value'));
+
+test('a multi menu carries its picks in the panel head', () => {
+  const win = newWindow();
+  const m = win.Blockr.Select.menu(anchorIn(win, 'AESOC, AEDECOD'), {
+    mode: 'multi', title: 'Rows', options: ['AESOC', 'AEDECOD', 'AETOXGR'],
+    selected: ['AESOC', 'AEDECOD']
+  });
+  // One box: the tags are inside the panel, not in a control beside it.
+  assert.strictEqual(win.document.querySelectorAll('.blockr-select__control').length, 0);
+  assert.deepStrictEqual(tagValues(win), ['AESOC', 'AEDECOD']);
+  assert.strictEqual(
+    win.document.querySelector('.blockr-select__tags').parentElement,
+    dropdown(win)
+  );
+  // And the list offers only what is not picked.
+  assert.deepStrictEqual(optionTexts(win), ['AETOXGR']);
+  m.close();
+  win.close();
+});
+
+test('a pick keeps the multi menu open and moves the value into the head', () => {
+  const win = newWindow();
+  const picked = [];
+  let closed = 0;
+  const m = win.Blockr.Select.menu(anchorIn(win), {
+    mode: 'multi', options: ['AESOC', 'AEDECOD', 'AETOXGR'], selected: ['AESOC'],
+    onChange: (v) => picked.push(v), onClose: () => { closed++; }
+  });
+  const opt = [...win.document.querySelectorAll('.blockr-select__option')]
+    .find((e) => e.getAttribute('data-value') === 'AETOXGR');
+  opt.dispatchEvent(new win.Event('click', { bubbles: true }));
+  assert.deepStrictEqual(picked, [['AESOC', 'AETOXGR']], 'the whole selection travels');
+  assert.strictEqual(closed, 0, 'the panel stays: the next pick is one click away');
+  assert.ok(dropdown(win), 'still on screen');
+  assert.deepStrictEqual(tagValues(win), ['AESOC', 'AETOXGR']);
+  assert.deepStrictEqual(optionTexts(win), ['AEDECOD']);
+  m.close();
+  win.close();
+});
+
+test('the x on a tag removes it, and the value comes back to the list', () => {
+  const win = newWindow();
+  const picked = [];
+  const m = win.Blockr.Select.menu(anchorIn(win), {
+    mode: 'multi', options: ['AESOC', 'AEDECOD'], selected: ['AESOC', 'AEDECOD'],
+    onChange: (v) => picked.push(v)
+  });
+  const x = win.document
+    .querySelector('.blockr-select__tag[data-value="AESOC"] .blockr-select__tag-remove');
+  x.dispatchEvent(new win.Event('click', { bubbles: true }));
+  assert.deepStrictEqual(picked, [['AEDECOD']]);
+  assert.deepStrictEqual(tagValues(win), ['AEDECOD']);
+  assert.deepStrictEqual(optionTexts(win), ['AESOC']);
+  // Emptying it sends [], not [''] -- the slot is unset, and a blank tag is
+  // what the old path drew when it was handed one.
+  win.document
+    .querySelector('.blockr-select__tag[data-value="AEDECOD"] .blockr-select__tag-remove')
+    .dispatchEvent(new win.Event('click', { bubbles: true }));
+  assert.deepStrictEqual(picked[1], []);
+  assert.deepStrictEqual(tagValues(win), []);
+  m.close();
+  win.close();
+});
+
+test('the filter prompt survives a pick', () => {
+  const win = newWindow();
+  const opts = Array.from({ length: 12 }, (_, i) => `COL${i + 1}`);
+  const m = win.Blockr.Select.menu(anchorIn(win), {
+    mode: 'multi', options: opts, selected: [], searchPlaceholder: 'Filter columns'
+  });
+  const input = dropdown(win).querySelector('.blockr-select__search');
+  assert.strictEqual(input.getAttribute('placeholder'), 'Filter columns');
+  [...win.document.querySelectorAll('.blockr-select__option')][0]
+    .dispatchEvent(new win.Event('click', { bubbles: true }));
+  // renderTags() writes the CONTROL's placeholder; in a menu that would wipe
+  // the caller's prompt the moment the first tag appears.
+  assert.strictEqual(input.getAttribute('placeholder'), 'Filter columns');
+  assert.strictEqual(input.parentElement, dropdown(win), 'and it stays in the head');
+  m.close();
+  win.close();
+});
