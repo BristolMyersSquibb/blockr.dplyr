@@ -133,17 +133,35 @@
       addExprLink.addEventListener('click', () => this._addExprRow(''));
       addRow.appendChild(addExprLink);
 
-      this.opToggle = document.createElement('button');
-      this.opToggle.type = 'button';
-      this.opToggle.className = 'blockr-pill fb-op-toggle';
-      this.opToggle.textContent = 'AND';
-      this.opToggle.title = 'Toggle between AND (all conditions must match) and OR (any condition can match)';
+      // All or any: a fixed choice of two, so a segmented control with both
+      // values in view (design system), in place of the AND/OR cycle pill.
+      this.opToggle = document.createElement('div');
+      this.opToggle.className = 'blockr-segmented blockr-segmented--xs fb-op-toggle';
+      this.opToggle.setAttribute('role', 'radiogroup');
+      this.opToggle.setAttribute('aria-label', 'Keep rows that match');
       this.opToggle.style.visibility = 'hidden';
-      this.opToggle.addEventListener('click', () => {
-        this.operator = this.operator === '&' ? '|' : '&';
-        /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
-        this._submit();
-      });
+      /** @type {Record<string, HTMLButtonElement>} */
+      this._opSegs = {};
+      for (const [val, text, tip] of [
+        ['&', 'All', 'Keep rows that match all conditions'],
+        ['|', 'Any', 'Keep rows that match any condition']
+      ]) {
+        const seg = document.createElement('button');
+        seg.type = 'button';
+        seg.className = 'blockr-segmented__seg';
+        seg.textContent = text;
+        seg.title = tip;
+        seg.setAttribute('role', 'radio');
+        seg.addEventListener('click', () => {
+          if (this.operator === val) return;
+          this.operator = /** @type {any} */ (val);
+          this._syncOpToggle();
+          this._submit();
+        });
+        this._opSegs[val] = seg;
+        this.opToggle.appendChild(seg);
+      }
+      this._syncOpToggle();
       addRow.appendChild(this.opToggle);
 
       const spacer = document.createElement('span');
@@ -187,17 +205,38 @@
         : 0;
       cond.op = ops[idx].value;
 
+      // A pill that opens a menu listing every operator (design system:
+      // "a pill that opens a menu"), in place of the click-to-cycle pill.
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'blockr-pill fb-op-btn';
-      btn.textContent = ops[idx].label;
-      btn.title = 'Cycle through comparison operators (is, is not, >, \u2265, <, \u2264)';
+      btn.className = 'blockr-pill blockr-pill--menu fb-op-btn';
+      btn.setAttribute('aria-haspopup', 'listbox');
+      const setLabel = () => {
+        btn.innerHTML = '';
+        btn.appendChild(document.createTextNode(ops[idx].label));
+        const car = document.createElement('span');
+        car.className = 'blockr-pill__caret';
+        car.innerHTML = Blockr.icons.chevron;
+        btn.appendChild(car);
+      };
+      setLabel();
+      btn.title = 'Operator';
       btn.addEventListener('click', () => {
-        idx = (idx + 1) % ops.length;
-        cond.op = ops[idx].value;
-        btn.textContent = ops[idx].label;
-        this._renderDynamicContent(cond);
-        this._submit();
+        Blockr.Select.menu(btn, {
+          title: 'Operator',
+          options: ops.map(o => o.label),
+          selected: ops[idx].label,
+          searchAfter: 99,
+          onChange: (label) => {
+            const next = ops.findIndex(o => o.label === label);
+            if (next < 0 || next === idx) return;
+            idx = next;
+            cond.op = ops[idx].value;
+            setLabel();
+            this._renderDynamicContent(cond);
+            this._submit();
+          }
+        });
       });
 
       cond._opBtn = btn;
@@ -490,6 +529,16 @@
       this._updateUI();
     }
 
+    /** Mark the segment that holds the current operator. */
+    _syncOpToggle() {
+      if (!this._opSegs) return;
+      for (const [val, seg] of Object.entries(this._opSegs)) {
+        const on = this.operator === val;
+        seg.classList.toggle('is-selected', on);
+        seg.setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+    }
+
     _updateUI() {
       const single = this.conditions.length <= 1;
       /** @type {HTMLButtonElement} */ (this.opToggle).style.visibility = single ? 'hidden' : 'visible';
@@ -578,7 +627,7 @@
 
       // Set operator
       this.operator = state?.operator || '&';
-      /** @type {HTMLButtonElement} */ (this.opToggle).textContent = this.operator === '&' ? 'AND' : 'OR';
+      this._syncOpToggle();
 
       // Restore "preserve order" toggle
       this.preserveOrder = !!state?.preserve_order;

@@ -3,30 +3,111 @@
    Reusable across filter, summarize, mutate, join, arrange, rename, etc.
    ========================================================================= */
 
-/* --- Click-through pill (operator toggle, mode toggle, etc.) --- */
+/* --- Pill: a setting inside a row. With a caret it opens a menu. ---
+   24px, radius 4, 1px border-default on bg-surface, 12px weight 500 muted;
+   hover border-strong and default text (design system, "A pill that opens a
+   menu"). */
 .blockr-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 8px;
+  gap: 4px;
+  padding: 0 8px;
   height: 24px;
   min-width: 28px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--blockr-grey-500, #6b7280);
-  background: var(--blockr-grey-50, #f9fafb);
-  border: 1px solid var(--blockr-grey-200, #e5e7eb);
-  border-radius: 4px;
+  font: inherit;
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-weight: var(--blockr-font-weight-medium, 500);
+  color: var(--blockr-color-text-muted, #6b7280);
+  background: var(--blockr-color-bg-surface, #ffffff);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-sm, 4px);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  transition: border-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
 }
 
-.blockr-pill:hover {
-  background: var(--blockr-grey-100, #f3f4f6);
-  border-color: var(--blockr-grey-300, #d1d5db);
-  color: var(--blockr-grey-600, #4b5563);
+.blockr-pill:hover,
+.blockr-pill[aria-expanded="true"] {
+  border-color: var(--blockr-color-border-strong, #d1d5db);
+  color: var(--blockr-color-text-default, #111827);
+}
+
+.blockr-pill:focus-visible {
+  outline: var(--blockr-focus-outline, 2px solid #2563eb);
+  outline-offset: var(--blockr-focus-offset, 2px);
+}
+
+.blockr-pill--menu { padding: 0 5px 0 8px; }
+
+.blockr-pill__caret {
+  display: inline-flex;
+  width: 10px;
+  height: 10px;
+  color: var(--blockr-color-text-muted, #6b7280);
+}
+
+.blockr-pill__caret svg { width: 10px; height: 10px; }
+
+/* --- Segmented control: a fixed choice of two or three values. ---
+   In the grid 42px; inside a row or a bar 26px (--xs). The selected segment
+   takes the accent tint. */
+.blockr-segmented {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  height: var(--blockr-control-h, 42px);
+  box-sizing: border-box;
+  background: var(--blockr-color-bg-field, #f9fafb);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-lg, 8px);
+}
+
+.blockr-segmented__seg {
+  flex: 1;
+  font: inherit;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  padding: 0 12px;
+  color: var(--blockr-color-text-muted, #6b7280);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--blockr-radius-md, 6px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+}
+
+.blockr-segmented__seg:hover {
+  color: var(--blockr-color-text-default, #111827);
+  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+}
+
+.blockr-segmented__seg.is-selected,
+.blockr-segmented__seg.is-selected:hover {
+  color: var(--blockr-color-text-accent, #2563eb);
+  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
+  border-color: var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
+  font-weight: var(--blockr-font-weight-medium, 500);
+}
+
+.blockr-segmented__seg:focus-visible {
+  outline: var(--blockr-focus-outline, 2px solid #2563eb);
+  outline-offset: var(--blockr-focus-offset, 2px);
+}
+
+.blockr-segmented--xs {
+  height: var(--blockr-control-h-xs, 26px);
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--blockr-radius-md, 6px);
+}
+
+.blockr-segmented--xs .blockr-segmented__seg {
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  padding: 0 9px;
+  border-radius: var(--blockr-radius-sm, 4px);
 }
 
 /* --- Condition/row container --- */
@@ -37,16 +118,18 @@
   min-height: 42px;
   padding: 5px 10px;
   margin-bottom: 6px;
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
+  background-color: var(--blockr-color-bg-field, #f9fafb);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-lg, 8px);
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--blockr-transition, 0.15s ease), box-shadow var(--blockr-transition, 0.15s ease), background-color var(--blockr-transition, 0.15s ease);
 }
 
+/* A row holds fields, so it takes a field's focus: the surface, the accent
+   edge and the soft ring. */
 .blockr-row:focus-within {
-  background-color: #ffffff;
-  border-color: var(--blockr-color-primary, #2563eb);
+  background-color: var(--blockr-color-bg-surface, #ffffff);
+  border-color: var(--blockr-color-border-accent, #2563eb);
   box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
 }
 
@@ -69,26 +152,34 @@
   height: 26px;
   background: none;
   border: none;
-  border-radius: 4px;
-  color: var(--blockr-grey-400, #9ca3af);
+  border-radius: var(--blockr-radius-sm, 4px);
+  color: var(--blockr-color-text-muted, #6b7280);
   cursor: pointer;
   opacity: 0;
   flex-shrink: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition: opacity var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
 }
 
-.blockr-row:hover .blockr-row-remove { opacity: 1; }
+/* Hidden at rest; shown on hover or keyboard focus of its row. */
+.blockr-row:hover .blockr-row-remove,
+.blockr-row:focus-within .blockr-row-remove { opacity: 1; }
 .blockr-row-remove:hover {
-  color: var(--blockr-color-danger, #dc2626);
-  background: rgba(220, 53, 69, 0.08);
+  color: var(--blockr-color-text-danger, #b91c1c);
+  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+}
+.blockr-row-remove:focus-visible {
+  opacity: 1;
+  outline: var(--blockr-focus-outline, 2px solid #2563eb);
+  outline-offset: var(--blockr-focus-offset, 2px);
 }
 
 /* --- Shared label for inputs (matches blockr.dock standard) --- */
+/* Field labels: 12px regular muted, 4px above the control. */
 .blockr-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--blockr-grey-500, #6b7280);
-  margin-bottom: 0.25rem;
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-weight: var(--blockr-font-weight-normal, 400);
+  color: var(--blockr-color-text-muted, #6b7280);
+  margin-bottom: 4px;
 }
 
 /* --- Add row bar --- */
@@ -96,24 +187,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   padding: 3px 0;
   min-height: 30px;
-  font-size: 13px;
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
   user-select: none;
   box-sizing: border-box;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
 }
 
+/* "Add condition" is a quiet button: text only, a hover wash. */
 .blockr-add-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  height: var(--blockr-control-h-xs, 26px);
+  padding: 0 8px;
+  margin-left: -8px;
+  border-radius: var(--blockr-radius-sm, 4px);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: background-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
 }
 
 .blockr-add-link:hover {
-  color: var(--blockr-color-primary, #2563eb);
+  color: var(--blockr-color-text-default, #111827);
+  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
 }
 
 .blockr-add-icon {
@@ -128,28 +226,28 @@
   gap: 3px;
   padding: 2px 8px;
   height: 24px;
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  border-radius: 4px;
-  color: var(--blockr-color-primary, #2563eb);
+  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
+  border: 1px solid var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
+  border-radius: var(--blockr-radius-sm, 4px);
+  color: var(--blockr-color-text-accent, #2563eb);
   cursor: pointer;
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: var(--blockr-font-weight-medium, 500);
   white-space: nowrap;
-  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color var(--blockr-transition, 0.15s ease), border-color var(--blockr-transition, 0.15s ease), opacity var(--blockr-transition, 0.15s ease);
 }
 
+/* The Enter button: the accent tint while the field is dirty. */
 .blockr-expr-confirm:hover {
-  background: rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.5);
+  background: var(--blockr-color-bg-accent-subtle-hover, rgba(37, 99, 235, 0.13));
+  border-color: var(--blockr-color-border-accent, #2563eb);
 }
 
 .blockr-expr-confirm.confirmed {
   background: none;
   border-color: transparent;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-disabled, #9ca3af);
   opacity: 0.5;
 }
 
@@ -375,22 +473,21 @@
 
 /* --- Add expression link (code icon button) --- */
 .blockr-add-link-expr {
-  margin-left: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  color: var(--blockr-grey-400, #9ca3af);
+  width: var(--blockr-control-h-xs, 26px);
+  height: var(--blockr-control-h-xs, 26px);
+  color: var(--blockr-color-text-muted, #6b7280);
   background: transparent;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 4px;
+  border: none;
+  border-radius: var(--blockr-radius-sm, 4px);
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: color var(--blockr-transition, 0.15s ease), background-color var(--blockr-transition, 0.15s ease);
 }
 
+/* A tool: bare at rest, a hover wash. */
 .blockr-add-link-expr:hover {
-  color: var(--blockr-color-primary, #2563eb);
-  border-color: rgba(37, 99, 235, 0.3);
-  background: rgba(37, 99, 235, 0.04);
+  color: var(--blockr-color-text-default, #111827);
+  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
 }

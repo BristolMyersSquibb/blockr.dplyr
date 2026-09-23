@@ -16,19 +16,13 @@
   max-width: min(55%, 360px);
   flex-shrink: 0;
   transition: width 120ms ease;
-  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
-  padding-right: 8px;
 }
 
-/* Operator cycle button */
+/* Operator: a pill that opens a menu (blockr-blocks.css). */
 .fb-op-btn { flex-shrink: 0; }
 
-/* AND/OR toggle */
-.fb-op-toggle {
-  margin-left: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+/* All / Any: a 26px segmented control in the add bar. */
+.fb-op-toggle { margin-left: 4px; }
 
 /* Expression row */
 .fb-row-expr .fb-expr-code {
@@ -52,7 +46,7 @@
     width: 100%;
     max-width: none;
     border-right: none;
-    border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+    border-bottom: 1px solid var(--blockr-color-border-default, #e5e7eb);
     padding-right: 0;
     padding-bottom: 2px;
   }

@@ -553,7 +553,13 @@
       isOpen = true;
       searchQuery = '';
       searchInput.value = '';
+      // A single select opens on its current pick, so the keyboard row and
+      // the pick start as the same row.
       highlightIdx = 0;
+      if (mode === 'single' && selected !== '') {
+        const cur = options.findIndex(o => optValue(o) === selected);
+        if (cur > 0) highlightIdx = cur;
+      }
 
       if (dropdown.parentElement !== document.body) {
         document.body.appendChild(dropdown);

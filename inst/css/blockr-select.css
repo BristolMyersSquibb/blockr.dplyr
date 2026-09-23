@@ -38,16 +38,17 @@
 /* Bordered modifier — for standalone use outside row containers.
    Matches blockr.dock's .selectize-input / .form-control sizing. */
 .blockr-select--bordered .blockr-select__control {
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
+  background-color: var(--blockr-color-bg-field, #f9fafb);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-lg, 8px);
   padding: 6px 12px;
-  min-height: 42px;
+  min-height: var(--blockr-control-h, 42px);
 }
 
 .blockr-select--bordered.blockr-select--open .blockr-select__control,
 .blockr-select--bordered .blockr-select__control:focus-within {
-  border-color: var(--blockr-color-primary, #2563eb);
+  background-color: var(--blockr-color-bg-surface, #ffffff);
+  border-color: var(--blockr-color-border-accent, #2563eb);
   box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
 }
 
@@ -61,7 +62,7 @@
 }
 
 .blockr-select__value--placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
 }
 
 /* Hide value when dropdown is open (single mode) */
@@ -74,7 +75,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
   transition: transform 150ms ease;
   pointer-events: none;
 }
@@ -98,7 +99,7 @@
 }
 
 .blockr-select__search::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
 }
 
 
@@ -174,14 +175,14 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
-  /* --blockr-radius-sm */
-  border-radius: 4px;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: var(--blockr-radius-sm, 4px);
+  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
+  border: 1px solid var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
   font-size: var(--blockr-font-size-sm, 0.8125rem);
-  line-height: 1.4;
-  color: var(--blockr-color-primary, #2563eb);
+  color: var(--blockr-color-text-accent, #2563eb);
   cursor: pointer;
   user-select: none;
 }
@@ -191,13 +192,14 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 1px 4px 1px 7px;
-  background: var(--blockr-grey-100, #f3f4f6);
-  border: 1px solid var(--blockr-grey-200, #e5e7eb);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: var(--blockr-grey-700, #374151);
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 3px 0 8px;
+  background: var(--blockr-color-bg-surface, #ffffff);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-sm, 4px);
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  color: var(--blockr-color-text-default, #111827);
   cursor: default;
   user-select: none;
   /* Cap at the control width, not a fixed size: a tag only ellipsizes when
@@ -221,15 +223,29 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
   cursor: pointer;
   border-radius: 2px;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+}
+
+/* The x shows on the tag under the pointer or with keyboard focus, never on
+   every tag at once; its space stays reserved so nothing moves. */
+.blockr-select__tag:hover .blockr-select__tag-remove,
+.blockr-select__tag:focus-within .blockr-select__tag-remove {
+  opacity: 1;
 }
 
 .blockr-select__tag-remove:hover {
-  color: var(--blockr-color-danger, #dc2626);
-  background: rgba(220, 53, 69, 0.08);
+  color: var(--blockr-color-text-danger, #b91c1c);
+}
+
+/* A column label inside a tag is 12px meta. */
+.blockr-select__tag .blockr-select__opt-label {
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  margin-left: 6px;
 }
 
 /* Tags the single-line fit dropped. After `.blockr-select__tag`, whose
@@ -290,12 +306,14 @@
   right: 0;
   top: 100%;
   margin-top: 4px;
-  max-height: 240px;
+  max-height: 320px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  box-sizing: border-box;
+  background: var(--blockr-color-bg-raised, #ffffff);
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-lg, 8px);
+  box-shadow: var(--blockr-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
   z-index: 9999;
 }
 
@@ -319,9 +337,9 @@
   font-size: var(--blockr-font-size-xs, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: 600;
-  color: var(--blockr-color-text-subtle, #9ca3af);
-  padding: 4px 9px 4px;
+  font-weight: var(--blockr-font-weight-semibold, 600);
+  color: var(--blockr-color-text-muted, #6b7280);
+  padding: 8px 10px 4px;
 }
 
 /* The picks, in the panel's own head (multi menus). The control that would
@@ -342,9 +360,10 @@
   height: 30px;
   margin: 2px 4px 5px;
   padding: 0 9px;
-  border: 1px solid var(--blockr-color-border-strong, #d1d5db);
-  border-radius: var(--blockr-radius-sm, 4px);
-  background: #fff;
+  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
+  border-radius: var(--blockr-radius-md, 6px);
+  background: var(--blockr-color-bg-field, #f9fafb);
+  color: var(--blockr-color-text-default, #111827);
   font: inherit;
   font-size: var(--blockr-font-size-sm, 0.8125rem);
 }
@@ -376,24 +395,34 @@
 }
 
 /* --- Options --- */
+/* Menu rows: 32px at 14px, radius 4, 10px side padding. Hover and the
+   keyboard row share one look, where meta text turns default; the current
+   pick is weight 600. */
 .blockr-select__option {
+  min-height: 32px;
+  box-sizing: border-box;
   padding: 6px 10px;
+  border-radius: var(--blockr-radius-sm, 4px);
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  color: var(--blockr-color-text-default, #111827);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.blockr-select__option--highlighted {
-  background: var(--blockr-grey-50, #f9fafb);
+.blockr-select__option--highlighted,
+.blockr-select__option:hover {
+  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+}
+
+.blockr-select__option--highlighted .blockr-select__opt-label,
+.blockr-select__option:hover .blockr-select__opt-label {
+  color: var(--blockr-color-text-default, #111827);
 }
 
 .blockr-select__option--selected {
-  font-weight: 600;
-}
-
-.blockr-select__option:hover {
-  background: var(--blockr-grey-50, #f9fafb);
+  font-weight: var(--blockr-font-weight-semibold, 600);
 }
 
 /* --- Option label (muted description next to value) ---
@@ -403,7 +432,7 @@
    parent ellipsizes the label first when space runs out. */
 .blockr-select__opt-label {
   font-size: var(--blockr-font-size-sm, 0.8125rem);
-  color: var(--blockr-grey-500, #6b7280);
+  color: var(--blockr-color-text-muted, #6b7280);
   margin-left: 8px;
   font-weight: 400;
 }
@@ -411,7 +440,7 @@
 /* --- Empty state --- */
 .blockr-select__empty {
   padding: 8px 10px;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted, #6b7280);
   font-style: italic;
   text-align: center;
 }
