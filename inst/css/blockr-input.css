@@ -54,7 +54,7 @@
   margin-top: 2px;
   max-height: 200px;
   overflow-y: auto;
-  background: #fff;
+  background: var(--blockr-color-bg-surface, #ffffff);
   border: 1px solid var(--blockr-color-border, #e5e7eb);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

@@ -344,7 +344,7 @@
 }
 
 .blockr-text-input:focus {
-  background-color: #ffffff;
+  background-color: var(--blockr-color-bg-surface, #ffffff);
   border-color: var(--blockr-color-primary, #2563eb);
   box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
   outline: none;
@@ -399,7 +399,7 @@
   right: 0;
   top: 32px;
   z-index: 1000;
-  background: #ffffff;
+  background: var(--blockr-color-bg-surface, #ffffff);
   border: 1px solid var(--blockr-color-border, #e5e7eb);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -436,7 +436,7 @@
 }
 
 .blockr-popover-input:focus {
-  background: #ffffff;
+  background: var(--blockr-color-bg-surface, #ffffff);
   border-color: var(--blockr-color-primary, #2563eb);
   box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
 }
