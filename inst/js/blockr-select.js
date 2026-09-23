@@ -322,6 +322,31 @@
 
     const onScrollOrResize = () => { if (isOpen) computePosition(); };
 
+    // The panel sits at a fixed position computed from the control, so it
+    // has to follow when the control changes height (a pick adds a tag row,
+    // a removal takes one away) or when its own height changes (fewer
+    // options left, which moves a panel that opened above). Observed only
+    // while open.
+    /** @type {ResizeObserver | null} */
+    let followObs = null;
+    let followFrame = 0;
+    const followStart = () => {
+      if (typeof ResizeObserver === 'undefined' || followObs) return;
+      followObs = new ResizeObserver(() => {
+        if (followFrame) return;
+        followFrame = requestAnimationFrame(() => {
+          followFrame = 0;
+          if (isOpen) computePosition();
+        });
+      });
+      followObs.observe(config.anchor || root);
+      followObs.observe(dropdown);
+    };
+    const followStop = () => {
+      if (followObs) { followObs.disconnect(); followObs = null; }
+      if (followFrame) { cancelAnimationFrame(followFrame); followFrame = 0; }
+    };
+
     // --- Rendering ---
 
     const getFiltered = () => {
@@ -581,6 +606,7 @@
       computePosition();
       window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
       window.addEventListener('resize', onScrollOrResize, { passive: true });
+      followStart();
       searchInput.focus();
 
       if (onOpen) onOpen();
@@ -594,6 +620,7 @@
 
       window.removeEventListener('scroll', onScrollOrResize, { capture: true });
       window.removeEventListener('resize', onScrollOrResize);
+      followStop();
 
       dropdown.style.display = '';
 
