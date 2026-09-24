@@ -87,7 +87,7 @@
       // Column picker (bordered) — required: the block is an identity
       // transform until columns are chosen, so it carries the amber cue.
       const pickerWrap = document.createElement('div');
-      pickerWrap.className = 'plb-picker-wrap blockr-select--bordered';
+      pickerWrap.className = 'plb-picker-wrap';
       const pickerLabel = document.createElement('label');
       pickerLabel.className = 'blockr-label';
       pickerLabel.textContent = 'Columns';
@@ -96,6 +96,7 @@
       this._pickerWrap = pickerWrap;
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',

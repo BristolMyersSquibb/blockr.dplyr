@@ -101,7 +101,14 @@
    * @param {BlockrSelectConfig} config
    * @param {'single' | 'multi'} mode
    */
-  const createSelect = (container, config, mode) => {
+  /**
+   * @param {HTMLElement} container
+   * @param {BlockrSelectConfig} config
+   * @param {'single' | 'multi'} mode
+   * @param {{ anchor?: HTMLElement }} [menuOf] Set only by Blockr.Select.menu():
+   *   the dropdown alone, hung under `anchor`, open from the start.
+   */
+  const createSelect = (container, config, mode, menuOf) => {
     const id = Blockr.uid('bsel');
     const dropdownId = `${id}-lb`;
 
@@ -116,11 +123,14 @@
     // owns (a word in a block's sentence) instead of to a control this
     // builds. Same options, same tick, same search, same keyboard -- a menu
     // that drifts from the select is a second idiom nobody asked for.
-    const headless = config.headless === true;
+    const headless = !!(menuOf && menuOf.anchor);
+    const anchor = headless ? /** @type {HTMLElement} */ (/** @type {any} */ (menuOf).anchor) : null;
     const menuTitle = config.title || '';
     const labelFirst = config.labelFirst === true;
-    // The select's own rule for when a list needs filtering, in one place.
-    const searchAfter = config.searchAfter != null ? config.searchAfter : 8;
+    // The select's own rule for when a list needs filtering, in one place:
+    // past 8 options. `search: false` never shows the filter box (a short
+    // fixed list such as operators or join types).
+    const searchAfter = config.search === false ? Infinity : 8;
     const onClose = config.onClose || null;
     /** @type {string | string[]} string in 'single' mode, string[] in 'multi' */
     let selected = mode === 'multi'
@@ -150,7 +160,7 @@
     const onSearch = config.onSearch || null;
     // Cap how many options get DOM nodes per render. The full list stays
     // searchable; rendering 50K divs froze the tab on every open/keystroke.
-    const maxRendered = config.maxRendered || 200;
+    const maxRendered = 200;
     let truncated = 0;
     // Server-search mode (high-cardinality columns): the option list is a
     // server-truncated page; typing re-queries via onSearch instead of
@@ -176,6 +186,9 @@
     // DOM
     const root = document.createElement('div');
     root.className = `blockr-select blockr-select--${mode}`;
+    // A standalone field (in the grid, in the gear tray): 42px, bordered.
+    // Inside a row the select stays bare.
+    if (config.bordered === true) root.classList.add('blockr-select--bordered');
     if (singleLine) root.classList.add('blockr-select--single-line');
     if (headless) root.classList.add('blockr-select--headless');
     root.setAttribute('role', 'combobox');
@@ -286,7 +299,7 @@
 
     const computePosition = () => {
       // Anchored to the caller's element when there is no control of our own.
-      const r = (config.anchor || root).getBoundingClientRect();
+      const r = (anchor || root).getBoundingClientRect();
       const dropH = dropdown.offsetHeight || 240;
       const spaceBelow = window.innerHeight - r.bottom - 8;
       const flipAbove = spaceBelow < dropH && r.top > dropH;
@@ -301,8 +314,8 @@
         // make every menu exactly max-width wide.
         dropdown.style.right = 'auto';
         dropdown.style.width = '';
-        dropdown.style.minWidth = (config.minWidth || 190) + 'px';
-        dropdown.style.maxWidth = (config.maxWidth || 320) + 'px';
+        dropdown.style.minWidth = '190px';
+        dropdown.style.maxWidth = '320px';
         const w = dropdown.offsetWidth || 190;
         dropdown.style.left = Math.max(8, Math.min(r.left,
           document.documentElement.clientWidth - w - 8)) + 'px';
@@ -339,7 +352,7 @@
           if (isOpen) computePosition();
         });
       });
-      followObs.observe(config.anchor || root);
+      followObs.observe(anchor || root);
       followObs.observe(dropdown);
     };
     const followStop = () => {
@@ -795,7 +808,7 @@
       if (root.contains(/** @type {Node | null} */ (e.target)) || dropdown.contains(/** @type {Node | null} */ (e.target))) return;
       // The anchor is not outside. A click on it is the caller's toggle, and
       // closing here first would have it re-open on the same click.
-      if (config.anchor && config.anchor.contains(/** @type {Node | null} */ (e.target))) return;
+      if (anchor && anchor.contains(/** @type {Node | null} */ (e.target))) return;
       collapse();
       close();
     };
@@ -924,11 +937,21 @@
 
     // --- Public API ---
 
+    // A menu is open from the start: there is no control to click.
+    if (headless) open();
+
     return {
       el: root,
 
-      // Headless callers own the opening: there is no control to click.
-      open() { open(); },
+      /**
+       * Set the selection from the owner (a restore, a mode switch) without
+       * firing onChange. Single: a value not among the options falls back as
+       * setOptions() does; multi: values not among the options are dropped.
+       * @param {string | string[] | null} value
+       */
+      setValue(value) {
+        this.setOptions(options, value);
+      },
 
       /**
        * @param {BlockrSelectOption[] | BlockrSelectOption | null | undefined} opts
@@ -1092,13 +1115,10 @@
       }, 0);
     };
     handle = createSelect(host, Object.assign({}, config, {
-      headless: true,
-      anchor: anchor,
       allowEmpty: true,
       onClose: teardown
-    }), config.mode === 'multi' ? 'multi' : 'single');
-    handle.open();
-    return { close: teardown, handle: handle };
+    }), config.mode === 'multi' ? 'multi' : 'single', { anchor: anchor });
+    return { close: teardown };
   };
 
   Blockr.Select = {

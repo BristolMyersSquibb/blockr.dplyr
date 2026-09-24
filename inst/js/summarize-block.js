@@ -146,13 +146,13 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'None',
         reorderable: true,
         onChange: (value) => { this.byValues = value || []; this._submit(); }
       });
-      this._bySelectize.el.classList.add('blockr-select--bordered');
 
       this.el.appendChild(this.bySection);
     }

@@ -96,12 +96,13 @@
       // names_from picker (bordered) — required: pivot_wider without it is
       // an identity transform, so it carries the amber cue while empty.
       const namesFromWrap = document.createElement('div');
-      namesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      namesFromWrap.className = 'pwb-picker-wrap';
       const namesFromLabel = document.createElement('label');
       namesFromLabel.className = 'blockr-label';
       namesFromLabel.textContent = 'Names from';
       namesFromWrap.appendChild(namesFromLabel);
       this._namesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(namesFromWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         // Pick order builds the combined column names (`a_b`, joined by
@@ -118,12 +119,13 @@
 
       // values_from picker (bordered) — required, same reasoning
       const valuesFromWrap = document.createElement('div');
-      valuesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      valuesFromWrap.className = 'pwb-picker-wrap';
       const valuesFromLabel = document.createElement('label');
       valuesFromLabel.className = 'blockr-label';
       valuesFromLabel.textContent = 'Values from';
       valuesFromWrap.appendChild(valuesFromLabel);
       this._valuesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(valuesFromWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',
@@ -138,12 +140,13 @@
 
       // id_cols picker (bordered)
       const idColsWrap = document.createElement('div');
-      idColsWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      idColsWrap.className = 'pwb-picker-wrap';
       const idColsLabel = document.createElement('label');
       idColsLabel.className = 'blockr-label';
       idColsLabel.textContent = 'ID columns (optional)';
       idColsWrap.appendChild(idColsLabel);
       this._idColsSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(idColsWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         // Empty is a legal configuration here, so the placeholder names what
@@ -222,6 +225,7 @@
       fnField.appendChild(fnWrap);
       const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
       this._valuesFnSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(fnWrap, {
+        bordered: true,
         options: fnOptions,
         selected: this.values_fn || '',
         placeholder: '(none)',
@@ -230,7 +234,6 @@
           this._submit();
         }
       });
-      this._valuesFnSelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(fnField);
 
       /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);

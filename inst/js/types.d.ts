@@ -96,10 +96,15 @@ interface BlockrSelectConfigBase {
    */
   onSearch?: (query: string) => void;
   /**
-   * Cap on options that get DOM nodes per render (default 200). The full
-   * list stays searchable; a "+N more" row reports the overflow.
+   * A standalone field (in the field grid, in the gear tray): 42px with a
+   * border. Leave it off inside a row, where the select is bare.
    */
-  maxRendered?: number;
+  bordered?: boolean;
+  /**
+   * Show the filter box once the list has more than 8 options (default
+   * true). `false` for a short fixed list (operators, join types).
+   */
+  search?: boolean;
 }
 
 interface BlockrSelectSingleConfig extends BlockrSelectConfigBase {
@@ -142,16 +147,23 @@ interface BlockrSelectConfig extends BlockrSelectConfigBase {
   maxTagChars?: number;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
-  /* Set by Blockr.Select.menu(): the dropdown alone, anchored to `anchor`. */
-  headless?: boolean;
-  anchor?: HTMLElement;
   title?: string;
   labelFirst?: boolean;
-  /** Show the filter box once there are more options than this (default 8). */
-  searchAfter?: number;
   searchPlaceholder?: string;
-  minWidth?: number;
-  maxWidth?: number;
+  onClose?: () => void;
+}
+
+/** Blockr.Select.menu(): the list alone, hung under a word or a pill. */
+interface BlockrSelectMenuConfig extends BlockrSelectConfigBase {
+  /** 'multi' keeps the menu open across picks; picks show in its head. */
+  mode?: 'single' | 'multi';
+  selected?: string | string[] | null;
+  /** Names the setting the menu sets (the word that opened it names only the value). */
+  title?: string;
+  /** Lead each option with its label, the value muted after it. */
+  labelFirst?: boolean;
+  searchPlaceholder?: string;
+  onChange?: (value: any) => void;
   onClose?: () => void;
 }
 
@@ -178,6 +190,12 @@ interface BlockrSelectHandleBase {
     opts: BlockrSelectOption[] | BlockrSelectOption | null | undefined,
     sel?: string | string[] | null
   ): void;
+  /**
+   * Set the selection from the owner (a restore, a mode switch) without
+   * firing onChange; it is reconciled against the options as setOptions()
+   * does.
+   */
+  setValue(value: string | string[] | null): void;
   /** Toggle the "Loading…" dropdown state. */
   setLoading(flag: boolean): void;
   /**
@@ -213,8 +231,8 @@ interface BlockrSelectStatic {
    */
   menu(
     anchor: HTMLElement,
-    config: any
-  ): { close: () => void; handle: BlockrSelectHandleBase & { open(): void } };
+    config: BlockrSelectMenuConfig
+  ): { close: () => void };
   /** Exposed for tests. */
   fitCount(widths: number[], avail: number, gap: number, chipWidth: number): number;
   midTruncate(value: string, cap: number): string;

@@ -214,7 +214,7 @@
           title: 'Operator',
           options: ops.map(o => o.label),
           selected: ops[idx].label,
-          searchAfter: 99,
+          search: false,
           onChange: (label) => {
             const next = ops.findIndex(o => o.label === label);
             if (next < 0 || next === idx) return;

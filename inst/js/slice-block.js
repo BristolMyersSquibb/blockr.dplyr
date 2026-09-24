@@ -217,6 +217,7 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'None',
@@ -226,7 +227,6 @@
           this._submit();
         }
       });
-      this._bySelect.el.classList.add('blockr-select--bordered');
 
       this.el.appendChild(this.bySection);
     }
@@ -252,6 +252,7 @@
       const orderBySelectWrap = document.createElement('div');
       this._orderByField.appendChild(orderBySelectWrap);
       this._orderBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(orderBySelectWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         // Without this the control falls back to the first column and displays
@@ -266,7 +267,6 @@
           this._submit();
         }
       });
-      this._orderBySelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(this._orderByField);
 
       // weight_by select (sample)
@@ -279,6 +279,7 @@
       const weightBySelectWrap = document.createElement('div');
       this._weightByField.appendChild(weightBySelectWrap);
       this._weightBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(weightBySelectWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         allowEmpty: true,
@@ -290,7 +291,6 @@
           this._submit();
         }
       });
-      this._weightBySelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(this._weightByField);
 
       // with_ties (min/max) — boolean data option -> checkbox

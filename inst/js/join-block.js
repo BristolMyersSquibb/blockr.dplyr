@@ -177,9 +177,10 @@
       typeWrap.className = 'jb-join-type';
       header.appendChild(typeWrap);
       this.joinTypeSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(typeWrap, {
+        bordered: true,
         options: JOIN_TYPES.map(t => ({ value: t.label, label: t.desc })),
         selected: JOIN_TYPES[this.joinTypeIdx].label,
-        searchAfter: 99,
+        search: false,
         onChange: (value) => {
           const idx = JOIN_TYPES.findIndex(t => t.label === value);
           if (idx < 0 || idx === this.joinTypeIdx) return;
@@ -188,7 +189,6 @@
           this._submit();
         }
       });
-      this.joinTypeSelect.el.classList.add('blockr-select--bordered');
 
       this.card.appendChild(header);
 
@@ -350,7 +350,7 @@
           title: 'Operator',
           options: KEY_OPS.map(o => o.label),
           selected: KEY_OPS[opIdx].label,
-          searchAfter: 99,
+          search: false,
           onChange: (/** @type {string} */ label) => {
             const next = KEY_OPS.findIndex(o => o.label === label);
             if (next < 0 || next === opIdx) return;

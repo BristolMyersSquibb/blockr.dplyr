@@ -121,7 +121,7 @@
       // Column picker (bordered) — required: unite with no columns is an
       // identity transform, so it carries the amber cue while empty.
       const pickerWrap = document.createElement('div');
-      pickerWrap.className = 'ub-picker-wrap blockr-select--bordered';
+      pickerWrap.className = 'ub-picker-wrap';
       const pickerLabel = document.createElement('label');
       pickerLabel.className = 'blockr-label';
       pickerLabel.textContent = 'Columns to unite';
@@ -130,6 +130,7 @@
       this._pickerWrap = pickerWrap;
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',
