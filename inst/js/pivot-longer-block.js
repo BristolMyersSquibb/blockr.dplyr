@@ -7,7 +7,7 @@
  *   names_prefix text input.
  * Selects submit immediately; text inputs commit on Enter/blur (§5.5 chip).
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';

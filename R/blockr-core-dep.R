@@ -19,26 +19,26 @@ blockr_core_js_dep <- memoise0(function() {
     # Bump the suffix on every blockr-core.js edit (version-pinned cache).
     version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
     src = system.file("js", package = "blockr.dplyr"),
-    script = "blockr-core.js"
+    # blockr-ui.js first: the namespace, DOM helpers, icons and the small
+    # controls; blockr-core.js adds the block protocol on top.
+    script = c("blockr-ui.js", "blockr-core.js")
   )
 })
 
-#' HTML dependency for the settings band + checkbox assets
+#' HTML dependency for the gear tray and checkbox stylesheet
 #'
-#' Vendored verbatim from blockr.viz (the canonical source until the shared
-#' layer moves to blockr.ui): the in-flow gear settings band CSS and the
-#' `Blockr.checkbox` factory. Distinct dependency name per package so a
-#' stale copy can never shadow a fresh one on a mixed dashboard.
+#' The CSS of the gear tray, the checkbox and the segmented control. Their JS
+#' (`Blockr.gearTray`, `Blockr.checkbox`, `Blockr.segmented`) is in
+#' blockr-ui.js, loaded by [blockr_core_js_dep()].
 #'
 #' @return An `htmltools::htmlDependency`.
 #' @noRd
 settings_band_dep <- memoise0(function() {
   htmltools::htmlDependency(
     name = "blockr-dplyr-settings-band",
-    # Bump the suffix on every settings-band.css/js edit (asset cache).
+    # Bump the suffix on every settings-band.css edit (asset cache).
     version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
     src = system.file(package = "blockr.dplyr"),
-    script = "js/settings-band.js",
     stylesheet = "css/settings-band.css"
   )
 })

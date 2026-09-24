@@ -6,7 +6,7 @@
  * distinct checkboxes (design-system rule: data options are checkboxes).
  * Submits immediately on any change.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';

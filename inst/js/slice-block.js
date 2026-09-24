@@ -8,7 +8,7 @@
  *   based on type; on/off options are Blockr.checkbox.
  * Below card: "Group by:" label + bordered multi-select (summarize pattern).
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';

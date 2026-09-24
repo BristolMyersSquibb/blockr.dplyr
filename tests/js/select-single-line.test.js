@@ -25,7 +25,7 @@ const read = (f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8');
 
 const newWindow = () => {
   const win = new Window({ url: 'http://localhost/' });
-  win.eval(read('blockr-core.js'));
+  win.eval(read('blockr-ui.js'));
   win.eval(read('blockr-select.js'));
   return win;
 };

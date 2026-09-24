@@ -8,7 +8,7 @@
  * Enter/blur (§5.5 chip). The columns picker carries the amber
  * required-empty cue while nothing is selected.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';

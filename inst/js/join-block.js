@@ -9,7 +9,7 @@
  * Settings band (in-flow, gear-toggled): suffix X and Y text inputs
  * (commit on Enter/blur, §5.5 chip)
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
 
 /**

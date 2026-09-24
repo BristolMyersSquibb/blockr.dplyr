@@ -310,20 +310,20 @@ interface BlockrNamespace {
   /** Shared components (blockr-select.js / blockr-input.js) */
   Select?: BlockrSelectStatic;
   Input?: BlockrInputStatic;
-  /** Design-system checkbox factory (settings-band.js, vendored from blockr.viz). */
+  /** Design-system checkbox factory (blockr-ui.js, vendored from blockr.viz). */
   checkbox(
     label: string,
     checked: boolean,
     onChange: (checked: boolean) => void
   ): BlockrCheckboxHandle;
-  /** Design-system segmented control (settings-band.js). */
+  /** Design-system segmented control (blockr-ui.js). */
   segmented(
     options: { value: string; label: string; title?: string }[],
     selected: string,
     onChange: (value: string) => void,
     opts?: { size?: 'xs'; label?: string }
   ): BlockrSegmentedHandle;
-  /** The gear tray behaviour (settings-band.js): the gear toggles the band,
+  /** The gear tray behaviour (blockr-ui.js): the gear toggles the band,
    *  which slides open and closed; Escape inside the band closes it. */
   gearTray(
     band: HTMLElement,
@@ -370,21 +370,21 @@ interface BlockrTextCommitHandle {
   sync(value: string): void;
 }
 
-/** Handle returned by Blockr.segmented (settings-band.js). */
+/** Handle returned by Blockr.segmented (blockr-ui.js). */
 interface BlockrSegmentedHandle {
   el: HTMLDivElement;
   set(value: string): void;
   get(): string;
 }
 
-/** Handle returned by Blockr.gearTray (settings-band.js). */
+/** Handle returned by Blockr.gearTray (blockr-ui.js). */
 interface BlockrGearTrayHandle {
   set(open: boolean): void;
   toggle(): void;
   isOpen(): boolean;
 }
 
-/** Handle returned by Blockr.checkbox (settings-band.js). */
+/** Handle returned by Blockr.checkbox (blockr-ui.js). */
 interface BlockrCheckboxHandle {
   el: HTMLLabelElement;
   input: HTMLInputElement;

@@ -46,7 +46,7 @@ const json = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x))
  * loudly in its own test instead of quietly loading something the browser
  * would not have served it.
  */
-const ALWAYS = ['blockr-core.js', 'settings-band.js'];
+const ALWAYS = ['blockr-ui.js', 'blockr-core.js'];
 
 const scriptsFor = (src) => {
   const m = /Depends on:\s*(.+)/.exec(src);

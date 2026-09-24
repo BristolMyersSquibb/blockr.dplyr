@@ -8,7 +8,7 @@
  * Enter/blur (§5.5 chip). Required fields (column, into) carry the amber
  * required-empty cue.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';

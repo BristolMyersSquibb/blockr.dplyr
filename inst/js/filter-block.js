@@ -6,7 +6,7 @@
  * Discrete controls submit immediately; numeric values and expression mode
  * commit on Enter/blur (§5.5 chip). "Keep pick order" is a checkbox.
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
  */
 (() => {
   'use strict';

@@ -16,7 +16,7 @@
 /* --- The gear tray -------------------------------------------------------
    In flow (no position/z-index): pushes the block content down while open,
    so the content being configured stays visible. Closed by default; it
-   slides open and closed (Blockr.gearTray in settings-band.js).
+   slides open and closed (Blockr.gearTray in blockr-ui.js).
 
    The design system's look: a quiet fill (bg-subtle), no border, radius 8,
    16px below it. Fields inside turn bg-surface, so the tray reads as its own

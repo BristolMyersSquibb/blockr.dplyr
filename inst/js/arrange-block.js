@@ -6,7 +6,7 @@
  * direction toggle (asc/desc). Footer has an "Add sort" link.
  * Auto-submits on any change.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
