@@ -11,22 +11,22 @@
   min-width: 60px;
   height: 30px;
   padding: 4px 8px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
   font-family: inherit;
   background: transparent;
   border: none;
-  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
-  color: var(--blockr-color-text-primary, #111827);
+  border-right: 1px solid var(--blockr-color-border-default);
+  color: var(--blockr-color-text-default);
   outline: none;
 }
 
 .smb-name-input::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 /* --- Equals sign --- */
 .smb-eq-sign {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
   font-size: 13px;
   padding: 0 2px;
   flex-shrink: 0;
@@ -35,8 +35,8 @@
 
 /* --- "of" label between func and col --- */
 .smb-of-label {
-  color: var(--blockr-grey-400, #9ca3af);
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  color: var(--blockr-color-text-muted);
+  font-size: var(--blockr-font-size-base);
   flex-shrink: 0;
   padding: 0 2px;
   user-select: none;
@@ -46,7 +46,7 @@
 .smb-func-wrap {
   flex: 1;
   min-width: 80px;
-  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-right: 1px solid var(--blockr-color-border-default);
   padding-right: 8px;
 }
 

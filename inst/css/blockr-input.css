@@ -5,7 +5,7 @@
 .blockr-input {
   position: relative;
   width: 100%;
-  font-family: var(--blockr-font-mono, 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace);
+  font-family: var(--blockr-font-mono);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -17,7 +17,7 @@
   outline: none;
   background: transparent;
   font: inherit;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
   padding: 2px 4px;
   margin: 0;
   box-sizing: border-box;
@@ -25,14 +25,14 @@
 }
 
 .blockr-input__field::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 /* Bordered modifier for standalone use.
    Matches blockr.dock's .form-control sizing. */
 .blockr-input--bordered .blockr-input__field {
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
   padding: 10px 14px;
   min-height: 42px;
@@ -40,8 +40,8 @@
 }
 
 .blockr-input--bordered .blockr-input__field:focus {
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 /* --- Autocomplete popup --- */
@@ -54,13 +54,13 @@
   margin-top: 2px;
   max-height: 200px;
   overflow-y: auto;
-  background: var(--blockr-color-bg-surface, #ffffff);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  background: var(--blockr-color-bg-surface);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--blockr-shadow-md);
   z-index: 9999;
   font-family: inherit;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
 }
 
 .blockr-input--popup-open .blockr-input__popup {
@@ -77,28 +77,28 @@
 }
 
 .blockr-input__item--highlighted {
-  background: var(--blockr-grey-50, #f9fafb);
+  background: var(--blockr-color-bg-subtle);
 }
 
 .blockr-input__item:hover {
-  background: var(--blockr-grey-50, #f9fafb);
+  background: var(--blockr-color-bg-subtle);
 }
 
 .blockr-input__item-text {
-  font-family: var(--blockr-font-mono, 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace);
+  font-family: var(--blockr-font-mono);
   font-size: 0.8125rem;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
 }
 
 .blockr-input__item-parens {
-  font-family: var(--blockr-font-mono, 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace);
+  font-family: var(--blockr-font-mono);
   font-size: 0.8125rem;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 .blockr-input__item-meta {
   margin-left: auto;
   font-size: 0.7rem;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
   text-transform: lowercase;
 }

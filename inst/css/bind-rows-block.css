@@ -13,20 +13,20 @@
   width: 100%;
   height: 30px;
   padding: 4px 10px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  background: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  font-size: var(--blockr-font-size-base);
+  background: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 6px;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
   box-sizing: border-box;
 }
 
 .brb-text-input:focus {
   outline: none;
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 .brb-text-input::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }

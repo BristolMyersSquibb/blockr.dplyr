@@ -18,7 +18,7 @@
    so the content being configured stays visible. Closed by default. */
 .blockr-settings {
   display: none;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
   /* Symmetric-looking breathing room: the 8px bottom only ever read as
      enough because row-built bands (summary table) put an 8px margin under
@@ -27,7 +27,7 @@
      now owns the bottom rhythm; the stray last-row margin is zeroed below. */
   padding: 12px 14px 16px;
   margin-bottom: 10px;
-  background: var(--blockr-color-bg-surface, #ffffff);
+  background: var(--blockr-color-bg-surface);
   box-sizing: border-box;
 }
 
@@ -56,9 +56,9 @@
   right: 8px;
   width: 10px;
   height: 10px;
-  background: var(--blockr-color-bg-surface, #ffffff);
-  border-left: 1px solid var(--blockr-color-border, #e5e7eb);
-  border-top: 1px solid var(--blockr-color-border, #e5e7eb);
+  background: var(--blockr-color-bg-surface);
+  border-left: 1px solid var(--blockr-color-border-default);
+  border-top: 1px solid var(--blockr-color-border-default);
   transform: rotate(45deg);
 }
 
@@ -67,9 +67,9 @@
 .blockr-settings .dd-popover-title,
 .blockr-settings__title {
   flex: 1 1 100%;
-  font-size: var(--blockr-font-size-xs, 0.75rem);
-  font-weight: var(--blockr-font-weight-medium, 500);
-  color: var(--blockr-color-text-muted, #6b7280);
+  font-size: var(--blockr-font-size-xs);
+  font-weight: var(--blockr-font-weight-medium);
+  color: var(--blockr-color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
@@ -119,13 +119,13 @@
   align-items: center;
   gap: 9px;
   cursor: pointer;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  color: var(--blockr-color-text-default, #111827);
+  font-size: var(--blockr-font-size-base);
+  color: var(--blockr-color-text-default);
   min-height: 26px;
   user-select: none;
   position: relative;
   margin-bottom: 0;           /* neutralize bootstrap label margin */
-  font-weight: var(--blockr-font-weight-normal, 400);
+  font-weight: var(--blockr-font-weight-normal);
 }
 .blockr-checkbox input {
   position: absolute;
@@ -137,25 +137,25 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  border: 1px solid var(--blockr-color-border-strong, #d1d5db);
-  border-radius: var(--blockr-radius-sm, 4px);
-  background: var(--blockr-color-bg-surface, #ffffff);
+  border: 1px solid var(--blockr-color-border-strong);
+  border-radius: var(--blockr-radius-sm);
+  background: var(--blockr-color-bg-surface);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--blockr-color-text-on-accent, #ffffff);
-  transition: background-color var(--blockr-transition, 0.15s ease), border-color var(--blockr-transition, 0.15s ease);
+  color: var(--blockr-color-text-on-accent);
+  transition: background-color var(--blockr-transition), border-color var(--blockr-transition);
 }
 .blockr-checkbox:hover .blockr-checkbox__box {
-  border-color: var(--blockr-color-text-muted, #6b7280);
+  border-color: var(--blockr-color-text-muted);
 }
 .blockr-checkbox input:checked + .blockr-checkbox__box {
-  background: var(--blockr-color-bg-accent, #2563eb);
-  border-color: var(--blockr-color-bg-accent, #2563eb);
+  background: var(--blockr-color-bg-accent);
+  border-color: var(--blockr-color-bg-accent);
 }
 .blockr-checkbox input:focus-visible + .blockr-checkbox__box {
-  outline: var(--blockr-focus-outline, 2px solid #2563eb);
-  outline-offset: var(--blockr-focus-offset, 2px);
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
 }
 .blockr-checkbox__box svg {
   opacity: 0;

@@ -266,6 +266,10 @@ js_block_ui <- function(name, shared_deps = "select") {
   force(shared_deps)
   function(id) {
     tagList(
+      # The design system's tokens and theme layer. Every colour, size and
+      # radius in this package's CSS reads them, with no fallbacks, so a block
+      # brings them along rather than relying on the host to attach them.
+      blockr.ui::theme_dep(),
       blockr_core_js_dep(),
       blockr_blocks_css_dep(),
       # Band CSS + Blockr.checkbox; must load before the per-block script.

@@ -17,28 +17,28 @@
   height: 24px;
   min-width: 28px;
   font: inherit;
-  font-size: var(--blockr-font-size-xs, 0.75rem);
-  font-weight: var(--blockr-font-weight-medium, 500);
-  color: var(--blockr-color-text-muted, #6b7280);
-  background: var(--blockr-color-bg-hover, color-mix(in srgb, var(--blockr-color-text-default) 6%, transparent));
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-sm, 4px);
+  font-size: var(--blockr-font-size-xs);
+  font-weight: var(--blockr-font-weight-medium);
+  color: var(--blockr-color-text-muted);
+  background: var(--blockr-color-bg-hover);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-sm);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: border-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+  transition: border-color var(--blockr-transition), color var(--blockr-transition);
 }
 
 .blockr-pill:hover,
 .blockr-pill[aria-expanded="true"] {
-  border-color: var(--blockr-color-border-strong, #d1d5db);
-  color: var(--blockr-color-text-default, #111827);
+  border-color: var(--blockr-color-border-strong);
+  color: var(--blockr-color-text-default);
 }
 
 .blockr-pill:focus-visible {
-  outline: var(--blockr-focus-outline, 2px solid #2563eb);
-  outline-offset: var(--blockr-focus-offset, 2px);
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
 }
 
 .blockr-pill--menu { padding: 0 5px 0 8px; }
@@ -47,7 +47,7 @@
   display: inline-flex;
   width: 10px;
   height: 10px;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
 }
 
 .blockr-pill__caret svg { width: 10px; height: 10px; }
@@ -59,56 +59,56 @@
   display: inline-flex;
   gap: 3px;
   padding: 3px;
-  height: var(--blockr-control-h, 42px);
+  height: var(--blockr-control-h);
   box-sizing: border-box;
-  background: var(--blockr-color-bg-field, #f9fafb);
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-lg, 8px);
+  background: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-lg);
 }
 
 .blockr-segmented__seg {
   flex: 1;
   font: inherit;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
   padding: 0 12px;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
   background: none;
   border: 1px solid transparent;
-  border-radius: var(--blockr-radius-md, 6px);
+  border-radius: var(--blockr-radius-md);
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+  transition: background-color var(--blockr-transition), color var(--blockr-transition);
 }
 
 .blockr-segmented__seg:hover {
-  color: var(--blockr-color-text-default, #111827);
-  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--blockr-color-text-default);
+  background: var(--blockr-color-bg-hover);
 }
 
 .blockr-segmented__seg.is-selected,
 .blockr-segmented__seg.is-selected:hover {
-  color: var(--blockr-color-text-accent, #2563eb);
-  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
-  border-color: var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
-  font-weight: var(--blockr-font-weight-medium, 500);
+  color: var(--blockr-color-text-accent);
+  background: var(--blockr-color-bg-accent-subtle);
+  border-color: var(--blockr-color-border-accent-subtle);
+  font-weight: var(--blockr-font-weight-medium);
 }
 
 .blockr-segmented__seg:focus-visible {
-  outline: var(--blockr-focus-outline, 2px solid #2563eb);
-  outline-offset: var(--blockr-focus-offset, 2px);
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
 }
 
 .blockr-segmented--xs {
-  height: var(--blockr-control-h-xs, 26px);
+  height: var(--blockr-control-h-xs);
   padding: 2px;
   gap: 2px;
-  border-radius: var(--blockr-radius-md, 6px);
+  border-radius: var(--blockr-radius-md);
 }
 
 .blockr-segmented--xs .blockr-segmented__seg {
-  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-size: var(--blockr-font-size-xs);
   padding: 0 9px;
-  border-radius: var(--blockr-radius-sm, 4px);
+  border-radius: var(--blockr-radius-sm);
 }
 
 /* --- Condition/row container --- */
@@ -119,19 +119,19 @@
   min-height: 42px;
   padding: 5px 10px;
   margin-bottom: 6px;
-  background-color: var(--blockr-color-bg-field, #f9fafb);
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-lg, 8px);
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-lg);
   box-sizing: border-box;
-  transition: border-color var(--blockr-transition, 0.15s ease), box-shadow var(--blockr-transition, 0.15s ease), background-color var(--blockr-transition, 0.15s ease);
+  transition: border-color var(--blockr-transition), box-shadow var(--blockr-transition), background-color var(--blockr-transition);
 }
 
 /* A row holds fields, so it takes a field's focus: the surface, the accent
    edge and the soft ring. */
 .blockr-row:focus-within {
-  background-color: var(--blockr-color-bg-surface, #ffffff);
-  border-color: var(--blockr-color-border-accent, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  background-color: var(--blockr-color-bg-surface);
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 /* --- Row content area (flex-fills remaining space) --- */
@@ -153,33 +153,33 @@
   height: 26px;
   background: none;
   border: none;
-  border-radius: var(--blockr-radius-sm, 4px);
-  color: var(--blockr-color-text-muted, #6b7280);
+  border-radius: var(--blockr-radius-sm);
+  color: var(--blockr-color-text-muted);
   cursor: pointer;
   opacity: 0;
   flex-shrink: 0;
-  transition: opacity var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+  transition: opacity var(--blockr-transition), color var(--blockr-transition);
 }
 
 /* Hidden at rest; shown on hover or keyboard focus of its row. */
 .blockr-row:hover .blockr-row-remove,
 .blockr-row:focus-within .blockr-row-remove { opacity: 1; }
 .blockr-row-remove:hover {
-  color: var(--blockr-color-text-danger, #b91c1c);
-  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--blockr-color-text-danger);
+  background: var(--blockr-color-bg-hover);
 }
 .blockr-row-remove:focus-visible {
   opacity: 1;
-  outline: var(--blockr-focus-outline, 2px solid #2563eb);
-  outline-offset: var(--blockr-focus-offset, 2px);
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
 }
 
 /* --- Shared label for inputs (matches blockr.dock standard) --- */
 /* Field labels: 12px regular muted, 4px above the control. */
 .blockr-label {
-  font-size: var(--blockr-font-size-xs, 0.75rem);
-  font-weight: var(--blockr-font-weight-normal, 400);
-  color: var(--blockr-color-text-muted, #6b7280);
+  font-size: var(--blockr-font-size-xs);
+  font-weight: var(--blockr-font-weight-normal);
+  color: var(--blockr-color-text-muted);
   margin-bottom: 4px;
 }
 
@@ -191,10 +191,10 @@
   gap: 6px;
   padding: 3px 0;
   min-height: 30px;
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  font-size: var(--blockr-font-size-sm);
   user-select: none;
   box-sizing: border-box;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
 }
 
 /* "Add condition" is a quiet button: text only, a hover wash. */
@@ -202,17 +202,17 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: var(--blockr-control-h-xs, 26px);
+  height: var(--blockr-control-h-xs);
   padding: 0 8px;
   margin-left: -8px;
-  border-radius: var(--blockr-radius-sm, 4px);
+  border-radius: var(--blockr-radius-sm);
   cursor: pointer;
-  transition: background-color var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+  transition: background-color var(--blockr-transition), color var(--blockr-transition);
 }
 
 .blockr-add-link:hover {
-  color: var(--blockr-color-text-default, #111827);
-  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--blockr-color-text-default);
+  background: var(--blockr-color-bg-hover);
 }
 
 .blockr-add-icon {
@@ -227,28 +227,28 @@
   gap: 3px;
   padding: 2px 8px;
   height: 24px;
-  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
-  border: 1px solid var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
-  border-radius: var(--blockr-radius-sm, 4px);
-  color: var(--blockr-color-text-accent, #2563eb);
+  background: var(--blockr-color-bg-accent-subtle);
+  border: 1px solid var(--blockr-color-border-accent-subtle);
+  border-radius: var(--blockr-radius-sm);
+  color: var(--blockr-color-text-accent);
   cursor: pointer;
   flex-shrink: 0;
   font-size: 11px;
-  font-weight: var(--blockr-font-weight-medium, 500);
+  font-weight: var(--blockr-font-weight-medium);
   white-space: nowrap;
-  transition: background-color var(--blockr-transition, 0.15s ease), border-color var(--blockr-transition, 0.15s ease), opacity var(--blockr-transition, 0.15s ease);
+  transition: background-color var(--blockr-transition), border-color var(--blockr-transition), opacity var(--blockr-transition);
 }
 
 /* The Enter button: the accent tint while the field is dirty. */
 .blockr-expr-confirm:hover {
-  background: var(--blockr-color-bg-accent-subtle-hover, rgba(37, 99, 235, 0.13));
-  border-color: var(--blockr-color-border-accent, #2563eb);
+  background: var(--blockr-color-bg-accent-subtle-hover);
+  border-color: var(--blockr-color-border-accent);
 }
 
 .blockr-expr-confirm.confirmed {
   background: none;
   border-color: transparent;
-  color: var(--blockr-color-text-disabled, #9ca3af);
+  color: var(--blockr-color-text-disabled);
   opacity: 0.5;
 }
 
@@ -297,8 +297,8 @@
   /* The --bordered variants repeat the pattern at higher specificity:
      blockr-select.css loads after this sheet and its equal-specificity
      .blockr-select--bordered rule would win the border otherwise. */
-  border-color: var(--blockr-color-warning, #f59e0b);
-  background: var(--blockr-color-warning-bg, #fffbeb);
+  border-color: var(--blockr-color-border-warning);
+  background: var(--blockr-color-bg-warning);
 }
 
 /* The second half of the recipe: the label carries a trailing `*`. Only
@@ -306,7 +306,7 @@
    (slice's custom-positions row) is carried by the amber alone. */
 .blockr-field--required-empty > .blockr-label::after {
   content: " *";
-  color: var(--blockr-color-warning, #f59e0b);
+  color: var(--blockr-color-text-warning);
   font-weight: 600;
 }
 
@@ -314,10 +314,10 @@
 .blockr-num-input {
   height: 30px;
   padding: 4px 10px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
   background: transparent;
   border: none;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
   flex: 1;
   width: 100%;
   min-width: 60px;
@@ -327,7 +327,7 @@
 .blockr-num-input:focus { outline: none; }
 
 .blockr-num-input::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 /* --- Standalone text input (matches blockr.dock .form-control sizing) --- */
@@ -335,24 +335,24 @@
   width: 100%;
   min-height: 42px;
   padding: 10px 14px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  font-size: var(--blockr-font-size-base);
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
   box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .blockr-text-input:focus {
-  background-color: var(--blockr-color-bg-surface, #ffffff);
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  background-color: var(--blockr-color-bg-surface);
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
   outline: none;
 }
 
 .blockr-text-input::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 /* --- Gear header (top-right settings icon, shared across blocks) --- */
@@ -370,24 +370,24 @@
   width: 26px;
   height: 26px;
   flex-shrink: 0;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
   background: transparent;
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 4px;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .blockr-gear-btn:hover {
-  color: var(--blockr-color-primary, #2563eb);
-  border-color: rgba(37, 99, 235, 0.3);
-  background: rgba(37, 99, 235, 0.04);
+  color: var(--blockr-color-text-accent);
+  border-color: var(--blockr-color-border-accent-subtle);
+  background: var(--blockr-color-bg-accent-subtle);
 }
 
 .blockr-gear-btn.blockr-gear-active {
-  color: var(--blockr-color-primary, #2563eb);
-  border-color: rgba(37, 99, 235, 0.3);
-  background: rgba(37, 99, 235, 0.08);
+  color: var(--blockr-color-text-accent);
+  border-color: var(--blockr-color-border-accent-subtle);
+  background: var(--blockr-color-bg-accent-subtle);
 }
 
 /* --- Shared popover panel ---
@@ -400,10 +400,10 @@
   right: 0;
   top: 32px;
   z-index: 1000;
-  background: var(--blockr-color-bg-surface, #ffffff);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  background: var(--blockr-color-bg-surface);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--blockr-shadow-md);
   padding: 12px 14px;
   min-width: 280px;
 }
@@ -419,7 +419,7 @@
 .blockr-popover-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--blockr-grey-500, #6b7280);
+  color: var(--blockr-color-text-muted);
   margin-bottom: 0.25rem;
 }
 
@@ -427,19 +427,19 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px 12px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  font-size: var(--blockr-font-size-base);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
-  background: var(--blockr-color-bg-input, #f9fafb);
-  color: var(--blockr-color-text-primary, #111827);
+  background: var(--blockr-color-bg-field);
+  color: var(--blockr-color-text-default);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .blockr-popover-input:focus {
-  background: var(--blockr-color-bg-surface, #ffffff);
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  background: var(--blockr-color-bg-surface);
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 .blockr-popover-select-wrap {
@@ -447,8 +447,8 @@
 }
 
 .blockr-popover-select-wrap .blockr-select__control {
-  background-color: var(--blockr-color-bg-input, #f9fafb);
-  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
   border-radius: 8px;
   padding: 6px 12px;
   min-height: 38px;
@@ -456,8 +456,8 @@
 
 .blockr-popover-select-wrap .blockr-select--open .blockr-select__control,
 .blockr-popover-select-wrap .blockr-select__control:focus-within {
-  border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 /* Shared popover toggle pill (self-labeling) */
@@ -467,9 +467,9 @@
 }
 
 .blockr-popover-toggle-active {
-  color: var(--blockr-color-primary, #2563eb) !important;
-  background: rgba(37, 99, 235, 0.08) !important;
-  border-color: rgba(37, 99, 235, 0.2) !important;
+  color: var(--blockr-color-text-accent) !important;
+  background: var(--blockr-color-bg-accent-subtle) !important;
+  border-color: var(--blockr-color-border-accent-subtle) !important;
 }
 
 /* --- Add expression link (code icon button) --- */
@@ -477,18 +477,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--blockr-control-h-xs, 26px);
-  height: var(--blockr-control-h-xs, 26px);
-  color: var(--blockr-color-text-muted, #6b7280);
+  width: var(--blockr-control-h-xs);
+  height: var(--blockr-control-h-xs);
+  color: var(--blockr-color-text-muted);
   background: transparent;
   border: none;
-  border-radius: var(--blockr-radius-sm, 4px);
+  border-radius: var(--blockr-radius-sm);
   cursor: pointer;
-  transition: color var(--blockr-transition, 0.15s ease), background-color var(--blockr-transition, 0.15s ease);
+  transition: color var(--blockr-transition), background-color var(--blockr-transition);
 }
 
 /* A tool: bare at rest, a hover wash. */
 .blockr-add-link-expr:hover {
-  color: var(--blockr-color-text-default, #111827);
-  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--blockr-color-text-default);
+  background: var(--blockr-color-bg-hover);
 }

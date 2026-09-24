@@ -8,10 +8,10 @@
   position: relative;
   display: inline-block;
   width: 100%;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
   font-family: inherit;
   line-height: 1.4;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
 }
 
 .blockr-select *,
@@ -38,18 +38,18 @@
 /* Bordered modifier — for standalone use outside row containers.
    Matches blockr.dock's .selectize-input / .form-control sizing. */
 .blockr-select--bordered .blockr-select__control {
-  background-color: var(--blockr-color-bg-field, #f9fafb);
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-lg, 8px);
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-lg);
   padding: 6px 12px;
-  min-height: var(--blockr-control-h, 42px);
+  min-height: var(--blockr-control-h);
 }
 
 .blockr-select--bordered.blockr-select--open .blockr-select__control,
 .blockr-select--bordered .blockr-select__control:focus-within {
-  background-color: var(--blockr-color-bg-surface, #ffffff);
-  border-color: var(--blockr-color-border-accent, #2563eb);
-  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  background-color: var(--blockr-color-bg-surface);
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
 }
 
 /* --- Value display (single mode) --- */
@@ -62,7 +62,7 @@
 }
 
 .blockr-select__value--placeholder {
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
 }
 
 /* Hide value when dropdown is open (single mode) */
@@ -75,7 +75,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
   transition: transform 150ms ease;
   pointer-events: none;
 }
@@ -99,7 +99,7 @@
 }
 
 .blockr-select__search::placeholder {
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
 }
 
 
@@ -178,11 +178,11 @@
   height: 24px;
   box-sizing: border-box;
   padding: 0 8px;
-  border-radius: var(--blockr-radius-sm, 4px);
-  background: var(--blockr-color-bg-accent-subtle, rgba(37, 99, 235, 0.07));
-  border: 1px solid var(--blockr-color-border-accent-subtle, rgba(37, 99, 235, 0.35));
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
-  color: var(--blockr-color-text-accent, #2563eb);
+  border-radius: var(--blockr-radius-sm);
+  background: var(--blockr-color-bg-accent-subtle);
+  border: 1px solid var(--blockr-color-border-accent-subtle);
+  font-size: var(--blockr-font-size-sm);
+  color: var(--blockr-color-text-accent);
   cursor: pointer;
   user-select: none;
 }
@@ -197,10 +197,10 @@
   padding: 0 3px 0 8px;
   /* A step darker than the field it sits in, with a softer name
      (design system, Tags). */
-  background: var(--blockr-color-bg-hover, color-mix(in srgb, var(--blockr-color-text-default) 6%, transparent));
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-sm, 4px);
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  background: var(--blockr-color-bg-hover);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-sm);
+  font-size: var(--blockr-font-size-sm);
   color: color-mix(in srgb, var(--blockr-color-text-default) 80%, var(--blockr-color-bg-field));
   cursor: default;
   user-select: none;
@@ -225,12 +225,12 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
   cursor: pointer;
   border-radius: 2px;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity var(--blockr-transition, 0.15s ease), color var(--blockr-transition, 0.15s ease);
+  transition: opacity var(--blockr-transition), color var(--blockr-transition);
 }
 
 /* The x shows on the tag under the pointer or with keyboard focus, never on
@@ -241,12 +241,12 @@
 }
 
 .blockr-select__tag-remove:hover {
-  color: var(--blockr-color-text-danger, #b91c1c);
+  color: var(--blockr-color-text-danger);
 }
 
 /* A column label inside a tag is 12px meta. */
 .blockr-select__tag .blockr-select__opt-label {
-  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-size: var(--blockr-font-size-xs);
   margin-left: 6px;
 }
 
@@ -281,7 +281,7 @@
   top: 2px;
   bottom: 2px;
   width: 2px;
-  background: var(--blockr-color-primary, #2563eb);
+  background: var(--blockr-color-bg-accent);
   border-radius: 1px;
 }
 
@@ -296,7 +296,7 @@
   top: 2px;
   bottom: 2px;
   width: 2px;
-  background: var(--blockr-color-primary, #2563eb);
+  background: var(--blockr-color-bg-accent);
   border-radius: 1px;
 }
 
@@ -312,10 +312,10 @@
   overflow-y: auto;
   padding: 4px;
   box-sizing: border-box;
-  background: var(--blockr-color-bg-raised, #ffffff);
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-lg, 8px);
-  box-shadow: var(--blockr-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  background: var(--blockr-color-bg-raised);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-lg);
+  box-shadow: var(--blockr-shadow-md);
   z-index: 9999;
 }
 
@@ -336,11 +336,11 @@
 /* The role this menu sets. The word that was clicked says which VALUE is in
    the slot, never which setting it fills, so the panel has to. */
 .blockr-select__menu-title {
-  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-size: var(--blockr-font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: var(--blockr-font-weight-semibold, 600);
-  color: var(--blockr-color-text-muted, #6b7280);
+  font-weight: var(--blockr-font-weight-semibold);
+  color: var(--blockr-color-text-muted);
   padding: 8px 10px 4px;
 }
 
@@ -362,12 +362,12 @@
   height: 30px;
   margin: 2px 4px 5px;
   padding: 0 9px;
-  border: 1px solid var(--blockr-color-border-default, #e5e7eb);
-  border-radius: var(--blockr-radius-md, 6px);
-  background: var(--blockr-color-bg-field, #f9fafb);
-  color: var(--blockr-color-text-default, #111827);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: var(--blockr-radius-md);
+  background: var(--blockr-color-bg-field);
+  color: var(--blockr-color-text-default);
   font: inherit;
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  font-size: var(--blockr-font-size-sm);
 }
 
 /* A short list needs no filter box, but it still needs the focus: the arrows,
@@ -404,9 +404,9 @@
   min-height: 32px;
   box-sizing: border-box;
   padding: 6px 10px;
-  border-radius: var(--blockr-radius-sm, 4px);
-  font-size: var(--blockr-font-size-base, 0.875rem);
-  color: var(--blockr-color-text-default, #111827);
+  border-radius: var(--blockr-radius-sm);
+  font-size: var(--blockr-font-size-base);
+  color: var(--blockr-color-text-default);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -415,16 +415,16 @@
 
 .blockr-select__option--highlighted,
 .blockr-select__option:hover {
-  background: var(--blockr-color-bg-hover, rgba(17, 24, 39, 0.06));
+  background: var(--blockr-color-bg-hover);
 }
 
 .blockr-select__option--highlighted .blockr-select__opt-label,
 .blockr-select__option:hover .blockr-select__opt-label {
-  color: var(--blockr-color-text-default, #111827);
+  color: var(--blockr-color-text-default);
 }
 
 .blockr-select__option--selected {
-  font-weight: var(--blockr-font-weight-semibold, 600);
+  font-weight: var(--blockr-font-weight-semibold);
 }
 
 /* --- Option label (muted description next to value) ---
@@ -433,8 +433,8 @@
    text-overflow: ellipsis. The inline label sits after the value, so the
    parent ellipsizes the label first when space runs out. */
 .blockr-select__opt-label {
-  font-size: var(--blockr-font-size-sm, 0.8125rem);
-  color: var(--blockr-color-text-muted, #6b7280);
+  font-size: var(--blockr-font-size-sm);
+  color: var(--blockr-color-text-muted);
   margin-left: 8px;
   font-weight: 400;
 }
@@ -442,7 +442,7 @@
 /* --- Empty state --- */
 .blockr-select__empty {
   padding: 8px 10px;
-  color: var(--blockr-color-text-muted, #6b7280);
+  color: var(--blockr-color-text-muted);
   font-style: italic;
   text-align: center;
 }

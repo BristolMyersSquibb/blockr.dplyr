@@ -46,7 +46,7 @@
     width: 100%;
     max-width: none;
     border-right: none;
-    border-bottom: 1px solid var(--blockr-color-border-default, #e5e7eb);
+    border-bottom: 1px solid var(--blockr-color-border-default);
     padding-right: 0;
     padding-bottom: 2px;
   }

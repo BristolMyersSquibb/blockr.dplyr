@@ -16,14 +16,14 @@
   max-width: min(55%, 360px);
   flex-shrink: 0;
   transition: width 120ms ease;
-  border-right: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-right: 1px solid var(--blockr-color-border-default);
   padding-right: 8px;
 }
 
 /* Arrow separator */
 .rb-arrow {
   flex-shrink: 0;
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
   font-size: 14px;
   padding: 0 2px;
 }
@@ -34,17 +34,17 @@
   min-width: 80px;
   height: 30px;
   padding: 4px 10px;
-  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-size: var(--blockr-font-size-base);
   background: transparent;
   border: none;
-  color: var(--blockr-color-text-primary, #111827);
+  color: var(--blockr-color-text-default);
   box-sizing: border-box;
 }
 
 .rb-name-input:focus { outline: none; }
 
 .rb-name-input::placeholder {
-  color: var(--blockr-grey-400, #9ca3af);
+  color: var(--blockr-color-text-muted);
 }
 
 /* --- Narrow panels: stack the column select above the rename ---
@@ -61,7 +61,7 @@
     width: 100%;
     max-width: none;
     border-right: none;
-    border-bottom: 1px solid var(--blockr-color-border, #e5e7eb);
+    border-bottom: 1px solid var(--blockr-color-border-default);
     padding-right: 0;
     padding-bottom: 2px;
   }
