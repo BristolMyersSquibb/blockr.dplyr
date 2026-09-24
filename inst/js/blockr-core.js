@@ -188,9 +188,11 @@ Blockr.icons = {
     '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" ' +
     'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
     '<polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg>',
+  // A tag's x: a thin stroke, like every small icon (design system, "Small
+  // icons"); at 1.5 it read bold beside the row's remove button.
   remove:
     '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.5" stroke-linecap="round">' +
+    'stroke-width="1" stroke-linecap="round">' +
     '<line x1="2.5" y1="2.5" x2="7.5" y2="7.5"></line>' +
     '<line x1="7.5" y1="2.5" x2="2.5" y2="7.5"></line></svg>',
   x:
