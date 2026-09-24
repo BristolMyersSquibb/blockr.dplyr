@@ -7,21 +7,8 @@
  */
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const test = require('node:test');
 const assert = require('node:assert');
-const { Window } = require('happy-dom');
-
-const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
-const read = (f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8');
-
-const newWindow = () => {
-  const win = new Window({ url: 'http://localhost/' });
-  win.eval(read('blockr-ui.js'));
-  win.eval(read('blockr-select.js'));
-  return win;
-};
+const { test } = require('./select-impls');
 
 const host = (win) => {
   const el = win.document.createElement('div');
@@ -31,7 +18,7 @@ const host = (win) => {
 
 const MANY = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
 
-test('bordered marks a standalone field; left out, the select stays bare', () => {
+test('bordered marks a standalone field; left out, the select stays bare', (newWindow) => {
   const win = newWindow();
   const field = win.Blockr.Select.single(host(win), { options: MANY, bordered: true });
   const bare = win.Blockr.Select.single(host(win), { options: MANY });
@@ -40,7 +27,7 @@ test('bordered marks a standalone field; left out, the select stays bare', () =>
   win.close();
 });
 
-test('the filter box shows past eight options, and never with search: false', () => {
+test('the filter box shows past eight options, and never with search: false', (newWindow) => {
   const win = newWindow();
   const filtered = (m) => {
     // A closed menu leaves on the next tick, so take the newest one.
@@ -59,7 +46,7 @@ test('the filter box shows past eight options, and never with search: false', ()
   win.close();
 });
 
-test('setValue changes the pick without reporting it', () => {
+test('setValue changes the pick without reporting it', (newWindow) => {
   const win = newWindow();
   const seen = [];
   const one = win.Blockr.Select.single(host(win), {
@@ -78,7 +65,7 @@ test('setValue changes the pick without reporting it', () => {
   win.close();
 });
 
-test('a menu hands back close and nothing else', () => {
+test('a menu hands back close and nothing else', (newWindow) => {
   const win = newWindow();
   const m = win.Blockr.Select.menu(host(win), { options: MANY });
   assert.deepStrictEqual(Object.keys(m), ['close']);

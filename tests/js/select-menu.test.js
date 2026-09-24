@@ -13,21 +13,8 @@
  */
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const test = require('node:test');
 const assert = require('node:assert');
-const { Window } = require('happy-dom');
-
-const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
-const read = (f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8');
-
-const newWindow = () => {
-  const win = new Window({ url: 'http://localhost/' });
-  win.eval(read('blockr-ui.js'));
-  win.eval(read('blockr-select.js'));
-  return win;
-};
+const { test } = require('./select-impls');
 
 const anchorIn = (win, text) => {
   const a = win.document.createElement('span');
@@ -49,7 +36,7 @@ const optionTexts = (win) =>
   [...win.document.querySelectorAll('.blockr-select__option')]
     .map((e) => e.textContent);
 
-test('the menu opens itself: no control to click first', () => {
+test('the menu opens itself: no control to click first', (newWindow) => {
   const win = newWindow();
   const m = win.Blockr.Select.menu(anchorIn(win), { options: COLS, selected: 'AVAL' });
   assert.ok(dropdown(win), 'a dropdown exists');
@@ -60,7 +47,7 @@ test('the menu opens itself: no control to click first', () => {
   win.close();
 });
 
-test('the title says which setting the word fills', () => {
+test('the title says which setting the word fills', (newWindow) => {
   const win = newWindow();
   const m = win.Blockr.Select.menu(anchorIn(win), {
     options: COLS, selected: 'AVAL', title: 'Colour'
@@ -71,7 +58,7 @@ test('the title says which setting the word fills', () => {
   win.close();
 });
 
-test('the option leads with the half the sentence printed', () => {
+test('the option leads with the half the sentence printed', (newWindow) => {
   const byName = newWindow();
   const a = byName.Blockr.Select.menu(anchorIn(byName), { options: COLS, selected: 'AVAL' });
   assert.deepStrictEqual(optionTexts(byName), [
@@ -91,7 +78,7 @@ test('the option leads with the half the sentence printed', () => {
   byLabel.close();
 });
 
-test('the current option is marked, the same way every select marks it', () => {
+test('the current option is marked, the same way every select marks it', (newWindow) => {
   const win = newWindow();
   const m = win.Blockr.Select.menu(anchorIn(win), { options: COLS, selected: 'CHG' });
   const on = win.document.querySelectorAll('.blockr-select__option--selected');
@@ -101,7 +88,7 @@ test('the current option is marked, the same way every select marks it', () => {
   win.close();
 });
 
-test('the filter box appears past the threshold, and holds focus below it', () => {
+test('the filter box appears past the threshold, and holds focus below it', (newWindow) => {
   const short = newWindow();
   const a = short.Blockr.Select.menu(anchorIn(short), { options: COLS, selected: 'AVAL' });
   const hidden = short.document.querySelector('.blockr-select__search--menu');
@@ -119,7 +106,7 @@ test('the filter box appears past the threshold, and holds focus below it', () =
   long.close();
 });
 
-test('typing filters without losing the input', () => {
+test('typing filters without losing the input', (newWindow) => {
   const win = newWindow();
   const many = Array.from({ length: 12 }, (_, i) => `COL${i}`);
   const m = win.Blockr.Select.menu(anchorIn(win), { options: many, selected: 'COL0' });
@@ -134,7 +121,7 @@ test('typing filters without losing the input', () => {
   win.close();
 });
 
-test('a pick reports the value and takes the menu away', () => {
+test('a pick reports the value and takes the menu away', (newWindow) => {
   const win = newWindow();
   const picked = [];
   let closed = 0;
@@ -162,7 +149,7 @@ test('a pick reports the value and takes the menu away', () => {
   });
 });
 
-test('a click on the anchor is the caller\'s toggle, not an outside click', () => {
+test('a click on the anchor is the caller\'s toggle, not an outside click', (newWindow) => {
   const win = newWindow();
   const anchor = anchorIn(win);
   let closed = 0;
@@ -199,7 +186,7 @@ const tagValues = (win) =>
   [...win.document.querySelectorAll('.blockr-select__tag')]
     .map((e) => e.getAttribute('data-value'));
 
-test('a multi menu carries its picks in the panel head', () => {
+test('a multi menu carries its picks in the panel head', (newWindow) => {
   const win = newWindow();
   const m = win.Blockr.Select.menu(anchorIn(win, 'AESOC, AEDECOD'), {
     mode: 'multi', title: 'Rows', options: ['AESOC', 'AEDECOD', 'AETOXGR'],
@@ -218,7 +205,7 @@ test('a multi menu carries its picks in the panel head', () => {
   win.close();
 });
 
-test('a pick keeps the multi menu open and moves the value into the head', () => {
+test('a pick keeps the multi menu open and moves the value into the head', (newWindow) => {
   const win = newWindow();
   const picked = [];
   let closed = 0;
@@ -238,7 +225,7 @@ test('a pick keeps the multi menu open and moves the value into the head', () =>
   win.close();
 });
 
-test('the x on a tag removes it, and the value comes back to the list', () => {
+test('the x on a tag removes it, and the value comes back to the list', (newWindow) => {
   const win = newWindow();
   const picked = [];
   const m = win.Blockr.Select.menu(anchorIn(win), {
@@ -262,7 +249,7 @@ test('the x on a tag removes it, and the value comes back to the list', () => {
   win.close();
 });
 
-test('the filter prompt survives a pick', () => {
+test('the filter prompt survives a pick', (newWindow) => {
   const win = newWindow();
   const opts = Array.from({ length: 12 }, (_, i) => `COL${i + 1}`);
   const m = win.Blockr.Select.menu(anchorIn(win), {

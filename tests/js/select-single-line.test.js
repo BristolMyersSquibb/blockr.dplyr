@@ -14,25 +14,12 @@
  */
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const test = require('node:test');
 const assert = require('node:assert');
-const { Window } = require('happy-dom');
-
-const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
-const read = (f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8');
-
-const newWindow = () => {
-  const win = new Window({ url: 'http://localhost/' });
-  win.eval(read('blockr-ui.js'));
-  win.eval(read('blockr-select.js'));
-  return win;
-};
+const { test } = require('./select-impls');
 
 const GAP = 3;
 
-test('fitCount: everything that fits stays', () => {
+test('fitCount: everything that fits stays', (newWindow) => {
   const win = newWindow();
   const fit = win.Blockr.Select.fitCount;
   // 3 * 40 + 2 gaps = 126
@@ -41,7 +28,7 @@ test('fitCount: everything that fits stays', () => {
   win.close();
 });
 
-test('fitCount: the chip has to fit too', () => {
+test('fitCount: the chip has to fit too', (newWindow) => {
   const win = newWindow();
   const fit = win.Blockr.Select.fitCount;
   // Two tags plus their gap is 83; a third would need 126, so it drops. The
@@ -52,21 +39,21 @@ test('fitCount: the chip has to fit too', () => {
   win.close();
 });
 
-test('fitCount: a control narrower than one tag shows the chip alone', () => {
+test('fitCount: a control narrower than one tag shows the chip alone', (newWindow) => {
   const win = newWindow();
   const fit = win.Blockr.Select.fitCount;
   assert.strictEqual(fit([40, 40], 30, GAP, 24), 0);
   win.close();
 });
 
-test('fitCount: no tags, no chip', () => {
+test('fitCount: no tags, no chip', (newWindow) => {
   const win = newWindow();
   const fit = win.Blockr.Select.fitCount;
   assert.strictEqual(fit([], 200, GAP, 24), 0);
   win.close();
 });
 
-test('midTruncate cuts the middle, keeping both ends', () => {
+test('midTruncate cuts the middle, keeping both ends', (newWindow) => {
   const win = newWindow();
   const mid = win.Blockr.Select.midTruncate;
 
@@ -82,7 +69,7 @@ test('midTruncate cuts the middle, keeping both ends', () => {
   win.close();
 });
 
-test('a tag past the cap is truncated and keeps the full value on hover', () => {
+test('a tag past the cap is truncated and keeps the full value on hover', (newWindow) => {
   const win = newWindow();
   const doc = win.document;
   doc.body.innerHTML = '<div id="host"></div>';
@@ -103,7 +90,7 @@ test('a tag past the cap is truncated and keeps the full value on hover', () => 
   win.close();
 });
 
-test('singleLine marks the root and leaves an unlaid-out control alone', () => {
+test('singleLine marks the root and leaves an unlaid-out control alone', (newWindow) => {
   const win = newWindow();
   const doc = win.document;
   doc.body.innerHTML = '<div id="host"></div>';
@@ -129,7 +116,7 @@ test('singleLine marks the root and leaves an unlaid-out control alone', () => {
   win.close();
 });
 
-test('a multi select without singleLine is untouched', () => {
+test('a multi select without singleLine is untouched', (newWindow) => {
   const win = newWindow();
   const doc = win.document;
   doc.body.innerHTML = '<div id="host"></div>';
