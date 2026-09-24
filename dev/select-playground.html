@@ -1,0 +1,178 @@
+<!doctype html>
+<!--
+  Blockr.Select in a browser, without Shiny.
+
+  Serve the workspace root and open
+    /blockr.dplyr/dev/select-playground.html?tokens=/blockr.ui/inst/assets/css
+  (`tokens` is where blockr.ui's token CSS lives relative to the server root;
+  the default below assumes the main checkout layout). Add `&dark=1` for the
+  dark scheme. dev/select-playground-check.R drives it through chromote.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blockr.Select playground</title>
+<script>
+  // The check script reads these; a thrown handler is otherwise invisible.
+  window.__errors = [];
+  window.addEventListener('error', function (e) { window.__errors.push(e.message); });
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var tokens = q.get('tokens') || '../../blockr.ui/inst/assets/css';
+    if (q.get('dark')) document.documentElement.setAttribute('data-bs-theme', 'dark');
+    ['blockr-tokens.css', 'blockr-tokens-dark.css'].forEach(function (f) {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = tokens + '/' + f;
+      document.head.appendChild(l);
+    });
+  })();
+</script>
+<link rel="stylesheet" href="../inst/css/blockr-select.css">
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    background: var(--blockr-color-bg-page, #f6f7f9);
+    color: var(--blockr-color-text-default, #222);
+    /* Tall enough to scroll, so a panel has to follow. */
+    min-height: 1800px;
+  }
+  .case { margin: 0 0 28px; max-width: 520px; }
+  .case h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+             color: var(--blockr-color-text-muted, #777); margin: 0 0 6px; }
+  .narrow { width: 220px; }
+  .row { display: flex; gap: 12px; align-items: flex-start; }
+  .row > * { flex: 1; }
+  .scroller { height: 160px; overflow: auto; border: 1px dashed #aaa; padding: 8px; }
+  .scroller .filler { height: 400px; }
+  .word { color: var(--blockr-color-text-accent, #2563eb); cursor: pointer;
+          text-decoration: underline dotted; }
+  .word.blockr-slot--open { background: var(--blockr-color-bg-accent-subtle, #e8effd); }
+  #bottom { position: absolute; top: 1700px; left: 24px; }
+  #log { position: fixed; right: 12px; bottom: 12px; font: 11px monospace;
+         color: #666; max-width: 320px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<div class="case" id="c-single">
+  <h2>single</h2>
+  <div id="single"></div>
+</div>
+
+<div class="case" id="c-bordered">
+  <h2>bordered single, allowEmpty</h2>
+  <div id="bordered"></div>
+</div>
+
+<div class="case" id="c-multi">
+  <h2>multi, many tags, reorderable (bordered)</h2>
+  <div id="multi"></div>
+</div>
+
+<div class="case" id="c-line">
+  <h2>single-line multi in a narrow box</h2>
+  <div class="narrow"><div id="line"></div></div>
+</div>
+
+<div class="case" id="c-scroll">
+  <h2>single inside a scrolling box</h2>
+  <div class="scroller" id="scroller">
+    <div id="inscroll"></div>
+    <div class="filler"></div>
+  </div>
+</div>
+
+<div class="case" id="c-menu-top">
+  <h2>menu from a word</h2>
+  <p>Colour by <span class="word" id="word-top">AVAL</span>, rows by
+     <span class="word" id="word-multi">AESOC, AEDECOD</span>.</p>
+</div>
+
+<div id="bottom" class="case">
+  <h2>near the bottom: single and a menu</h2>
+  <div class="row">
+    <div id="single-bottom"></div>
+    <p>Colour by <span class="word" id="word-bottom">AVAL</span>.</p>
+  </div>
+</div>
+
+<div id="log"></div>
+
+<script src="../inst/js/blockr-ui.js"></script>
+<script src="../inst/js/blockr-select.js"></script>
+<script>
+  var log = function (s) {
+    var el = document.getElementById('log');
+    el.textContent = (s + '\n' + el.textContent).slice(0, 2000);
+  };
+  var COLS = [
+    { value: 'AVAL', label: 'Analysis Value' },
+    { value: 'CHG', label: 'Change from Baseline' },
+    { value: 'BASE', label: 'Baseline Value' },
+    'PARAMCD', 'AVISIT', 'AVISITN', 'TRT01A', 'TRT01P', 'AGE', 'SEX', 'RACE',
+    'COUNTRY', 'SAFFL', 'ITTFL', 'USUBJID'
+  ];
+  var ARMS = ['Placebo', 'Xanomeline High Dose', 'Xanomeline Low Dose',
+              'Screen Failure', 'Not Assigned'];
+  var byId = function (id) { return document.getElementById(id); };
+  window.__last = {};
+  var report = function (name) {
+    return function (v) { window.__last[name] = v; log(name + ' -> ' + JSON.stringify(v)); };
+  };
+
+  window.S = {};
+  S.single = Blockr.Select.single(byId('single'), {
+    options: COLS, selected: 'CHG', onChange: report('single')
+  });
+  S.bordered = Blockr.Select.single(byId('bordered'), {
+    options: ARMS, allowEmpty: true, bordered: true, placeholder: 'Pick an arm',
+    onChange: report('bordered')
+  });
+  S.multi = Blockr.Select.multi(byId('multi'), {
+    options: COLS, bordered: true, placeholder: 'Columns',
+    selected: ['AVAL', 'CHG', 'BASE', 'PARAMCD', 'AVISIT', 'TRT01A', 'AGE', 'SEX'],
+    onChange: report('multi')
+  });
+  S.line = Blockr.Select.multi(byId('line'), {
+    options: ARMS.concat(COLS), bordered: true, singleLine: true, maxTagChars: 16,
+    selected: ['Placebo', 'Xanomeline High Dose', 'Xanomeline Low Dose', 'AGE', 'SEX'],
+    onChange: report('line')
+  });
+  S.inscroll = Blockr.Select.single(byId('inscroll'), {
+    options: COLS, bordered: true, selected: 'AGE', onChange: report('inscroll')
+  });
+  S.bottom = Blockr.Select.single(byId('single-bottom'), {
+    options: COLS, bordered: true, selected: 'AGE', onChange: report('bottom')
+  });
+
+  // The word toggles its own menu, as the chart block does.
+  var wire = function (id, cfg) {
+    var word = byId(id);
+    var open = null;
+    word.addEventListener('click', function () {
+      if (open) { open.close(); return; }
+      word.classList.add('blockr-slot--open');
+      open = Blockr.Select.menu(word, Object.assign({
+        onChange: function (v) {
+          report(id)(v);
+          if (cfg.mode !== 'multi') word.textContent = v;
+        },
+        onClose: function () {
+          word.classList.remove('blockr-slot--open');
+          open = null;
+        }
+      }, cfg));
+    });
+  };
+  wire('word-top', { options: COLS, selected: 'AVAL', title: 'Colour',
+                     searchPlaceholder: 'Filter columns' });
+  wire('word-multi', { mode: 'multi', options: COLS, title: 'Rows',
+                       selected: ['AESOC', 'AEDECOD'], labelFirst: true });
+  wire('word-bottom', { options: COLS, selected: 'AVAL', title: 'Colour' });
+</script>
+</body>
+</html>

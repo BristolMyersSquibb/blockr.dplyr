@@ -296,68 +296,20 @@
     // Portal: dropdown lives on document.body while open so it escapes any
     // clipping / paint-containment / stacking-context ancestors (Dockview
     // panels, offcanvas, modals, …). See blockr.design/open/blockr-select-portal.
-
-    const computePosition = () => {
-      // Anchored to the caller's element when there is no control of our own.
-      const r = (anchor || root).getBoundingClientRect();
-      const dropH = dropdown.offsetHeight || 240;
-      const spaceBelow = window.innerHeight - r.bottom - 8;
-      const flipAbove = spaceBelow < dropH && r.top > dropH;
-
-      dropdown.style.position = 'fixed';
-      dropdown.style.bottom   = 'auto';
-      if (headless) {
-        // A word is not a control: the panel sizes to its own content, and
-        // has to be pulled back inside the viewport rather than lining up.
-        // `right` is 0 in the stylesheet (a dropdown normally spans its
-        // control), which would stretch a fixed box to the window edge and
-        // make every menu exactly max-width wide.
-        dropdown.style.right = 'auto';
-        dropdown.style.width = '';
-        dropdown.style.minWidth = '190px';
-        dropdown.style.maxWidth = '320px';
-        const w = dropdown.offsetWidth || 190;
-        dropdown.style.left = Math.max(8, Math.min(r.left,
-          document.documentElement.clientWidth - w - 8)) + 'px';
-      } else {
-        dropdown.style.width = r.width + 'px';
-        dropdown.style.left  = r.left + 'px';
-      }
-
-      if (flipAbove) {
-        dropdown.style.top = (r.top - dropH - 4) + 'px';
-        root.classList.add('blockr-select--above');
-      } else {
-        dropdown.style.top = (r.bottom + 4) + 'px';
-        root.classList.remove('blockr-select--above');
-      }
-    };
-
-    const onScrollOrResize = () => { if (isOpen) computePosition(); };
-
-    // The panel sits at a fixed position computed from the control, so it
-    // has to follow when the control changes height (a pick adds a tag row,
-    // a removal takes one away) or when its own height changes (fewer
-    // options left, which moves a panel that opened above). Observed only
-    // while open.
-    /** @type {ResizeObserver | null} */
-    let followObs = null;
-    let followFrame = 0;
-    const followStart = () => {
-      if (typeof ResizeObserver === 'undefined' || followObs) return;
-      followObs = new ResizeObserver(() => {
-        if (followFrame) return;
-        followFrame = requestAnimationFrame(() => {
-          followFrame = 0;
-          if (isOpen) computePosition();
-        });
+    // Blockr.place puts it under the control (or the caller's anchor, when
+    // there is no control of our own) and keeps it there while open.
+    /** @type {BlockrPlaceHandle | null} */
+    let placed = null;
+    const placeStart = () => {
+      if (placed) return;
+      placed = Blockr.place(dropdown, anchor || root, {
+        // A word is not a control: the menu sizes to its own content.
+        width: headless ? { min: 190, max: 320 } : 'anchor',
+        onFlip: (above) => root.classList.toggle('blockr-select--above', above)
       });
-      followObs.observe(anchor || root);
-      followObs.observe(dropdown);
     };
-    const followStop = () => {
-      if (followObs) { followObs.disconnect(); followObs = null; }
-      if (followFrame) { cancelAnimationFrame(followFrame); followFrame = 0; }
+    const placeStop = () => {
+      if (placed) { placed.stop(); placed = null; }
     };
 
     // --- Rendering ---
@@ -616,10 +568,7 @@
       }
 
       renderDropdown();
-      computePosition();
-      window.addEventListener('scroll', onScrollOrResize, { capture: true, passive: true });
-      window.addEventListener('resize', onScrollOrResize, { passive: true });
-      followStart();
+      placeStart();
       searchInput.focus();
 
       if (onOpen) onOpen();
@@ -631,9 +580,7 @@
       searchQuery = '';
       searchInput.value = '';
 
-      window.removeEventListener('scroll', onScrollOrResize, { capture: true });
-      window.removeEventListener('resize', onScrollOrResize);
-      followStop();
+      placeStop();
 
       dropdown.style.display = '';
 
@@ -1018,7 +965,7 @@
             : sel;
         }
         render();
-        if (isOpen) computePosition();
+        if (placed) placed.update();
       },
 
       /** @param {boolean} flag */

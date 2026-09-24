@@ -233,9 +233,33 @@ interface BlockrSelectStatic {
     anchor: HTMLElement,
     config: BlockrSelectMenuConfig
   ): { close: () => void };
+  /**
+   * Capability flag read by the packages that paint the words a menu opens
+   * from: a build without it has a single-only menu.
+   */
+  menuMulti: boolean;
   /** Exposed for tests. */
   fitCount(widths: number[], avail: number, gap: number, chipWidth: number): number;
   midTruncate(value: string, cap: number): string;
+}
+
+/** Handle returned by Blockr.place (blockr-ui.js). */
+interface BlockrPlaceHandle {
+  /** Recompute the position now (it also follows scroll, resize and size changes). */
+  update(): void;
+  /** Remove every listener and observer. */
+  stop(): void;
+}
+
+interface BlockrPlaceOptions {
+  /** Span the anchor (default), or size to content within bounds. */
+  width?: 'anchor' | { min: number; max: number };
+  /** Pixels between anchor and panel (default 4). */
+  gap?: number;
+  /** Distance kept from the viewport edges (default 8). */
+  margin?: number;
+  /** Called on every placement with whether the panel sits above the anchor. */
+  onFlip?: (above: boolean) => void;
 }
 
 /* --- Blockr.Input (blockr-input.js) --- */
@@ -319,6 +343,12 @@ interface BlockrNamespace {
   _measureEl?: HTMLDivElement;
   icons: Record<string, string>;
   onDocClick(el: Element, cb: (e: MouseEvent) => void): void;
+  /**
+   * Hang a fixed-position, body-portalled panel under an anchor and keep it
+   * there: flips above when there is no room below, follows scroll, resize
+   * and size changes of anchor and panel (blockr-ui.js).
+   */
+  place(panel: HTMLElement, anchor: HTMLElement, opts?: BlockrPlaceOptions): BlockrPlaceHandle;
   registerBlock(config: BlockrRegisterConfig): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;

@@ -84,6 +84,95 @@ Blockr.onDocClick = (el, cb) => {
   Blockr._docClick.add({ el, cb });
 };
 
+/**
+ * Hang a fixed-position panel under an anchor and keep it there.
+ *
+ * For a floating panel that has been portalled to <body> to escape its
+ * ancestors' clipping and stacking contexts (dock panels, offcanvas, modals;
+ * see blockr.design/open/blockr-select-portal). Being out of the ancestor's
+ * flow, the panel has to be told where the anchor is: `gap` px under it,
+ * flipped above when there is no room below and there is room above.
+ *
+ * `width: 'anchor'` (the default) spans the anchor's width, which is what a
+ * dropdown under its control does. `width: { min, max }` lets the panel size
+ * to its own content within those bounds and pulls it back inside the
+ * viewport by `margin`, which is what a menu under a word needs: a word is
+ * not a control, and lining up with it would run a menu off the right edge.
+ *
+ * The panel follows scroll (capture phase, so an ancestor scrolling counts),
+ * window resize, and size changes of the anchor and of the panel itself
+ * (ResizeObserver, coalesced to the next frame): a pick that adds a tag row
+ * moves the anchor's bottom edge, and fewer options left moves a panel that
+ * opened above. `onFlip(above)` reports each placement so the caller can mark
+ * its own element. `stop()` removes every listener.
+ *
+ * @param {HTMLElement} panel
+ * @param {HTMLElement} anchor
+ * @param {{ width?: 'anchor' | { min: number, max: number }, gap?: number,
+ *           margin?: number, onFlip?: (above: boolean) => void }} [opts]
+ * @returns {BlockrPlaceHandle}
+ */
+Blockr.place = (panel, anchor, opts) => {
+  const o = opts || {};
+  const gap = o.gap == null ? 4 : o.gap;
+  const margin = o.margin == null ? 8 : o.margin;
+  const width = o.width || 'anchor';
+
+  const update = () => {
+    const r = anchor.getBoundingClientRect();
+    // Not laid out yet on the first call after display: block; a guess is
+    // better than 0, which would never flip.
+    const h = panel.offsetHeight || 240;
+    const spaceBelow = window.innerHeight - r.bottom - margin;
+    const above = spaceBelow < h && r.top > h;
+
+    panel.style.position = 'fixed';
+    panel.style.bottom = 'auto';
+    // A stylesheet may pin `right` for the in-flow case; on a fixed box that
+    // would stretch it to the window edge.
+    panel.style.right = 'auto';
+    if (width === 'anchor') {
+      panel.style.width = r.width + 'px';
+      panel.style.left = r.left + 'px';
+    } else {
+      panel.style.width = '';
+      panel.style.minWidth = width.min + 'px';
+      panel.style.maxWidth = width.max + 'px';
+      const w = panel.offsetWidth || width.min;
+      panel.style.left = Math.max(margin, Math.min(r.left,
+        document.documentElement.clientWidth - w - margin)) + 'px';
+    }
+    panel.style.top = (above ? r.top - h - gap : r.bottom + gap) + 'px';
+    if (o.onFlip) o.onFlip(above);
+  };
+
+  update();
+  window.addEventListener('scroll', update, { capture: true, passive: true });
+  window.addEventListener('resize', update, { passive: true });
+
+  /** @type {ResizeObserver | null} */
+  let obs = null;
+  let frame = 0;
+  if (typeof ResizeObserver !== 'undefined') {
+    obs = new ResizeObserver(() => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => { frame = 0; update(); });
+    });
+    obs.observe(anchor);
+    obs.observe(panel);
+  }
+
+  return {
+    update,
+    stop: () => {
+      window.removeEventListener('scroll', update, { capture: true });
+      window.removeEventListener('resize', update);
+      if (obs) { obs.disconnect(); obs = null; }
+      if (frame) { cancelAnimationFrame(frame); frame = 0; }
+    }
+  };
+};
+
 Blockr.icons = {
   chevron:
     '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" ' +

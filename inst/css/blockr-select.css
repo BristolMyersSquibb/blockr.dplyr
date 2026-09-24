@@ -14,9 +14,15 @@
   color: var(--blockr-color-text-default);
 }
 
+/* The dropdown is listed on its own: it is portalled to <body> while open,
+   so a rule scoped to .blockr-select never reaches it. Without this the
+   menu's filter box (width: calc(100% - 8px) plus padding) overflowed the
+   panel and gave it a horizontal scrollbar. */
 .blockr-select *,
 .blockr-select *::before,
-.blockr-select *::after {
+.blockr-select *::after,
+.blockr-select__dropdown,
+.blockr-select__dropdown * {
   box-sizing: border-box;
 }
 
@@ -300,14 +306,13 @@
   border-radius: 1px;
 }
 
-/* --- Dropdown --- */
+/* --- Dropdown ---
+   Shown only while portalled to <body>, where Blockr.place (blockr-ui.js)
+   gives it a fixed position 4px under the control, or above it near the
+   bottom of the window. No in-flow position or margin here: a margin would
+   add to the computed offset below and eat the gap above. */
 .blockr-select__dropdown {
   display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  margin-top: 4px;
   max-height: 320px;
   overflow-y: auto;
   padding: 4px;
@@ -382,18 +387,6 @@
   border: 0;
   opacity: 0;
   pointer-events: none;
-}
-
-.blockr-select--open .blockr-select__dropdown {
-  display: block;
-}
-
-/* Open above */
-.blockr-select--above .blockr-select__dropdown {
-  top: auto;
-  bottom: 100%;
-  margin-top: 0;
-  margin-bottom: 4px;
 }
 
 /* --- Options --- */
