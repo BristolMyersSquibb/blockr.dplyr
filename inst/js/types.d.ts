@@ -316,6 +316,20 @@ interface BlockrNamespace {
     checked: boolean,
     onChange: (checked: boolean) => void
   ): BlockrCheckboxHandle;
+  /** Design-system segmented control (settings-band.js). */
+  segmented(
+    options: { value: string; label: string; title?: string }[],
+    selected: string,
+    onChange: (value: string) => void,
+    opts?: { size?: 'xs'; label?: string }
+  ): BlockrSegmentedHandle;
+  /** The gear tray behaviour (settings-band.js): the gear toggles the band,
+   *  which slides open and closed; Escape inside the band closes it. */
+  gearTray(
+    band: HTMLElement,
+    gear: HTMLButtonElement,
+    opts?: { label?: string }
+  ): BlockrGearTrayHandle;
   /**
    * Point a column picker at a new option list without losing a deliberate
    * pick. Returns the column the caller should hold from here on: a pinned
@@ -354,6 +368,20 @@ interface BlockrTextCommitHandle {
   chip: HTMLButtonElement;
   commit(): void;
   sync(value: string): void;
+}
+
+/** Handle returned by Blockr.segmented (settings-band.js). */
+interface BlockrSegmentedHandle {
+  el: HTMLDivElement;
+  set(value: string): void;
+  get(): string;
+}
+
+/** Handle returned by Blockr.gearTray (settings-band.js). */
+interface BlockrGearTrayHandle {
+  set(open: boolean): void;
+  toggle(): void;
+  isOpen(): boolean;
 }
 
 /** Handle returned by Blockr.checkbox (settings-band.js). */

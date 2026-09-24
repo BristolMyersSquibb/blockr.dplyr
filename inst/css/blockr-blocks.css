@@ -373,15 +373,22 @@
   color: var(--blockr-color-text-muted);
   background: transparent;
   border: 1px solid var(--blockr-color-border-default);
-  border-radius: 4px;
+  border-radius: var(--blockr-radius-sm);
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: color var(--blockr-transition), border-color var(--blockr-transition), background var(--blockr-transition);
 }
 
+/* The gear: the one framed square in the header row. Hover is neutral;
+   the accent tint means the tray is open. */
 .blockr-gear-btn:hover {
-  color: var(--blockr-color-text-accent);
-  border-color: var(--blockr-color-border-accent-subtle);
-  background: var(--blockr-color-bg-accent-subtle);
+  color: var(--blockr-color-text-default);
+  border-color: var(--blockr-color-border-strong);
+  background: var(--blockr-color-bg-hover);
+}
+
+.blockr-gear-btn:focus-visible {
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
 }
 
 .blockr-gear-btn.blockr-gear-active {

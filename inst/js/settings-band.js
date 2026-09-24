@@ -51,8 +51,130 @@
     };
   }
 
+  /**
+   * The gear tray (design system, "The gear tray"): the gear toggles the band
+   * in flow under the header row. It slides open and closed over 0.22s, so
+   * the content below is seen moving; Escape inside it closes it and returns
+   * focus to the gear. The gear carries the tooltip "Settings", reports its
+   * state in aria-expanded and takes the accent tint while open
+   * (.blockr-gear-active).
+   * @param {HTMLElement} band
+   * @param {HTMLButtonElement} gear
+   * @param {{ label?: string }} [opts]
+   * @returns {BlockrGearTrayHandle}
+   */
+  function gearTray(band, gear, opts) {
+    var open = false;
+    /** @type {Animation | null} */
+    var anim = null;
+    var still = typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    band.setAttribute('role', 'region');
+    band.setAttribute('aria-label', (opts && opts.label) || 'Settings');
+    gear.title = 'Settings';
+    gear.setAttribute('aria-label', 'Settings');
+    gear.setAttribute('aria-expanded', 'false');
+
+    /** @param {boolean} next */
+    function set(next) {
+      if (next === open) return;
+      open = next;
+      gear.classList.toggle('blockr-gear-active', open);
+      gear.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (anim) { anim.cancel(); anim = null; }
+      if (open) band.classList.add('blockr-settings--open');
+      if (still || typeof band.animate !== 'function') {
+        if (!open) band.classList.remove('blockr-settings--open');
+        return;
+      }
+      // Animate from nothing to the band's natural size (or back). The
+      // clip keeps the beak, which sits above the band, visible throughout.
+      var cs = getComputedStyle(band);
+      var full = {
+        height: band.offsetHeight + 'px',
+        paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom,
+        marginBottom: cs.marginBottom
+      };
+      var none = { height: '0px', paddingTop: '0px', paddingBottom: '0px',
+                   marginBottom: '0px' };
+      band.style.clipPath = 'inset(-12px 0 0 0)';
+      anim = band.animate(open ? [none, full] : [full, none],
+                          { duration: 220, easing: 'ease' });
+      anim.onfinish = function () {
+        anim = null;
+        band.style.clipPath = '';
+        if (!open) band.classList.remove('blockr-settings--open');
+      };
+    }
+
+    gear.addEventListener('click', function () { set(!open); });
+    band.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && open) {
+        e.stopPropagation();
+        set(false);
+        gear.focus();
+      }
+    });
+
+    return {
+      set: set,
+      toggle: function () { set(!open); },
+      isOpen: function () { return open; }
+    };
+  }
+
+  /**
+   * A segmented control (design system): a fixed choice of two or three short
+   * values, all in view, the pick in the accent tint. 42px in the field grid;
+   * `size: 'xs'` is the 26px form for a row or a bar.
+   * @param {{ value: string, label: string, title?: string }[]} options
+   * @param {string} selected
+   * @param {(value: string) => void} onChange
+   * @param {{ size?: 'xs', label?: string }} [opts]
+   * @returns {BlockrSegmentedHandle}
+   */
+  function segmented(options, selected, onChange, opts) {
+    var wrap = document.createElement('div');
+    wrap.className = 'blockr-segmented' +
+      (opts && opts.size === 'xs' ? ' blockr-segmented--xs' : '');
+    wrap.setAttribute('role', 'radiogroup');
+    if (opts && opts.label) wrap.setAttribute('aria-label', opts.label);
+    var current = selected;
+    /** @type {Record<string, HTMLButtonElement>} */
+    var segs = {};
+    /** @param {string} v */
+    function set(v) {
+      current = v;
+      Object.keys(segs).forEach(function (k) {
+        var on = k === v;
+        segs[k].classList.toggle('is-selected', on);
+        segs[k].setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    options.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'blockr-segmented__seg';
+      b.textContent = o.label;
+      if (o.title) b.title = o.title;
+      b.setAttribute('role', 'radio');
+      b.addEventListener('click', function () {
+        if (current === o.value) return;
+        set(o.value);
+        onChange(o.value);
+      });
+      segs[o.value] = b;
+      wrap.appendChild(b);
+    });
+    set(current);
+    return { el: wrap, set: set, get: function () { return current; } };
+  }
+
   var ns = /** @type {BlockrNamespace} */ (
     (typeof Blockr !== 'undefined') ? Blockr
       : (window.Blockr = window.Blockr || /** @type {BlockrNamespace} */ ({})));
   ns.checkbox = checkbox;
+  ns.gearTray = gearTray;
+  ns.segmented = segmented;
 })();

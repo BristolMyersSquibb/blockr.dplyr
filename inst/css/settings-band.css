@@ -13,22 +13,48 @@
    Staged here in blockr.viz; moves to blockr.ui with the shared layer.
    ========================================================================= */
 
-/* --- The band ------------------------------------------------------------
+/* --- The gear tray -------------------------------------------------------
    In flow (no position/z-index): pushes the block content down while open,
-   so the content being configured stays visible. Closed by default. */
+   so the content being configured stays visible. Closed by default; it
+   slides open and closed (Blockr.gearTray in settings-band.js).
+
+   The design system's look: a quiet fill (bg-subtle), no border, radius 8,
+   16px below it. Fields inside turn bg-surface, so the tray reads as its own
+   layer. In dark the tray takes bg-page. */
 .blockr-settings {
   display: none;
-  border: 1px solid var(--blockr-color-border-default);
-  border-radius: 8px;
+  border: none;
+  border-radius: var(--blockr-radius-lg);
   /* Symmetric-looking breathing room: the 8px bottom only ever read as
      enough because row-built bands (summary table) put an 8px margin under
      every row, including the last. Bands whose grid is a plain field row
      (blockr.dplyr's) had the controls nearly touching the border. The band
      now owns the bottom rhythm; the stray last-row margin is zeroed below. */
   padding: 12px 14px 16px;
-  margin-bottom: 10px;
-  background: var(--blockr-color-bg-surface);
+  margin-bottom: 16px;
+  background: var(--blockr-color-bg-subtle);
   box-sizing: border-box;
+}
+
+[data-bs-theme="dark"] .blockr-settings {
+  background: var(--blockr-color-bg-page);
+}
+
+/* Fields inside the tray sit on the surface colour. */
+.blockr-settings .blockr-text-input,
+.blockr-settings .blockr-select--bordered .blockr-select__control,
+.blockr-settings .blockr-segmented,
+.blockr-settings .blockr-row {
+  background-color: var(--blockr-color-bg-surface);
+}
+
+/* ...except a required field that is still empty, which keeps its amber
+   fill (the required-empty cue in blockr-blocks.css). */
+.blockr-settings .blockr-field--required-empty .blockr-select__control,
+.blockr-settings .blockr-field--required-empty .blockr-text-input,
+.blockr-settings .blockr-field--required-empty.blockr-text-input,
+.blockr-settings .blockr-field--required-empty.blockr-row {
+  background-color: var(--blockr-color-bg-warning);
 }
 
 /* Open: same wrapping form-grid the popover used (chart.css lays out the
@@ -56,9 +82,7 @@
   right: 8px;
   width: 10px;
   height: 10px;
-  background: var(--blockr-color-bg-surface);
-  border-left: 1px solid var(--blockr-color-border-default);
-  border-top: 1px solid var(--blockr-color-border-default);
+  background: inherit;
   transform: rotate(45deg);
 }
 

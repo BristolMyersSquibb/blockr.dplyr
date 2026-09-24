@@ -10,22 +10,19 @@
   position: relative;
 }
 
-/* --- Header row: join type pill --- */
+/* --- Join type: a labelled Select field (a large field, two grid
+   columns) above the key rows --- */
 .jb-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  margin-bottom: 6px;
+  flex-direction: column;
+  margin-bottom: 16px;
 }
 
-/* Join type pill */
-.jb-join-type-pill {
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
+.jb-join-type {
+  max-width: 272px;
 }
 
-/* Operator cycle button */
+/* Operator: a pill that opens a menu (blockr-blocks.css). */
 .jb-op-btn { flex-shrink: 0; }
 
 /* Gear button and popover styles are in blockr-blocks.css (shared) */

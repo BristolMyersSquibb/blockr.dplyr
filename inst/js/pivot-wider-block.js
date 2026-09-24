@@ -62,7 +62,8 @@
       this._sepCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
       this._prefixCommit = null;
-      this._bandOpen = false;
+      /** @type {BlockrGearTrayHandle | null} */
+      this._tray = null;
 
       this._buildDOM();
       this._updateRequired();
@@ -80,14 +81,17 @@
       this.gearBtn.type = 'button';
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
       // Settings band — in flow between the gear header and the content
       // (a panel, not a menu: the gear is the only toggle).
       this._buildBand();
+      this._tray = Blockr.gearTray(
+        /** @type {HTMLElement} */ (this.bandEl),
+        /** @type {HTMLButtonElement} */ (this.gearBtn),
+        { label: 'Advanced settings' }
+      );
 
       // names_from picker (bordered) — required: pivot_wider without it is
       // an identity transform, so it carries the amber cue while empty.
@@ -187,11 +191,6 @@
       this.bandEl = document.createElement('div');
       this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      const title = document.createElement('div');
-      title.className = 'blockr-settings__title';
-      title.textContent = 'Advanced settings';
-      this.bandEl.appendChild(title);
-
       const grid = document.createElement('div');
       grid.className = 'blockr-settings__grid';
       this.bandEl.appendChild(grid);
@@ -238,9 +237,7 @@
     }
 
     _toggleBand() {
-      this._bandOpen = !this._bandOpen;
-      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
+      if (this._tray) this._tray.toggle();
     }
 
     _updateRequired() {

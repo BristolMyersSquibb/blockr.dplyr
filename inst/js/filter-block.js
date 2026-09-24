@@ -135,33 +135,21 @@
 
       // All or any: a fixed choice of two, so a segmented control with both
       // values in view (design system), in place of the AND/OR cycle pill.
-      this.opToggle = document.createElement('div');
-      this.opToggle.className = 'blockr-segmented blockr-segmented--xs fb-op-toggle';
-      this.opToggle.setAttribute('role', 'radiogroup');
-      this.opToggle.setAttribute('aria-label', 'Keep rows that match');
-      this.opToggle.style.visibility = 'hidden';
-      /** @type {Record<string, HTMLButtonElement>} */
-      this._opSegs = {};
-      for (const [val, text, tip] of [
-        ['&', 'All', 'Keep rows that match all conditions'],
-        ['|', 'Any', 'Keep rows that match any condition']
-      ]) {
-        const seg = document.createElement('button');
-        seg.type = 'button';
-        seg.className = 'blockr-segmented__seg';
-        seg.textContent = text;
-        seg.title = tip;
-        seg.setAttribute('role', 'radio');
-        seg.addEventListener('click', () => {
-          if (this.operator === val) return;
-          this.operator = /** @type {any} */ (val);
-          this._syncOpToggle();
+      this._opSeg = Blockr.segmented(
+        [
+          { value: '&', label: 'All', title: 'Keep rows that match all conditions' },
+          { value: '|', label: 'Any', title: 'Keep rows that match any condition' }
+        ],
+        this.operator,
+        (value) => {
+          this.operator = /** @type {any} */ (value);
           this._submit();
-        });
-        this._opSegs[val] = seg;
-        this.opToggle.appendChild(seg);
-      }
-      this._syncOpToggle();
+        },
+        { size: 'xs', label: 'Keep rows that match' }
+      );
+      this.opToggle = this._opSeg.el;
+      this.opToggle.classList.add('fb-op-toggle');
+      this.opToggle.style.visibility = 'hidden';
       addRow.appendChild(this.opToggle);
 
       const spacer = document.createElement('span');
@@ -531,12 +519,7 @@
 
     /** Mark the segment that holds the current operator. */
     _syncOpToggle() {
-      if (!this._opSegs) return;
-      for (const [val, seg] of Object.entries(this._opSegs)) {
-        const on = this.operator === val;
-        seg.classList.toggle('is-selected', on);
-        seg.setAttribute('aria-checked', on ? 'true' : 'false');
-      }
+      if (this._opSeg) this._opSeg.set(this.operator);
     }
 
     _updateUI() {

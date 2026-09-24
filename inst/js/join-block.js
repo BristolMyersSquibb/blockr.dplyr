@@ -5,11 +5,11 @@
  * Binary block: takes x and y data inputs.
  * Key rows: [x col select] [operator pill] [y col select] [remove]
  * Expression rows: [BlockrInput] [confirm] [remove]
- * Header: join type pill (click-cycle) + gear settings button
+ * Header: join type Select field + gear settings button
  * Settings band (in-flow, gear-toggled): suffix X and Y text inputs
  * (commit on Enter/blur, §5.5 chip)
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
+ * Depends on: blockr-core.js, blockr-select.js, blockr-input.js, settings-band.js
  */
 
 /**
@@ -74,12 +74,12 @@
 
   // Join type definitions
   const JOIN_TYPES = [
-    { value: 'left_join',  label: 'left join' },
-    { value: 'inner_join', label: 'inner join' },
-    { value: 'right_join', label: 'right join' },
-    { value: 'full_join',  label: 'full join' },
-    { value: 'semi_join',  label: 'semi join' },
-    { value: 'anti_join',  label: 'anti join' }
+    { value: 'left_join',  label: 'left join',  desc: 'keep all x rows' },
+    { value: 'inner_join', label: 'inner join', desc: 'only matching rows' },
+    { value: 'right_join', label: 'right join', desc: 'keep all y rows' },
+    { value: 'full_join',  label: 'full join',  desc: 'keep everything' },
+    { value: 'semi_join',  label: 'semi join',  desc: 'x rows with a match' },
+    { value: 'anti_join',  label: 'anti join',  desc: 'x rows without a match' }
   ];
 
   // Key operator definitions
@@ -113,6 +113,8 @@
       /** @type {Record<string, BlockrPickerColumn>} */
       this.yColumnMeta = {};
       this.joinTypeIdx = 0;
+      /** @type {BlockrSelectSingleHandle | null} */
+      this.joinTypeSelect = null;
       this.joinType = JOIN_TYPES[0].value;
       this.suffixX = '.x';
       this.suffixY = '.y';
@@ -123,7 +125,8 @@
       this._suffixXCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
       this._suffixYCommit = null;
-      this._bandOpen = false;
+      /** @type {BlockrGearTrayHandle | null} */
+      this._tray = null;
 
       this._buildDOM();
       this._addKeyRow(null, null, null);
@@ -147,32 +150,45 @@
       this.gearBtn.type = 'button';
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Suffix settings';
-      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
       // Settings band — in flow between the gear header and the content
       // (a panel, not a menu: the gear is the only toggle).
       this._buildBand();
+      this._tray = Blockr.gearTray(
+        /** @type {HTMLElement} */ (this.bandEl),
+        /** @type {HTMLButtonElement} */ (this.gearBtn),
+        { label: 'Suffixes' }
+      );
 
       // Header row: join type pill
       const header = document.createElement('div');
       header.className = 'jb-header';
 
-      // Join type pill (click-through cycle)
-      this.joinTypePill = document.createElement('button');
-      this.joinTypePill.type = 'button';
-      this.joinTypePill.className = 'blockr-pill jb-join-type-pill';
-      this.joinTypePill.textContent = JOIN_TYPES[0].label;
-      this.joinTypePill.title = 'Cycle through join types: left (keep all x rows), inner (only matching), right (keep all y rows), full (keep everything), semi (x rows with a match), anti (x rows without a match)';
-      this.joinTypePill.addEventListener('click', () => {
-        this.joinTypeIdx = (this.joinTypeIdx + 1) % JOIN_TYPES.length;
-        this.joinType = JOIN_TYPES[this.joinTypeIdx].value;
-        /** @type {HTMLButtonElement} */ (this.joinTypePill).textContent = JOIN_TYPES[this.joinTypeIdx].label;
-        this._submit();
+      // Join type: one of six, outside a row, so a Select field with a label
+      // (design system), in place of the click-to-cycle pill. Each option
+      // shows the join and, muted, what it keeps.
+      const typeLabel = document.createElement('label');
+      typeLabel.className = 'blockr-label';
+      typeLabel.textContent = 'Join type';
+      header.appendChild(typeLabel);
+      const typeWrap = document.createElement('div');
+      typeWrap.className = 'jb-join-type';
+      header.appendChild(typeWrap);
+      this.joinTypeSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(typeWrap, {
+        options: JOIN_TYPES.map(t => ({ value: t.label, label: t.desc })),
+        selected: JOIN_TYPES[this.joinTypeIdx].label,
+        searchAfter: 99,
+        onChange: (value) => {
+          const idx = JOIN_TYPES.findIndex(t => t.label === value);
+          if (idx < 0 || idx === this.joinTypeIdx) return;
+          this.joinTypeIdx = idx;
+          this.joinType = JOIN_TYPES[idx].value;
+          this._submit();
+        }
       });
-      header.appendChild(this.joinTypePill);
+      this.joinTypeSelect.el.classList.add('blockr-select--bordered');
 
       this.card.appendChild(header);
 
@@ -206,11 +222,6 @@
     _buildBand() {
       this.bandEl = document.createElement('div');
       this.bandEl.className = 'blockr-settings blockr-settings--beak';
-
-      const title = document.createElement('div');
-      title.className = 'blockr-settings__title';
-      title.textContent = 'Suffixes';
-      this.bandEl.appendChild(title);
 
       const grid = document.createElement('div');
       grid.className = 'blockr-settings__grid';
@@ -266,9 +277,7 @@
     }
 
     _toggleBand() {
-      this._bandOpen = !this._bandOpen;
-      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
+      if (this._tray) this._tray.toggle();
     }
 
     // --- Key rows ---
@@ -318,19 +327,39 @@
         }
       });
 
-      // Operator pill (click-through cycle)
+      // Operator: a pill that opens a menu listing every operator (design
+      // system), in place of the click-to-cycle pill.
       let opIdx = KEY_OPS.findIndex(o => o.value === (op || '=='));
       if (opIdx < 0) opIdx = 0;
       const opBtn = document.createElement('button');
       opBtn.type = 'button';
-      opBtn.className = 'blockr-pill jb-op-btn';
-      opBtn.textContent = KEY_OPS[opIdx].label;
-      opBtn.title = 'Cycle through join operators (==, \u2265, >, \u2264, <) for non-equi joins';
+      opBtn.className = 'blockr-pill blockr-pill--menu jb-op-btn';
+      opBtn.setAttribute('aria-haspopup', 'listbox');
+      opBtn.title = 'Operator';
+      const setOpLabel = () => {
+        opBtn.innerHTML = '';
+        opBtn.appendChild(document.createTextNode(KEY_OPS[opIdx].label));
+        const car = document.createElement('span');
+        car.className = 'blockr-pill__caret';
+        car.innerHTML = Blockr.icons.chevron;
+        opBtn.appendChild(car);
+      };
+      setOpLabel();
       opBtn.addEventListener('click', () => {
-        opIdx = (opIdx + 1) % KEY_OPS.length;
-        key.op = KEY_OPS[opIdx].value;
-        opBtn.textContent = KEY_OPS[opIdx].label;
-        this._submit();
+        /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(opBtn, {
+          title: 'Operator',
+          options: KEY_OPS.map(o => o.label),
+          selected: KEY_OPS[opIdx].label,
+          searchAfter: 99,
+          onChange: (/** @type {string} */ label) => {
+            const next = KEY_OPS.findIndex(o => o.label === label);
+            if (next < 0 || next === opIdx) return;
+            opIdx = next;
+            key.op = KEY_OPS[opIdx].value;
+            setOpLabel();
+            this._submit();
+          }
+        });
       });
       key._opBtn = opBtn;
       row.appendChild(opBtn);
@@ -554,7 +583,12 @@
       this.joinType = type;
       this.joinTypeIdx = JOIN_TYPES.findIndex(t => t.value === type);
       if (this.joinTypeIdx < 0) this.joinTypeIdx = 0;
-      /** @type {HTMLButtonElement} */ (this.joinTypePill).textContent = JOIN_TYPES[this.joinTypeIdx].label;
+      if (this.joinTypeSelect) {
+        this.joinTypeSelect.setOptions(
+          JOIN_TYPES.map(t => ({ value: t.label, label: t.desc })),
+          JOIN_TYPES[this.joinTypeIdx].label
+        );
+      }
 
       // Set suffixes
       this.suffixX = state?.suffix_x ?? '.x';

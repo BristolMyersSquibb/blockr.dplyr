@@ -11,16 +11,5 @@
   min-width: 0;
 }
 
-/* Direction toggle pill */
-.ab-dir-btn {
-  flex-shrink: 0;
-  text-transform: lowercase;
-  letter-spacing: 0.03em;
-  min-width: 38px;
-}
-
-.ab-dir-desc {
-  color: var(--blockr-color-text-accent) !important;
-  background: var(--blockr-color-bg-accent-subtle) !important;
-  border-color: var(--blockr-color-border-accent-subtle) !important;
-}
+/* Direction: a 26px segmented control (Blockr.segmented). */
+.ab-dir { flex-shrink: 0; }
