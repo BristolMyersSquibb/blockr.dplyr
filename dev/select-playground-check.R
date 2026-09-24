@@ -30,8 +30,11 @@ run_scheme <- function(dark) {
   b <- ChromoteSession$new(width = 900, height = 700)
   on.exit(b$close(), add = TRUE)
   tag <- if (dark) "dark" else "light"
-  b$Page$navigate(paste0(url, if (dark) "&dark=1" else ""))
-  b$Page$loadEventFired()
+  # Register the wait before navigating: a fast load fires the event before
+  # a wait registered afterwards would see it.
+  loaded <- b$Page$loadEventFired(wait_ = FALSE)
+  b$Page$navigate(paste0(url, if (dark) "&dark=1" else ""), wait_ = FALSE)
+  b$wait_for(loaded)
   Sys.sleep(0.3)
 
   js <- function(expr) {

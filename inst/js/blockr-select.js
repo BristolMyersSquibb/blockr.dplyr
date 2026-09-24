@@ -459,6 +459,11 @@
       if (placed) placed.update();
     };
 
+    const showHighlight = () => {
+      list.querySelector('.blockr-select__option--highlighted')
+        ?.scrollIntoView({ block: 'nearest' });
+    };
+
     // --- Placement and the document click ----------------------------------
 
     // The list lives on <body> while open so it escapes any clipping or
@@ -511,6 +516,8 @@
         onFlip: (above) => root.classList.toggle('blockr-select--above', above)
       });
       syncDocClick();
+      // The pick may be far down a long column list.
+      showHighlight();
       input.focus();
       if (onOpen) onOpen();
     };
@@ -635,8 +642,7 @@
       const n = rows.length || 1;
       st.highlight = (st.highlight + step + n) % n;
       renderList();
-      list.querySelector('.blockr-select__option--highlighted')
-        ?.scrollIntoView({ block: 'nearest' });
+      showHighlight();
     };
 
     input.addEventListener('keydown', (e) => {

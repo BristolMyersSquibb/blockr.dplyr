@@ -472,7 +472,27 @@ test('the highlighted row is scrolled into view', (newWindow) => {
     click(win, control(sel));
     press(win, search(sel), 'ArrowDown');
     press(win, search(sel), 'ArrowDown');
-    assert.deepStrictEqual(scrolled, ['b', 'c']);
+    assert.deepStrictEqual(scrolled.slice(-2), ['b', 'c']);
+  } finally {
+    proto.scrollIntoView = original;
+    win.close();
+  }
+});
+
+/* Deliberate difference: the reference set the highlight on the pick at
+ * open but scrolled only on arrow moves, so a pick far down a long column
+ * list opened out of view. */
+test('opening scrolls the pick into view', (newWindow, impl, t) => {
+  if (impl === 'reference') return t.skip('reference scrolls only on arrow moves');
+  const win = newWindow();
+  const scrolled = [];
+  const proto = win.Element.prototype;
+  const original = proto.scrollIntoView;
+  proto.scrollIntoView = function () { scrolled.push(this.getAttribute('data-value')); };
+  try {
+    const sel = single(win, { options: ABC, selected: 'd' });
+    click(win, control(sel));
+    assert.deepStrictEqual(scrolled, ['d']);
   } finally {
     proto.scrollIntoView = original;
     win.close();
