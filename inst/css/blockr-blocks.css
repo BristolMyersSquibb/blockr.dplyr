@@ -326,6 +326,15 @@
 
 .blockr-num-input:focus { outline: none; }
 
+/* The spec hides the spinner arrows: a click on them would change a value
+   that still waits for Enter. The arrow keys still step. */
+.blockr-num-input { -moz-appearance: textfield; appearance: textfield; }
+.blockr-num-input::-webkit-inner-spin-button,
+.blockr-num-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .blockr-num-input::placeholder {
   color: var(--blockr-color-text-muted);
 }
