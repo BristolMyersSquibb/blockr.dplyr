@@ -63,12 +63,11 @@
 }
 
 /* --- Group by section --- */
+/* Group by: a field with its label above it (design system, field labels). */
 .smb-by-section {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 0 2px;
+  flex-direction: column;
+  margin-top: 16px;
 }
 
 .smb-by-wrap {

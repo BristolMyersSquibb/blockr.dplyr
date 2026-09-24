@@ -138,7 +138,7 @@
 
       const byLabel = document.createElement('span');
       byLabel.className = 'blockr-label';
-      byLabel.textContent = 'Group by:';
+      byLabel.textContent = 'Group by';
       this.bySection.appendChild(byLabel);
 
       const byWrap = document.createElement('div');
