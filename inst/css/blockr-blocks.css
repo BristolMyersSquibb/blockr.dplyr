@@ -4,7 +4,8 @@
    ========================================================================= */
 
 /* --- Pill: a setting inside a row. With a caret it opens a menu. ---
-   24px, radius 4, 1px border-default on bg-surface, 12px weight 500 muted;
+   24px, radius 4, 1px border-default, the tags' fill (a step darker than the
+   field), 12px weight 500 muted;
    hover border-strong and default text (design system, "A pill that opens a
    menu"). */
 .blockr-pill {
@@ -19,7 +20,7 @@
   font-size: var(--blockr-font-size-xs, 0.75rem);
   font-weight: var(--blockr-font-weight-medium, 500);
   color: var(--blockr-color-text-muted, #6b7280);
-  background: var(--blockr-color-bg-surface, #ffffff);
+  background: var(--blockr-color-bg-hover, color-mix(in srgb, var(--blockr-color-text-default) 6%, transparent));
   border: 1px solid var(--blockr-color-border-default, #e5e7eb);
   border-radius: var(--blockr-radius-sm, 4px);
   cursor: pointer;

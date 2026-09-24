@@ -195,11 +195,13 @@
   height: 24px;
   box-sizing: border-box;
   padding: 0 3px 0 8px;
-  background: var(--blockr-color-bg-surface, #ffffff);
+  /* A step darker than the field it sits in, with a softer name
+     (design system, Tags). */
+  background: var(--blockr-color-bg-hover, color-mix(in srgb, var(--blockr-color-text-default) 6%, transparent));
   border: 1px solid var(--blockr-color-border-default, #e5e7eb);
   border-radius: var(--blockr-radius-sm, 4px);
   font-size: var(--blockr-font-size-sm, 0.8125rem);
-  color: var(--blockr-color-text-default, #111827);
+  color: color-mix(in srgb, var(--blockr-color-text-default) 80%, var(--blockr-color-bg-field));
   cursor: default;
   user-select: none;
   /* Cap at the control width, not a fixed size: a tag only ellipsizes when
