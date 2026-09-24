@@ -3,8 +3,9 @@
  * The checklist in dev/select-rewrite-plan.md, one test per line: what
  * getValue() returns, when onChange fires, which rows the list shows, which
  * row carries the keyboard highlight, which classes and ARIA attributes are
- * set. Nothing here reads private state, so the same suite runs against the
- * shipped file and the frozen reference copy (select-impls.js).
+ * set. Nothing here reads private state; during the rewrite the same suite
+ * ran against the previous implementation too (select-impls.js), and the
+ * tests marked "Deliberate difference" are where the two parted.
  *
  * happy-dom has no layout engine: every measured width is 0 and nothing
  * scrolls. Positioning is checked in a browser (dev/select-playground.html);
@@ -149,8 +150,7 @@ test('Escape closes', (newWindow) => {
  * no tabindex) and focus stays in the input by accident; happy-dom focuses
  * any element, so the reference fails this here. The rewrite leaves focus
  * on the input, which is the combobox. */
-test('Escape leaves focus on the combobox input', (newWindow, impl, t) => {
-  if (impl === 'reference') return t.skip('reference calls root.focus()');
+test('Escape leaves focus on the combobox input', (newWindow, t) => {
   const win = newWindow();
   const sel = single(win, { options: ABC });
   click(win, control(sel));
@@ -164,8 +164,7 @@ test('Escape leaves focus on the combobox input', (newWindow, impl, t) => {
  * after Escape nothing had focus. It now returns to the anchor when it can
  * take it, and only then; a closing click that landed on another focusable
  * element keeps its focus. */
-test('a menu closed by Escape hands focus back to its anchor', async (newWindow, impl, t) => {
-  if (impl === 'reference') return t.skip('reference drops focus on the body');
+test('a menu closed by Escape hands focus back to its anchor', async (newWindow, t) => {
   const win = newWindow();
   const anchor = win.document.createElement('button');
   win.document.body.appendChild(anchor);
@@ -323,8 +322,7 @@ test('typing into a closed select opens it', (newWindow) => {
 /* Deliberate difference: the reference's open() wiped the query, so the
  * letter that opened a closed select was thrown away and the list came up
  * unfiltered. The rewrite keeps it. */
-test('typing into a closed select keeps the typed letter as the filter', (newWindow, impl, t) => {
-  if (impl === 'reference') return t.skip('reference clears the query on open');
+test('typing into a closed select keeps the typed letter as the filter', (newWindow, t) => {
   const win = newWindow();
   const sel = multi(win, { options: ABC });
   type(win, search(sel), 'b');
@@ -336,8 +334,7 @@ test('typing into a closed select keeps the typed letter as the filter', (newWin
 /* Deliberate difference: the reference handled Space only on the root, which
  * cannot take focus; a space typed into the input opened the list filtered
  * by " ". The rewrite opens a closed select on Space without typing it. */
-test('Space opens a closed select without typing a space', (newWindow, impl, t) => {
-  if (impl === 'reference') return t.skip('reference types the space');
+test('Space opens a closed select without typing a space', (newWindow, t) => {
   const win = newWindow();
   const sel = single(win, { options: ABC, selected: 'c' });
   press(win, search(sel), ' ');
@@ -482,8 +479,7 @@ test('the highlighted row is scrolled into view', (newWindow) => {
 /* Deliberate difference: the reference set the highlight on the pick at
  * open but scrolled only on arrow moves, so a pick far down a long column
  * list opened out of view. */
-test('opening scrolls the pick into view', (newWindow, impl, t) => {
-  if (impl === 'reference') return t.skip('reference scrolls only on arrow moves');
+test('opening scrolls the pick into view', (newWindow, t) => {
   const win = newWindow();
   const scrolled = [];
   const proto = win.Element.prototype;
@@ -917,7 +913,7 @@ const stubLayout = (win) => {
   };
 };
 
-test('singleLine: tags past the first row hide behind a +N chip that lists them', (newWindow, impl, t) => {
+test('singleLine: tags past the first row hide behind a +N chip that lists them', (newWindow, t) => {
   const win = newWindow();
   t.after(stubLayout(win));
   const three = multi(win, { options: ABC, selected: ['a', 'b', 'c'], singleLine: true });
@@ -942,7 +938,7 @@ test('singleLine: tags past the first row hide behind a +N chip that lists them'
   win.close();
 });
 
-test('singleLine: the chip expands the control until a click elsewhere', (newWindow, impl, t) => {
+test('singleLine: the chip expands the control until a click elsewhere', (newWindow, t) => {
   const win = newWindow();
   t.after(stubLayout(win));
   const sel = multi(win, { options: ABC, selected: ABC, singleLine: true });
