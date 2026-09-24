@@ -441,7 +441,11 @@ test('ArrowDown and ArrowUp move the highlight and wrap; aria-activedescendant f
     const row = win.document.getElementById(id);
     return row && row.getAttribute('data-value');
   };
-  assert.strictEqual(highlighted(win, sel), 'a');
+  // Opened with the mouse: no keyboard row until a key is pressed.
+  assert.strictEqual(highlighted(win, sel), null);
+  assert.strictEqual(input.getAttribute('aria-activedescendant'), null);
+  press(win, input, 'ArrowDown');
+  assert.strictEqual(highlighted(win, sel), 'a', 'the first arrow shows the row');
   assert.strictEqual(active(), 'a');
   press(win, input, 'ArrowDown');
   assert.strictEqual(highlighted(win, sel), 'b');
@@ -467,6 +471,7 @@ test('the highlighted row is scrolled into view', (newWindow) => {
   try {
     const sel = single(win, { options: ABC });
     click(win, control(sel));
+    press(win, search(sel), 'ArrowDown');
     press(win, search(sel), 'ArrowDown');
     press(win, search(sel), 'ArrowDown');
     assert.deepStrictEqual(scrolled.slice(-2), ['b', 'c']);
@@ -499,7 +504,9 @@ test('a single select opens with the highlight on its pick', (newWindow) => {
   const win = newWindow();
   const sel = single(win, { options: ABC, selected: 'd' });
   click(win, control(sel));
-  assert.strictEqual(highlighted(win, sel), 'd');
+  assert.strictEqual(highlighted(win, sel), null, 'no grey row after a click');
+  press(win, search(sel), 'ArrowDown');
+  assert.strictEqual(highlighted(win, sel), 'd', 'the first arrow shows the pick');
   press(win, search(sel), 'ArrowDown');
   assert.strictEqual(highlighted(win, sel), 'e', 'and the arrows start from there');
   press(win, search(sel), 'Escape');
@@ -512,7 +519,6 @@ test('the highlight moves to the first row when the filter changes', (newWindow)
   const win = newWindow();
   const sel = single(win, { options: ['ab', 'cd', 'ce'], selected: 'ce' });
   click(win, control(sel));
-  assert.strictEqual(highlighted(win, sel), 'ce');
   type(win, search(sel), 'c');
   assert.strictEqual(highlighted(win, sel), 'cd');
   win.close();
@@ -524,10 +530,26 @@ test('Enter picks the highlighted row', (newWindow) => {
   const sel = single(win, { options: ABC, selected: 'a', onChange: (v) => seen.push(v) });
   click(win, control(sel));
   press(win, search(sel), 'ArrowDown');
+  press(win, search(sel), 'ArrowDown');
   press(win, search(sel), 'Enter');
   assert.strictEqual(sel.getValue(), 'b');
   assert.deepStrictEqual(seen, ['b']);
   assert.ok(!isOpen(sel));
+  win.close();
+});
+
+test('opened with the mouse, Enter shows the keyboard row instead of picking', (newWindow) => {
+  const win = newWindow();
+  const seen = [];
+  const sel = multi(win, { options: ABC, onChange: (v) => seen.push(v) });
+  click(win, control(sel));
+  assert.strictEqual(highlighted(win, sel), null);
+  press(win, search(sel), 'Enter');
+  assert.strictEqual(highlighted(win, sel), 'a');
+  assert.deepStrictEqual(seen, [], 'nothing picked');
+  press(win, search(sel), 'Enter');
+  // onChange hands over an array from the page's realm; compare its content.
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(seen)), [['a']]);
   win.close();
 });
 

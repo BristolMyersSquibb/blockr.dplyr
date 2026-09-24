@@ -180,6 +180,10 @@
       query: '',
       open: false,
       highlight: 0,
+      // The keyboard row is shown only once the keyboard is in use: opened
+      // with a key, an arrow pressed, a query typed. Opened with the mouse,
+      // a grey first row reads as a default pick, which it is not.
+      keyboard: false,
       loading: !!config.loading,
       // Single-line only: the chip has been clicked, so the control wraps and
       // shows every tag until a click lands elsewhere. The list offers only
@@ -423,7 +427,7 @@
         const val = optValue(opt);
         const row = div('blockr-select__option');
         const picked = !multi && val === st.selected;
-        if (i === st.highlight) row.classList.add('blockr-select__option--highlighted');
+        if (st.keyboard && i === st.highlight) row.classList.add('blockr-select__option--highlighted');
         if (picked) row.classList.add('blockr-select__option--selected');
         row.setAttribute('role', 'option');
         row.id = `${id}-opt-${i}`;
@@ -439,7 +443,8 @@
         list.appendChild(div('blockr-select__empty',
           `+${f.extra.toLocaleString()} more — type to narrow`));
       }
-      input.setAttribute('aria-activedescendant', `${id}-opt-${st.highlight}`);
+      if (st.keyboard) input.setAttribute('aria-activedescendant', `${id}-opt-${st.highlight}`);
+      else input.removeAttribute('aria-activedescendant');
     };
 
     const render = () => {
@@ -459,8 +464,10 @@
       if (placed) placed.update();
     };
 
+    // Scrolls the keyboard row into view, or without one the pick.
     const showHighlight = () => {
-      list.querySelector('.blockr-select__option--highlighted')
+      (list.querySelector('.blockr-select__option--highlighted') ||
+       list.querySelector('.blockr-select__option--selected'))
         ?.scrollIntoView({ block: 'nearest' });
     };
 
@@ -498,9 +505,11 @@
 
     // --- Open, close, pick -------------------------------------------------
 
-    const open = () => {
+    /** @param {boolean} [byKeyboard] */
+    const open = (byKeyboard) => {
       if (st.open || st.destroyed) return;
       st.open = true;
+      st.keyboard = !!byKeyboard || !!st.query;
       // A single select opens on its pick, so the keyboard row and the pick
       // start as the same row. Typing into a closed select opens it on the
       // typed query instead, from the top.
@@ -527,6 +536,7 @@
       st.open = false;
       st.query = '';
       input.value = '';
+      st.keyboard = false;
       if (placed) { placed.stop(); placed = null; }
       root.classList.remove('blockr-select--above');
       syncDocClick();
@@ -626,8 +636,9 @@
     input.addEventListener('input', () => {
       st.query = input.value;
       st.highlight = 0;
+      st.keyboard = true;
       if (st.open) render();
-      else open();
+      else open(true);
       // Server search: re-query after the user pauses. The client-side filter
       // gives instant feedback on the loaded page; the server response then
       // replaces the option list through updateOptions.
@@ -640,7 +651,10 @@
     /** @param {number} step */
     const move = (step) => {
       const n = rows.length || 1;
-      st.highlight = (st.highlight + step + n) % n;
+      // The first arrow press shows the row the list opened on; the next
+      // ones move it.
+      if (!st.keyboard) st.keyboard = true;
+      else st.highlight = (st.highlight + step + n) % n;
       renderList();
       showHighlight();
     };
@@ -651,17 +665,20 @@
         case 'ArrowUp':
           e.preventDefault();
           if (st.open) move(e.key === 'ArrowDown' ? 1 : -1);
-          else open();
+          else open(true);
           break;
         case 'Enter':
           e.preventDefault();
-          if (!st.open) open();
+          if (!st.open) open(true);
+          // With no keyboard row on screen, Enter shows it rather than
+          // picking a row the user cannot see.
+          else if (!st.keyboard) { st.keyboard = true; renderList(); showHighlight(); }
           else if (rows[st.highlight]) pick(optValue(rows[st.highlight]));
           break;
         case ' ':
           // Opens a closed select as a native one does; once open, a space
           // is typing.
-          if (!st.open) { e.preventDefault(); open(); }
+          if (!st.open) { e.preventDefault(); open(true); }
           break;
         case 'Escape':
           e.preventDefault();
