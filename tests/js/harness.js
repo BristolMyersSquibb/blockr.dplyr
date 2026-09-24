@@ -189,7 +189,10 @@ function mount(name, opts = {}) {
      */
     pick(select, value) {
       select.querySelector('.blockr-select__control').click();
-      const dropdown = doc.getElementById(select.getAttribute('aria-owns'));
+      // The list is portalled to <body>; the combobox input names it.
+      const dropdown = doc.getElementById(
+        select.querySelector('.blockr-select__search').getAttribute('aria-controls')
+      );
       const opt = dropdown.querySelector(`.blockr-select__option[data-value="${value}"]`);
       if (!opt) {
         const offered = Array.from(dropdown.querySelectorAll('.blockr-select__option'))

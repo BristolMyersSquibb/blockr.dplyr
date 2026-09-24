@@ -144,6 +144,48 @@ test('Escape closes', (newWindow) => {
   win.close();
 });
 
+/* Deliberate difference (select-rewrite-plan.md, "Questions"): the reference
+ * called root.focus() on Escape. In a browser that is a no-op (the root has
+ * no tabindex) and focus stays in the input by accident; happy-dom focuses
+ * any element, so the reference fails this here. The rewrite leaves focus
+ * on the input, which is the combobox. */
+test('Escape leaves focus on the combobox input', (newWindow, impl, t) => {
+  if (impl === 'reference') return t.skip('reference calls root.focus()');
+  const win = newWindow();
+  const sel = single(win, { options: ABC });
+  click(win, control(sel));
+  assert.strictEqual(win.document.activeElement, search(sel));
+  press(win, search(sel), 'Escape');
+  assert.strictEqual(win.document.activeElement, search(sel));
+  win.close();
+});
+
+/* Deliberate difference: a menu's filter box is torn down with the menu, so
+ * after Escape nothing had focus. It now returns to the anchor when it can
+ * take it, and only then; a closing click that landed on another focusable
+ * element keeps its focus. */
+test('a menu closed by Escape hands focus back to its anchor', async (newWindow, impl, t) => {
+  if (impl === 'reference') return t.skip('reference drops focus on the body');
+  const win = newWindow();
+  const anchor = win.document.createElement('button');
+  win.document.body.appendChild(anchor);
+  win.Blockr.Select.menu(anchor, { options: ABC });
+  const box = win.document.querySelector('.blockr-select__search');
+  assert.strictEqual(win.document.activeElement, box);
+  press(win, box, 'Escape');
+  await wait(win, 0);
+  assert.strictEqual(win.document.activeElement, anchor);
+
+  const other = win.document.createElement('input');
+  win.document.body.appendChild(other);
+  win.Blockr.Select.menu(anchor, { options: ABC });
+  other.focus();
+  click(win, other);
+  await wait(win, 0);
+  assert.strictEqual(win.document.activeElement, other, 'a click elsewhere keeps its focus');
+  win.close();
+});
+
 test('Tab closes', (newWindow) => {
   const win = newWindow();
   const sel = multi(win, { options: ABC });
@@ -275,6 +317,36 @@ test('typing into a closed select opens it', (newWindow) => {
   const sel = multi(win, { options: ABC });
   type(win, search(sel), 'b');
   assert.ok(isOpen(sel));
+  win.close();
+});
+
+/* Deliberate difference: the reference's open() wiped the query, so the
+ * letter that opened a closed select was thrown away and the list came up
+ * unfiltered. The rewrite keeps it. */
+test('typing into a closed select keeps the typed letter as the filter', (newWindow, impl, t) => {
+  if (impl === 'reference') return t.skip('reference clears the query on open');
+  const win = newWindow();
+  const sel = multi(win, { options: ABC });
+  type(win, search(sel), 'b');
+  assert.strictEqual(search(sel).value, 'b');
+  assert.deepStrictEqual(rows(win, sel), ['b']);
+  win.close();
+});
+
+/* Deliberate difference: the reference handled Space only on the root, which
+ * cannot take focus; a space typed into the input opened the list filtered
+ * by " ". The rewrite opens a closed select on Space without typing it. */
+test('Space opens a closed select without typing a space', (newWindow, impl, t) => {
+  if (impl === 'reference') return t.skip('reference types the space');
+  const win = newWindow();
+  const sel = single(win, { options: ABC, selected: 'c' });
+  press(win, search(sel), ' ');
+  assert.ok(isOpen(sel));
+  assert.strictEqual(search(sel).value, '');
+  assert.deepStrictEqual(rows(win, sel), ABC);
+  assert.strictEqual(highlighted(win, sel), 'c');
+  press(win, search(sel), ' ');
+  assert.strictEqual(search(sel).value, ' ', 'once open, a space is typing');
   win.close();
 });
 
