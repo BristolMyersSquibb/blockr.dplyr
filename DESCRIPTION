@@ -38,11 +38,11 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Remotes:
     BristolMyersSquibb/blockr.core,
-    BristolMyersSquibb/blockr.ui@feat/design-system
+    BristolMyersSquibb/blockr.ui
 Imports:
     shiny,
     blockr.core (>= 0.1.2),
-    blockr.ui (>= 0.0.1.9000),
+    blockr.ui (>= 0.0.1.9001),
     dplyr,
     tidyr,
     htmltools,
