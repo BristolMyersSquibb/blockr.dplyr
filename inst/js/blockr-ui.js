@@ -118,7 +118,24 @@ Blockr.place = (panel, anchor, opts) => {
   const margin = o.margin == null ? 8 : o.margin;
   const width = o.width || 'anchor';
 
+  // The anchor can leave the page while the panel is open: a block that
+  // redraws its band on every pick replaces the word a multi menu hangs off.
+  // A detached element measures 0x0 at 0,0, which threw the panel to the top
+  // left corner. `reanchor` returns the element that now stands for the
+  // anchor; without one, or while it finds none, the panel stays put.
+  /** @type {ResizeObserver | null} */
+  let obs = null;
+  const current = () => {
+    if (anchor.isConnected) return true;
+    const next = o.reanchor ? o.reanchor() : null;
+    if (!next || !next.isConnected) return false;
+    if (obs) { obs.unobserve(anchor); obs.observe(next); }
+    anchor = next;
+    return true;
+  };
+
   const update = () => {
+    if (!current()) return;
     const r = anchor.getBoundingClientRect();
     // Not laid out yet on the first call after display: block; a guess is
     // better than 0, which would never flip.
@@ -150,8 +167,6 @@ Blockr.place = (panel, anchor, opts) => {
   window.addEventListener('scroll', update, { capture: true, passive: true });
   window.addEventListener('resize', update, { passive: true });
 
-  /** @type {ResizeObserver | null} */
-  let obs = null;
   let frame = 0;
   if (typeof ResizeObserver !== 'undefined') {
     obs = new ResizeObserver(() => {

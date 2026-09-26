@@ -522,6 +522,9 @@
       placed = Blockr.place(list, anchor || root, {
         // A word is not a control: the menu sizes to its own content.
         width: headless ? { min: 190, max: 320 } : 'anchor',
+        // The word can be redrawn under an open menu (a multi pick recomposes
+        // the block); the caller says how to find it again.
+        reanchor: typeof config.reanchor === 'function' ? config.reanchor : undefined,
         onFlip: (above) => root.classList.toggle('blockr-select--above', above)
       });
       syncDocClick();
