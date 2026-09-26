@@ -1,0 +1,82 @@
+/* --- Shared popover panel ---
+   The floating popover of the older engines. blockr.dplyr's own blocks use
+   the settings band instead, but blockr.dm (value filter), blockr.pharma
+   (flag filter), blockr.input and the blockr.viz / blockr.ggplot drilldown
+   config still draw .blockr-popover-*. blockr.ui's controls_dep() does not
+   carry these rules, so they stay here until those callers move off. --- */
+.blockr-popover {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  z-index: 1000;
+  background: var(--blockr-color-bg-surface);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: 8px;
+  box-shadow: var(--blockr-shadow-md);
+  padding: 12px 14px;
+  min-width: 280px;
+}
+
+.blockr-popover-row {
+  margin-bottom: 10px;
+}
+
+.blockr-popover-row:last-child {
+  margin-bottom: 0;
+}
+
+.blockr-popover-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--blockr-color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.blockr-popover-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: var(--blockr-font-size-base);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: 8px;
+  background: var(--blockr-color-bg-field);
+  color: var(--blockr-color-text-default);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.blockr-popover-input:focus {
+  background: var(--blockr-color-bg-surface);
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
+}
+
+.blockr-popover-select-wrap {
+  width: 100%;
+}
+
+.blockr-popover-select-wrap .blockr-select__control {
+  background-color: var(--blockr-color-bg-field);
+  border: 1px solid var(--blockr-color-border-default);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-height: 38px;
+}
+
+.blockr-popover-select-wrap .blockr-select--open .blockr-select__control,
+.blockr-popover-select-wrap .blockr-select__control:focus-within {
+  border-color: var(--blockr-color-border-accent);
+  box-shadow: var(--blockr-focus-ring);
+}
+
+/* Shared popover toggle pill (self-labeling) */
+.blockr-popover-toggle {
+  font-size: 11px !important;
+  margin: 2px 4px 6px 0;
+}
+
+.blockr-popover-toggle-active {
+  color: var(--blockr-color-text-accent) !important;
+  background: var(--blockr-color-bg-accent-subtle) !important;
+  border-color: var(--blockr-color-border-accent-subtle) !important;
+}

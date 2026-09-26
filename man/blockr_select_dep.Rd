@@ -11,6 +11,8 @@ An \code{htmltools::tagList} of \code{htmlDependency} objects.
 }
 \description{
 Exported for reuse by other blockr packages that embed the shared
-select component (e.g. blockr.dm's table pickers).
+select component (e.g. blockr.dm's table pickers). \code{Blockr.Select} lives in
+blockr.ui; this returns \code{\link[blockr.ui:controls_dep]{blockr.ui::controls_dep()}} together with
+blockr-core.js.
 }
 \keyword{internal}

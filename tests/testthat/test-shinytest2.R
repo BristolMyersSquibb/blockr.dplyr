@@ -795,12 +795,18 @@ test_that("lazy values: opening the value dropdown loads values on demand", {
      })();"
   )
   # The open dropdown fills in place: gear's uniques are 3/4/5, and multi
-  # mode hides the already-selected chip "4" from the option list.
+  # mode keeps the already-selected "4" in the list, ticked.
   opts_json <- app$get_js(
     "JSON.stringify(Array.from(document.querySelectorAll(
        '.blockr-select__dropdown .blockr-select__option')).map(e => e.textContent));"
   )
-  expect_setequal(jsonlite::fromJSON(opts_json), c("3", "5"))
+  expect_setequal(jsonlite::fromJSON(opts_json), c("3", "4", "5"))
+  picked_json <- app$get_js(
+    "JSON.stringify(Array.from(document.querySelectorAll(
+       '.blockr-select__dropdown .blockr-select__option[aria-selected=\"true\"]'
+     )).map(e => e.textContent));"
+  )
+  expect_identical(jsonlite::fromJSON(picked_json), "4")
 })
 
 # ===========================================================================

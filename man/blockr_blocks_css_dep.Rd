@@ -2,15 +2,17 @@
 % Please edit documentation in R/blockr-core-dep.R
 \name{blockr_blocks_css_dep}
 \alias{blockr_blocks_css_dep}
-\title{HTML dependency for blockr-blocks.css (shared block layout styles)}
+\title{HTML dependency for the shared block styles}
 \usage{
 blockr_blocks_css_dep()
 }
 \value{
-An \code{htmltools::htmlDependency}.
+An \code{htmltools::tagList} of \code{htmlDependency} objects.
 }
 \description{
 Exported for reuse by other blockr packages that reuse the shared
-block-container / row / popover styles.
+block-container / row styles. Those are blockr.ui's (in
+\code{\link[blockr.ui:controls_dep]{blockr.ui::controls_dep()}}); this adds the \verb{.blockr-popover-*} rules that
+the older engines in other packages still draw.
 }
 \keyword{internal}

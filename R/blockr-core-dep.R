@@ -5,58 +5,47 @@
 # block's construction cost. See blockr.viz/dev/block-build-cost-findings.md.
 # (js_block_dep is keyed by block name, so it keeps its own keyed cache.)
 
-#' HTML dependency for blockr-core.js (namespace + shared utilities)
+#' HTML dependency for blockr-core.js (the block protocol)
 #'
 #' Exported for reuse by other blockr packages that build on the shared
-#' JS namespace (e.g. blockr.dm).
+#' JS namespace (e.g. blockr.dm). The namespace, DOM helpers, icons and the
+#' shared controls come from [blockr.ui::controls_dep()], which this returns
+#' first; blockr-core.js adds the block protocol on top.
 #'
-#' @return An `htmltools::htmlDependency`.
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
 #' @keywords internal
 #' @export
 blockr_core_js_dep <- memoise0(function() {
-  htmltools::htmlDependency(
-    name = "blockr-core-js",
-    # Bump the suffix on every blockr-core.js edit (version-pinned cache).
-    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
-    src = system.file("js", package = "blockr.dplyr"),
-    # blockr-ui.js first: the namespace, DOM helpers, icons and the small
-    # controls; blockr-core.js adds the block protocol on top.
-    script = c("blockr-ui.js", "blockr-core.js")
+  htmltools::tagList(
+    blockr.ui::controls_dep(),
+    htmltools::htmlDependency(
+      name = "blockr-core-js",
+      # Bump the suffix on every blockr-core.js edit (version-pinned cache).
+      version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
+      src = system.file("js", package = "blockr.dplyr"),
+      script = "blockr-core.js"
+    )
   )
 })
 
-#' HTML dependency for the gear tray and checkbox stylesheet
-#'
-#' The CSS of the gear tray, the checkbox and the segmented control. Their JS
-#' (`Blockr.gearTray`, `Blockr.checkbox`, `Blockr.segmented`) is in
-#' blockr-ui.js, loaded by [blockr_core_js_dep()].
-#'
-#' @return An `htmltools::htmlDependency`.
-#' @noRd
-settings_band_dep <- memoise0(function() {
-  htmltools::htmlDependency(
-    name = "blockr-dplyr-settings-band",
-    # Bump the suffix on every settings-band.css edit (asset cache).
-    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
-    src = system.file(package = "blockr.dplyr"),
-    stylesheet = "css/settings-band.css"
-  )
-})
-
-#' HTML dependency for blockr-blocks.css (shared block layout styles)
+#' HTML dependency for the shared block styles
 #'
 #' Exported for reuse by other blockr packages that reuse the shared
-#' block-container / row / popover styles.
+#' block-container / row styles. Those are blockr.ui's (in
+#' [blockr.ui::controls_dep()]); this adds the `.blockr-popover-*` rules that
+#' the older engines in other packages still draw.
 #'
-#' @return An `htmltools::htmlDependency`.
+#' @return An `htmltools::tagList` of `htmlDependency` objects.
 #' @keywords internal
 #' @export
 blockr_blocks_css_dep <- memoise0(function() {
-  htmltools::htmlDependency(
-    name = "blockr-blocks-css",
-    # Bump the suffix on every blockr-blocks.css edit (version-pinned cache).
-    version = paste0(utils::packageVersion("blockr.dplyr"), ".1"),
-    src = system.file("css", package = "blockr.dplyr"),
-    stylesheet = "blockr-blocks.css"
+  htmltools::tagList(
+    blockr.ui::controls_dep(),
+    htmltools::htmlDependency(
+      name = "blockr-dplyr-popover-css",
+      version = utils::packageVersion("blockr.dplyr"),
+      src = system.file("css", package = "blockr.dplyr"),
+      stylesheet = "blockr-popover.css"
+    )
   )
 })

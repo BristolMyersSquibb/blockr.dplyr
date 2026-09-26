@@ -31,7 +31,19 @@ const { Window } = require('happy-dom');
 
 const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
 
-const read = (file) => fs.readFileSync(path.join(JS_DIR, file), 'utf8');
+/* blockr-ui.js and blockr-select.js are blockr.ui's (controls_dep()). The
+ * tests read the installed copy, the one R serves; BLOCKR_UI_JS points them
+ * at a source tree instead. */
+const UI_FILES = ['blockr-ui.js', 'blockr-select.js'];
+let uiDir = process.env.BLOCKR_UI_JS;
+const UI_DIR = () => uiDir || (uiDir = require('node:child_process').execFileSync(
+  'Rscript', ['-e', 'cat(system.file("assets", "js", package = "blockr.ui", mustWork = TRUE))'],
+  { encoding: 'utf8' }
+).trim());
+
+const read = (file) => fs.readFileSync(
+  path.join(UI_FILES.includes(file) ? UI_DIR() : JS_DIR, file), 'utf8'
+);
 
 /* Objects built inside the window's realm have that realm's prototypes, which
  * `deepStrictEqual` counts as a difference. Serializing is also the honest
