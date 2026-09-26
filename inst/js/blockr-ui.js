@@ -177,12 +177,27 @@ Blockr.place = (panel, anchor, opts) => {
     obs.observe(panel);
   }
 
+  // Removing the anchor fires nothing the panel listens to (no scroll, no
+  // resize, and a ResizeObserver does not reliably report a node leaving
+  // the page), so with `reanchor` the page is watched while the panel is
+  // open, and the panel moves on the next frame after its anchor is gone.
+  /** @type {MutationObserver | null} */
+  let mut = null;
+  if (o.reanchor && typeof MutationObserver !== 'undefined') {
+    mut = new MutationObserver(() => {
+      if (frame || anchor.isConnected) return;
+      frame = requestAnimationFrame(() => { frame = 0; update(); });
+    });
+    mut.observe(document.body, { childList: true, subtree: true });
+  }
+
   return {
     update,
     stop: () => {
       window.removeEventListener('scroll', update, { capture: true });
       window.removeEventListener('resize', update);
       if (obs) { obs.disconnect(); obs = null; }
+      if (mut) { mut.disconnect(); mut = null; }
       if (frame) { cancelAnimationFrame(frame); frame = 0; }
     }
   };
