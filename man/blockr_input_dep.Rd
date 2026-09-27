@@ -11,6 +11,7 @@ An \code{htmltools::tagList} of \code{htmlDependency} objects.
 }
 \description{
 Exported for reuse by other blockr packages that embed the shared
-expression-input component.
+expression-input component. \code{Blockr.Input} lives in blockr.ui; this returns
+\code{\link[blockr.ui:controls_dep]{blockr.ui::controls_dep()}} together with blockr-core.js.
 }
 \keyword{internal}
