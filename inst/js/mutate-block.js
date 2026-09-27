@@ -158,9 +158,9 @@
 
       // Confirm button
       const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'blockr-expr-confirm';
+      confirmBtn.className = 'blockr-expr-confirm blockr-expr-confirm--key';
       confirmBtn.type = 'button';
-      confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+      confirmBtn.textContent = '\u21B5';
       confirmBtn.title = 'Apply expression';
 
       /** @type {MutateRow} */
@@ -187,7 +187,7 @@
         placeholder: 'R expression\u2026',
         onChange: () => {
           confirmBtn.classList.remove('confirmed');
-          confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+          confirmBtn.textContent = '\u21B5';
         },
         onConfirm: () => doConfirm()
       });
@@ -201,7 +201,7 @@
       nameInput.addEventListener('input', () => {
         nameDirty = true;
         confirmBtn.classList.remove('confirmed');
-        confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+        confirmBtn.textContent = '\u21B5';
       });
       const commitName = () => {
         if (!nameDirty) return;

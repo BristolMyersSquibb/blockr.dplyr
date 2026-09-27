@@ -132,7 +132,7 @@
       // No --bordered class needed: the row provides the border
       topRow.appendChild(typeWrap);
 
-      // n input — commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // n input — commits on Enter/blur with the ↵ button (§5.5)
       const nWrap = document.createElement('div');
       nWrap.className = 'slb-n-wrap';
       this._nInput = document.createElement('input');

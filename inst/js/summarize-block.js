@@ -198,7 +198,7 @@
       nameInput.value = name || '';
       summary._nameInput = nameInput;
       row.appendChild(nameInput);
-      // Commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // Commits on Enter/blur with the ↵ button (§5.5)
       Blockr.textCommit(nameInput, {
         onCommit: (value) => {
           summary.name = value;
@@ -317,9 +317,9 @@
 
       // Confirm button
       const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'blockr-expr-confirm';
+      confirmBtn.className = 'blockr-expr-confirm blockr-expr-confirm--key';
       confirmBtn.type = 'button';
-      confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+      confirmBtn.textContent = '\u21B5';
       confirmBtn.title = 'Apply expression';
 
       const doConfirm = () => {
@@ -336,7 +336,7 @@
         placeholder: 'R expression\u2026',
         onChange: () => {
           confirmBtn.classList.remove('confirmed');
-          confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+          confirmBtn.textContent = '\u21B5';
         },
         onConfirm: () => doConfirm()
       });
@@ -348,7 +348,7 @@
       nameInput.addEventListener('input', () => {
         nameDirty = true;
         confirmBtn.classList.remove('confirmed');
-        confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+        confirmBtn.textContent = '\u21B5';
       });
       const commitName = () => {
         if (!nameDirty) return;
