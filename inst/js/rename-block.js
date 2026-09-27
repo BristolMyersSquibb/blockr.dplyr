@@ -5,7 +5,7 @@
  * Dynamic rows: each row has a column picker (single select), an arrow
  * separator, a text input for the new name, and a remove button.
  * Footer has an "Add rename" link. Selects submit immediately; the new-name
- * input commits on Enter/blur (§5.5 "Enter ↵" chip
+ * input commits on Enter/blur (§5.5 ↵ button
  * for text input).
  *
  * Depends on: blockr-core.js, blockr-select.js
@@ -137,7 +137,7 @@
       nameInput.value = newName || '';
       row._nameInput = nameInput;
       rowEl.appendChild(nameInput);
-      // Commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // Commits on Enter/blur with the ↵ button (§5.5)
       row._nameCommit = Blockr.textCommit(nameInput, {
         onCommit: (value) => {
           row.newName = value;

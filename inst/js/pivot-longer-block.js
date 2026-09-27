@@ -112,7 +112,7 @@
       const inputRow = document.createElement('div');
       inputRow.className = 'plb-input-row';
 
-      // names_to — commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // names_to — commits on Enter/blur with the ↵ button (§5.5)
       const namesToWrap = document.createElement('div');
       namesToWrap.className = 'plb-field';
       const namesToLabel = document.createElement('label');
