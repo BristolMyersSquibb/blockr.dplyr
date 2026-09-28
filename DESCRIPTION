@@ -42,7 +42,7 @@ Remotes:
 Imports:
     shiny,
     blockr.core (>= 0.1.2),
-    blockr.ui (>= 0.0.1.9001),
+    blockr.ui,
     dplyr,
     tidyr,
     htmltools,
