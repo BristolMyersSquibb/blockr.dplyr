@@ -31,7 +31,19 @@ const { Window } = require('happy-dom');
 
 const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
 
-const read = (file) => fs.readFileSync(path.join(JS_DIR, file), 'utf8');
+/* blockr-ui.js, blockr-select.js and blockr-input.js are blockr.ui's
+ * (controls_dep()). The tests read the installed copy, the one R serves;
+ * BLOCKR_UI_JS points them at a source tree instead. */
+const UI_FILES = ['blockr-ui.js', 'blockr-select.js', 'blockr-input.js'];
+let uiDir = process.env.BLOCKR_UI_JS;
+const UI_DIR = () => uiDir || (uiDir = require('node:child_process').execFileSync(
+  'Rscript', ['-e', 'cat(system.file("assets", "js", package = "blockr.ui", mustWork = TRUE))'],
+  { encoding: 'utf8' }
+).trim());
+
+const read = (file) => fs.readFileSync(
+  path.join(UI_FILES.includes(file) ? UI_DIR() : JS_DIR, file), 'utf8'
+);
 
 /* Objects built inside the window's realm have that realm's prototypes, which
  * `deepStrictEqual` counts as a difference. Serializing is also the honest
@@ -46,7 +58,7 @@ const json = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x))
  * loudly in its own test instead of quietly loading something the browser
  * would not have served it.
  */
-const ALWAYS = ['blockr-core.js', 'settings-band.js'];
+const ALWAYS = ['blockr-ui.js', 'blockr-core.js'];
 
 const scriptsFor = (src) => {
   const m = /Depends on:\s*(.+)/.exec(src);
@@ -189,7 +201,10 @@ function mount(name, opts = {}) {
      */
     pick(select, value) {
       select.querySelector('.blockr-select__control').click();
-      const dropdown = doc.getElementById(select.getAttribute('aria-owns'));
+      // The list is portalled to <body>; the combobox input names it.
+      const dropdown = doc.getElementById(
+        select.querySelector('.blockr-select__search').getAttribute('aria-controls')
+      );
       const opt = dropdown.querySelector(`.blockr-select__option[data-value="${value}"]`);
       if (!opt) {
         const offered = Array.from(dropdown.querySelectorAll('.blockr-select__option'))

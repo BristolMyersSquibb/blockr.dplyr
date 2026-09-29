@@ -8,7 +8,7 @@
  *   based on type; on/off options are Blockr.checkbox.
  * Below card: "Group by:" label + bordered multi-select (summarize pattern).
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -78,7 +78,8 @@
       this._nCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
       this._rowsCommit = null;
-      this._bandOpen = false;
+      /** @type {BlockrGearTrayHandle | null} */
+      this._tray = null;
 
       this._buildDOM();
       this._updateBandVisibility();
@@ -96,8 +97,6 @@
       this.gearBtn.type = 'button';
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Options';
-      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this._gearHeader = gearHeader;
       this.card.appendChild(gearHeader);
@@ -106,6 +105,11 @@
       // opening pushes the content down; the gear is the only toggle
       // (a panel, not a menu — no outside-click dismissal).
       this._buildBand();
+      this._tray = Blockr.gearTray(
+        /** @type {HTMLElement} */ (this.bandEl),
+        /** @type {HTMLButtonElement} */ (this.gearBtn),
+        { label: 'Options' }
+      );
 
       // Top row: type + n in a standard blockr-row
       const topRow = document.createElement('div');
@@ -128,7 +132,7 @@
       // No --bordered class needed: the row provides the border
       topRow.appendChild(typeWrap);
 
-      // n input — commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // n input — commits on Enter/blur with the ↵ button (§5.5)
       const nWrap = document.createElement('div');
       nWrap.className = 'slb-n-wrap';
       this._nInput = document.createElement('input');
@@ -146,17 +150,17 @@
       });
       topRow.appendChild(nWrap);
 
-      // n/% toggle pill
+      // n or %: a fixed choice of two inside the row, so a 26px segmented
+      // control (design system), in place of the click-to-cycle pill.
       this._usesProp = false;
-      this._nModePill = document.createElement('button');
-      this._nModePill.type = 'button';
-      this._nModePill.className = 'blockr-pill slb-mode-pill';
-      this._nModePill.textContent = 'n';
-      this._nModePill.title = 'Toggle between selecting a fixed number of rows (n) or a percentage (%)';
-      this._nModePill.addEventListener('click', () => {
-        this._usesProp = !this._usesProp;
-        /** @type {HTMLButtonElement} */ (this._nModePill).textContent = this._usesProp ? '%' : 'n';
-        /** @type {HTMLButtonElement} */ (this._nModePill).classList.toggle('slb-mode-active', this._usesProp);
+      this._nModeSeg = Blockr.segmented(
+        [
+          { value: 'n', label: 'n', title: 'A fixed number of rows' },
+          { value: 'prop', label: '%', title: 'A percentage of rows' }
+        ],
+        'n',
+        (value) => {
+          this._usesProp = value === 'prop';
         if (this._usesProp) {
           /** @type {HTMLInputElement} */ (this._nInput).min = '0';
           /** @type {HTMLInputElement} */ (this._nInput).max = '100';
@@ -170,10 +174,13 @@
           /** @type {HTMLInputElement} */ (this._nInput).placeholder = 'n';
           /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync('5');
         }
-        this._updateNValue();
-        this._submit();
-      });
-      topRow.appendChild(this._nModePill);
+          this._updateNValue();
+          this._submit();
+        },
+        { size: 'xs', label: 'Rows as' }
+      );
+      this._nModeSeg.el.classList.add('slb-mode');
+      topRow.appendChild(this._nModeSeg.el);
 
       // Rows text input (custom positions — hidden by default)
       this._rowsWrap = document.createElement('div');
@@ -202,7 +209,7 @@
 
       const byLabel = document.createElement('span');
       byLabel.className = 'blockr-label';
-      byLabel.textContent = 'Group by:';
+      byLabel.textContent = 'Group by';
       this.bySection.appendChild(byLabel);
 
       const byWrap = document.createElement('div');
@@ -210,6 +217,7 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'None',
@@ -219,7 +227,6 @@
           this._submit();
         }
       });
-      this._bySelect.el.classList.add('blockr-select--bordered');
 
       this.el.appendChild(this.bySection);
     }
@@ -229,11 +236,6 @@
     _buildBand() {
       this.bandEl = document.createElement('div');
       this.bandEl.className = 'blockr-settings blockr-settings--beak';
-
-      const title = document.createElement('div');
-      title.className = 'blockr-settings__title';
-      title.textContent = 'Options';
-      this.bandEl.appendChild(title);
 
       const grid = document.createElement('div');
       grid.className = 'blockr-settings__grid';
@@ -250,6 +252,7 @@
       const orderBySelectWrap = document.createElement('div');
       this._orderByField.appendChild(orderBySelectWrap);
       this._orderBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(orderBySelectWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         // Without this the control falls back to the first column and displays
@@ -264,7 +267,6 @@
           this._submit();
         }
       });
-      this._orderBySelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(this._orderByField);
 
       // weight_by select (sample)
@@ -277,6 +279,7 @@
       const weightBySelectWrap = document.createElement('div');
       this._weightByField.appendChild(weightBySelectWrap);
       this._weightBySelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(weightBySelectWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: /** @type {string | undefined} */ (/** @type {*} */ (null)),
         allowEmpty: true,
@@ -288,7 +291,6 @@
           this._submit();
         }
       });
-      this._weightBySelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(this._weightByField);
 
       // with_ties (min/max) — boolean data option -> checkbox
@@ -319,13 +321,11 @@
     }
 
     _toggleBand() {
-      this._bandOpen = !this._bandOpen;
-      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
+      if (this._tray) this._tray.toggle();
     }
 
     _closeBand() {
-      if (this._bandOpen) this._toggleBand();
+      if (this._tray) this._tray.set(false);
     }
 
     _updateBandVisibility() {
@@ -343,7 +343,7 @@
 
       // Toggle n input vs rows input
       /** @type {HTMLElement} */ (/** @type {HTMLInputElement} */ (this._nInput).parentElement).style.display = isCustom ? 'none' : '';
-      /** @type {HTMLButtonElement} */ (this._nModePill).style.display = isCustom ? 'none' : '';
+      /** @type {BlockrSegmentedHandle} */ (this._nModeSeg).el.style.display = isCustom ? 'none' : '';
       /** @type {HTMLDivElement} */ (this._rowsWrap).style.display = isCustom ? '' : 'none';
 
       /** @type {HTMLDivElement} */ (this._orderByField).style.display = isMinMax ? '' : 'none';
@@ -431,8 +431,7 @@
 
       // Update n/prop mode
       this._usesProp = this.prop != null && this.prop > 0;
-      /** @type {HTMLButtonElement} */ (this._nModePill).textContent = this._usesProp ? '%' : 'n';
-      /** @type {HTMLButtonElement} */ (this._nModePill).classList.toggle('slb-mode-active', this._usesProp);
+      /** @type {BlockrSegmentedHandle} */ (this._nModeSeg).set(this._usesProp ? 'prop' : 'n');
       if (this._usesProp) {
         /** @type {BlockrTextCommitHandle} */ (this._nCommit).sync(
           String(Math.round(/** @type {number} */ (this.prop) * 100)));

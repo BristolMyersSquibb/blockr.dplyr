@@ -6,7 +6,7 @@
  * distinct checkboxes (design-system rule: data options are checkboxes).
  * Submits immediately on any change.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -57,6 +57,7 @@
       this.card.appendChild(pickerWrap);
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns\u2026',
@@ -66,7 +67,6 @@
           this._submit();
         }
       });
-      this._multiSelect.el.classList.add('blockr-select--bordered');
 
       // Option bar: exclude + distinct checkboxes (boolean data options)
       const optionBar = document.createElement('div');

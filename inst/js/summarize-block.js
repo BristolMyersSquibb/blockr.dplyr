@@ -138,7 +138,7 @@
 
       const byLabel = document.createElement('span');
       byLabel.className = 'blockr-label';
-      byLabel.textContent = 'Group by:';
+      byLabel.textContent = 'Group by';
       this.bySection.appendChild(byLabel);
 
       const byWrap = document.createElement('div');
@@ -146,13 +146,13 @@
       this.bySection.appendChild(byWrap);
 
       this._bySelectize = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(byWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'None',
         reorderable: true,
         onChange: (value) => { this.byValues = value || []; this._submit(); }
       });
-      this._bySelectize.el.classList.add('blockr-select--bordered');
 
       this.el.appendChild(this.bySection);
     }
@@ -198,7 +198,7 @@
       nameInput.value = name || '';
       summary._nameInput = nameInput;
       row.appendChild(nameInput);
-      // Commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // Commits on Enter/blur with the ↵ button (§5.5)
       Blockr.textCommit(nameInput, {
         onCommit: (value) => {
           summary.name = value;
@@ -317,9 +317,9 @@
 
       // Confirm button
       const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'blockr-expr-confirm';
+      confirmBtn.className = 'blockr-expr-confirm blockr-expr-confirm--key';
       confirmBtn.type = 'button';
-      confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+      confirmBtn.textContent = '\u21B5';
       confirmBtn.title = 'Apply expression';
 
       const doConfirm = () => {
@@ -336,7 +336,7 @@
         placeholder: 'R expression\u2026',
         onChange: () => {
           confirmBtn.classList.remove('confirmed');
-          confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+          confirmBtn.textContent = '\u21B5';
         },
         onConfirm: () => doConfirm()
       });
@@ -348,7 +348,7 @@
       nameInput.addEventListener('input', () => {
         nameDirty = true;
         confirmBtn.classList.remove('confirmed');
-        confirmBtn.innerHTML = 'Enter <span class="blockr-kbd">\u21B5</span>';
+        confirmBtn.textContent = '\u21B5';
       });
       const commitName = () => {
         if (!nameDirty) return;

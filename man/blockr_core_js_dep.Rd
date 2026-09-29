@@ -2,15 +2,17 @@
 % Please edit documentation in R/blockr-core-dep.R
 \name{blockr_core_js_dep}
 \alias{blockr_core_js_dep}
-\title{HTML dependency for blockr-core.js (namespace + shared utilities)}
+\title{HTML dependency for blockr-core.js (the block protocol)}
 \usage{
 blockr_core_js_dep()
 }
 \value{
-An \code{htmltools::htmlDependency}.
+An \code{htmltools::tagList} of \code{htmlDependency} objects.
 }
 \description{
 Exported for reuse by other blockr packages that build on the shared
-JS namespace (e.g. blockr.dm).
+JS namespace (e.g. blockr.dm). The namespace, DOM helpers, icons and the
+shared controls come from \code{\link[blockr.ui:controls_dep]{blockr.ui::controls_dep()}}, which this returns
+first; blockr-core.js adds the block protocol on top.
 }
 \keyword{internal}

@@ -8,7 +8,7 @@
  * Enter/blur (§5.5 chip). Required fields (column, into) carry the amber
  * required-empty cue.
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -72,12 +72,13 @@
 
       // Source column picker (bordered) — required
       const colWrap = document.createElement('div');
-      colWrap.className = 'spb-col-wrap blockr-select--bordered';
+      colWrap.className = 'spb-col-wrap';
       const colLabel = document.createElement('label');
       colLabel.className = 'blockr-label';
       colLabel.textContent = 'Column';
       colWrap.appendChild(colLabel);
       this._colSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(colWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: /** @type {any} */ (null),
         placeholder: 'Select column…',

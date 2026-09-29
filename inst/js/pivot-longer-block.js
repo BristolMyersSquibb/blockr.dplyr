@@ -7,7 +7,7 @@
  *   names_prefix text input.
  * Selects submit immediately; text inputs commit on Enter/blur (§5.5 chip).
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -53,7 +53,8 @@
       this._valuesToCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
       this._prefixCommit = null;
-      this._bandOpen = false;
+      /** @type {BlockrGearTrayHandle | null} */
+      this._tray = null;
 
       this._buildDOM();
       this._updateRequired();
@@ -71,19 +72,22 @@
       this.gearBtn.type = 'button';
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
       // Settings band — in flow between the gear header and the content
       // (a panel, not a menu: the gear is the only toggle).
       this._buildBand();
+      this._tray = Blockr.gearTray(
+        /** @type {HTMLElement} */ (this.bandEl),
+        /** @type {HTMLButtonElement} */ (this.gearBtn),
+        { label: 'Advanced settings' }
+      );
 
       // Column picker (bordered) — required: the block is an identity
       // transform until columns are chosen, so it carries the amber cue.
       const pickerWrap = document.createElement('div');
-      pickerWrap.className = 'plb-picker-wrap blockr-select--bordered';
+      pickerWrap.className = 'plb-picker-wrap';
       const pickerLabel = document.createElement('label');
       pickerLabel.className = 'blockr-label';
       pickerLabel.textContent = 'Columns';
@@ -92,6 +96,7 @@
       this._pickerWrap = pickerWrap;
 
       this._multiSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(pickerWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',
@@ -107,7 +112,7 @@
       const inputRow = document.createElement('div');
       inputRow.className = 'plb-input-row';
 
-      // names_to — commits on Enter/blur with the "Enter ↵" chip (§5.5)
+      // names_to — commits on Enter/blur with the ↵ button (§5.5)
       const namesToWrap = document.createElement('div');
       namesToWrap.className = 'plb-field';
       const namesToLabel = document.createElement('label');
@@ -164,11 +169,6 @@
       this.bandEl = document.createElement('div');
       this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      const title = document.createElement('div');
-      title.className = 'blockr-settings__title';
-      title.textContent = 'Advanced settings';
-      this.bandEl.appendChild(title);
-
       const grid = document.createElement('div');
       grid.className = 'blockr-settings__grid';
       this.bandEl.appendChild(grid);
@@ -213,9 +213,7 @@
     }
 
     _toggleBand() {
-      this._bandOpen = !this._bandOpen;
-      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
+      if (this._tray) this._tray.toggle();
     }
 
     _updateRequired() {

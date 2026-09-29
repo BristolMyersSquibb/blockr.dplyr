@@ -8,7 +8,7 @@
  *   text inputs + values_fn select.
  * Selects submit immediately; text inputs commit on Enter/blur (§5.5 chip).
  *
- * Depends on: blockr-core.js, blockr-select.js, settings-band.js
+ * Depends on: blockr-core.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -62,7 +62,8 @@
       this._sepCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
       this._prefixCommit = null;
-      this._bandOpen = false;
+      /** @type {BlockrGearTrayHandle | null} */
+      this._tray = null;
 
       this._buildDOM();
       this._updateRequired();
@@ -80,24 +81,28 @@
       this.gearBtn.type = 'button';
       this.gearBtn.className = 'blockr-gear-btn';
       this.gearBtn.innerHTML = Blockr.icons.gear;
-      this.gearBtn.title = 'Advanced settings';
-      this.gearBtn.addEventListener('click', () => this._toggleBand());
       gearHeader.appendChild(this.gearBtn);
       this.card.appendChild(gearHeader);
 
       // Settings band — in flow between the gear header and the content
       // (a panel, not a menu: the gear is the only toggle).
       this._buildBand();
+      this._tray = Blockr.gearTray(
+        /** @type {HTMLElement} */ (this.bandEl),
+        /** @type {HTMLButtonElement} */ (this.gearBtn),
+        { label: 'Advanced settings' }
+      );
 
       // names_from picker (bordered) — required: pivot_wider without it is
       // an identity transform, so it carries the amber cue while empty.
       const namesFromWrap = document.createElement('div');
-      namesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      namesFromWrap.className = 'pwb-picker-wrap';
       const namesFromLabel = document.createElement('label');
       namesFromLabel.className = 'blockr-label';
       namesFromLabel.textContent = 'Names from';
       namesFromWrap.appendChild(namesFromLabel);
       this._namesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(namesFromWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         // Pick order builds the combined column names (`a_b`, joined by
@@ -114,12 +119,13 @@
 
       // values_from picker (bordered) — required, same reasoning
       const valuesFromWrap = document.createElement('div');
-      valuesFromWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      valuesFromWrap.className = 'pwb-picker-wrap';
       const valuesFromLabel = document.createElement('label');
       valuesFromLabel.className = 'blockr-label';
       valuesFromLabel.textContent = 'Values from';
       valuesFromWrap.appendChild(valuesFromLabel);
       this._valuesFromSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(valuesFromWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         placeholder: 'Select columns…',
@@ -134,12 +140,13 @@
 
       // id_cols picker (bordered)
       const idColsWrap = document.createElement('div');
-      idColsWrap.className = 'pwb-picker-wrap blockr-select--bordered';
+      idColsWrap.className = 'pwb-picker-wrap';
       const idColsLabel = document.createElement('label');
       idColsLabel.className = 'blockr-label';
       idColsLabel.textContent = 'ID columns (optional)';
       idColsWrap.appendChild(idColsLabel);
       this._idColsSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).multi(idColsWrap, {
+        bordered: true,
         options: this.columnOptions,
         selected: [],
         // Empty is a legal configuration here, so the placeholder names what
@@ -187,11 +194,6 @@
       this.bandEl = document.createElement('div');
       this.bandEl.className = 'blockr-settings blockr-settings--beak';
 
-      const title = document.createElement('div');
-      title.className = 'blockr-settings__title';
-      title.textContent = 'Advanced settings';
-      this.bandEl.appendChild(title);
-
       const grid = document.createElement('div');
       grid.className = 'blockr-settings__grid';
       this.bandEl.appendChild(grid);
@@ -223,6 +225,7 @@
       fnField.appendChild(fnWrap);
       const fnOptions = ['', 'mean', 'median', 'sum', 'min', 'max', 'first', 'last', 'n_distinct'];
       this._valuesFnSelect = /** @type {BlockrSelectStatic} */ (Blockr.Select).single(fnWrap, {
+        bordered: true,
         options: fnOptions,
         selected: this.values_fn || '',
         placeholder: '(none)',
@@ -231,16 +234,13 @@
           this._submit();
         }
       });
-      this._valuesFnSelect.el.classList.add('blockr-select--bordered');
       grid.appendChild(fnField);
 
       /** @type {HTMLDivElement} */ (this.card).appendChild(this.bandEl);
     }
 
     _toggleBand() {
-      this._bandOpen = !this._bandOpen;
-      /** @type {HTMLDivElement} */ (this.bandEl).classList.toggle('blockr-settings--open', this._bandOpen);
-      /** @type {HTMLButtonElement} */ (this.gearBtn).classList.toggle('blockr-gear-active', this._bandOpen);
+      if (this._tray) this._tray.toggle();
     }
 
     _updateRequired() {

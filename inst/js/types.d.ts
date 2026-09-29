@@ -96,10 +96,15 @@ interface BlockrSelectConfigBase {
    */
   onSearch?: (query: string) => void;
   /**
-   * Cap on options that get DOM nodes per render (default 200). The full
-   * list stays searchable; a "+N more" row reports the overflow.
+   * A standalone field (in the field grid, in the gear tray): 42px with a
+   * border. Leave it off inside a row, where the select is bare.
    */
-  maxRendered?: number;
+  bordered?: boolean;
+  /**
+   * Show the filter box once the list has more than 8 options (default
+   * true). `false` for a short fixed list (operators, join types).
+   */
+  search?: boolean;
 }
 
 interface BlockrSelectSingleConfig extends BlockrSelectConfigBase {
@@ -142,16 +147,23 @@ interface BlockrSelectConfig extends BlockrSelectConfigBase {
   maxTagChars?: number;
   /** `any` so both per-mode signatures are assignable under strict variance. */
   onChange?: (value: any) => void;
-  /* Set by Blockr.Select.menu(): the dropdown alone, anchored to `anchor`. */
-  headless?: boolean;
-  anchor?: HTMLElement;
   title?: string;
   labelFirst?: boolean;
-  /** Show the filter box once there are more options than this (default 8). */
-  searchAfter?: number;
   searchPlaceholder?: string;
-  minWidth?: number;
-  maxWidth?: number;
+  onClose?: () => void;
+}
+
+/** Blockr.Select.menu(): the list alone, hung under a word or a pill. */
+interface BlockrSelectMenuConfig extends BlockrSelectConfigBase {
+  /** 'multi' keeps the menu open across picks; picks show in its head. */
+  mode?: 'single' | 'multi';
+  selected?: string | string[] | null;
+  /** Names the setting the menu sets (the word that opened it names only the value). */
+  title?: string;
+  /** Lead each option with its label, the value muted after it. */
+  labelFirst?: boolean;
+  searchPlaceholder?: string;
+  onChange?: (value: any) => void;
   onClose?: () => void;
 }
 
@@ -178,6 +190,12 @@ interface BlockrSelectHandleBase {
     opts: BlockrSelectOption[] | BlockrSelectOption | null | undefined,
     sel?: string | string[] | null
   ): void;
+  /**
+   * Set the selection from the owner (a restore, a mode switch) without
+   * firing onChange; it is reconciled against the options as setOptions()
+   * does.
+   */
+  setValue(value: string | string[] | null): void;
   /** Toggle the "Loading…" dropdown state. */
   setLoading(flag: boolean): void;
   /**
@@ -213,11 +231,35 @@ interface BlockrSelectStatic {
    */
   menu(
     anchor: HTMLElement,
-    config: any
-  ): { close: () => void; handle: BlockrSelectHandleBase & { open(): void } };
+    config: BlockrSelectMenuConfig
+  ): { close: () => void };
+  /**
+   * Capability flag read by the packages that paint the words a menu opens
+   * from: a build without it has a single-only menu.
+   */
+  menuMulti: boolean;
   /** Exposed for tests. */
   fitCount(widths: number[], avail: number, gap: number, chipWidth: number): number;
   midTruncate(value: string, cap: number): string;
+}
+
+/** Handle returned by Blockr.place (blockr-ui.js). */
+interface BlockrPlaceHandle {
+  /** Recompute the position now (it also follows scroll, resize and size changes). */
+  update(): void;
+  /** Remove every listener and observer. */
+  stop(): void;
+}
+
+interface BlockrPlaceOptions {
+  /** Span the anchor (default), or size to content within bounds. */
+  width?: 'anchor' | { min: number; max: number };
+  /** Pixels between anchor and panel (default 4). */
+  gap?: number;
+  /** Distance kept from the viewport edges (default 8). */
+  margin?: number;
+  /** Called on every placement with whether the panel sits above the anchor. */
+  onFlip?: (above: boolean) => void;
 }
 
 /* --- Blockr.Input (blockr-input.js) --- */
@@ -301,6 +343,12 @@ interface BlockrNamespace {
   _measureEl?: HTMLDivElement;
   icons: Record<string, string>;
   onDocClick(el: Element, cb: (e: MouseEvent) => void): void;
+  /**
+   * Hang a fixed-position, body-portalled panel under an anchor and keep it
+   * there: flips above when there is no room below, follows scroll, resize
+   * and size changes of anchor and panel (blockr-ui.js).
+   */
+  place(panel: HTMLElement, anchor: HTMLElement, opts?: BlockrPlaceOptions): BlockrPlaceHandle;
   registerBlock(config: BlockrRegisterConfig): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
@@ -310,12 +358,26 @@ interface BlockrNamespace {
   /** Shared components (blockr-select.js / blockr-input.js) */
   Select?: BlockrSelectStatic;
   Input?: BlockrInputStatic;
-  /** Design-system checkbox factory (settings-band.js, vendored from blockr.viz). */
+  /** Design-system checkbox factory (blockr-ui.js, vendored from blockr.viz). */
   checkbox(
     label: string,
     checked: boolean,
     onChange: (checked: boolean) => void
   ): BlockrCheckboxHandle;
+  /** Design-system segmented control (blockr-ui.js). */
+  segmented(
+    options: { value: string; label: string; title?: string }[],
+    selected: string,
+    onChange: (value: string) => void,
+    opts?: { size?: 'xs'; label?: string }
+  ): BlockrSegmentedHandle;
+  /** The gear tray behaviour (blockr-ui.js): the gear toggles the band,
+   *  which slides open and closed; Escape inside the band closes it. */
+  gearTray(
+    band: HTMLElement,
+    gear: HTMLButtonElement,
+    opts?: { label?: string }
+  ): BlockrGearTrayHandle;
   /**
    * Point a column picker at a new option list without losing a deliberate
    * pick. Returns the column the caller should hold from here on: a pinned
@@ -356,7 +418,21 @@ interface BlockrTextCommitHandle {
   sync(value: string): void;
 }
 
-/** Handle returned by Blockr.checkbox (settings-band.js). */
+/** Handle returned by Blockr.segmented (blockr-ui.js). */
+interface BlockrSegmentedHandle {
+  el: HTMLDivElement;
+  set(value: string): void;
+  get(): string;
+}
+
+/** Handle returned by Blockr.gearTray (blockr-ui.js). */
+interface BlockrGearTrayHandle {
+  set(open: boolean): void;
+  toggle(): void;
+  isOpen(): boolean;
+}
+
+/** Handle returned by Blockr.checkbox (blockr-ui.js). */
 interface BlockrCheckboxHandle {
   el: HTMLLabelElement;
   input: HTMLInputElement;

@@ -37,7 +37,7 @@
    * @property {boolean} colPinned
    * @property {BlockrSelectSingleHandle | null} _colSelect
    * @property {HTMLDivElement | null} rowEl
-   * @property {HTMLButtonElement} [_dirBtn]
+   * @property {BlockrSegmentedHandle} [_dirSeg]
    */
 
   class ArrangeBlock {
@@ -121,21 +121,23 @@
         }
       });
 
-      // Direction toggle pill
-      const dirBtn = document.createElement('button');
-      dirBtn.type = 'button';
-      dirBtn.className = 'blockr-pill ab-dir-btn';
-      dirBtn.textContent = direction === 'desc' ? 'desc' : 'asc';
-      if (direction === 'desc') dirBtn.classList.add('ab-dir-desc');
-      dirBtn.title = 'Toggle between ascending (A\u2192Z, 1\u21929) and descending (Z\u2192A, 9\u21921) sort order';
-      dirBtn.addEventListener('click', () => {
-        row.direction = row.direction === 'asc' ? 'desc' : 'asc';
-        dirBtn.textContent = row.direction;
-        dirBtn.classList.toggle('ab-dir-desc', row.direction === 'desc');
-        this._submit();
-      });
-      row._dirBtn = dirBtn;
-      rowEl.appendChild(dirBtn);
+      // Direction: a fixed choice of two, so a segmented control with both
+      // in view (design system), in place of the asc/desc cycle pill.
+      const dirSeg = Blockr.segmented(
+        [
+          { value: 'asc', label: 'Asc', title: 'Ascending: A\u2192Z, 1\u21929' },
+          { value: 'desc', label: 'Desc', title: 'Descending: Z\u2192A, 9\u21921' }
+        ],
+        direction === 'desc' ? 'desc' : 'asc',
+        (value) => {
+          row.direction = /** @type {'asc' | 'desc'} */ (value);
+          this._submit();
+        },
+        { size: 'xs', label: 'Sort direction' }
+      );
+      dirSeg.el.classList.add('ab-dir');
+      row._dirSeg = dirSeg;
+      rowEl.appendChild(dirSeg.el);
 
       // Remove button
       const rmBtn = document.createElement('button');
