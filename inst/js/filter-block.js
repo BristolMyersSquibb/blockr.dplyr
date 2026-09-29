@@ -129,7 +129,8 @@
       const addExprLink = document.createElement('span');
       addExprLink.className = 'blockr-add-link-expr';
       addExprLink.innerHTML = Blockr.icons.code;
-      addExprLink.title = 'Add R expression';
+      addExprLink.setAttribute('aria-label', 'Add R expression');
+      Blockr.tooltip.set(addExprLink, 'Add R expression');
       addExprLink.addEventListener('click', () => this._addExprRow(''));
       addRow.appendChild(addExprLink);
 
@@ -167,8 +168,10 @@
         }
         this._submit();
       });
-      this._preserveBox.input.title =
-        'Keep rows in the order you picked values instead of the original data order';
+      Blockr.tooltip.set(
+        this._preserveBox.el,
+        'Keep rows in the order you picked values instead of the original data order'
+      );
       addRow.appendChild(this._preserveBox.el);
 
       this.card.appendChild(addRow);
@@ -208,7 +211,9 @@
         btn.appendChild(car);
       };
       setLabel();
-      btn.title = 'Operator';
+      // The pill shows the operator; the tooltip and screen readers name it.
+      btn.setAttribute('aria-description', 'Operator');
+      Blockr.tooltip.set(btn, 'Operator');
       btn.addEventListener('click', () => {
         /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(btn, {
           title: 'Operator',
@@ -456,7 +461,9 @@
       confirmBtn.className = 'blockr-expr-confirm blockr-expr-confirm--key';
       confirmBtn.type = 'button';
       confirmBtn.textContent = '\u21B5';
-      confirmBtn.title = 'Apply expression';
+      // The key is the whole action, so the button shows it and has no
+      // tooltip (as blockr.ui's Blockr.textCommit); screen readers get its name.
+      confirmBtn.setAttribute('aria-label', 'Apply (Enter)');
 
       const doConfirm = () => {
         confirmBtn.classList.add('confirmed');

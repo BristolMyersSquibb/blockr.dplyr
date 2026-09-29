@@ -266,11 +266,11 @@ js_block_ui <- function(name, shared_deps = "select") {
   force(shared_deps)
   function(id) {
     tagList(
-      # The design system's tokens and theme layer. Every colour, size and
-      # radius in this package's CSS reads them, with no fallbacks, so a block
-      # brings them along rather than relying on the host to attach them.
-      blockr.ui::theme_dep(),
       blockr_core_js_dep(),
+      # The design system's tokens come with blockr.ui::controls_dep(), inside
+      # this: every colour, size and radius in this package's CSS reads them,
+      # with no fallbacks. The theme layer that restyles the rest of the page
+      # is the app's to attach (blockr.dock's board page does).
       blockr_blocks_css_dep(),
       if ("select" %in% shared_deps) blockr_select_dep(),
       if ("input" %in% shared_deps) blockr_input_dep(),

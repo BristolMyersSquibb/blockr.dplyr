@@ -14,6 +14,7 @@
 #'
 #' @return An `htmltools::tagList` of `htmlDependency` objects.
 #' @keywords internal
+#' @importFrom blockr.ui controls_dep
 #' @export
 blockr_core_js_dep <- memoise0(function() {
   htmltools::tagList(

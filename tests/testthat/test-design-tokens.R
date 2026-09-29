@@ -75,9 +75,10 @@ test_that("no colour is written out", {
   expect_identical(offending, NULL)
 })
 
-test_that("a block brings blockr.ui's theme with it", {
+test_that("a block brings blockr.ui's tokens, not its theme", {
   ui <- js_block_ui("filter", shared_deps = c("select", "input"))("x")
   deps <- vapply(htmltools::findDependencies(ui), `[[`, character(1L), "name")
-  expect_true("blockr-theme" %in% deps)
-  expect_lt(match("blockr-theme", deps), match("blockr-blocks-css", deps))
+  expect_true("blockr-tokens" %in% deps)
+  expect_false("blockr-theme" %in% deps)
+  expect_lt(match("blockr-tokens", deps), match("blockr-blocks-css", deps))
 })
