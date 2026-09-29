@@ -343,6 +343,11 @@ interface BlockrNamespace {
   _measureEl?: HTMLDivElement;
   icons: Record<string, string>;
   onDocClick(el: Element, cb: (e: MouseEvent) => void): void;
+  /** The design system's tooltip card (blockr-ui.js), in place of a native title. */
+  tooltip: {
+    set(el: Element, content: string | string[], opts?: { overflow?: boolean }): void;
+    clear(el: Element): void;
+  };
   /**
    * Hang a fixed-position, body-portalled panel under an anchor and keep it
    * there: flips above when there is no room below, follows scroll, resize

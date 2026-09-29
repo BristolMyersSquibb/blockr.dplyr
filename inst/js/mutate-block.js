@@ -161,7 +161,9 @@
       confirmBtn.className = 'blockr-expr-confirm blockr-expr-confirm--key';
       confirmBtn.type = 'button';
       confirmBtn.textContent = '\u21B5';
-      confirmBtn.title = 'Apply expression';
+      // The key is the whole action, so the button shows it and has no
+      // tooltip (as blockr.ui's Blockr.textCommit); screen readers get its name.
+      confirmBtn.setAttribute('aria-label', 'Apply (Enter)');
 
       /** @type {MutateRow} */
       const rowData = {

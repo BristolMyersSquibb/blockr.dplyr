@@ -89,6 +89,13 @@
   `Select columns…`.
 - Removed the `title` tooltips that only restated their checkbox label
   (`Exclude selected`, `Remove source column`, `Remove source columns`).
+- A block no longer attaches `blockr.ui::theme_dep()`. The tokens its CSS
+  reads come with `blockr.ui::controls_dep()`; the theme layer, which
+  restyles the rest of the page, is the app's to attach (blockr.dock's board
+  page does).
+- The remaining native `title` tooltips (Add R expression, Operator, the
+  keep-order checkbox) use blockr.ui's tooltip card. The ↵ button has none:
+  it shows its key, and screen readers read "Apply (Enter)".
 
 # blockr.dplyr 0.2.0
 
