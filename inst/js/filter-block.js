@@ -210,7 +210,7 @@
       setLabel();
       btn.title = 'Operator';
       btn.addEventListener('click', () => {
-        Blockr.Select.menu(btn, {
+        /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(btn, {
           title: 'Operator',
           options: ops.map(o => o.label),
           selected: ops[idx].label,
@@ -524,7 +524,7 @@
 
     _updateUI() {
       const single = this.conditions.length <= 1;
-      /** @type {HTMLButtonElement} */ (this.opToggle).style.visibility = single ? 'hidden' : 'visible';
+      /** @type {HTMLElement} */ (this.opToggle).style.visibility = single ? 'hidden' : 'visible';
       for (const c of this.conditions) {
         const btn = /** @type {HTMLElement | null | undefined} */ (c.rowEl?.querySelector('.blockr-row-remove'));
         if (btn) btn.style.visibility = single ? 'hidden' : 'visible';
