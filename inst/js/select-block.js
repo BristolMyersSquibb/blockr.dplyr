@@ -82,8 +82,6 @@
         this.distinct = checked;
         this._submit();
       });
-      this._distinctBox.input.title =
-        'Deduplicate rows based on the selected columns';
       optionBar.appendChild(this._distinctBox.el);
 
       this.card.appendChild(optionBar);

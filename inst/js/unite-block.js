@@ -156,8 +156,6 @@
         this.na_rm = checked;
         this._submit();
       });
-      this._naRmBox.input.title =
-        'Remove NA values before pasting columns together';
       optionBar.appendChild(this._naRmBox.el);
 
       this.card.appendChild(optionBar);

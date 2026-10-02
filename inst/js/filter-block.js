@@ -168,10 +168,6 @@
         }
         this._submit();
       });
-      Blockr.tooltip.set(
-        this._preserveBox.el,
-        'Keep rows in the order you picked values instead of the original data order'
-      );
       addRow.appendChild(this._preserveBox.el);
 
       this.card.appendChild(addRow);
