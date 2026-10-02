@@ -38,7 +38,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Remotes:
     BristolMyersSquibb/blockr.core,
-    BristolMyersSquibb/blockr.ui
+    BristolMyersSquibb/blockr.ui,
+    nbenn/reactives
 Imports:
     shiny,
     blockr.core (>= 0.1.2),
@@ -52,6 +53,7 @@ Imports:
 Suggests:
     chromote,
     DT,
+    reactives,
     shinytest2,
     testthat (>= 3.0.0),
     withr

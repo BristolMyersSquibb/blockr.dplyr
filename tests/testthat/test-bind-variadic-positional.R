@@ -4,15 +4,11 @@
 # collapse arg_names() to NULL -> `dplyr::bind_rows()` / `dplyr::bind_cols()`
 # with no arguments (an empty tibble), silently dropping the connected input.
 # The fix references the slot as `.arg1` (the symbol core binds an unnamed input
-# under). reactiveValues() can only hold *named* slots, so build the positional
-# `reactives` object the live board actually produces.
+# under). Since reactiveValues() can only hold *named* slots, build the
+# positional `reactive_exprs` collection the live board actually produces.
 positional_args <- function(...) {
-  fns <- lapply(list(...), function(v) function() v)
-  shiny::isolate({
-    ra <- blockr.core:::reactives()
-    for (fn in fns) blockr.core:::append_reactive(ra, fn)
-    ra
-  })
+  slots <- lapply(list(...), function(v) shiny::reactive(v))
+  do.call(reactives::reactive_exprs, slots)
 }
 
 test_that("bind_rows_block references an unnamed (DAG-UI) slot as .arg1", {
