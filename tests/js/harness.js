@@ -45,6 +45,26 @@ const read = (file) => fs.readFileSync(
   path.join(UI_FILES.includes(file) ? UI_DIR() : JS_DIR, file), 'utf8'
 );
 
+/* The small icons, Blockr.icons, are not in blockr-ui.js: controls_dep()
+ * writes them into the page's head ahead of it, built from blockr.ui's icon
+ * files, one SVG each in the directory next to its scripts. The tests build
+ * the same statement from those files, the way blockr.ui's own tests do: a
+ * file holds the icon's note as a comment, so the icon is the file without
+ * the comment and the whitespace between tags. */
+const iconsScript = () => {
+  const dir = path.join(UI_DIR(), '..', 'icons');
+  const icons = Object.fromEntries(
+    fs.readdirSync(dir).filter((f) => f.endsWith('.svg')).map((f) => [
+      path.basename(f, '.svg'),
+      fs.readFileSync(path.join(dir, f), 'utf8')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/>\s+</g, '><')
+        .trim()
+    ])
+  );
+  return `(window.Blockr = window.Blockr || {}).icons = ${JSON.stringify(icons)};`;
+};
+
 /* Objects built inside the window's realm have that realm's prototypes, which
  * `deepStrictEqual` counts as a difference. Serializing is also the honest
  * comparison: JSON is what Shiny puts on the wire. */
@@ -98,6 +118,7 @@ function mount(name, opts = {}) {
   `);
 
   const blockSrc = read(`${name}-block.js`);
+  win.eval(iconsScript());
   for (const dep of scriptsFor(blockSrc)) win.eval(read(dep));
   win.eval(blockSrc);
 
