@@ -296,12 +296,10 @@
       // with_ties (min/max) — boolean data option -> checkbox
       this._withTiesField = document.createElement('div');
       this._withTiesField.className = 'blockr-settings__field';
-      this._withTiesBox = Blockr.checkbox('Keep ties', this.with_ties, (checked) => {
+      this._withTiesBox = Blockr.checkbox('Keep all tied rows', this.with_ties, (checked) => {
         this.with_ties = checked;
         this._submit();
       });
-      this._withTiesBox.input.title =
-        'Whether rows with equal values are all included or cut off at n';
       this._withTiesField.appendChild(this._withTiesBox.el);
       grid.appendChild(this._withTiesField);
 
@@ -312,8 +310,6 @@
         this.replace = checked;
         this._submit();
       });
-      this._replaceBox.input.title =
-        'Whether sampled rows can be picked more than once';
       this._replaceField.appendChild(this._replaceBox.el);
       grid.appendChild(this._replaceField);
 

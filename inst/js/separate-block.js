@@ -162,8 +162,6 @@
         this.convert = checked;
         this._submit();
       });
-      this._convertBox.input.title =
-        'Auto-convert split values to numbers or logicals';
       optionBar.appendChild(this._convertBox.el);
 
       this.card.appendChild(optionBar);

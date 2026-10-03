@@ -180,8 +180,6 @@
         this.values_drop_na = checked;
         this._submit();
       });
-      this._dropNaBox.input.title =
-        'Drop rows whose value is NA from the result';
       dropNaField.appendChild(this._dropNaBox.el);
       grid.appendChild(dropNaField);
 

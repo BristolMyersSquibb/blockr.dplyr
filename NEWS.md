@@ -87,15 +87,16 @@
   (optional)` reads `All other columns` (what tidyr actually does), `Group by:`
   reads `None`, `Weight by` reads `Unweighted`, while required pickers keep
   `Select columns…`.
-- Removed the `title` tooltips that only restated their checkbox label
-  (`Exclude selected`, `Remove source column`, `Remove source columns`).
+- Checkboxes have no tooltip, as the design system specifies: the label names
+  the "on" state, and a tooltip would only say it again. In `slice`, "Keep
+  ties" said too little on its own and now reads "Keep all tied rows".
 - A block no longer attaches `blockr.ui::theme_dep()`. The tokens its CSS
   reads come with `blockr.ui::controls_dep()`; the theme layer, which
   restyles the rest of the page, is the app's to attach (blockr.dock's board
   page does).
-- The remaining native `title` tooltips (Add R expression, Operator, the
-  keep-order checkbox) use blockr.ui's tooltip card. The ↵ button has none:
-  it shows its key, and screen readers read "Apply (Enter)".
+- The remaining native `title` tooltips (Add R expression, Operator) use
+  blockr.ui's tooltip card. The ↵ button has none: it shows its key, and
+  screen readers read "Apply (Enter)".
 
 # blockr.dplyr 0.2.0
 
