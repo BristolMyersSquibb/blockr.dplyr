@@ -132,8 +132,8 @@ deserialization path above, and the handful of R scripts that called
 strictly flat avoids re-polluting the assistant surface.
 
 Downstream callers therefore migrate from `new_*_block(state = list(...))` to
-flat args. Done so far: blockr.insurance examples; CEDX (`blockr.cdex`
-`cedx_board.R` + the cedx-explorer demos) — migrating **only** the 13
+flat args. Done so far: blockr.insurance examples; a clinical demo app (its
+board script and demos) — migrating **only** the 13
 blockr.dplyr constructors; blockr.viz/blockr.extra blocks
 (`new_summary_table_block`, `new_value_filter_block`, …) keep their `state=`
 API. Other packages (blockr.ai, blockr.csr, blockr.admiral, …) migrate as
