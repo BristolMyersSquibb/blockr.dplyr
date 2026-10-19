@@ -74,8 +74,8 @@ test('the host gets IR when the user picks a value', () => {
 
 test('removing an expression row is submitted', () => {
   const b = mount('filter');
-  b.block.setState({ conditions: [{ type: 'expr', expr: 'x > 1' }], operator: '&' });
-  b.el.querySelector('.blockr-row-remove').click();
-  assert.deepStrictEqual(b.submits[b.submits.length - 1], { pred: [], preserve_order: false });
+  b.block.setState({ conditions: [{ type: 'expr', expr: 'x > 1' }, { type: 'expr', expr: 'y > 2' }], operator: '&' });
+  b.el.querySelectorAll('.blockr-row-remove')[1].click();
+  assert.deepStrictEqual(b.submits[b.submits.length - 1], { pred: [{ code: 'x > 1', lang: 'r' }], preserve_order: false });
   b.close();
 });
