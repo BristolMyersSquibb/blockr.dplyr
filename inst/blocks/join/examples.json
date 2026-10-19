@@ -4,48 +4,80 @@
       "type": "left_join",
       "keys": [
         {
-          "xCol": "id",
+          "xCol": "name",
           "op": "==",
-          "yCol": "id"
+          "yCol": "name"
         }
       ],
       "exprs": [],
       "suffix_x": ".x",
       "suffix_y": ".y"
     },
-    "code": "dplyr::left_join(x, y, by = c(id = \"id\"))"
+    "inputs": {
+      "x": "band_members",
+      "y": "band_instruments"
+    },
+    "code": "dplyr::left_join(x, y, by = c(name = \"name\"))"
   },
   {
     "state": {
       "type": "inner_join",
       "keys": [
         {
-          "xCol": "id",
+          "xCol": "name",
           "op": "==",
-          "yCol": "key"
-        },
-        {
-          "xCol": "t",
-          "op": ">=",
-          "yCol": "start"
+          "yCol": "artist"
         }
       ],
       "exprs": [],
       "suffix_x": ".x",
       "suffix_y": ".y"
     },
-    "code": "dplyr::inner_join(x, y, by = dplyr::join_by(id == key, t >= start))"
+    "inputs": {
+      "x": "band_members",
+      "y": "band_instruments2"
+    },
+    "code": "dplyr::inner_join(x, y, by = c(name = \"artist\"))"
   },
   {
     "state": {
       "type": "anti_join",
       "keys": [],
       "exprs": [
-        "id == key"
+        "name == artist"
       ],
+      "suffix_x": ".x",
+      "suffix_y": ".y"
+    },
+    "inputs": {
+      "x": "band_members",
+      "y": "band_instruments2"
+    },
+    "code": "dplyr::anti_join(x, y, by = dplyr::join_by(name == artist))"
+  },
+  {
+    "state": {
+      "type": "inner_join",
+      "keys": [
+        {
+          "xCol": "cyl",
+          "op": "==",
+          "yCol": "cyl"
+        },
+        {
+          "xCol": "mpg",
+          "op": ">=",
+          "yCol": "mpg"
+        }
+      ],
+      "exprs": [],
       "suffix_x": "_l",
       "suffix_y": "_r"
     },
-    "code": "dplyr::anti_join(x, y, by = dplyr::join_by(id == key))"
+    "inputs": {
+      "x": "mtcars",
+      "y": "mtcars"
+    },
+    "code": "dplyr::inner_join(x, y, by = dplyr::join_by(cyl == cyl, mpg >= mpg), suffix = c(\"_l\", \"_r\"))"
   }
 ]

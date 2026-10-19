@@ -9,6 +9,14 @@ block_dirs <- list.dirs(
   full.names = FALSE, recursive = FALSE
 )
 
+# An example's input, by the name of a data set in dplyr or datasets.
+example_data <- function(name) {
+  tryCatch(
+    getExportedValue("dplyr", name),
+    error = function(e) getExportedValue("datasets", name)
+  )
+}
+
 block_ctor <- function(name) {
   get(paste0("new_", gsub("-", "_", name), "_block"),
       envir = asNamespace("blockr.dplyr"))
@@ -60,6 +68,9 @@ for (name in block_dirs) {
               deparse1(e, width.cutoff = 500L),
               deparse1(str2lang(ex$code), width.cutoff = 500L)
             )
+            # and the code runs on the example's inputs
+            env <- list2env(lapply(ex$inputs, example_data))
+            expect_s3_class(eval(str2lang(ex$code), env), "data.frame")
           }
         )
       }

@@ -5,6 +5,9 @@
       "operator": "&",
       "preserve_order": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "data"
   },
   {
@@ -24,6 +27,9 @@
       "operator": "&",
       "preserve_order": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "dplyr::filter(data, Species %in% c(\"setosa\", \"virginica\"))"
   },
   {
@@ -41,6 +47,9 @@
       ],
       "operator": "&",
       "preserve_order": false
+    },
+    "inputs": {
+      "data": "iris"
     },
     "code": "dplyr::filter(data, !Species %in% \"setosa\")"
   },
@@ -61,6 +70,9 @@
       "operator": "|",
       "preserve_order": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "dplyr::filter(data, Sepal.Length >= 5 | Petal.Width < 1)"
   },
   {
@@ -79,6 +91,9 @@
       ],
       "operator": "&",
       "preserve_order": true
+    },
+    "inputs": {
+      "data": "iris"
     },
     "code": "dplyr::arrange(dplyr::filter(data, Species %in% c(\"virginica\", \"setosa\")), match(Species, c(\"virginica\", \"setosa\")))"
   }

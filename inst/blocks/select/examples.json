@@ -5,6 +5,9 @@
       "exclude": false,
       "distinct": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "dplyr::select(data, dplyr::everything())"
   },
   {
@@ -16,6 +19,9 @@
       "exclude": false,
       "distinct": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "dplyr::select(data, Species, Sepal.Length)"
   },
   {
@@ -26,6 +32,9 @@
       "exclude": true,
       "distinct": false
     },
+    "inputs": {
+      "data": "iris"
+    },
     "code": "dplyr::select(data, -c(Species))"
   },
   {
@@ -35,6 +44,9 @@
       ],
       "exclude": false,
       "distinct": true
+    },
+    "inputs": {
+      "data": "iris"
     },
     "code": "dplyr::distinct(dplyr::select(data, Species))"
   }
