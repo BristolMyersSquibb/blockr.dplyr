@@ -313,7 +313,8 @@ interface BlockrColumn {
 }
 
 interface BlockrContext {
-  inputs: Record<string, { columns: BlockrColumn[] } | null>;
+  inputs: Record<string, { columns?: BlockrColumn[]; rev: number | string } | null>;
+  options: Record<string, unknown>;
 }
 
 interface BlockrHost<S> {
