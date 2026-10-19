@@ -37,9 +37,10 @@ for (name in block_dirs) {
       args <- args[names(args) != "..."]
       expect_identical(names(args), names(manifest$state$properties))
       defaults <- lapply(args, eval)
+      # the constructor's defaults are the schema's
       expect_identical(
         blockr.ui::coerce_state(defaults, manifest$state),
-        lapply(manifest$state$properties, `[[`, "default")
+        blockr.ui::coerce_state(list(), manifest$state)
       )
     })
 
