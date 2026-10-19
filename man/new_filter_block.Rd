@@ -4,43 +4,35 @@
 \alias{new_filter_block}
 \title{Filter block (JS-driven)}
 \usage{
-new_filter_block(
-  conditions = list(),
-  operator = "&",
-  preserve_order = FALSE,
-  ...
-)
+new_filter_block(pred = list(), preserve_order = FALSE, ...)
 }
 \arguments{
-\item{conditions}{Array of condition objects combined by \code{operator}.
-Condition types:
-\itemize{
-\item \code{values}: column, values (character vector), mode ("include"/"exclude")
-\item \code{numeric}: column, op (">", ">=", "<", "<=", "is", "is not"), value
-\item \code{expr}: expr (R expression as string)
-}}
+\item{pred}{A list of IR predicates, ANDed. A predicate is an IR
+expression: \code{list(call = "\%in\%", args = list(list(col = "Species"), list(list = list("setosa"))))}, or R code as typed,
+\code{list(code = "Sepal.Length > 5", lang = "r")}.}
 
-\item{operator}{How conditions are combined: \code{"&"} (all) or \code{"|"} (any).}
+\item{preserve_order}{If \code{TRUE}, rows are returned in the order their
+values were picked rather than the original data order.}
 
-\item{preserve_order}{If \code{TRUE}, rows are returned in the order matched by
-the conditions rather than the original data order.}
-
-\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}}
+\item{...}{Additional arguments forwarded to \code{\link[blockr.core:new_block]{blockr.core::new_block()}}.
+\code{conditions} and \code{operator}, the arguments of earlier versions, are read
+and turned into \code{pred}, so saved boards keep working.}
 }
 \description{
-Unified filter block combining simple mode (column + operator + values)
-and expression mode (free R code) in a single JS-driven UI.
+Keeps the rows for which its predicates are \code{TRUE}. The UI offers value
+pickers, comparisons and free R expressions; its state is the filter step
+of the block IR (see \code{\link[blockr.ui:ir_to_expr]{blockr.ui::ir_to_expr()}}), which R translates to
+\code{dplyr::filter()} and blockx to SQL.
 }
 \examples{
 if (interactive()) {
   library(blockr.core)
   serve(
     new_filter_block(
-      conditions = list(
-        list(type = "values", column = "Species",
-             values = list("setosa"), mode = "include")
-      ),
-      operator = "&"
+      pred = list(list(
+        call = "\%in\%",
+        args = list(list(col = "Species"), list(list = list("setosa")))
+      ))
     ),
     data = list(data = iris)
   )
