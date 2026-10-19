@@ -71,3 +71,11 @@ test('the host gets IR when the user picks a value', () => {
   assert.deepStrictEqual(last.pred, [{ call: '%in%', args: [{ col: 'Species' }, { list: ['setosa'] }] }]);
   b.close();
 });
+
+test('removing an expression row is submitted', () => {
+  const b = mount('filter');
+  b.block.setState({ conditions: [{ type: 'expr', expr: 'x > 1' }], operator: '&' });
+  b.el.querySelector('.blockr-row-remove').click();
+  assert.deepStrictEqual(b.submits[b.submits.length - 1], { pred: [], preserve_order: false });
+  b.close();
+});

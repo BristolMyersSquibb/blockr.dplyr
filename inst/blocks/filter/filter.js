@@ -486,7 +486,10 @@
       rmBtn.className = 'blockr-row-remove';
       rmBtn.type = 'button';
       rmBtn.innerHTML = Blockr.icons.x;
-      rmBtn.addEventListener('click', () => this._removeCondition(id));
+      rmBtn.addEventListener('click', () => {
+        this._removeCondition(id);
+        this._submit();
+      });
       row.appendChild(rmBtn);
 
       /** @type {HTMLDivElement} */ (this.listEl).appendChild(row);
