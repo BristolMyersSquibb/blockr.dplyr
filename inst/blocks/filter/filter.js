@@ -1,12 +1,12 @@
 // @ts-check
 /**
- * FilterBlock — JS-driven filter block input binding.
+ * FilterBlock — filter block.
  *
  * Auto-detects column types: multi-select for categorical, comparison for numeric.
  * Discrete controls submit immediately; numeric values and expression mode
  * commit on Enter/blur (§5.5 chip). "Keep pick order" is a checkbox.
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
+ * Depends on: blockr-block.js, blockr-select.js, blockr-input.js
  */
 (() => {
   'use strict';
@@ -80,9 +80,13 @@
    */
 
   class FilterBlock {
-    /** @param {HTMLElement} el */
-    constructor(el) {
+    /**
+     * @param {HTMLElement} el
+     * @param {BlockrHost<BlockrFilterState>} host
+     */
+    constructor(el, host) {
       this.el = el;
+      this.host = host;
       /** @type {FilterCondRow[]} */
       this.conditions = [];
       /** @type {'&' | '|'} */
@@ -94,9 +98,6 @@
       this.columnNames = [];
       /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
-      /** @type {((value: boolean) => void) | null} */
-      this._callback = null;
-      this._submitted = false;
       this.preserveOrder = false;
       /** @type {BlockrCheckboxHandle | null} */
       this._preserveBox = null;
@@ -587,13 +588,7 @@
     }
 
     _submit() {
-      this._submitted = true;
-      this._callback?.(true);
-    }
-
-    getValue() {
-      if (!this._submitted) return null;
-      return this._compose();
+      this.host.submit(this._compose());
     }
 
     /**
@@ -658,7 +653,7 @@
       this._updateUI();
     }
 
-    /** @param {BlockrColumnSummary[] | null | undefined} meta */
+    /** @param {BlockrColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -711,26 +706,36 @@
       }
       if (this._pendingValueRequests.has(colName)) return;
       this._pendingValueRequests.add(colName);
-      Shiny.setInputValue(
-        this.el.id + '_request_values',
-        colName,
-        { priority: 'event' }
-      );
+      this._askColumnValues(colName, '');
     }
 
     /**
-     * Ask R for the value page matching `query` (server-search mode on
-     * high-cardinality columns). Responses arrive in order via the
-     * filter-column-values message, so the last one wins.
+     * Ask the host for the value page matching `query` (server-search mode
+     * on high-cardinality columns). Answers arrive in order, so the last one
+     * wins.
      * @param {string} colName
      * @param {string} query
      */
     _searchColumnValues(colName, query) {
-      Shiny.setInputValue(
-        this.el.id + '_search_values',
-        { column: colName, query: query },
-        { priority: 'event' }
-      );
+      this._askColumnValues(colName, query);
+    }
+
+    /**
+     * @param {string} colName
+     * @param {string} query
+     */
+    _askColumnValues(colName, query) {
+      this.host.request('column_values', { input: 'data', column: colName, query })
+        .then(
+          (meta) => this.receiveColumnValues(meta),
+          // a failed request leaves the list loading: stop the spinner
+          () => {
+            this._pendingValueRequests.delete(colName);
+            for (const c of this.conditions) {
+              if (c.column === colName) c._valueSelectize?.setLoading(false);
+            }
+          }
+        );
     }
 
     /** @param {BlockrColumnValues} colMeta */
@@ -761,15 +766,17 @@
     }
   }
 
-  // --- Shiny wiring (binding + message handlers via shared factory) ---
-
-  Blockr.registerBlock({
+  Blockr.defineBlock({
     name: 'filter',
-    Block: FilterBlock,
-    messages: {
-      'filter-columns': (block, msg) => block.updateColumns(msg.columns),
-      'filter-column-values': (block, msg) => block.receiveColumnValues(msg.column),
-      'filter-block-update': (block, msg) => block.setState(msg.state)
+    mount(el, host) {
+      const block = new FilterBlock(el, host);
+      block.setState(host.state);
+      block.updateColumns(host.context.inputs.data?.columns);
+      return {
+        block, // for tests
+        setState: (state) => block.setState(state),
+        setContext: (context) => block.updateColumns(context.inputs.data?.columns)
+      };
     }
   });
 })();

@@ -69,7 +69,7 @@ test_that("the announce re-sends summarize's state, columns and functions", {
   })
 })
 
-test_that("the announce re-sends state while the upstream is still unset", {
+test_that("ready gets the state while the upstream is still unset", {
   blk <- new_filter_block(
     conditions = list(list(type = "expr", expr = "mpg > 20"))
   )
@@ -79,18 +79,21 @@ test_that("the announce re-sends state while the upstream is still unset", {
     args = list(data = reactive(req(FALSE))),
     {
       session$flushReact()
-      sent <- capture_messages(session)
+      sent <- list()
+      root <- session$rootScope()
+      root$sendInputMessage <- function(inputId, message) {
+        sent[[length(sent) + 1L]] <<- message
+        invisible(NULL)
+      }
 
-      session$setInputs(filter_input_ready = 1)
+      session$setInputs(block = list(messages = list(list(type = "ready"))))
       session$flushReact()
 
-      # No columns to send, but the state must still get through: the state
-      # push does not touch `data()`, so an unset upstream cannot leave the
-      # block blank.
-      expect_equal(types_of(sent), "filter-block-update")
-
-      state <- sent$msgs[[1L]]$message
-      expect_equal(state$state$conditions[[1L]]$expr, "mpg > 20")
+      # No columns yet, but the state gets through: the block is mounted
+      # with an input that has no data.
+      expect_length(sent, 1L)
+      expect_equal(sent[[1L]]$state$conditions[[1L]]$expr, "mpg > 20")
+      expect_null(sent[[1L]]$context$inputs$data)
     }
   )
 })

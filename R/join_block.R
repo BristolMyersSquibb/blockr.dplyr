@@ -39,67 +39,18 @@ new_join_block <- function(
   suffix_y = ".y",
   ...
 ) {
-  state <- list(type = type, keys = keys, exprs = exprs,
-                suffix_x = suffix_x, suffix_y = suffix_y)
-  new_transform_block(
-    # -- server ---------------------------------------------------------------
-    function(id, x, y) {
-      moduleServer(id, function(input, output, session) {
-        ns <- session$ns
-
-        send_columns <- function() {
-          tryCatch(
-            session$sendCustomMessage(
-              "join-columns",
-              list(
-                id = ns("join_input"),
-                xColumns = build_column_picker_meta(x()),
-                yColumns = build_column_picker_meta(y())
-              )
-            ),
-            error = function(e) NULL
-          )
-        }
-
-        # Send column summary (name + label + type) when either input changes.
-        # Lower priority than the state push in `js_block_state()`: join
-        # auto-submits once it has columns, so a restored block must have
-        # been told what it is first (see `new_js_transform_block()`).
-        observeEvent(list(x(), y()), send_columns(), priority = -10L)
-        # ...and when a client announces itself, which is how a block on a
-        # deferred dock panel gets the push that was dropped at boot.
-        observeEvent(
-          input[[js_block_ready_name("join_input")]],
-          send_columns(),
-          priority = -10L
-        )
-
-        sync <- js_block_state(input, session, "join", "join_input", state)
-
-        list(
-          expr = reactive({
-            s <- sync$state()
-            make_join_expr(
-              s$type %||% "left_join",
-              s$keys %||% list(),
-              s$exprs %||% list(),
-              s$suffix_x %||% ".x",
-              s$suffix_y %||% ".y"
-            )
-          }),
-          state = sync$fields
-        )
-      })
+  blockr.ui::new_js_block(
+    "join",
+    state = list(type = type, keys = keys, exprs = exprs,
+                 suffix_x = suffix_x, suffix_y = suffix_y),
+    expr = function(s) {
+      make_join_expr(s$type, s$keys, s$exprs, s$suffix_x, s$suffix_y)
     },
-    # -- ui -------------------------------------------------------------------
-    js_block_ui("join", c("select", "input")),
+    class = "join_block",
+    pkg = "blockr.dplyr",
     dat_valid = function(x, y) {
       stopifnot(is.data.frame(x), is.data.frame(y))
     },
-    class = "join_block",
-    expr_type = "bquoted",
-    external_ctrl = TRUE,
-    allow_empty_state = TRUE,
     ...
   )
 }

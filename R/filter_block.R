@@ -39,81 +39,20 @@ new_filter_block <- function(
   preserve_order = FALSE,
   ...
 ) {
-  new_js_transform_block(
-    class = "filter_block",
-    name = "filter",
-    record_fields = "conditions",
+  blockr.ui::new_js_block(
+    "filter",
     state = list(
       conditions = conditions,
       operator = operator,
       preserve_order = preserve_order
     ),
-    expr_fn = function(s) {
-      make_filter_expr(
-        s$conditions %||% list(),
-        s$operator %||% "&",
-        isTRUE(s$preserve_order)
-      )
+    expr = function(s) {
+      make_filter_expr(s$conditions, s$operator, s$preserve_order)
     },
-    # Lightweight summary (names + types); unique values load on demand
-    columns_meta = build_column_summary,
-    setup = function(input, session, ns, data, input_name) {
-      # Columns with more distinct values than this switch to server-side
-      # search: the dropdown gets the first `limit` values plus a total
-      # count, and typing re-queries R instead of filtering client-side.
-      limit <- blockr_option("dplyr.max_filter_values", 1000)
-
-      send_values <- function(col, query = "") {
-        if (!is.null(col) && col %in% colnames(data())) {
-          meta <- build_column_values(data(), col, limit = limit,
-                                      query = query)
-          session$sendCustomMessage(
-            "filter-column-values",
-            list(id = ns(input_name), column = meta)
-          )
-        }
-      }
-
-      # On-demand: JS requests unique values for a specific column
-      observeEvent(input[[paste0(input_name, "_request_values")]], {
-        send_values(input[[paste0(input_name, "_request_values")]])
-      })
-
-      # Server-side search on truncated (high-cardinality) columns
-      observeEvent(input[[paste0(input_name, "_search_values")]], {
-        req_ <- input[[paste0(input_name, "_search_values")]]
-        send_values(req_$column, req_$query %||% "")
-      })
-    },
-    normalize_state = normalize_filter_state_for_js,
-    shared_deps = c("select", "input"),
+    class = "filter_block",
+    pkg = "blockr.dplyr",
     ...
   )
-}
-
-#' Normalize filter state before sending to JS
-#'
-#' Shiny's `sendCustomMessage` serializes with `auto_unbox = TRUE`, which
-#' flattens length-1 character vectors to JSON scalars. The JS filter block
-#' then treats a scalar `values` as an iterable string and renders one chip
-#' per character. Wrap `values` in `as.list()` so JSON always emits an array,
-#' regardless of length.
-#' @noRd
-normalize_filter_state_for_js <- function(state) {
-  # Be defensive about shape: this runs in the R->JS sync observer (js-block.R),
-  # which is OUTSIDE blockr.core's per-block error boundary, so throwing here
-  # crashes the whole Shiny session rather than just erroring the block. A
-  # malformed `conditions` (e.g. a list of scalars instead of {column,op,values}
-  # records, from a bad restore or an LLM-built block) must degrade, not crash.
-  if (is.null(state) || !is.list(state)) return(state)
-  conds <- state$conditions %||% list()
-  if (!is.list(conds)) return(state)
-  state$conditions <- lapply(conds, function(cond) {
-    if (!is.list(cond)) return(cond)
-    if (!is.null(cond$values)) cond$values <- as.list(cond$values)
-    cond
-  })
-  state
 }
 
 #' HTML dependency for filter block JS + CSS
@@ -125,5 +64,15 @@ normalize_filter_state_for_js <- function(state) {
 #' @keywords internal
 #' @export
 filter_block_dep <- function() {
-  js_block_dep("filter")
+  htmltools::tagList(
+    blockr.ui::controls_dep(),
+    blockr.ui::js_block_dep(),
+    htmltools::htmlDependency(
+      name = "blockr.dplyr-filter-block",
+      version = utils::packageVersion("blockr.dplyr"),
+      src = system.file("blocks", "filter", package = "blockr.dplyr"),
+      script = "filter.js",
+      stylesheet = "filter.css"
+    )
+  )
 }

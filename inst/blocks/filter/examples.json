@@ -1,0 +1,85 @@
+[
+  {
+    "state": {
+      "conditions": [],
+      "operator": "&",
+      "preserve_order": false
+    },
+    "code": "data"
+  },
+  {
+    "state": {
+      "conditions": [
+        {
+          "type": "values",
+          "column": "Species",
+          "values": [
+            "setosa",
+            "virginica"
+          ],
+          "mode": "include",
+          "colType": "character"
+        }
+      ],
+      "operator": "&",
+      "preserve_order": false
+    },
+    "code": "dplyr::filter(data, Species %in% c(\"setosa\", \"virginica\"))"
+  },
+  {
+    "state": {
+      "conditions": [
+        {
+          "type": "values",
+          "column": "Species",
+          "values": [
+            "setosa"
+          ],
+          "mode": "exclude",
+          "colType": "character"
+        }
+      ],
+      "operator": "&",
+      "preserve_order": false
+    },
+    "code": "dplyr::filter(data, !Species %in% \"setosa\")"
+  },
+  {
+    "state": {
+      "conditions": [
+        {
+          "type": "numeric",
+          "column": "Sepal.Length",
+          "op": ">=",
+          "value": 5
+        },
+        {
+          "type": "expr",
+          "expr": "Petal.Width < 1"
+        }
+      ],
+      "operator": "|",
+      "preserve_order": false
+    },
+    "code": "dplyr::filter(data, Sepal.Length >= 5 | Petal.Width < 1)"
+  },
+  {
+    "state": {
+      "conditions": [
+        {
+          "type": "values",
+          "column": "Species",
+          "values": [
+            "virginica",
+            "setosa"
+          ],
+          "mode": "include",
+          "colType": "character"
+        }
+      ],
+      "operator": "&",
+      "preserve_order": true
+    },
+    "code": "dplyr::arrange(dplyr::filter(data, Species %in% c(\"virginica\", \"setosa\")), match(Species, c(\"virginica\", \"setosa\")))"
+  }
+]

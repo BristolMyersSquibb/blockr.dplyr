@@ -2,6 +2,17 @@
 
 ## Features
 
+- **select, filter and join are built on `blockr.ui::new_js_block()`**, the
+  block contract shared with blockx. Each lives in `inst/blocks/<name>/`:
+  `block.json` declares the state schema, `examples.json` pairs states with
+  the dplyr code they give (checked by `test-block-contract.R`), and the JS
+  defines the block with `Blockr.defineBlock()` and calls no Shiny. The
+  state and saved boards are unchanged. filter asks for column values with
+  the host request `column_values`; its cap is now the option
+  `blockr.max_column_values` (was `blockr.dplyr.max_filter_values`).
+  blockr.dm's dm filter block still speaks the old protocol to
+  `filter_block_dep()` and has to move too.
+
 - **`maxTagChars` shortens a long tag from the middle.** "Xanomeline High Dose"
   and "Xanomeline Low Dose" both end-ellipsize to "Xanomelin…", so the end
   ellipsis CSS gives you is the wrong cut for these values; middle truncation

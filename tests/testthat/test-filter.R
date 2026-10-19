@@ -282,15 +282,28 @@ test_that("build_column_values includes label", {
 # LLM-built block. The R->JS sync observer runs outside blockr.core's
 # per-block error boundary, so a throw there is session-fatal.
 
-test_that("normalize_filter_state_for_js tolerates malformed conditions", {
+test_that("the filter schema drops malformed conditions", {
+  schema <- blockr.ui::js_block_manifest("filter", "blockr.dplyr")$state
   state <- list(conditions = list("AGE", "SEX"), operator = "&")
-  expect_no_error(out <- normalize_filter_state_for_js(state))
-  expect_equal(out$conditions, list("AGE", "SEX"))
+  expect_no_error(out <- blockr.ui::coerce_state(state, schema))
+  expect_equal(out$conditions, list())
+  expect_equal(blockr.ui::coerce_state(NULL, schema)$conditions, list())
 })
 
-test_that("normalize_filter_state_for_js tolerates non-list state", {
-  expect_no_error(normalize_filter_state_for_js(NULL))
-  expect_no_error(normalize_filter_state_for_js(list(conditions = "AGE")))
+test_that("the filter schema keeps one picked value an array", {
+  # jsonlite unboxes a length-1 vector, and the client then iterates a string
+  # and renders one chip per character.
+  schema <- blockr.ui::js_block_manifest("filter", "blockr.dplyr")$state
+  out <- blockr.ui::coerce_state(
+    list(conditions = list(list(type = "values", column = "Species",
+                                values = "setosa", mode = "include"))),
+    schema
+  )
+  expect_identical(out$conditions[[1]]$values, list("setosa"))
+  expect_match(
+    as.character(jsonlite::toJSON(out, auto_unbox = TRUE)),
+    '"values":["setosa"]', fixed = TRUE
+  )
 })
 
 test_that("make_filter_expr skips malformed conditions instead of erroring", {

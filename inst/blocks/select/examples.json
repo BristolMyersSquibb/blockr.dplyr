@@ -1,0 +1,41 @@
+[
+  {
+    "state": {
+      "columns": [],
+      "exclude": false,
+      "distinct": false
+    },
+    "code": "dplyr::select(data, dplyr::everything())"
+  },
+  {
+    "state": {
+      "columns": [
+        "Species",
+        "Sepal.Length"
+      ],
+      "exclude": false,
+      "distinct": false
+    },
+    "code": "dplyr::select(data, Species, Sepal.Length)"
+  },
+  {
+    "state": {
+      "columns": [
+        "Species"
+      ],
+      "exclude": true,
+      "distinct": false
+    },
+    "code": "dplyr::select(data, -c(Species))"
+  },
+  {
+    "state": {
+      "columns": [
+        "Species"
+      ],
+      "exclude": false,
+      "distinct": true
+    },
+    "code": "dplyr::distinct(dplyr::select(data, Species))"
+  }
+]

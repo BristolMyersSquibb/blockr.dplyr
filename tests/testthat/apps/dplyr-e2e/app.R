@@ -13,7 +13,7 @@ single_col_data <- data.frame(x = 1:5)
 
 # High-cardinality data for the server-side value search test: 500 distinct
 # ids against a deliberately low limit so the column goes into search mode.
-options(blockr.dplyr.max_filter_values = 100)
+options(blockr.max_column_values = 100)
 big_id_data <- data.frame(
   id = sprintf("ID%04d", 1:500),
   val = seq_len(500),

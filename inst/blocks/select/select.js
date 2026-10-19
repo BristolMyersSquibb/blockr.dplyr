@@ -1,12 +1,12 @@
 // @ts-check
 /**
- * SelectBlock — JS-driven column select block input binding.
+ * SelectBlock — column select block.
  *
  * Multi-select column picker with reorderable tags, plus exclude and
  * distinct checkboxes (design-system rule: data options are checkboxes).
  * Submits immediately on any change.
  *
- * Depends on: blockr-core.js, blockr-select.js
+ * Depends on: blockr-block.js, blockr-select.js
  */
 (() => {
   'use strict';
@@ -20,9 +20,13 @@
    */
 
   class SelectBlock {
-    /** @param {HTMLElement} el */
-    constructor(el) {
+    /**
+     * @param {HTMLElement} el
+     * @param {BlockrHost<SelectBlockState>} host
+     */
+    constructor(el, host) {
       this.el = el;
+      this.host = host;
       /** @type {string[]} */
       this.columns = [];
       this.exclude = false;
@@ -31,11 +35,8 @@
       this.columnNames = [];
       /** @type {Array<{value: string, label: string}>} */
       this.columnOptions = [];
-      /** @type {Record<string, BlockrColumnSummary>} */
+      /** @type {Record<string, BlockrColumn>} */
       this.columnMeta = {};
-      /** @type {((value: boolean) => void) | null} */
-      this._callback = null;
-      this._submitted = false;
       /** @type {BlockrSelectMultiHandle | null} */
       this._multiSelect = null;
       /** @type {BlockrCheckboxHandle | null} */
@@ -97,13 +98,7 @@
     }
 
     _submit() {
-      this._submitted = true;
-      this._callback?.(true);
-    }
-
-    getValue() {
-      if (!this._submitted) return null;
-      return this._compose();
+      this.host.submit(this._compose());
     }
 
     /**
@@ -127,7 +122,7 @@
       }
     }
 
-    /** @param {BlockrColumnSummary[] | null | undefined} meta */
+    /** @param {BlockrColumn[] | null | undefined} meta */
     updateColumns(meta) {
       this.columnMeta = {};
       this.columnNames = [];
@@ -145,14 +140,17 @@
     }
   }
 
-  // --- Shiny wiring (binding + message handlers via shared factory) ---
-
-  Blockr.registerBlock({
+  Blockr.defineBlock({
     name: 'select',
-    Block: SelectBlock,
-    messages: {
-      'select-columns': (block, msg) => block.updateColumns(msg.columns),
-      'select-block-update': (block, msg) => block.setState(msg.state)
+    mount(el, host) {
+      const block = new SelectBlock(el, host);
+      block.setState(host.state);
+      block.updateColumns(host.context.inputs.data?.columns);
+      return {
+        block, // for tests
+        setState: (state) => block.setState(state),
+        setContext: (context) => block.updateColumns(context.inputs.data?.columns)
+      };
     }
   });
 })();

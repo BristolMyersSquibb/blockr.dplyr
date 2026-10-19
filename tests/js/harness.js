@@ -34,16 +34,25 @@ const JS_DIR = path.join(__dirname, '..', '..', 'inst', 'js');
 /* blockr-ui.js, blockr-select.js and blockr-input.js are blockr.ui's
  * (controls_dep()). The tests read the installed copy, the one R serves;
  * BLOCKR_UI_JS points them at a source tree instead. */
-const UI_FILES = ['blockr-ui.js', 'blockr-select.js', 'blockr-input.js'];
+const UI_FILES = ['blockr-ui.js', 'blockr-select.js', 'blockr-input.js', 'blockr-block.js'];
 let uiDir = process.env.BLOCKR_UI_JS;
 const UI_DIR = () => uiDir || (uiDir = require('node:child_process').execFileSync(
   'Rscript', ['-e', 'cat(system.file("assets", "js", package = "blockr.ui", mustWork = TRUE))'],
   { encoding: 'utf8' }
 ).trim());
 
+const BLOCKS_DIR = path.join(__dirname, '..', '..', 'inst', 'blocks');
+
 const read = (file) => fs.readFileSync(
   path.join(UI_FILES.includes(file) ? UI_DIR() : JS_DIR, file), 'utf8'
 );
+
+/* A block on blockr.ui's contract lives in inst/blocks/<name>/ and defines
+ * itself with Blockr.defineBlock() instead of registering a Shiny binding. */
+const contractBlock = (name) => {
+  const file = path.join(BLOCKS_DIR, name, `${name}.js`);
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+};
 
 /* The small icons, Blockr.icons, are not in blockr-ui.js: controls_dep()
  * writes them into the page's head ahead of it, built from blockr.ui's icon
@@ -99,6 +108,8 @@ const columnMeta = (cols) => cols.map((c) => (
  *          beforeInit?: (send: Function) => void}} [opts]
  */
 function mount(name, opts = {}) {
+  const contract = contractBlock(name);
+  if (contract !== null) return mountContract(name, contract, opts);
   const id = opts.id || `${name}_input`;
   const win = new Window({ url: 'http://localhost/' });
 
@@ -256,6 +267,111 @@ function mount(name, opts = {}) {
   if (opts.columns) api.columns(opts.columns);
   if (opts.state) api.setState(opts.state);
 
+  return api;
+}
+
+/**
+ * The same API for a block defined with Blockr.defineBlock(), driven through
+ * a host the way blockr.ui's Shiny host and blockx drive it. The block is
+ * mounted at once with no state and no data, then gets what the test sends.
+ * `requests` records host.request() calls; `answer(i, result)` resolves one.
+ */
+function mountContract(name, blockSrc, opts) {
+  const win = new Window({ url: 'http://localhost/' });
+  win.eval(iconsScript());
+  for (const dep of ['blockr-ui.js'].concat(scriptsFor(blockSrc))) {
+    if (dep !== 'blockr-core.js') win.eval(read(dep));
+  }
+  win.eval(blockSrc);
+
+  const doc = win.document;
+  doc.body.innerHTML = `<div id="${name}-block" class="blockr-block"></div>`;
+  const el = doc.getElementById(`${name}-block`);
+
+  const def = win.Blockr.blocks[name];
+  if (!def) throw new Error(`${name}.js defined no block "${name}"`);
+
+  const submits = [];
+  const requests = [];
+  const host = {
+    state: null,
+    context: { inputs: {} },
+    submit: (state) => submits.push(json(state)),
+    request: (req, args) => new Promise((resolve, reject) => {
+      requests.push({ name: req, args: json(args), resolve, reject });
+    })
+  };
+  const instance = def.mount(el, host);
+
+  const api = {
+    win,
+    doc,
+    el,
+    submits,
+    requests,
+    get block() {
+      return instance.block;
+    },
+    compose() {
+      return json(instance.block._compose());
+    },
+    value() {
+      return submits.length ? submits[submits.length - 1] : null;
+    },
+    setState(state) {
+      instance.setState(state);
+      return api;
+    },
+    context(inputs) {
+      instance.setContext({ inputs });
+      return api;
+    },
+    columns(cols) {
+      return api.context({ data: { columns: columnMeta(cols) } });
+    },
+    joinColumns(xCols, yCols) {
+      return api.context({
+        x: { columns: columnMeta(xCols) },
+        y: { columns: columnMeta(yCols) }
+      });
+    },
+    answer(i, result) {
+      requests[i].resolve(result);
+      return new Promise((r) => setTimeout(r, 0));
+    },
+    selects() {
+      return Array.from(el.querySelectorAll('.blockr-select'));
+    },
+    faceOf(select) {
+      return select.querySelector('.blockr-select__value').textContent.trim();
+    },
+    faces() {
+      return Array.from(el.querySelectorAll('.blockr-select--single')).map(api.faceOf);
+    },
+    chipsOf(select) {
+      return Array.from(select.querySelectorAll('.blockr-select__tag'))
+        .map((t) => t.getAttribute('data-value'));
+    },
+    pick(select, value) {
+      select.querySelector('.blockr-select__control').click();
+      const dropdown = doc.getElementById(
+        select.querySelector('.blockr-select__search').getAttribute('aria-controls')
+      );
+      const opt = dropdown.querySelector(`.blockr-select__option[data-value="${value}"]`);
+      if (!opt) throw new Error(`"${value}" is not offered`);
+      opt.click();
+      return api;
+    },
+    pickNth(n, value) {
+      return api.pick(api.selects()[n], value);
+    },
+    close() {
+      win.close();
+    }
+  };
+
+  if (opts.columns) api.columns(opts.columns);
+  if (opts.state) api.setState(opts.state);
   return api;
 }
 

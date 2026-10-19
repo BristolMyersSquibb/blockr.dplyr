@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * JoinBlock — JS-driven join block input binding.
+ * JoinBlock — join block.
  *
  * Binary block: takes x and y data inputs.
  * Key rows: [x col select] [operator pill] [y col select] [remove]
@@ -9,7 +9,7 @@
  * Settings band (in-flow, gear-toggled): suffix X and Y text inputs
  * (commit on Enter/blur, §5.5 chip)
  *
- * Depends on: blockr-core.js, blockr-select.js, blockr-input.js
+ * Depends on: blockr-block.js, blockr-select.js, blockr-input.js
  */
 
 /**
@@ -93,8 +93,13 @@
 
   class JoinBlock {
     /** @param {HTMLElement} el */
-    constructor(el) {
+    /**
+     * @param {HTMLElement} el
+     * @param {BlockrHost<JoinState>} host
+     */
+    constructor(el, host) {
       this.el = el;
+      this.host = host;
       /** @type {JoinKeyRow[]} */
       this.keys = [];
       /** @type {JoinExprRow[]} */
@@ -118,9 +123,6 @@
       this.joinType = JOIN_TYPES[0].value;
       this.suffixX = '.x';
       this.suffixY = '.y';
-      /** @type {((value: boolean) => void) | null} */
-      this._callback = null;
-      this._submitted = false;
       /** @type {BlockrTextCommitHandle | null} */
       this._suffixXCommit = null;
       /** @type {BlockrTextCommitHandle | null} */
@@ -133,8 +135,7 @@
     }
 
     _submit() {
-      this._submitted = true;
-      this._callback?.(true);
+      this.host.submit(this._compose());
     }
 
     _buildDOM() {
@@ -555,12 +556,6 @@
       };
     }
 
-    /** @returns {JoinState | null} */
-    getValue() {
-      if (!this._submitted) return null;
-      return this._compose();
-    }
-
     /**
      * @param {Partial<JoinState> | null | undefined} state
      * @param {boolean} [silent] Unused here; kept for setState() symmetry.
@@ -682,14 +677,25 @@
     }
   }
 
-  // --- Shiny wiring (binding + message handlers via shared factory) ---
+  // The column lists go in once both inputs have data.
+  /** @param {JoinBlock} block @param {BlockrContext} context */
+  const setContext = (block, context) => {
+    const x = context.inputs.x;
+    const y = context.inputs.y;
+    if (x && y) block.updateColumns(x.columns, y.columns);
+  };
 
-  Blockr.registerBlock({
+  Blockr.defineBlock({
     name: 'join',
-    Block: JoinBlock,
-    messages: {
-      'join-columns': (block, msg) => block.updateColumns(msg.xColumns, msg.yColumns),
-      'join-block-update': (block, msg) => block.setState(msg.state)
+    mount(el, host) {
+      const block = new JoinBlock(el, host);
+      block.setState(host.state);
+      setContext(block, host.context);
+      return {
+        block, // for tests
+        setState: (state) => block.setState(state),
+        setContext: (context) => setContext(block, context)
+      };
     }
   });
 })();

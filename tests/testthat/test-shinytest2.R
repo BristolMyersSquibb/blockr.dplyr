@@ -7,15 +7,19 @@ library(shinytest2)
 #' Push state into a custom JS input binding via run_js().
 #' shinytest2's set_inputs() can't find blockr custom bindings,
 #' so we drive setState() + _submit() on the JS block instance directly.
+#' A block on blockr.ui's new_js_block() sits on `<ns>-block`, and its object
+#' on the element's mounted instance.
 set_block_state <- function(app, block_id, input_suffix, state) {
   input_id <- paste0("board-block_", block_id, "-expr-", input_suffix)
+  contract_id <- paste0("board-block_", block_id, "-expr-block")
   state_json <- jsonlite::toJSON(state, auto_unbox = TRUE, null = "null")
 
   app$run_js(sprintf(
-    "var el = document.getElementById('%s');
-     el._block.setState(%s);
-     el._block._submit();",
-    input_id, state_json
+    "var el = document.getElementById('%s') || document.getElementById('%s');
+     var b = el._block || el._blockr.instance.block;
+     b.setState(%s);
+     b._submit();",
+    input_id, contract_id, state_json
   ))
   app$wait_for_idle()
 }
@@ -136,17 +140,17 @@ test_that("filter: values survive a subsequent updateColumns (restore race)", {
   ))
   baseline <- get_block_result(app, "filter")
 
-  fid <- "board-block_filter-expr-filter_input"
+  fid <- "board-block_filter-expr-block"
   app$run_js(sprintf(
     "(function(){
        var el = document.getElementById('%s');
-       el._block.updateColumns(Object.values(el._block.columnMeta));
-       el._block._submit();
+       el._blockr.instance.block.updateColumns(Object.values(el._blockr.instance.block.columnMeta));
+       el._blockr.instance.block._submit();
      })();", fid))
   app$wait_for_idle()
 
   after_json <- app$get_js(sprintf(
-    "JSON.stringify(document.getElementById('%s')._block.conditions
+    "JSON.stringify(document.getElementById('%s')._blockr.instance.block.conditions
        .map(function(c){
          return {values: c.values, numValue: c.numValue, op: c.op};
        }))", fid))
@@ -705,9 +709,9 @@ test_that("auto-unbox: single-column data has correct JS columnNames", {
   app$wait_for_idle()
   col_names_json <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_select_single-expr-select_input');
-       if (!el || !el._block) return null;
-       return JSON.stringify(el._block.columnNames);
+       var el = document.getElementById('board-block_select_single-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return null;
+       return JSON.stringify(el._blockr.instance.block.columnNames);
      })();"
   )
   skip_if(is.null(col_names_json), "select_single block not initialized")
@@ -723,23 +727,23 @@ test_that("auto-unbox: single unique value has correct JS filter meta", {
   # Values load lazily (on dropdown-open); trigger the request directly.
   app$run_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_single-expr-filter_input');
-       if (el && el._block) el._block._requestColumnValues('id');
+       var el = document.getElementById('board-block_filter_single-expr-block');
+       if (el && el._blockr && el._blockr.instance) el._blockr.instance.block._requestColumnValues('id');
      })();"
   )
   app$wait_for_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_single-expr-filter_input');
-       if (!el || !el._block) return true;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_single-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return true;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return !!(meta && meta.values !== undefined);
      })();"
   )
   vals_json <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_single-expr-filter_input');
-       if (!el || !el._block) return null;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_single-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return null;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return JSON.stringify(meta ? meta.values : null);
      })();"
   )
@@ -769,9 +773,9 @@ test_that("lazy values: a values condition filters without fetching the value li
 
   loaded <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_filter-expr-filter_input');
-       if (!el || !el._block) return null;
-       var meta = el._block.columnMeta['gear'];
+       var el = document.getElementById('board-block_filter-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return null;
+       var meta = el._blockr.instance.block.columnMeta['gear'];
        return !!(meta && (meta.uniqueValues !== undefined || meta.values !== undefined));
      })();"
   )
@@ -782,15 +786,15 @@ test_that("lazy values: a values condition filters without fetching the value li
 test_that("lazy values: opening the value dropdown loads values on demand", {
   app$run_js(
     "(function() {
-       var el = document.getElementById('board-block_filter-expr-filter_input');
+       var el = document.getElementById('board-block_filter-expr-block');
        el.querySelector('.blockr-select--multi .blockr-select__control').click();
      })();"
   )
   app$wait_for_js(
     "(function() {
-       var el = document.getElementById('board-block_filter-expr-filter_input');
-       if (!el || !el._block) return true;
-       var meta = el._block.columnMeta['gear'];
+       var el = document.getElementById('board-block_filter-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return true;
+       var meta = el._blockr.instance.block.columnMeta['gear'];
        return !!(meta && meta.uniqueValues !== undefined);
      })();"
   )
@@ -812,7 +816,7 @@ test_that("lazy values: opening the value dropdown loads values on demand", {
 # ===========================================================================
 # SERVER-SIDE VALUE SEARCH (4 tests)
 # ===========================================================================
-# data_big has 500 distinct ids and the app caps blockr.dplyr.max_filter_values
+# data_big has 500 distinct ids and the app caps blockr.max_column_values
 # at 100, so the id column runs in server-search mode: a capped first page
 # plus total count, and typing re-queries R for a matching page.
 
@@ -820,23 +824,23 @@ test_that("server search: first value page is capped and flagged truncated", {
   app$wait_for_idle()
   app$run_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (el && el._block) el._block._requestColumnValues('id');
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (el && el._blockr && el._blockr.instance) el._blockr.instance.block._requestColumnValues('id');
      })();"
   )
   app$wait_for_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (!el || !el._block) return true;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return true;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return !!(meta && meta.values !== undefined);
      })();"
   )
   meta_json <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (!el || !el._block) return null;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return null;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return JSON.stringify({
          n: meta.values.length, total: meta.total, truncated: meta.truncated
        });
@@ -852,23 +856,23 @@ test_that("server search: first value page is capped and flagged truncated", {
 test_that("server search: querying fetches the matching value page", {
   app$run_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (el && el._block) el._block._searchColumnValues('id', '0042');
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (el && el._blockr && el._blockr.instance) el._blockr.instance.block._searchColumnValues('id', '0042');
      })();"
   )
   app$wait_for_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (!el || !el._block) return true;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return true;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return !!(meta && meta.values && meta.values.length === 1);
      })();"
   )
   vals_json <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (!el || !el._block) return null;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return null;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return JSON.stringify({
          values: meta.values, truncated: meta.truncated, total: meta.total
        });
@@ -901,22 +905,22 @@ test_that("server search: reopening the dropdown fetches a fresh page", {
   # column look almost empty).
   app$run_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
+       var el = document.getElementById('board-block_filter_big-expr-block');
        el.querySelector('.blockr-select--multi .blockr-select__control').click();
      })();"
   )
   app$wait_for_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       if (!el || !el._block) return true;
-       var meta = el._block.columnMeta['id'];
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       if (!el || !el._blockr || !el._blockr.instance) return true;
+       var meta = el._blockr.instance.block.columnMeta['id'];
        return !!(meta && meta.values && meta.values.length === 100);
      })();"
   )
   n <- app$get_js(
     "(function() {
-       var el = document.getElementById('board-block_filter_big-expr-filter_input');
-       return el._block.columnMeta['id'].values.length;
+       var el = document.getElementById('board-block_filter_big-expr-block');
+       return el._blockr.instance.block.columnMeta['id'].values.length;
      })();"
   )
   expect_equal(n, 100)

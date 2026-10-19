@@ -31,7 +31,7 @@ record_list_blocks <- list(
     label  = "filter",
     ctor   = function(v) new_filter_block(conditions = v),
     field  = "conditions",
-    ready  = "filter_input_ready",
+    ready  = NULL,
     record = list(column = "mpg", op = ">", values = list("20"))
   ),
   list(
@@ -44,8 +44,11 @@ record_list_blocks <- list(
 )
 
 # The state as the client actually receives it: the "<name>-block-update"
-# custom message, serialised the way Shiny serialises it.
+# custom message, serialised the way Shiny serialises it. A block on
+# blockr.ui's new_js_block() (`ready = NULL`) gets it as the answer to its
+# `ready` message on input `block`.
 sent_state <- function(blk, ready, field) {
+  if (is.null(ready)) return(sent_js_block_state(blk, field))
   out <- NULL
 
   testServer(blk$expr_server, args = list(data = shiny::reactive(mtcars)), {
@@ -69,6 +72,21 @@ sent_state <- function(blk, ready, field) {
     if (length(hit)) out <<- msgs[[hit[[1L]]]]$message$state[[field]]
   })
 
+  out
+}
+
+sent_js_block_state <- function(blk, field) {
+  out <- NULL
+  testServer(blk$expr_server, args = list(data = shiny::reactive(mtcars)), {
+    session$flushReact()
+    root <- session$rootScope()
+    root$sendInputMessage <- function(inputId, message) {
+      if (is.null(out)) out <<- message$state[[field]]
+      invisible(NULL)
+    }
+    session$setInputs(block = list(messages = list(list(type = "ready"))))
+    session$flushReact()
+  })
   out
 }
 

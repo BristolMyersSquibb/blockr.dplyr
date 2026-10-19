@@ -11,5 +11,5 @@
     "lib": ["es2021", "dom", "dom.iterable"],
     "types": []
   },
-  "include": ["inst/js/**/*.js", "inst/js/types.d.ts"]
+  "include": ["inst/js/**/*.js", "inst/blocks/**/*.js", "inst/js/types.d.ts"]
 }

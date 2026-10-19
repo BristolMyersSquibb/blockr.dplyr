@@ -16,7 +16,8 @@ type BlockrColumnType = 'numeric' | 'integer' | 'logical' | 'character';
 interface BlockrColumnSummary {
   name: string;
   type: BlockrColumnType;
-  hasNA: boolean;
+  /** known once the column's values are loaded */
+  hasNA?: boolean;
   /** attr(col, "label") or "" */
   label: string;
 }
@@ -302,6 +303,39 @@ interface BlockrInputStatic {
   create(container: HTMLElement, config: BlockrInputConfig): BlockrInputHandle;
 }
 
+/* --- Block contract (blockr.ui: blockr-block.js, new_js_block()) ---
+   A copy of blockr.ui's declarations, for the blocks in inst/blocks. */
+
+interface BlockrColumn {
+  name: string;
+  type: BlockrColumnType;
+  label: string;
+}
+
+interface BlockrContext {
+  inputs: Record<string, { columns: BlockrColumn[] } | null>;
+}
+
+interface BlockrHost<S> {
+  state: S;
+  context: BlockrContext;
+  submit(state: S): void;
+  request(name: string, args?: object): Promise<any>;
+}
+
+interface BlockrBlockInstance {
+  setState(state: any): void;
+  setContext(context: BlockrContext): void;
+  destroy?(): void;
+  /** the block object, for tests */
+  block?: unknown;
+}
+
+interface BlockrBlockDef {
+  name: string;
+  mount(el: HTMLElement, host: BlockrHost<any>): BlockrBlockInstance;
+}
+
 /* --- Block class / binding contract (JS: Blockr.registerBlock) --- */
 
 /**
@@ -355,6 +389,9 @@ interface BlockrNamespace {
    */
   place(panel: HTMLElement, anchor: HTMLElement, opts?: BlockrPlaceOptions): BlockrPlaceHandle;
   registerBlock(config: BlockrRegisterConfig): void;
+  /** Blocks by name, from Blockr.defineBlock() (blockr.ui's blockr-block.js). */
+  blocks: Record<string, BlockrBlockDef>;
+  defineBlock(def: BlockrBlockDef): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
   _enqueue(id: string, channel: string, fn: (block: BlockrBlock | undefined) => void): void;

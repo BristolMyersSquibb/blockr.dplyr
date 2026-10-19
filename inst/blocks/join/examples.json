@@ -1,0 +1,51 @@
+[
+  {
+    "state": {
+      "type": "left_join",
+      "keys": [
+        {
+          "xCol": "id",
+          "op": "==",
+          "yCol": "id"
+        }
+      ],
+      "exprs": [],
+      "suffix_x": ".x",
+      "suffix_y": ".y"
+    },
+    "code": "dplyr::left_join(x, y, by = c(id = \"id\"))"
+  },
+  {
+    "state": {
+      "type": "inner_join",
+      "keys": [
+        {
+          "xCol": "id",
+          "op": "==",
+          "yCol": "key"
+        },
+        {
+          "xCol": "t",
+          "op": ">=",
+          "yCol": "start"
+        }
+      ],
+      "exprs": [],
+      "suffix_x": ".x",
+      "suffix_y": ".y"
+    },
+    "code": "dplyr::inner_join(x, y, by = dplyr::join_by(id == key, t >= start))"
+  },
+  {
+    "state": {
+      "type": "anti_join",
+      "keys": [],
+      "exprs": [
+        "id == key"
+      ],
+      "suffix_x": "_l",
+      "suffix_y": "_r"
+    },
+    "code": "dplyr::anti_join(x, y, by = dplyr::join_by(id == key))"
+  }
+]
