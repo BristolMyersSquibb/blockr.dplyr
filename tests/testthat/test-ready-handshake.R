@@ -92,7 +92,7 @@ test_that("ready gets the state while the upstream is still unset", {
       # No columns yet, but the state gets through: the block is mounted
       # with an input that has no data.
       expect_length(sent, 1L)
-      expect_equal(sent[[1L]]$state$conditions[[1L]]$expr, "mpg > 20")
+      expect_equal(sent[[1L]]$state$pred[[1L]]$code, "mpg > 20")
       expect_null(sent[[1L]]$context$inputs$data)
     }
   )

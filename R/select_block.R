@@ -35,7 +35,6 @@ new_select_block <- function(
   blockr.ui::new_js_block(
     "select",
     state = list(columns = columns, exclude = exclude, distinct = distinct),
-    expr = function(s) make_select_expr(s$columns, s$exclude, s$distinct),
     class = "select_block",
     pkg = "blockr.dplyr",
     ...

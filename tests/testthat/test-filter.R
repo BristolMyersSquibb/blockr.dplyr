@@ -232,11 +232,10 @@ test_that("filter block state change propagates to expression", {
 
       # Update state via reactiveVal
       state <- session$returned$state
-      state$conditions(list(
-        list(type = "values", column = "Species",
-             values = list("virginica"), mode = "include")
-      ))
-      state$operator("&")
+      state$pred(list(list(
+        call = "%in%",
+        args = list(list(col = "Species"), list(list = list("virginica")))
+      )))
       session$flushReact()
       expr_result2 <- session$returned$expr()
       evaluated2 <- eval_bquoted(expr_result2, iris)
@@ -282,27 +281,22 @@ test_that("build_column_values includes label", {
 # LLM-built block. The R->JS sync observer runs outside blockr.core's
 # per-block error boundary, so a throw there is session-fatal.
 
-test_that("the filter schema drops malformed conditions", {
+test_that("the filter schema keeps IR and drops what is not", {
   schema <- blockr.ui::js_block_manifest("filter", "blockr.dplyr")$state
-  state <- list(conditions = list("AGE", "SEX"), operator = "&")
-  expect_no_error(out <- blockr.ui::coerce_state(state, schema))
-  expect_equal(out$conditions, list())
-  expect_equal(blockr.ui::coerce_state(NULL, schema)$conditions, list())
+  out <- blockr.ui::coerce_state(list(pred = list("AGE", "SEX")), schema)
+  expect_equal(out$pred, list())
+  expect_equal(blockr.ui::coerce_state(NULL, schema)$pred, list())
 })
 
-test_that("the filter schema keeps one picked value an array", {
-  # jsonlite unboxes a length-1 vector, and the client then iterates a string
-  # and renders one chip per character.
-  schema <- blockr.ui::js_block_manifest("filter", "blockr.dplyr")$state
-  out <- blockr.ui::coerce_state(
-    list(conditions = list(list(type = "values", column = "Species",
-                                values = "setosa", mode = "include"))),
-    schema
-  )
-  expect_identical(out$conditions[[1]]$values, list("setosa"))
+test_that("one picked value stays an array", {
+  # jsonlite unboxes a length-1 vector; the client would iterate a string
+  blk <- new_filter_block(pred = list(list(
+    call = "%in%", args = list(list(col = "Species"), list(list = "setosa"))
+  )))
+  state <- blockr.core:::initial_block_state(blk)
   expect_match(
-    as.character(jsonlite::toJSON(out, auto_unbox = TRUE)),
-    '"values":["setosa"]', fixed = TRUE
+    as.character(jsonlite::toJSON(state, auto_unbox = TRUE)),
+    '"list":["setosa"]', fixed = TRUE
   )
 })
 
@@ -326,4 +320,38 @@ test_that("make_filter_expr ignores malformed conds with preserve_order", {
 
 test_that("new_filter_block constructs with malformed conditions", {
   expect_no_error(new_filter_block(conditions = list("AGE", "SEX")))
+})
+
+test_that("old filter states give the same rows through the IR", {
+  # Boards saved with conditions are read into IR (filter_conditions_to_ir);
+  # what ir_to_expr() makes of it must keep the rows make_filter_expr() kept.
+  df <- data.frame(
+    g = c("a", "b", NA, "", "a", "007"),
+    n = c(1, 5, 3, NA, 7, 2),
+    stringsAsFactors = FALSE
+  )
+  cases <- list(
+    list(list(type = "values", column = "g", values = list("a", "<NA>"),
+              mode = "include", colType = "character")),
+    list(list(type = "values", column = "g", values = list("a", "<empty>"),
+              mode = "exclude", colType = "character")),
+    list(list(type = "values", column = "g", values = list("007"),
+              mode = "include", colType = "character")),
+    list(list(type = "values", column = "n", values = list("1", "7"),
+              mode = "include", colType = "numeric")),
+    list(list(type = "numeric", column = "n", op = ">=", value = 3),
+         list(type = "values", column = "g", values = list("a"),
+              mode = "include")),
+    list(list(type = "numeric", column = "n", op = "is not", value = 5)),
+    list(list(type = "expr", expr = "nchar(g) > 1"))
+  )
+  for (conds in cases) {
+    for (op in c("&", "|")) {
+      old <- eval_bquoted(make_filter_expr(conds, op), df)
+      ir <- blockr.ui::ir_to_expr(list(
+        op = "filter", pred = filter_conditions_to_ir(conds, op)
+      ))
+      expect_identical(eval_bquoted(ir, df), old, info = deparse1(ir))
+    }
+  }
 })

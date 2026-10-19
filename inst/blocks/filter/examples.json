@@ -1,8 +1,7 @@
 [
   {
     "state": {
-      "conditions": [],
-      "operator": "&",
+      "pred": [],
       "preserve_order": false
     },
     "inputs": {
@@ -12,19 +11,22 @@
   },
   {
     "state": {
-      "conditions": [
+      "pred": [
         {
-          "type": "values",
-          "column": "Species",
-          "values": [
-            "setosa",
-            "virginica"
-          ],
-          "mode": "include",
-          "colType": "character"
+          "call": "%in%",
+          "args": [
+            {
+              "col": "Species"
+            },
+            {
+              "list": [
+                "setosa",
+                "virginica"
+              ]
+            }
+          ]
         }
       ],
-      "operator": "&",
       "preserve_order": false
     },
     "inputs": {
@@ -34,18 +36,26 @@
   },
   {
     "state": {
-      "conditions": [
+      "pred": [
         {
-          "type": "values",
-          "column": "Species",
-          "values": [
-            "setosa"
-          ],
-          "mode": "exclude",
-          "colType": "character"
+          "call": "!",
+          "args": [
+            {
+              "call": "%in%",
+              "args": [
+                {
+                  "col": "Species"
+                },
+                {
+                  "list": [
+                    "setosa"
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ],
-      "operator": "&",
       "preserve_order": false
     },
     "inputs": {
@@ -55,19 +65,28 @@
   },
   {
     "state": {
-      "conditions": [
+      "pred": [
         {
-          "type": "numeric",
-          "column": "Sepal.Length",
-          "op": ">=",
-          "value": 5
-        },
-        {
-          "type": "expr",
-          "expr": "Petal.Width < 1"
+          "call": "|",
+          "args": [
+            {
+              "call": ">=",
+              "args": [
+                {
+                  "col": "Sepal.Length"
+                },
+                {
+                  "lit": 5
+                }
+              ]
+            },
+            {
+              "code": "Petal.Width < 1",
+              "lang": "r"
+            }
+          ]
         }
       ],
-      "operator": "|",
       "preserve_order": false
     },
     "inputs": {
@@ -77,19 +96,48 @@
   },
   {
     "state": {
-      "conditions": [
+      "pred": [
         {
-          "type": "values",
-          "column": "Species",
-          "values": [
-            "virginica",
-            "setosa"
-          ],
-          "mode": "include",
-          "colType": "character"
+          "call": "!=",
+          "args": [
+            {
+              "col": "Sepal.Length"
+            },
+            {
+              "lit": 5
+            }
+          ]
+        },
+        {
+          "code": "grepl(\"^v\", Species)",
+          "lang": "r"
         }
       ],
-      "operator": "&",
+      "preserve_order": false
+    },
+    "inputs": {
+      "data": "iris"
+    },
+    "code": "dplyr::filter(data, Sepal.Length != 5, grepl(\"^v\", Species))"
+  },
+  {
+    "state": {
+      "pred": [
+        {
+          "call": "%in%",
+          "args": [
+            {
+              "col": "Species"
+            },
+            {
+              "list": [
+                "virginica",
+                "setosa"
+              ]
+            }
+          ]
+        }
+      ],
       "preserve_order": true
     },
     "inputs": {

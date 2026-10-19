@@ -30,7 +30,7 @@ record_list_blocks <- list(
   list(
     label  = "filter",
     ctor   = function(v) new_filter_block(conditions = v),
-    field  = "conditions",
+    field  = "pred",
     ready  = NULL,
     record = list(column = "mpg", op = ">", values = list("20"))
   ),

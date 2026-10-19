@@ -2,6 +2,16 @@
 
 ## Features
 
+- **filter and select keep their state as IR**, the step of the block IR
+  that blockx runs. filter's state is `pred` (a list of IR predicates) and
+  `preserve_order`; select's is unchanged. Neither has an expression builder
+  any more: `blockr.ui::ir_to_expr()` turns the state into the dplyr call.
+  The filter UI reads its rows from the IR and writes them back; expression
+  rows are `{code, lang = "r"}` nodes, kept as typed. Boards saved with
+  `conditions` and `operator` are read into IR, and keep the same rows
+  (`test-filter.R` compares both). blockr.ai writes filter predicates as R
+  code nodes for now.
+
 - **select, filter and join are built on `blockr.ui::new_js_block()`**, the
   block contract shared with blockx. Each lives in `inst/blocks/<name>/`:
   `block.json` declares the state schema, `examples.json` pairs states with

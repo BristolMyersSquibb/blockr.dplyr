@@ -303,6 +303,16 @@ interface BlockrInputStatic {
   create(container: HTMLElement, config: BlockrInputConfig): BlockrInputHandle;
 }
 
+/* --- Block IR (blockr.ui: ir_to_expr(), Blockr.ir) --- */
+
+type BlockrIrLit = number | string | boolean | null;
+type BlockrIrExpr =
+  | { col: string }
+  | { lit: BlockrIrLit }
+  | { list: BlockrIrLit[] }
+  | { call: string; args: BlockrIrExpr[]; named?: Record<string, BlockrIrExpr> }
+  | { code: string; lang: string };
+
 /* --- Block contract (blockr.ui: blockr-block.js, new_js_block()) ---
    A copy of blockr.ui's declarations, for the blocks in inst/blocks. */
 
@@ -334,6 +344,7 @@ interface BlockrBlockInstance {
 
 interface BlockrBlockDef {
   name: string;
+  [extra: string]: unknown;
   mount(el: HTMLElement, host: BlockrHost<any>): BlockrBlockInstance;
 }
 
@@ -393,6 +404,7 @@ interface BlockrNamespace {
   /** Blocks by name, from Blockr.defineBlock() (blockr.ui's blockr-block.js). */
   blocks: Record<string, BlockrBlockDef>;
   defineBlock(def: BlockrBlockDef): void;
+  ir: { toR(e: BlockrIrExpr): string };
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
   _enqueue(id: string, channel: string, fn: (block: BlockrBlock | undefined) => void): void;

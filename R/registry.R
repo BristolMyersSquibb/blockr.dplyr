@@ -173,31 +173,17 @@ register_dplyr_blocks <- function() {
       ),
       # filter_block:
       paste(
-        "Combine conditions with 'operator': '&' (AND, all",
-        "match) / '|' (OR, any match). Condition values are",
-        "always strings, even for numeric columns.",
-        "\n\nIMPORTANT -- include vs exclude: ALWAYS prefer mode",
-        "'include'. Use 'exclude' only when the user says",
-        "'exclude', 'remove', 'drop', or 'not'.",
-        "\n\nIMPORTANT -- equality on a NUMERIC column (e.g.",
-        "Year == 2024) uses type='values' with stringified",
-        "values (values=['2024']), NOT type='numeric'.",
-        "type='numeric' supports only '>', '>=', '<', '<=';",
-        "op='==' renders a blank UI control.",
-        "\n\nChoose the type: 'values' for categorical and",
-        "exact-match numeric; 'numeric' for inequalities; 'expr'",
-        "only when the others can't express the rule. Prefer",
-        "values+mode='exclude' over expr+grepl to drop a known",
-        "set of names (removable chips beat a regex); reach for",
-        "expr only for genuinely substring/regex/multi-column",
-        "rules.",
-        "\n\nIMPORTANT -- one filter_block holds MANY conditions",
-        "(conditions:[c1,c2,c3] + operator). Do NOT chain",
-        "separate filter_blocks to AND predicates on the same",
-        "data; chain only to put a transform (e.g. summarize)",
-        "between filtering steps.",
-        "\n\nR rules (expr type): do NOT prefix base R (grepl,",
-        "is.na, ...); DO prefix dplyr/tidyr. Base pipe |> only."
+        "'pred' is a list of predicates, ANDed, each",
+        "{code: '<R expression>', lang: 'r'}, for example",
+        "{code: 'Species %in% c(\"setosa\")', lang: 'r'}. Use the",
+        "column's own value types (Year == 2024, not '2024').",
+        "Exclude with !( ... ); prefer include unless the user",
+        "says exclude, remove, drop or not. Any of several: one",
+        "predicate joined with |.",
+        "\n\nOne filter_block holds MANY predicates; do not chain",
+        "filter_blocks to AND predicates on the same data.",
+        "\n\nR rules: do NOT prefix base R (grepl, is.na, ...);",
+        "DO prefix dplyr/tidyr. Base pipe |> only."
       ),
       # bind_rows_block:
       "",
@@ -409,46 +395,13 @@ register_dplyr_blocks <- function() {
       ),
       # filter_block:
       new_arg_specs(
-        conditions = new_arg_spec(
+        pred = new_arg_spec(
           paste0(
-            "Array of condition objects. ",
-            "Types: \"values\" (column, ",
-            "values array of strings, mode ",
-            "\"include\"/\"exclude\"), ",
-            "\"numeric\" (column, op like ",
-            "\">\"/\">=\"/\"<\"/\"<=\", ",
-            "value as number), ",
-            "\"expr\" (expr as R ",
-            "expression string)"
+            "Array of predicates, ANDed, each an R expression ",
+            "as {code, lang: \"r\"}"
           ),
-          example = list(
-            list(
-              type = "values",
-              column = "Species",
-              values = list("setosa"),
-              mode = "include"
-            )
-          ),
-          type = arg_array(
-            arg_object(
-              type = arg_enum(c("values", "numeric", "expr")),
-              column = arg_string(required = FALSE),
-              values = arg_array(arg_string(), required = FALSE),
-              mode = arg_enum(c("include", "exclude"), required = FALSE),
-              op = arg_enum(c(">", ">=", "<", "<="), required = FALSE),
-              value = arg_number(required = FALSE),
-              expr = arg_string(required = FALSE)
-            )
-          )
-        ),
-        operator = new_arg_spec(
-          paste0(
-            "How to combine conditions: ",
-            "\"&\" for AND (all match), ",
-            "\"|\" for OR (any match)"
-          ),
-          example = "&",
-          type = arg_enum(c("&", "|"))
+          example = list(list(code = "Species %in% c(\"setosa\")", lang = "r")),
+          type = arg_array(arg_object(code = arg_string(), lang = arg_enum("r")))
         ),
         preserve_order = new_arg_spec(
           paste0(

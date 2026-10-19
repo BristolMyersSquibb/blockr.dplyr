@@ -318,8 +318,10 @@ function mountContract(name, blockSrc, opts) {
     value() {
       return submits.length ? submits[submits.length - 1] : null;
     },
+    // the block's own state shape (filter's rows; the host gives filter IR,
+    // which its mount reads into rows; tests/js/filter-ir.test.js)
     setState(state) {
-      instance.setState(state);
+      instance.block.setState(state);
       return api;
     },
     context(inputs) {

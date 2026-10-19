@@ -8,7 +8,7 @@
     "inputs": {
       "data": "iris"
     },
-    "code": "dplyr::select(data, dplyr::everything())"
+    "code": "data"
   },
   {
     "state": {

@@ -42,13 +42,13 @@ test_that("legacy filter_block payload migrates to typed conditions", {
     )
   )
   state <- restored_state(data)
-  expect_length(state$conditions, 1)
-  cond <- state$conditions[[1]]
-  expect_equal(cond$type, "values")
-  expect_equal(cond$column, "Species")
-  expect_equal(unlist(cond$values), "setosa")
+  # the state is IR now: Species %in% "setosa"
+  expect_length(state$pred, 1)
+  expect_equal(state$pred[[1]]$call, "%in%")
+  expect_equal(state$pred[[1]]$args[[1]]$col, "Species")
+  expect_equal(unlist(state$pred[[1]]$args[[2]]$list), "setosa")
 
-  expr <- make_filter_expr(state$conditions, state$operator)
+  expr <- blockr.ui::ir_to_expr(c(list(op = "filter"), state))
   expect_equal(nrow(eval_bquoted(expr, iris)), 50)
 })
 
@@ -61,8 +61,8 @@ test_that("legacy filter_expr_block (removed ctor) migrates to expr condition", 
   # Class is restored verbatim so blockr.core's round-trip check passes
   expect_s3_class(blk, "filter_expr_block")
   state <- blockr.core::blockr_ser(blk)$payload
-  expect_equal(state$conditions[[1]]$type, "expr")
-  expect_equal(state$conditions[[1]]$expr, "Sepal.Length > 7")
+  expect_equal(state$pred[[1]]$code, "Sepal.Length > 7")
+  expect_equal(state$pred[[1]]$lang, "r")
 })
 
 test_that("legacy mutate_expr_block migrates named exprs to mutations", {
@@ -195,6 +195,7 @@ test_that("new-format payload (with state) passes through unchanged", {
     list(state = state_in)
   )
   state <- restored_state(data)
-  expect_equal(state$conditions[[1]]$column, "cyl")
-  expect_equal(state$conditions[[1]]$colType, "numeric")
+  # the type tag casts the picked value: cyl %in% 4, a number
+  expect_equal(state$pred[[1]]$args[[1]]$col, "cyl")
+  expect_identical(unlist(state$pred[[1]]$args[[2]]$list), 4)
 })

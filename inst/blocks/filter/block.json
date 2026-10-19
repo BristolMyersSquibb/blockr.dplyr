@@ -1,32 +1,31 @@
 {
   "name": "filter",
   "title": "Filter rows",
-  "inputs": ["data"],
+  "inputs": [
+    "data"
+  ],
+  "plan": "filter",
   "state": {
     "type": "object",
     "properties": {
-      "conditions": {
+      "pred": {
         "type": "array",
         "items": {
-          "type": "object",
-          "properties": {
-            "type": { "type": "string", "enum": ["values", "numeric", "expr"] },
-            "column": { "type": "string" },
-            "values": { "type": "array" },
-            "mode": { "type": "string", "enum": ["include", "exclude"] },
-            "op": { "type": "string" },
-            "value": {},
-            "expr": { "type": "string" },
-            "colType": { "type": "string" }
-          }
+          "format": "ir"
         },
         "default": []
       },
-      "operator": { "type": "string", "enum": ["&", "|"], "default": "&" },
-      "preserve_order": { "type": "boolean", "default": false }
+      "preserve_order": {
+        "type": "boolean",
+        "default": false
+      }
     }
   },
   "requests": [],
-  "js": ["filter.js"],
-  "css": ["filter.css"]
+  "js": [
+    "filter.js"
+  ],
+  "css": [
+    "filter.css"
+  ]
 }

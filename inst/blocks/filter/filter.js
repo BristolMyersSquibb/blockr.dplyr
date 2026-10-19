@@ -766,15 +766,223 @@
     }
   }
 
+  // -- The state is IR -------------------------------------------------------
+  // The block's state is the filter step of the block IR: `pred`, a list of
+  // predicates (ANDed), and `preserve_order`. The rows the UI draws are its
+  // own reading of that IR: toIR() writes them, fromIR() reads them back. R
+  // (ir_to_expr()) and blockx (SQL) translate the IR; nothing else knows the
+  // rows. `&` and `|` take two or more arguments, so each row is one argument.
+
+  /** @typedef {{ call: string, args: BlockrIrExpr[], named?: Record<string, BlockrIrExpr> }} IrCall */
+  /** @typedef {Map<string, BlockrIrExpr>} Known IR shown as text, by that text */
+  /**
+   * @typedef {Object} Rows the UI's reading of the state
+   * @property {any[]} conditions
+   * @property {'&' | '|'} operator
+   * @property {boolean} [preserve_order]
+   */
+
+  /** @type {Record<string, string>} */
+  const NUM_OP = { is: '==', 'is not': '!=' };
+  /** @type {Record<string, string>} */
+  const NUM_OP_BACK = { '==': 'is', '!=': 'is not' };
+  const COMPARE = ['>', '>=', '<', '<=', '==', '!='];
+
+  /**
+   * @param {unknown} e @param {string} name @param {number} [n] at least
+   * @returns {e is IrCall}
+   */
+  const isCall = (e, name, n = 1) => !!e && typeof e === 'object' && 'call' in e &&
+    /** @type {IrCall} */ (e).call === name && /** @type {IrCall} */ (e).args.length >= n;
+  /** @param {BlockrIrExpr} e */
+  const colOf = (e) => (e && 'col' in e ? e.col : null);
+
+  /** @param {string[]} values @param {string | null | undefined} colType @returns {BlockrIrLit[]} */
+  const castValues = (values, colType) => {
+    if (colType === 'numeric' || colType === 'integer') return values.map(Number);
+    if (colType === 'logical') return values.map((v) => v === 'TRUE');
+    if (colType) return values;
+    // no type tag (an old board): numbers when every value parses
+    const nums = values.map(Number);
+    return nums.every((n) => Number.isFinite(n)) ? nums : values;
+  };
+
+  /** @param {string} op @param {BlockrIrExpr[]} parts @returns {BlockrIrExpr} */
+  const join = (op, parts) => (parts.length === 1 ? parts[0] : { call: op, args: parts });
+  /** @param {BlockrIrExpr} e @returns {BlockrIrExpr} */
+  const not = (e) => ({ call: '!', args: [e] });
+
+  /** @param {any} c a row @param {Known} known @returns {BlockrIrExpr | null} */
+  const rowToIR = (c, known) => {
+    if (!c || !c.type) return null;
+    if (c.type === 'expr') {
+      const text = String(c.expr || '').trim();
+      if (!text) return null;
+      return known.get(text) || { code: text, lang: 'r' };
+    }
+    if (!c.column) return null;
+    /** @type {BlockrIrExpr} */
+    const col = { col: c.column };
+    if (c.type === 'numeric') {
+      if (c.value === null || c.value === undefined || c.value === '') return null;
+      const op = NUM_OP[c.op] || c.op;
+      if (!COMPARE.includes(op)) return null;
+      return { call: op, args: [col, { lit: Number(c.value) }] };
+    }
+    if (c.type === 'values') {
+      /** @type {string[]} */
+      const values = (Array.isArray(c.values) ? c.values : [c.values]).map(String);
+      if (!values.length) return null;
+      const include = (c.mode || 'include') === 'include';
+      const regular = values.filter((v) => v !== '<NA>' && v !== '<empty>');
+      /** @type {BlockrIrExpr[]} */
+      const parts = [];
+      if (regular.length) {
+        /** @type {BlockrIrExpr} */
+        const inn = { call: '%in%', args: [col, { list: castValues(regular, c.colType) }] };
+        parts.push(include ? inn : not(inn));
+      }
+      if (values.includes('<NA>')) {
+        /** @type {BlockrIrExpr} */
+        const na = { call: 'is.na', args: [col] };
+        parts.push(include ? na : not(na));
+      }
+      if (values.includes('<empty>')) {
+        parts.push({ call: include ? '==' : '!=', args: [col, { lit: '' }] });
+      }
+      return parts.length ? join(include ? '|' : '&', parts) : null;
+    }
+    return null;
+  };
+
+  /**
+   * The rows as the filter step.
+   * @param {Rows} ui @param {Known} known
+   */
+  const toIR = (ui, known) => {
+    const parts = /** @type {BlockrIrExpr[]} */ (
+      (ui.conditions || []).map((c) => rowToIR(c, known)).filter(Boolean)
+    );
+    const pred = ui.operator === '|' && parts.length > 1 ? [join('|', parts)] : parts;
+    return { pred, preserve_order: !!ui.preserve_order };
+  };
+
+  /** @param {string} op @param {BlockrIrExpr} e @returns {BlockrIrExpr[]} */
+  const flatten = (op, e) => (isCall(e, op, 2) ? e.args.flatMap((a) => flatten(op, a)) : [e]);
+
+  /** @param {BlockrIrLit[]} list */
+  const strs = (list) => list.map((v) => (v === true ? 'TRUE' : v === false ? 'FALSE' : String(v)));
+  /** @param {BlockrIrLit[]} list */
+  const typeOf = (list) => (list.length && list.every((v) => typeof v === 'number') ? 'numeric'
+    : list.length && list.every((v) => typeof v === 'boolean') ? 'logical' : 'character');
+
+  /**
+   * One predicate as a values row, if it is one: an %in%, is.na() and == ""
+   * on one column, ORed (include), or their negations ANDed (exclude).
+   * @param {BlockrIrExpr} e
+   */
+  const valuesRow = (e) => {
+    for (const [op, include] of /** @type {[string, boolean][]} */ ([['|', true], ['&', false]])) {
+      /** @type {string | null} */
+      let column = null;
+      /** @type {string[]} */
+      let values = [];
+      /** @type {string | null} */
+      let colType = null;
+      let ok = true;
+      for (let p of flatten(op, e)) {
+        let neg = false;
+        if (isCall(p, '!')) { neg = true; p = p.args[0]; }
+        /** @type {string | null} */
+        let col = null;
+        if (isCall(p, '%in%', 2) && 'list' in p.args[1] && neg === !include) {
+          col = colOf(p.args[0]);
+          values = values.concat(strs(p.args[1].list));
+          colType = typeOf(p.args[1].list);
+        } else if (isCall(p, 'is.na') && neg === !include) {
+          col = colOf(p.args[0]);
+          values.push('<NA>');
+        } else if (!neg && isCall(p, include ? '==' : '!=', 2) &&
+                   'lit' in p.args[1] && p.args[1].lit === '') {
+          col = colOf(p.args[0]);
+          values.push('<empty>');
+        }
+        if (!col || (column && col !== column)) { ok = false; break; }
+        column = col;
+      }
+      if (ok && column) {
+        return { type: 'values', column, values, mode: include ? 'include' : 'exclude', colType };
+      }
+    }
+    return null;
+  };
+
+  /** @param {BlockrIrExpr} e @param {Known} known */
+  const rowFromIR = (e, known) => {
+    if (!e || typeof e !== 'object') return null;
+    if ('code' in e) return { type: 'expr', expr: e.code };
+    const values = valuesRow(e);
+    if (values) return values;
+    if ('call' in e && COMPARE.includes(e.call) && e.args.length === 2 &&
+        colOf(e.args[0]) && 'lit' in e.args[1] && typeof e.args[1].lit === 'number') {
+      return { type: 'numeric', column: colOf(e.args[0]), op: NUM_OP_BACK[e.call] || e.call,
+        value: e.args[1].lit };
+    }
+    // IR the rows cannot draw (from code or an assistant): an expression row
+    // that keeps the IR until its text is edited
+    const text = Blockr.ir.toR(e);
+    known.set(text, e);
+    return { type: 'expr', expr: text };
+  };
+
+  /**
+   * The filter step as rows.
+   * @param {any} state @param {Known} known @returns {Rows}
+   */
+  const fromIR = (state, known) => {
+    /** @type {BlockrIrExpr[]} */
+    const pred = Array.isArray(state && state.pred) ? state.pred : [];
+    /** @type {'&' | '|'} */
+    let operator = '&';
+    let parts = pred;
+    if (pred.length === 1) {
+      const single = pred[0];
+      const asRow = rowFromIR(single, new Map());
+      if ((asRow && asRow.type !== 'expr') || 'code' in single) {
+        parts = [single];
+      } else if (isCall(single, '|', 2)) {
+        // each argument a row, as toIR() writes it
+        operator = '|';
+        parts = single.args;
+      } else if (isCall(single, '&', 2)) {
+        parts = single.args;
+      }
+    }
+    return {
+      conditions: parts.map((e) => rowFromIR(e, known)).filter(Boolean),
+      operator,
+      preserve_order: !!(state && state.preserve_order)
+    };
+  };
+
   Blockr.defineBlock({
     name: 'filter',
+    // for tests
+    ir: { toIR, fromIR },
     mount(el, host) {
-      const block = new FilterBlock(el, host);
-      block.setState(host.state);
+      /** @type {Known} */
+      const known = new Map();
+      const block = new FilterBlock(el, {
+        state: host.state,
+        context: host.context,
+        submit: (ui) => host.submit(toIR(ui, known)),
+        request: host.request
+      });
+      block.setState(fromIR(host.state, known));
       block.updateColumns(host.context.inputs.data?.columns);
       return {
         block, // for tests
-        setState: (state) => block.setState(state),
+        setState: (state) => block.setState(fromIR(state, known)),
         setContext: (context) => block.updateColumns(context.inputs.data?.columns)
       };
     }

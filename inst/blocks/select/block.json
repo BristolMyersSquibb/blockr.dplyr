@@ -1,16 +1,35 @@
 {
   "name": "select",
   "title": "Select columns",
-  "inputs": ["data"],
+  "inputs": [
+    "data"
+  ],
+  "plan": "select",
   "state": {
     "type": "object",
     "properties": {
-      "columns": { "type": "array", "items": { "type": "string" }, "default": [] },
-      "exclude": { "type": "boolean", "default": false },
-      "distinct": { "type": "boolean", "default": false }
+      "columns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "exclude": {
+        "type": "boolean",
+        "default": false
+      },
+      "distinct": {
+        "type": "boolean",
+        "default": false
+      }
     }
   },
   "requests": [],
-  "js": ["select.js"],
-  "css": ["select.css"]
+  "js": [
+    "select.js"
+  ],
+  "css": [
+    "select.css"
+  ]
 }

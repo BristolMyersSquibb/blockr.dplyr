@@ -68,6 +68,11 @@ legacy_deser_block <- function(data, ctor_name, state_builder = identity) {
 #' @export
 blockr_deser.filter_block <- function(x, data, ...) {
   legacy_deser_block(data, "new_filter_block", function(p) {
+    # the current state is IR; new_filter_block() turns conditions into it
+    if ("pred" %in% names(p)) {
+      return(list(pred = p$pred %||% list(),
+                  preserve_order = isTRUE(p$preserve_order)))
+    }
     list(
       conditions = lapply(p$conditions %||% list(), function(c) {
         # Modern conditions already carry a `type`; leave them untouched.
