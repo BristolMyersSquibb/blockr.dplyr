@@ -210,8 +210,17 @@
       // The pill shows the operator; the tooltip and screen readers name it.
       btn.setAttribute('aria-description', 'Operator');
       Blockr.tooltip.set(btn, 'Operator');
+      // The open menu, if any. blockr.ui leaves a click on the anchor to the
+      // caller, so a second click on the pill closes the menu.
+      /** @type {{ close: () => void } | null} */
+      let menu = null;
       btn.addEventListener('click', () => {
-        /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(btn, {
+        if (menu) {
+          menu.close();
+          menu = null;
+          return;
+        }
+        const m = /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(btn, {
           title: 'Operator',
           options: ops.map(o => o.label),
           selected: ops[idx].label,
@@ -224,8 +233,10 @@
             setLabel();
             this._renderDynamicContent(cond);
             this._submit();
-          }
+          },
+          onClose: () => { if (menu === m) menu = null; }
         });
+        menu = m;
       });
 
       cond._opBtn = btn;
