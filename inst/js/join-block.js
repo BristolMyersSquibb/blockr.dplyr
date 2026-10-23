@@ -348,8 +348,17 @@
         opBtn.appendChild(car);
       };
       setOpLabel();
+      // The open menu, if any. blockr.ui leaves a click on the anchor to the
+      // caller, so a second click on the pill closes the menu.
+      /** @type {{ close: () => void } | null} */
+      let opMenu = null;
       opBtn.addEventListener('click', () => {
-        /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(opBtn, {
+        if (opMenu) {
+          opMenu.close();
+          opMenu = null;
+          return;
+        }
+        const m = /** @type {BlockrSelectStatic} */ (Blockr.Select).menu(opBtn, {
           title: 'Operator',
           options: KEY_OPS.map(o => o.label),
           selected: KEY_OPS[opIdx].label,
@@ -361,8 +370,10 @@
             key.op = KEY_OPS[opIdx].value;
             setOpLabel();
             this._submit();
-          }
+          },
+          onClose: () => { if (opMenu === m) opMenu = null; }
         });
+        opMenu = m;
       });
       key._opBtn = opBtn;
       row.appendChild(opBtn);
