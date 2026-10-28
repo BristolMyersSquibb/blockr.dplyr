@@ -365,7 +365,8 @@
     const renderList = () => {
       listbox.textContent = '';
       input.removeAttribute('aria-activedescendant');
-      list.style.display = st.open ? 'block' : '';
+      // A dropdown shows while open; the list in place keeps its own layout.
+      if (!inline) list.style.display = st.open ? 'block' : '';
       if (!st.open) { rows = []; return; }
       renderBulk();
       if (st.loading && !st.selected.length) {
