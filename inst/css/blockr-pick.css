@@ -1,0 +1,105 @@
+/* Blockr.Pick (blockr-pick.js): the parts Blockr.Select's sheet does not
+   cover. Everything else (the field, the panel, rows, ticks, the filter box)
+   is blockr.ui's blockr-select.css, through the shared class names. */
+
+/* The field: the picks as one line of text. "5 of 48" leads, the names
+   follow muted and ellipsize first. */
+.blockr-pick .blockr-select__control {
+  flex-wrap: nowrap;
+}
+.blockr-pick .blockr-select__control:focus-visible {
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
+}
+.blockr-pick__face,
+.blockr-select--open .blockr-pick__face {
+  display: block;
+  min-width: 0;
+}
+.blockr-pick__rest {
+  margin-left: 8px;
+  font-size: var(--blockr-font-size-sm);
+  color: var(--blockr-color-text-muted);
+}
+.blockr-pick__rest:empty {
+  display: none;
+}
+
+/* The head under the filter box: the count, then All and None. */
+.blockr-pick__bulk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 10px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--blockr-color-border-default);
+  font-size: var(--blockr-font-size-sm);
+  color: var(--blockr-color-text-muted);
+}
+.blockr-pick__bulk-btns {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.blockr-pick__bulk-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--blockr-color-text-accent);
+  cursor: pointer;
+}
+.blockr-pick__bulk-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.blockr-pick__bulk-btn:disabled {
+  color: var(--blockr-color-text-disabled);
+  cursor: default;
+}
+
+/* "Selected" and "Other" over the two groups of rows. */
+.blockr-pick__group {
+  padding: 8px 10px 2px;
+  font-size: var(--blockr-font-size-xs);
+  font-weight: var(--blockr-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blockr-color-text-muted);
+}
+
+/* A row: tick, name, meta, and the grip on a draggable pick. */
+.blockr-pick__option {
+  display: flex;
+  align-items: center;
+}
+.blockr-pick__option .blockr-select__tick {
+  flex-shrink: 0;
+}
+.blockr-pick__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.blockr-pick__option .blockr-select__opt-label {
+  flex-shrink: 0;
+}
+.blockr-pick__grip {
+  display: flex;
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--blockr-color-text-muted);
+  cursor: grab;
+}
+.blockr-pick__grip svg {
+  width: 14px;
+  height: 14px;
+}
+.blockr-pick__option--dragging {
+  opacity: 0.4;
+}
+.blockr-pick__option--drop-before {
+  box-shadow: inset 0 2px 0 var(--blockr-color-border-accent);
+}
+.blockr-pick__option--drop-after {
+  box-shadow: inset 0 -2px 0 var(--blockr-color-border-accent);
+}
