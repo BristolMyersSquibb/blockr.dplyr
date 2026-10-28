@@ -21,7 +21,8 @@
  * - Dragging is off unless the caller passes `reorderable: true`; then the
  *   rows under "Selected" drag.
  * - Options may carry a `group`; the rest of the list then shows under the
- *   group names, in the options' order.
+ *   group names, in the options' order. The filter matches an option's
+ *   value, shown text, label, group and `keywords`.
  *
  * Two placements of the one list. A dropdown (`multi`, `menu`): a field or a
  * word says what is picked, the list opens under it and the picks are
@@ -41,7 +42,7 @@
 (() => {
   'use strict';
 
-  /** @typedef {string | { value: string, label?: string, display?: string, group?: string }} PickOption */
+  /** @typedef {string | { value: string, label?: string, display?: string, group?: string, keywords?: string }} PickOption */
 
   /** @param {PickOption} o @returns {string} */
   const optValue = (o) => (typeof o === 'object' && o !== null ? o.value : o);
@@ -240,9 +241,13 @@
     /** @param {PickOption} o */
     const matches = (o) => {
       const q = st.query.toLowerCase();
-      const shown = typeof o === 'object' && o !== null ? (o.display || '') : '';
-      return !q || String(optValue(o)).toLowerCase().indexOf(q) >= 0 ||
-        optLabel(o).toLowerCase().indexOf(q) >= 0 || shown.toLowerCase().indexOf(q) >= 0;
+      if (!q) return true;
+      // The value, what is shown, its label, its group, and any keywords the
+      // caller adds (so "liver" can find Chemistry).
+      const obj = typeof o === 'object' && o !== null ? o : null;
+      const hay = [optValue(o), optLabel(o), obj && obj.display, obj && obj.group,
+        obj && obj.keywords];
+      return hay.some((t) => t != null && String(t).toLowerCase().indexOf(q) >= 0);
     };
     const total = () => (st.serverSearch && st.serverTotal) || st.options.length;
 

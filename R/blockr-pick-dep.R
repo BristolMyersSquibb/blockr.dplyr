@@ -18,7 +18,7 @@ blockr_pick_dep <- memoise0(function() {
       name = "blockr-pick",
       # Bump the suffix on every blockr-pick.js / .css edit (version-pinned
       # cache).
-      version = paste0(utils::packageVersion("blockr.dplyr"), ".5"),
+      version = paste0(utils::packageVersion("blockr.dplyr"), ".6"),
       src = system.file(package = "blockr.dplyr"),
       script = "js/blockr-pick.js",
       stylesheet = "css/blockr-pick.css",
