@@ -258,9 +258,33 @@ interface BlockrPlaceOptions {
   gap?: number;
   /** Distance kept from the viewport edges (default 8). */
   margin?: number;
+  /** Narrowest the panel may be, in pixels. */
+  minWidth?: number;
+  /** Find the anchor again after a re-render replaced it. */
+  reanchor?: () => HTMLElement | null;
   /** Called on every placement with whether the panel sits above the anchor. */
   onFlip?: (above: boolean) => void;
 }
+
+/* --- Blockr.layer, the dismiss stack (blockr-ui.js) --- */
+
+interface BlockrLayerOptions {
+  /** What opened the layer: a pointerdown on it is inside, not outside. */
+  from?: Element;
+  /** The layer sits in the page, not over it. */
+  inPage?: boolean;
+  /** What Escape does when the layer is on top. */
+  escape?: (e: KeyboardEvent) => void;
+  /** What a pointerdown outside does. */
+  outside?: (e: PointerEvent) => void;
+}
+
+interface BlockrLayerHandle {
+  remove(): void;
+}
+
+/** A tooltip line: plain text, or a name with its label muted. */
+type BlockrTooltipLine = string | { name: string; label?: string };
 
 /* --- Blockr.Input (blockr-input.js) --- */
 
@@ -345,7 +369,7 @@ interface BlockrNamespace {
   onDocClick(el: Element, cb: (e: MouseEvent) => void): void;
   /** The design system's tooltip card (blockr-ui.js), in place of a native title. */
   tooltip: {
-    set(el: Element, content: string | string[], opts?: { overflow?: boolean }): void;
+    set(el: Element, content: BlockrTooltipLine | BlockrTooltipLine[], opts?: { overflow?: boolean }): void;
     clear(el: Element): void;
   };
   /**
@@ -354,6 +378,15 @@ interface BlockrNamespace {
    * and size changes of anchor and panel (blockr-ui.js).
    */
   place(panel: HTMLElement, anchor: HTMLElement, opts?: BlockrPlaceOptions): BlockrPlaceHandle;
+  /** Put an open panel on the dismiss stack (blockr-ui.js). */
+  layer(el: Element, opts?: BlockrLayerOptions): BlockrLayerHandle;
+  /** The multi-select on trial in blockr-pick.js. */
+  Pick: {
+    multi(container: HTMLElement, config: BlockrSelectMultiConfig): BlockrSelectMultiHandle;
+    list(container: HTMLElement, config: any): BlockrSelectMultiHandle & { flush(): void };
+    menu(anchor: HTMLElement, config: any): { close(): void };
+    summary(sel: string[], total: number, placeholder: string): { lead: string; rest: string; empty: boolean };
+  };
   registerBlock(config: BlockrRegisterConfig): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
