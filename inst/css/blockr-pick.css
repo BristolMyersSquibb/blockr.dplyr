@@ -3,7 +3,11 @@
    is blockr.ui's blockr-select.css, through the shared class names. */
 
 /* The field: the picks as one line of text. "5 of 48" leads, the names
-   follow muted and ellipsize first. */
+   follow muted and ellipsize first. In a flex row the select would grow to
+   fit the names instead; min-width: 0 keeps it to the row. */
+.blockr-pick {
+  min-width: 0;
+}
 .blockr-pick .blockr-select__control {
   flex-wrap: nowrap;
 }
