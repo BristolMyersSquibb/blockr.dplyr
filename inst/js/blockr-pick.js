@@ -511,8 +511,11 @@
     });
 
     list.addEventListener('mousedown', (e) => {
-      // Keep the focus in the filter box while clicking rows.
-      if (e.target !== input) e.preventDefault();
+      // Keep the focus in the filter box while clicking rows. Not on a
+      // draggable row: a cancelled mousedown never starts a drag.
+      const t = /** @type {Element} */ (e.target);
+      if (t === input || t.closest('[draggable="true"]')) return;
+      e.preventDefault();
     });
     list.addEventListener('click', (e) => {
       const t = /** @type {Element} */ (e.target);
@@ -600,6 +603,12 @@
         dt.setData('text/plain', /** @type {string} */ (dragValue));
         row.classList.add('blockr-pick__option--dragging');
       });
+      // A row (or the name inside it) accepts the drop from the moment the
+      // pointer enters it, not only from its next dragover.
+      listbox.addEventListener('dragenter', (e) => {
+        if (dragValue == null) return;
+        if (/** @type {Element} */ (e.target).closest('.blockr-select__option[draggable="true"]')) e.preventDefault();
+      });
       listbox.addEventListener('dragover', (e) => {
         if (dragValue == null) return;
         const row = /** @type {Element} */ (e.target).closest('.blockr-select__option[draggable="true"]');
@@ -619,9 +628,16 @@
       listbox.addEventListener('dragend', dragEnd);
       listbox.addEventListener('drop', (e) => {
         e.preventDefault();
-        const target = overRow && overRow.getAttribute('data-value');
+        // The row under the pointer at the drop, which a quick drag may not
+        // have reported in a dragover yet.
+        const row = /** @type {Element} */ (e.target).closest('.blockr-select__option[draggable="true"]') || overRow;
+        const target = row && row.getAttribute('data-value');
         const moved = dragValue;
-        const drop = side;
+        let drop = side;
+        if (row) {
+          const r = row.getBoundingClientRect();
+          drop = e.clientY < r.top + r.height / 2 ? 'before' : 'after';
+        }
         dragEnd();
         if (moved == null || target == null || moved === target) return;
         const sel = st.selected.filter((v) => v !== moved);
