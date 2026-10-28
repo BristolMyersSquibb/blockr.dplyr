@@ -15,8 +15,8 @@
  *   options in their own order. A tick moves a row up, an untick moves it back
  *   to its place, both animated, so the list looks the same every time it
  *   opens.
- * - The list head has "All" and "None". With a filter typed they act on the
- *   matching rows. In server-search mode (only part of the values loaded)
+ * - The list head has "All" and "None" (`all: false` drops All). With a
+ *   filter typed they act on the matching rows. In server-search mode (only part of the values loaded)
  *   "All" waits for a search.
  * - Dragging is off unless the caller passes `reorderable: true`; then the
  *   rows under "Selected" drag.
@@ -131,6 +131,9 @@
     const onClose = config.onClose || null;
     const onSearch = config.onSearch || null;
     const countLabel = config.countLabel || 'selected';
+    // `all: false` drops the All button, where picking everything at once is
+    // never meant (every panel on one profile).
+    const showAll = config.all !== false;
     const delay = typeof config.delay === 'number' ? config.delay : REPORT_DELAY;
     // Fold only in place; a dropdown is already the open state.
     const foldAfter = !inline || config.fold === false ? Infinity
@@ -219,7 +222,8 @@
     noneBtn.className = 'blockr-pick__bulk-btn';
     const btns = document.createElement('span');
     btns.className = 'blockr-pick__bulk-btns';
-    btns.append(allBtn, noneBtn);
+    if (showAll) btns.appendChild(allBtn);
+    btns.appendChild(noneBtn);
     bulk.append(count, btns);
     head.appendChild(bulk);
     list.appendChild(head);
