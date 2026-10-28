@@ -20,6 +20,15 @@
  *   "All" waits for a search.
  * - Dragging is off unless the caller passes `reorderable: true`; then the
  *   rows under "Selected" drag.
+ * - Options may carry a `group`; the rest of the list then shows under the
+ *   group names, in the options' order.
+ *
+ * Two placements of the one list. A dropdown (`multi`, `menu`): a field or a
+ * word says what is picked, the list opens under it and the picks are
+ * reported once, when it closes. In place (`list`): the list is the control,
+ * always open; there is no close, so the picks are reported after a pause in
+ * the picking (`delay`, 1 s). A long list in place folds what is not picked
+ * under "+ Add …" until the filter is used or the fold is opened.
  *
  * The keyboard, the placement, the layers, the server search and the report
  * on close are Blockr.Select's, copied. The markup keeps Blockr.Select's class
@@ -32,7 +41,7 @@
 (() => {
   'use strict';
 
-  /** @typedef {string | { value: string, label?: string }} PickOption */
+  /** @typedef {string | { value: string, label?: string, display?: string, group?: string }} PickOption */
 
   /** @param {PickOption} o @returns {string} */
   const optValue = (o) => (typeof o === 'object' && o !== null ? o.value : o);
@@ -49,6 +58,12 @@
   const SEARCH_AFTER = 8;
   const SEARCH_DEBOUNCE = 250;
   const MOVE_MS = 240;
+  // In place: report this long after the last pick, so quick picks are one
+  // report. And fold the unpicked rows of a list longer than this.
+  const REPORT_DELAY = 1000;
+  const FOLD_AFTER = 12;
+  /** @param {PickOption} o @returns {string} */
+  const optGroup = (o) => (typeof o === 'object' && o !== null ? (o.group || '') : '');
 
   /** @param {string} cls @param {string} [text] */
   const div = (cls, text) => {
@@ -63,7 +78,7 @@
     el.textContent = '';
     const val = optValue(o);
     const lbl = optLabel(o);
-    const lead = labelFirst && lbl ? lbl : val;
+    const lead = labelFirst && lbl ? lbl : (o && typeof o === 'object' && o.display) || val;
     const trail = labelFirst && lbl ? val : lbl;
     const name = document.createElement('span');
     name.className = 'blockr-pick__name';
@@ -98,9 +113,10 @@
    * @param {any} config Blockr.Select's multi config.
    * @param {HTMLElement | null} anchor Set by the menu form: the list alone,
    *   hung under `anchor`, open from the start.
+   * @param {boolean} [inline] The list form: the list in place, always open.
    */
-  const createPick = (container, config, anchor) => {
-    const headless = !!anchor;
+  const createPick = (container, config, anchor, inline = false) => {
+    const headless = !!anchor || inline;
     const id = Blockr.uid('bpick');
     const listId = `${id}-lb`;
 
@@ -113,6 +129,11 @@
     const onOpen = config.onOpen || null;
     const onClose = config.onClose || null;
     const onSearch = config.onSearch || null;
+    const countLabel = config.countLabel || 'selected';
+    const delay = typeof config.delay === 'number' ? config.delay : REPORT_DELAY;
+    // Fold only in place; a dropdown is already the open state.
+    const foldAfter = !inline || config.fold === false ? Infinity
+      : (typeof config.fold === 'number' ? config.fold : FOLD_AFTER);
 
     const st = {
       options: toOptions(config.options),
@@ -126,6 +147,8 @@
       serverTotal: 0,
       disabled: config.disabled === true,
       openedWith: /** @type {string[] | null} */ (null),
+      // In place, a long list: the unpicked rows show.
+      unfolded: false,
       destroyed: false
     };
     /** The option rows the last render showed, in screen order. */
@@ -136,7 +159,8 @@
 
     const root = div('blockr-select blockr-select--multi blockr-pick');
     if (config.bordered === true) root.classList.add('blockr-select--bordered');
-    if (headless) root.classList.add('blockr-select--headless');
+    if (headless && !inline) root.classList.add('blockr-select--headless');
+    if (inline) root.classList.add('blockr-pick--inline');
 
     // The field: the picks as text and the chevron. It takes focus itself,
     // since the filter box is in the list.
@@ -177,9 +201,10 @@
     input.setAttribute('placeholder', config.searchPlaceholder || 'Filter');
     if (label) input.setAttribute('aria-label', label);
 
-    const list = div('blockr-select__dropdown blockr-select__dropdown--multi blockr-select__dropdown--menu blockr-pick__panel');
+    const list = div(inline ? 'blockr-pick__panel blockr-pick__panel--inline'
+      : 'blockr-select__dropdown blockr-select__dropdown--multi blockr-select__dropdown--menu blockr-pick__panel');
     const head = div('blockr-select__head');
-    if (headless && config.title) head.appendChild(div('blockr-select__menu-title', config.title));
+    if (headless && !inline && config.title) head.appendChild(div('blockr-select__menu-title', config.title));
     head.appendChild(input);
     // "3 of 12 selected", then All and None.
     const bulk = div('blockr-pick__bulk');
@@ -204,7 +229,8 @@
     if (label) listbox.setAttribute('aria-label', label);
     list.appendChild(listbox);
 
-    if (!headless) root.appendChild(control);
+    if (inline) root.appendChild(list);
+    else if (!headless) root.appendChild(control);
     container.appendChild(root);
 
     // --- Render ------------------------------------------------------------
@@ -214,8 +240,9 @@
     /** @param {PickOption} o */
     const matches = (o) => {
       const q = st.query.toLowerCase();
+      const shown = typeof o === 'object' && o !== null ? (o.display || '') : '';
       return !q || String(optValue(o)).toLowerCase().indexOf(q) >= 0 ||
-        optLabel(o).toLowerCase().indexOf(q) >= 0;
+        optLabel(o).toLowerCase().indexOf(q) >= 0 || shown.toLowerCase().indexOf(q) >= 0;
     };
     const total = () => (st.serverSearch && st.serverTotal) || st.options.length;
 
@@ -235,7 +262,10 @@
         if (rest.length < MAX_ROWS) rest.push(o);
         else extra++;
       }
-      return { picked, rest, extra };
+      // Folded: the picks alone, and a row that opens the rest.
+      const folded = st.options.length > foldAfter && !st.unfolded && !st.query;
+      return { picked, rest: folded ? [] : rest, extra: folded ? 0 : extra,
+        folded: folded ? rest.length + extra : 0 };
     };
 
     const renderFace = () => {
@@ -259,9 +289,9 @@
       const shown = g ? g.picked.length + g.rest.length : 0;
       const filtered = !!st.query;
       const n = st.selected.length;
-      count.textContent = `${n} of ${total().toLocaleString()} selected`;
+      count.textContent = `${n} of ${total().toLocaleString()} ${countLabel}`;
       // All waits for a search while only part of the values are loaded.
-      const allOff = !g || (st.serverSearch && !filtered) || !g.rest.length;
+      const allOff = !g || (st.serverSearch && !filtered) || !g.rest.length || g.folded > 0;
       allBtn.textContent = filtered ? `All ${shown.toLocaleString()} shown` : 'All';
       allBtn.disabled = allOff;
       if (st.serverSearch && !filtered) {
@@ -345,7 +375,7 @@
       }
       const g = groups();
       rows = g.picked.concat(g.rest);
-      if (!rows.length) {
+      if (!rows.length && !g.folded) {
         listbox.appendChild(div('blockr-select__empty', st.query ? 'No matches' : 'No options'));
         return;
       }
@@ -357,7 +387,8 @@
         h.setAttribute('data-group', 'selected');
         listbox.appendChild(h);
         for (const o of g.picked) listbox.appendChild(optionRow(o, i++, true));
-        if (g.rest.length || st.loading) {
+        // Named groups head the rest themselves.
+        if ((g.rest.length && !optGroup(g.rest[0])) || st.loading) {
           const h2 = div('blockr-pick__group', 'Other');
           h2.setAttribute('role', 'presentation');
           h2.setAttribute('data-group', 'other');
@@ -365,7 +396,40 @@
         }
       }
       if (st.loading) listbox.appendChild(div('blockr-select__empty', 'Loading…'));
-      else for (const o of g.rest) listbox.appendChild(optionRow(o, i++, false));
+      else {
+        let grp = '';
+        for (const o of g.rest) {
+          const og = optGroup(o);
+          if (og && og !== grp) {
+            grp = og;
+            const gh = div('blockr-pick__subgroup', og);
+            gh.setAttribute('role', 'presentation');
+            gh.setAttribute('data-group', `sub:${og}`);
+            listbox.appendChild(gh);
+          }
+          listbox.appendChild(optionRow(o, i++, false));
+        }
+      }
+      if (g.folded) {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'blockr-pick__unfold';
+        more.textContent = `+ ${config.addLabel || 'Add'} (${g.folded.toLocaleString()})`;
+        more.addEventListener('click', () => {
+          const before = positions();
+          st.unfolded = true;
+          renderList();
+          slide(before, null);
+        });
+        listbox.appendChild(more);
+      } else if (inline && st.unfolded && !st.query && st.options.length > foldAfter) {
+        const less = document.createElement('button');
+        less.type = 'button';
+        less.className = 'blockr-pick__unfold';
+        less.textContent = 'Show only the picks';
+        less.addEventListener('click', () => { st.unfolded = false; renderList(); });
+        listbox.appendChild(less);
+      }
       if (st.serverSearch) {
         listbox.appendChild(div('blockr-select__empty',
           `${st.serverTotal.toLocaleString()} values — type to search`));
@@ -378,6 +442,7 @@
 
     const render = () => {
       if (st.destroyed) return;
+      if (inline) st.open = true;
       renderFace();
       root.classList.toggle('blockr-select--open', st.open);
       root.classList.toggle('blockr-select--disabled', st.disabled);
@@ -456,6 +521,22 @@
       if (onChange) onChange(st.selected.slice());
     };
 
+    // In place there is no close to report at: report after a pause.
+    /** @type {ReturnType<typeof setTimeout> | null} */
+    let reportTimer = null;
+    /** @type {string[]} */
+    let reported = st.selected.slice();
+    const flush = () => {
+      if (reportTimer) { clearTimeout(reportTimer); reportTimer = null; }
+      if (sameList(st.selected, reported)) return;
+      reported = st.selected.slice();
+      emit();
+    };
+    const scheduleReport = () => {
+      if (reportTimer) clearTimeout(reportTimer);
+      reportTimer = setTimeout(flush, delay);
+    };
+
     /** Change the picks with the list open, sliding the rows that move.
      *  @param {string[]} next @param {string | null} moved */
     const repick = (next, moved) => {
@@ -463,6 +544,7 @@
       st.selected = next;
       render();
       slide(before, moved);
+      if (inline) scheduleReport();
     };
 
     /** @param {string} value */
@@ -567,7 +649,16 @@
           else if (rows[st.highlight]) pick(optValue(rows[st.highlight]));
           break;
         case 'Tab':
-          close();
+          if (!inline) close();
+          break;
+        case 'Escape':
+          // In place there is nothing to close: Escape empties the filter.
+          if (inline && st.query) {
+            e.preventDefault();
+            input.value = '';
+            st.query = '';
+            render();
+          }
           break;
       }
     });
@@ -653,11 +744,12 @@
       st.options = toOptions(opts);
       const vals = st.options.map(optValue);
       st.selected = toArray(sel != null ? sel : st.selected).filter((v) => vals.indexOf(v) >= 0);
+      if (inline && !reportTimer) reported = st.selected.slice();
       render();
     };
 
     render();
-    if (headless) open();
+    if (headless && !inline) open();
 
     return {
       el: root,
@@ -685,10 +777,14 @@
         st.serverTotal = (info && info.total) || 0;
         render();
       },
+      /** In place: report a pending change now rather than after the pause. */
+      flush() { if (inline) flush(); },
       destroy() {
         if (st.destroyed) return;
         if (searchTimer) clearTimeout(searchTimer);
-        close('destroy');
+        // A change still waiting for its pause is reported, not lost.
+        if (inline) flush();
+        else close('destroy');
         st.destroyed = true;
         Blockr.removeNode(list);
         Blockr.removeNode(root);
@@ -723,6 +819,8 @@
   /** @type {any} */ (window).Blockr = window.Blockr || {};
   Blockr.Pick = {
     multi: (/** @type {HTMLElement} */ container, /** @type {any} */ config) => createPick(container, config, null),
+    // The list in place: always open, reports after a pause in the picking.
+    list: (/** @type {HTMLElement} */ container, /** @type {any} */ config) => createPick(container, config, null, true),
     menu: createMenu,
     summary
   };

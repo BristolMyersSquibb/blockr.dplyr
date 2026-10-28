@@ -13,7 +13,9 @@ An \code{htmltools::tagList} of \code{htmlDependency} objects.
 \code{Blockr.Pick} is a multi-select that shows each pick once: the field shows
 the picks as text, the open list has them on top, and the list head has All
 and None. It takes the same config and returns the same handle as
-\code{Blockr.Select.multi()} and the multi form of \code{Blockr.Select.menu()}. It is
-on trial here before it moves to blockr.ui.
+\code{Blockr.Select.multi()} and the multi form of \code{Blockr.Select.menu()}.
+\code{Blockr.Pick.list()} puts the same list in place, always open, reporting
+after a pause in the picking. It is on trial here before it moves to
+blockr.ui.
 }
 \keyword{internal}
