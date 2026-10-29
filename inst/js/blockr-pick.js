@@ -770,12 +770,27 @@
 
     // --- Reconciling -------------------------------------------------------
 
-    /** @param {any} opts @param {any} sel */
+    /** Picks made here that the caller has not heard yet: in place, those
+     *  waiting for the pause; in a dropdown, a change since it opened. */
+    const pending = () => (inline ? !!reportTimer
+      : st.open && !!st.openedWith && !sameList(st.selected, st.openedWith));
+
+    /** The caller's picks and choices, as R sends them. Picks still pending
+     *  here are newer than anything the caller can send, so they stay (less
+     *  what is no longer offered) and go out as usual; the caller's answer
+     *  to them comes after. Otherwise the caller's picks are taken.
+     *  @param {any} opts @param {any} sel */
     const reconcile = (opts, sel) => {
       st.options = toOptions(opts);
       const vals = st.options.map(optValue);
-      st.selected = toArray(sel != null ? sel : st.selected).filter((v) => vals.indexOf(v) >= 0);
-      if (inline && !reportTimer) reported = st.selected.slice();
+      const hold = pending();
+      const take = sel != null && !hold;
+      st.selected = toArray(take ? sel : st.selected).filter((v) => vals.indexOf(v) >= 0);
+      if (!hold) {
+        // What the caller sent is what it knows: no report owed for it.
+        if (inline) reported = st.selected.slice();
+        else if (st.openedWith) st.openedWith = st.selected.slice();
+      }
       render();
     };
 

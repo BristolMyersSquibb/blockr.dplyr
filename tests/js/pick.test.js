@@ -157,3 +157,72 @@ test('a burst of picks in place is one report, of where the burst ended', () => 
   p.tick(1000);
   assert.deepStrictEqual(p.changes, [['CR', 'SD']]);
 });
+
+test('in place, a push of the old picks during the pause does not undo new ones', () => {
+  const p = mount('list', { options: OPTS, selected: ['CR', 'PD'] });
+  p.tickRow('SD');
+  // R echoes what it had before it heard of SD.
+  p.handle.setOptions(OPTS, ['CR', 'PD']);
+  assert.deepStrictEqual(p.value(), ['CR', 'PD', 'SD']);
+  p.tick(1000);
+  assert.deepStrictEqual(p.changes, [['CR', 'PD', 'SD']]);
+});
+
+test('in place, a push that matches the report is quiet', () => {
+  const p = mount('list', { options: OPTS, selected: ['CR'] });
+  p.tickRow('PD');
+  p.tick(1000);
+  p.handle.setOptions(OPTS, ['CR', 'PD']);
+  p.tick(5000);
+  assert.deepStrictEqual(p.value(), ['CR', 'PD']);
+  assert.deepStrictEqual(p.changes, [['CR', 'PD']]);
+});
+
+test('in place, a push that differs after the report is taken, and not sent back', () => {
+  const p = mount('list', { options: OPTS, selected: ['CR'] });
+  p.tickRow('PD');
+  p.tick(1000);
+  // R refused PD and says CR alone.
+  p.handle.setOptions(OPTS, ['CR']);
+  p.tick(5000);
+  assert.deepStrictEqual(p.value(), ['CR']);
+  assert.deepStrictEqual(p.changes, [['CR', 'PD']]);
+});
+
+test('a pending pick no longer offered is dropped from the report', () => {
+  const p = mount('list', { options: OPTS, selected: ['CR'] });
+  p.tickRow('SD');
+  p.handle.setOptions(['CR', 'PD'], ['CR']);
+  p.tick(1000);
+  assert.deepStrictEqual(p.value(), ['CR']);
+  assert.deepStrictEqual(p.changes, []);
+});
+
+test('an open dropdown keeps its changes against a push of the old picks', () => {
+  const p = mount('multi', { options: OPTS, selected: ['CR'] });
+  p.open();
+  p.tickRow('PR');
+  p.handle.setOptions(OPTS, ['CR']);
+  assert.deepStrictEqual(p.value(), ['CR', 'PR']);
+  p.close();
+  assert.deepStrictEqual(p.changes, [['CR', 'PR']]);
+});
+
+test('an open dropdown with no changes takes a push, and does not send it back', () => {
+  const p = mount('multi', { options: OPTS, selected: ['CR'] });
+  p.open();
+  p.handle.setOptions(OPTS, ['NE']);
+  assert.deepStrictEqual(p.value(), ['NE']);
+  p.close();
+  assert.deepStrictEqual(p.changes, []);
+});
+
+test('a closed dropdown takes a push of new choices and picks', () => {
+  const p = mount('multi', { options: OPTS, selected: ['CR'] });
+  p.handle.setOptions(['A', 'B'], ['B']);
+  assert.deepStrictEqual(p.value(), ['B']);
+  p.handle.setValue(null);
+  assert.deepStrictEqual(p.value(), ['B']);
+  p.handle.setValue([]);
+  assert.deepStrictEqual(p.value(), []);
+});
