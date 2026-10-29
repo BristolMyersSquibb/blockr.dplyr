@@ -54,10 +54,11 @@
   color: var(--blockr-color-text-accent);
   cursor: pointer;
 }
-.blockr-pick__bulk-btn:hover:not(:disabled) {
+.blockr-pick__bulk-btn:hover:not(:disabled):not([aria-disabled="true"]) {
   text-decoration: underline;
 }
-.blockr-pick__bulk-btn:disabled {
+.blockr-pick__bulk-btn:disabled,
+.blockr-pick__bulk-btn[aria-disabled="true"] {
   color: var(--blockr-color-text-disabled);
   cursor: default;
 }
@@ -86,6 +87,10 @@
 }
 .blockr-pick__option .blockr-select__opt-label {
   flex-shrink: 0;
+}
+/* A pick that may not untick (`min`). */
+.blockr-pick__option--locked {
+  cursor: default;
 }
 .blockr-pick__grip {
   display: flex;

@@ -20,6 +20,10 @@
  *   "All" waits for a search.
  * - Dragging is off unless the caller passes `reorderable: true`; then the
  *   rows under "Selected" drag.
+ * - `min` (default 0) is the fewest picks the caller accepts. None is
+ *   disabled where it would leave fewer, and the last picks do not untick;
+ *   `minHint` says why. So the list never shows a pick the caller will put
+ *   back.
  * - Options may carry a `group`; the rest of the list then shows under the
  *   group names, in the options' order. The filter matches an option's
  *   value, shown text, label, group and `keywords`.
@@ -134,6 +138,8 @@
     // `all: false` drops the All button, where picking everything at once is
     // never meant (every panel on one profile).
     const showAll = config.all !== false;
+    const min = typeof config.min === 'number' && config.min > 0 ? config.min : 0;
+    const minHint = config.minHint || (min === 1 ? 'At least one is needed' : `At least ${min} are needed`);
     const delay = typeof config.delay === 'number' ? config.delay : REPORT_DELAY;
     // Fold only in place; a dropdown is already the open state.
     const foldAfter = !inline || config.fold === false ? Infinity
@@ -277,6 +283,9 @@
         folded: folded ? rest.length + extra : 0 };
     };
 
+    /** Whether a pick may not be unticked: one fewer would be below `min`. */
+    const locked = () => min > 0 && st.selected.length <= min;
+
     const renderFace = () => {
       if (headless) return;
       const s = summary(st.selected, total(), placeholder);
@@ -308,6 +317,11 @@
       } else Blockr.tooltip.clear(allBtn);
       noneBtn.textContent = filtered ? 'None shown' : 'None';
       noneBtn.disabled = !g || !g.picked.length;
+      // Below `min` None stays focusable and hoverable, so it can say why.
+      const short = !!g && g.picked.length > 0 && n - g.picked.length < min;
+      noneBtn.setAttribute('aria-disabled', short ? 'true' : 'false');
+      if (short) Blockr.tooltip.set(noneBtn, minHint);
+      else Blockr.tooltip.clear(noneBtn);
       // A short list does not need the count; the ticks say it.
       bulk.classList.toggle('blockr-pick__bulk--search', st.serverSearch);
     };
@@ -318,6 +332,10 @@
       const row = div('blockr-select__option blockr-pick__option');
       if (st.keyboard && i === st.highlight) row.classList.add('blockr-select__option--highlighted');
       if (picked) row.classList.add('blockr-select__option--selected');
+      if (picked && locked()) {
+        row.classList.add('blockr-pick__option--locked');
+        row.setAttribute('aria-disabled', 'true');
+      }
       row.setAttribute('role', 'option');
       row.id = `${id}-opt-${i}`;
       row.setAttribute('aria-selected', picked ? 'true' : 'false');
@@ -561,6 +579,7 @@
     const pick = (value) => {
       const sel = st.selected.slice();
       const i = sel.indexOf(value);
+      if (i >= 0 && locked()) return;
       if (i >= 0) sel.splice(i, 1);
       else sel.push(value);
       // The keyboard row follows the row it was on.
@@ -577,7 +596,9 @@
     };
     const pickNone = () => {
       const drop = groups().picked.map(optValue);
-      repick(st.selected.filter((v) => drop.indexOf(v) < 0), null);
+      const next = st.selected.filter((v) => drop.indexOf(v) < 0);
+      if (next.length < min) return;
+      repick(next, null);
     };
 
     // --- Events ------------------------------------------------------------
