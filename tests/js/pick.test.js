@@ -238,3 +238,26 @@ test('a dropdown destroyed while open reports the picks made since it opened', (
   q.handle.destroy();
   assert.deepStrictEqual(q.changes, []);
 });
+
+test('the count holds picks the options do not, so it never reads 2 of 1', () => {
+  const p = mount('multi', { options: ['A'], selected: ['A', 'B'] });
+  p.open();
+  assert.match(p.count(), /^2 of 2 /);
+  p.handle.updateOptions([]);
+  assert.match(p.count(), /^2 of 2 /);
+});
+
+test('All picks every option, past the rows the list shows', () => {
+  const many = Array.from({ length: 230 }, (_, i) => `v${i}`);
+  const p = mount('multi', { options: many, selected: [] });
+  p.open();
+  p.all();
+  assert.strictEqual(p.value().length, 230);
+  assert.match(p.count(), /^230 of 230 /);
+  p.filter('v1');
+  p.none();
+  // v1, v10..v19, v100..v199: 111 rows match.
+  assert.strictEqual(p.value().length, 230 - 111);
+  p.all();
+  assert.strictEqual(p.value().length, 230);
+});

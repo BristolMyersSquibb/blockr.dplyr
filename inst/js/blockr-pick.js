@@ -259,7 +259,10 @@
         obj && obj.keywords];
       return hay.some((t) => t != null && String(t).toLowerCase().indexOf(q) >= 0);
     };
-    const total = () => (st.serverSearch && st.serverTotal) || st.options.length;
+    // Picks the options do not hold (not loaded yet, or gone from the data)
+    // still count, so the head never reads "2 of 1".
+    const total = () => (st.serverSearch && st.serverTotal) ||
+      st.options.length + st.selected.filter((v) => !findOpt(v)).length;
 
     /**
      * The two groups the list shows: the picks (in pick order, each from the
@@ -592,9 +595,13 @@
       }
     };
 
+    // Every matching option, not only the rows shown (the list stops at
+    // MAX_ROWS).
     const pickAll = () => {
-      const g = groups();
-      repick(st.selected.concat(g.rest.map(optValue)), null);
+      const add = st.options
+        .filter((o) => st.selected.indexOf(optValue(o)) < 0 && matches(o))
+        .map(optValue);
+      repick(st.selected.concat(add), null);
     };
     const pickNone = () => {
       const drop = groups().picked.map(optValue);
