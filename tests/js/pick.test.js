@@ -261,3 +261,30 @@ test('All picks every option, past the rows the list shows', () => {
   p.all();
   assert.strictEqual(p.value().length, 230);
 });
+
+/** A key on the filter box. */
+const key = (p, k) => {
+  const input = p.doc.querySelector('.blockr-pick__panel .blockr-select__search');
+  input.dispatchEvent(new p.win.KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+};
+
+test('Space ticks the highlighted row while the filter is empty', () => {
+  const p = mount('multi', { options: OPTS, selected: [] });
+  p.open();
+  key(p, 'ArrowDown');
+  key(p, ' ');
+  assert.deepStrictEqual(p.value(), ['CR']);
+  p.filter('P');
+  key(p, ' ');
+  assert.deepStrictEqual(p.value(), ['CR']);
+});
+
+test('Tab closes a dropdown, reports, and puts the focus back on the field', () => {
+  const p = mount('multi', { options: OPTS, selected: [] });
+  p.open();
+  key(p, 'ArrowDown');
+  key(p, 'Enter');
+  key(p, 'Tab');
+  assert.deepStrictEqual(p.changes, [['CR']]);
+  assert.strictEqual(p.doc.activeElement, p.doc.querySelector('.blockr-select__control'));
+});

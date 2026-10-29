@@ -688,8 +688,23 @@
           else if (!st.keyboard) { st.keyboard = true; renderList(); showHighlight(); }
           else if (rows[st.highlight]) pick(optValue(rows[st.highlight]));
           break;
+        case ' ':
+          // Space ticks the highlighted row while the filter is empty; in a
+          // filter already typed it is a space.
+          if (st.open && st.keyboard && !input.value && rows[st.highlight]) {
+            e.preventDefault();
+            pick(optValue(rows[st.highlight]));
+          }
+          break;
         case 'Tab':
-          if (!inline) close();
+          // The list hangs at the end of the page, so the browser's Tab
+          // would go on from there: back to the field or the word instead.
+          if (!inline) {
+            e.preventDefault();
+            close();
+            const back = headless ? anchor : control;
+            if (back && typeof back.focus === 'function') back.focus();
+          }
           break;
         case 'Escape':
           // In place there is nothing to close: Escape empties the filter.

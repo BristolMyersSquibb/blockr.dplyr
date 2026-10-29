@@ -88,6 +88,13 @@
 .blockr-pick__option .blockr-select__opt-label {
   flex-shrink: 0;
 }
+/* A short list in place keeps its filter box off screen; while the box
+   has the keyboard, the list shows the focus. */
+.blockr-pick__panel--inline:has(.blockr-select__search--offscreen:focus-visible) {
+  outline: var(--blockr-focus-outline);
+  outline-offset: var(--blockr-focus-offset);
+}
+
 /* A pick that may not untick (`min`). */
 .blockr-pick__option--locked {
   cursor: default;
