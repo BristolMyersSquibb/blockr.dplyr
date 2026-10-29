@@ -20,6 +20,10 @@
  *   "All" waits for a search.
  * - Dragging is off unless the caller passes `reorderable: true`; then the
  *   rows under "Selected" drag.
+ * - `min` (default 0) is the fewest picks the caller accepts. None is
+ *   disabled where it would leave fewer, and the last picks do not untick;
+ *   `minHint` says why. So the list never shows a pick the caller will put
+ *   back.
  * - Options may carry a `group`; the rest of the list then shows under the
  *   group names, in the options' order. The filter matches an option's
  *   value, shown text, label, group and `keywords`.
@@ -134,6 +138,8 @@
     // `all: false` drops the All button, where picking everything at once is
     // never meant (every panel on one profile).
     const showAll = config.all !== false;
+    const min = typeof config.min === 'number' && config.min > 0 ? config.min : 0;
+    const minHint = config.minHint || (min === 1 ? 'At least one is needed' : `At least ${min} are needed`);
     const delay = typeof config.delay === 'number' ? config.delay : REPORT_DELAY;
     // Fold only in place; a dropdown is already the open state.
     const foldAfter = !inline || config.fold === false ? Infinity
@@ -253,7 +259,10 @@
         obj && obj.keywords];
       return hay.some((t) => t != null && String(t).toLowerCase().indexOf(q) >= 0);
     };
-    const total = () => (st.serverSearch && st.serverTotal) || st.options.length;
+    // Picks the options do not hold (not loaded yet, or gone from the data)
+    // still count, so the head never reads "2 of 1".
+    const total = () => (st.serverSearch && st.serverTotal) ||
+      st.options.length + st.selected.filter((v) => !findOpt(v)).length;
 
     /**
      * The two groups the list shows: the picks (in pick order, each from the
@@ -276,6 +285,9 @@
       return { picked, rest: folded ? [] : rest, extra: folded ? 0 : extra,
         folded: folded ? rest.length + extra : 0 };
     };
+
+    /** Whether a pick may not be unticked: one fewer would be below `min`. */
+    const locked = () => min > 0 && st.selected.length <= min;
 
     const renderFace = () => {
       if (headless) return;
@@ -308,6 +320,11 @@
       } else Blockr.tooltip.clear(allBtn);
       noneBtn.textContent = filtered ? 'None shown' : 'None';
       noneBtn.disabled = !g || !g.picked.length;
+      // Below `min` None stays focusable and hoverable, so it can say why.
+      const short = !!g && g.picked.length > 0 && n - g.picked.length < min;
+      noneBtn.setAttribute('aria-disabled', short ? 'true' : 'false');
+      if (short) Blockr.tooltip.set(noneBtn, minHint);
+      else Blockr.tooltip.clear(noneBtn);
       // A short list does not need the count; the ticks say it.
       bulk.classList.toggle('blockr-pick__bulk--search', st.serverSearch);
     };
@@ -318,6 +335,10 @@
       const row = div('blockr-select__option blockr-pick__option');
       if (st.keyboard && i === st.highlight) row.classList.add('blockr-select__option--highlighted');
       if (picked) row.classList.add('blockr-select__option--selected');
+      if (picked && locked()) {
+        row.classList.add('blockr-pick__option--locked');
+        row.setAttribute('aria-disabled', 'true');
+      }
       row.setAttribute('role', 'option');
       row.id = `${id}-opt-${i}`;
       row.setAttribute('aria-selected', picked ? 'true' : 'false');
@@ -515,11 +536,13 @@
       if (placed) { placed.stop(); placed = null; }
       if (listLayer) { listLayer.remove(); listLayer = null; }
       root.classList.remove('blockr-select--above');
+      // Destroyed open (a redraw, a caller closing it), the picks since it
+      // opened are still reported, as the list in place reports its pause.
       let changed = false;
       if (st.openedWith) {
         const was = st.openedWith;
         st.openedWith = null;
-        if (how !== 'destroy') changed = !sameList(st.selected, was);
+        changed = !sameList(st.selected, was);
       }
       render();
       if (!headless && how === 'escape') control.focus();
@@ -561,6 +584,7 @@
     const pick = (value) => {
       const sel = st.selected.slice();
       const i = sel.indexOf(value);
+      if (i >= 0 && locked()) return;
       if (i >= 0) sel.splice(i, 1);
       else sel.push(value);
       // The keyboard row follows the row it was on.
@@ -571,13 +595,19 @@
       }
     };
 
+    // Every matching option, not only the rows shown (the list stops at
+    // MAX_ROWS).
     const pickAll = () => {
-      const g = groups();
-      repick(st.selected.concat(g.rest.map(optValue)), null);
+      const add = st.options
+        .filter((o) => st.selected.indexOf(optValue(o)) < 0 && matches(o))
+        .map(optValue);
+      repick(st.selected.concat(add), null);
     };
     const pickNone = () => {
       const drop = groups().picked.map(optValue);
-      repick(st.selected.filter((v) => drop.indexOf(v) < 0), null);
+      const next = st.selected.filter((v) => drop.indexOf(v) < 0);
+      if (next.length < min) return;
+      repick(next, null);
     };
 
     // --- Events ------------------------------------------------------------
@@ -658,8 +688,23 @@
           else if (!st.keyboard) { st.keyboard = true; renderList(); showHighlight(); }
           else if (rows[st.highlight]) pick(optValue(rows[st.highlight]));
           break;
+        case ' ':
+          // Space ticks the highlighted row while the filter is empty; in a
+          // filter already typed it is a space.
+          if (st.open && st.keyboard && !input.value && rows[st.highlight]) {
+            e.preventDefault();
+            pick(optValue(rows[st.highlight]));
+          }
+          break;
         case 'Tab':
-          if (!inline) close();
+          // The list hangs at the end of the page, so the browser's Tab
+          // would go on from there: back to the field or the word instead.
+          if (!inline) {
+            e.preventDefault();
+            close();
+            const back = headless ? anchor : control;
+            if (back && typeof back.focus === 'function') back.focus();
+          }
           break;
         case 'Escape':
           // In place there is nothing to close: Escape empties the filter.
@@ -749,12 +794,27 @@
 
     // --- Reconciling -------------------------------------------------------
 
-    /** @param {any} opts @param {any} sel */
+    /** Picks made here that the caller has not heard yet: in place, those
+     *  waiting for the pause; in a dropdown, a change since it opened. */
+    const pending = () => (inline ? !!reportTimer
+      : st.open && !!st.openedWith && !sameList(st.selected, st.openedWith));
+
+    /** The caller's picks and choices, as R sends them. Picks still pending
+     *  here are newer than anything the caller can send, so they stay (less
+     *  what is no longer offered) and go out as usual; the caller's answer
+     *  to them comes after. Otherwise the caller's picks are taken.
+     *  @param {any} opts @param {any} sel */
     const reconcile = (opts, sel) => {
       st.options = toOptions(opts);
       const vals = st.options.map(optValue);
-      st.selected = toArray(sel != null ? sel : st.selected).filter((v) => vals.indexOf(v) >= 0);
-      if (inline && !reportTimer) reported = st.selected.slice();
+      const hold = pending();
+      const take = sel != null && !hold;
+      st.selected = toArray(take ? sel : st.selected).filter((v) => vals.indexOf(v) >= 0);
+      if (!hold) {
+        // What the caller sent is what it knows: no report owed for it.
+        if (inline) reported = st.selected.slice();
+        else if (st.openedWith) st.openedWith = st.selected.slice();
+      }
       render();
     };
 
@@ -823,7 +883,13 @@
       }, 0);
     };
     handle = createPick(host, Object.assign({}, config, { onClose: teardown }), anchor);
-    return { close: teardown };
+    // New choices or picks from R while the menu is open (its word redrawn
+    // under it). Picks made in the menu and not reported yet stay.
+    return {
+      close: teardown,
+      /** @param {any} opts @param {any} [sel] */
+      setOptions: (opts, sel) => { if (handle && !done) handle.setOptions(opts, sel); }
+    };
   };
 
   /** @type {any} */ (window).Blockr = window.Blockr || {};
