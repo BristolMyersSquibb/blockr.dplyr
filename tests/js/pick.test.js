@@ -288,3 +288,21 @@ test('Tab closes a dropdown, reports, and puts the focus back on the field', () 
   assert.deepStrictEqual(p.changes, [['CR']]);
   assert.strictEqual(p.doc.activeElement, p.doc.querySelector('.blockr-select__control'));
 });
+
+test('an open menu takes new choices, keeping the picks made in it', () => {
+  const win = mount('multi', { options: [] }).win;
+  const anchor = win.document.createElement('span');
+  win.document.body.appendChild(anchor);
+  const changes = [];
+  const menu = win.Blockr.Pick.menu(anchor, {
+    options: OPTS, selected: ['CR', 'PD'], onChange: (v) => changes.push(json(v))
+  });
+  const row = (v) => win.document.querySelector(`.blockr-pick__panel .blockr-select__option[data-value="${v}"]`);
+  row('SD').click();
+  // R redrew the word: PD is gone from the data.
+  menu.setOptions(['CR', 'NE', 'SD'], ['CR']);
+  assert.strictEqual(row('PD'), null);
+  menu.close();
+  win.__timers.forEach((t) => t.fn());
+  assert.deepStrictEqual(changes, [['CR', 'SD']]);
+});

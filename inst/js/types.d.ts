@@ -384,7 +384,7 @@ interface BlockrNamespace {
   Pick: {
     multi(container: HTMLElement, config: BlockrSelectMultiConfig): BlockrSelectMultiHandle;
     list(container: HTMLElement, config: any): BlockrSelectMultiHandle & { flush(): void };
-    menu(anchor: HTMLElement, config: any): { close(): void };
+    menu(anchor: HTMLElement, config: any): { close(): void; setOptions(opts: any, sel?: any): void };
     summary(sel: string[], total: number, placeholder: string): { lead: string; rest: string; empty: boolean };
   };
   registerBlock(config: BlockrRegisterConfig): void;

@@ -883,7 +883,13 @@
       }, 0);
     };
     handle = createPick(host, Object.assign({}, config, { onClose: teardown }), anchor);
-    return { close: teardown };
+    // New choices or picks from R while the menu is open (its word redrawn
+    // under it). Picks made in the menu and not reported yet stay.
+    return {
+      close: teardown,
+      /** @param {any} opts @param {any} [sel] */
+      setOptions: (opts, sel) => { if (handle && !done) handle.setOptions(opts, sel); }
+    };
   };
 
   /** @type {any} */ (window).Blockr = window.Blockr || {};
