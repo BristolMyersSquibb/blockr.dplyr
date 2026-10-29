@@ -226,3 +226,15 @@ test('a closed dropdown takes a push of new choices and picks', () => {
   p.handle.setValue([]);
   assert.deepStrictEqual(p.value(), []);
 });
+
+test('a dropdown destroyed while open reports the picks made since it opened', () => {
+  const p = mount('multi', { options: OPTS, selected: ['CR'] });
+  p.open();
+  p.tickRow('SD');
+  p.handle.destroy();
+  assert.deepStrictEqual(p.changes, [['CR', 'SD']]);
+  const q = mount('multi', { options: OPTS, selected: ['CR'] });
+  q.open();
+  q.handle.destroy();
+  assert.deepStrictEqual(q.changes, []);
+});

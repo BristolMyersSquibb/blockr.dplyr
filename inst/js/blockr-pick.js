@@ -533,11 +533,13 @@
       if (placed) { placed.stop(); placed = null; }
       if (listLayer) { listLayer.remove(); listLayer = null; }
       root.classList.remove('blockr-select--above');
+      // Destroyed open (a redraw, a caller closing it), the picks since it
+      // opened are still reported, as the list in place reports its pause.
       let changed = false;
       if (st.openedWith) {
         const was = st.openedWith;
         st.openedWith = null;
-        if (how !== 'destroy') changed = !sameList(st.selected, was);
+        changed = !sameList(st.selected, was);
       }
       render();
       if (!headless && how === 'escape') control.focus();
