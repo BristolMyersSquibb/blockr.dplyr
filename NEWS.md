@@ -1,5 +1,11 @@
 # blockr.dplyr (development version)
 
+## Breaking changes
+
+- **`blockr_pick_dep()` and `Blockr.Pick` are gone.** The multi-select that
+  was on trial as `Blockr.Pick` is now blockr.ui's `Blockr.Select` (`multi`,
+  `menu` and `list`). Callers use that instead.
+
 ## Features
 
 - **`maxTagChars` shortens a long tag from the middle.** "Xanomeline High Dose"

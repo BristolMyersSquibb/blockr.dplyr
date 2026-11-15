@@ -380,13 +380,6 @@ interface BlockrNamespace {
   place(panel: HTMLElement, anchor: HTMLElement, opts?: BlockrPlaceOptions): BlockrPlaceHandle;
   /** Put an open panel on the dismiss stack (blockr-ui.js). */
   layer(el: Element, opts?: BlockrLayerOptions): BlockrLayerHandle;
-  /** The multi-select on trial in blockr-pick.js. */
-  Pick: {
-    multi(container: HTMLElement, config: BlockrSelectMultiConfig): BlockrSelectMultiHandle;
-    list(container: HTMLElement, config: any): BlockrSelectMultiHandle & { flush(): void };
-    menu(anchor: HTMLElement, config: any): { close(): void; setOptions(opts: any, sel?: any): void };
-    summary(sel: string[], total: number, placeholder: string): { lead: string; rest: string; empty: boolean };
-  };
   registerBlock(config: BlockrRegisterConfig): void;
   _docClick: Set<{ el: Element; cb: (e: MouseEvent) => void }>;
   _pending: Map<string, BlockrPendingQueue>;
