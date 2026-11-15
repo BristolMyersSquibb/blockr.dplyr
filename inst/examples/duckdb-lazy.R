@@ -147,4 +147,9 @@ board <- new_dock_board(
   ))
 )
 
+# The default layout's one view gets a random id as its tab label; name it.
+views <- blockr.dock::board_views(board)
+blockr.dock::view_name(views[[1]]) <- "Pipeline"
+blockr.dock::board_views(board) <- views
+
 serve(board, "duckdb-lazy", plugins = custom_plugins(manage_project()))
