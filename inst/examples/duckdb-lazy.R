@@ -4,10 +4,10 @@
 # table preview pages through 100M rows without ever materializing the full
 # table; the filter value-picker probes distinct levels with a bounded query.
 #
-#   [fn(...): DuckDB read_parquet -> lazy tbl]          <- variadic = arity-0 SOURCE
+#   [script: DuckDB read_parquet -> lazy tbl]           <- no input = SOURCE
 #       -> select -> filter (id < 1000) -> mutate -> arrange -> rename  (stay lazy)
 #                                                       \-> summarize    (group agg)
-#       -> [fn: collect()]   (filter cut 100M -> ~1000 in DuckDB, THEN materialize)
+#       -> [script: collect()]   (filter cut 100M -> ~1000 in DuckDB, THEN materialize)
 #
 # Run with:
 #   source(system.file("examples/duckdb-lazy.R", package = "blockr.dplyr"))
@@ -28,7 +28,7 @@ blockr_pkgs <- c(
   "blockr.dplyr",
   "blockr.dock",
   "blockr.dag",
-  "blockr.extra"   # new_function_var_block (variadic source) + new_function_block
+  "blockr.script"  # script blocks: the DuckDB source and the collect()
 )
 
 for (pkg in blockr_pkgs) {
@@ -94,14 +94,15 @@ stopifnot(file.exists(pq))
 message(sprintf("parquet: %s (%.2f GB on disk, %s rows)",
                 pq, file.size(pq) / 1e9, format(n_rows, big.mark = ",")))
 
-# --- escape hatch 1: variadic SOURCE -- open DuckDB, return a LAZY tbl --------
-# `function(...)` takes no input, so the block is a root (no upstream needed).
-# Self-qualified (DBI::/duckdb::/dplyr::) because a block expr runs sandboxed.
-read_remote_fn <- sprintf(
-  "function(..., path = \"%s\") {
-  con <- DBI::dbConnect(duckdb::duckdb())
-  dplyr::tbl(con, sprintf(\"read_parquet('%%s')\", path))
-}",
+# --- escape hatch 1: SOURCE -- open DuckDB, return a LAZY tbl -----------------
+# A script block with no input is a root (no upstream needed). `path` becomes a
+# text control on the block. Self-qualified (DBI::/duckdb::/dplyr::) because a
+# block expr runs sandboxed.
+read_remote_script <- sprintf(
+  "path <- \"%s\"
+
+con <- DBI::dbConnect(duckdb::duckdb())
+dplyr::tbl(con, sprintf(\"read_parquet('%%s')\", path))",
   pq
 )
 
@@ -109,13 +110,12 @@ read_remote_fn <- sprintf(
 # Safe because `filt` below cuts 100M rows down to ~1000 IN DuckDB first; only
 # the filtered result is pulled into R. (collect() on the full 100M would OOM --
 # the lesson: filter on the remote table, THEN collect the small result.)
-collect_fn <- "function(data) {
-  dplyr::collect(data)
-}"
+collect_script <- "dplyr::collect(data)"
 
 board <- new_dock_board(
   blocks = c(
-    remote = new_function_var_block(fn = read_remote_fn),  # arity-0 lazy source
+    remote = new_script_block(script = read_remote_script,   # lazy source
+                              block_name = "Read parquet"),
 
     # --- as many blockr.dplyr blocks as stay lazy on a remote backend --------
     cols   = new_select_block(
@@ -136,7 +136,7 @@ board <- new_dock_board(
     agg    = new_summarize_block(),
 
     # --- materialize ----------------------------------------------------------
-    collected = new_function_block(fn = collect_fn)
+    collected = new_script_block(script = collect_script, block_name = "Collect")
   ),
   links = links(
     from = c("remote", "cols", "filt", "mutated", "sorted", "renamed", "renamed"),
